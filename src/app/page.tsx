@@ -63,7 +63,7 @@ export default async function HomePage() {
     });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-emerald-500 selection:text-white font-sans" dir="rtl">
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-orange-500 selection:text-white font-sans" dir="rtl">
       {/* Meta Facebook Pixel */}
       <MetaPixel pixelId={pixelId} />
 
@@ -75,7 +75,7 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-emerald-600/25 group-hover:scale-105 transition">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-slate-950 to-indigo-900 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-105 transition">
               R
             </div>
             <div>
@@ -90,16 +90,16 @@ export default async function HomePage() {
 
           {/* Quick Nav Anchors */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-bold text-gray-600">
-            <a href="#products" className="hover:text-emerald-600 transition">
+            <a href="#products" className="hover:text-orange-600 transition">
               المنتجات والعروض
             </a>
-            <a href="#features" className="hover:text-emerald-600 transition">
+            <a href="#features" className="hover:text-orange-600 transition">
               مميزات التسوق
             </a>
-            <a href="#reviews" className="hover:text-emerald-600 transition">
+            <a href="#reviews" className="hover:text-orange-600 transition">
               آراء العملاء
             </a>
-            <a href="#faq" className="hover:text-emerald-600 transition">
+            <a href="#faq" className="hover:text-orange-600 transition">
               الأسئلة الشائعة
             </a>
           </nav>
@@ -108,7 +108,7 @@ export default async function HomePage() {
           <div className="flex items-center gap-3">
             <a
               href="#products"
-              className="py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md shadow-emerald-600/30 transition flex items-center gap-2 active:scale-95"
+              className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-extrabold text-sm shadow-md shadow-orange-500/25 transition flex items-center gap-2 active:scale-95"
             >
               <ShoppingBag className="w-4 h-4" />
               <span>تصفح المنتجات</span>
@@ -118,19 +118,19 @@ export default async function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-emerald-50/30 py-16 md:py-24 border-b border-gray-200">
+      <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-orange-50/20 py-16 md:py-24 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             {/* Tag badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-emerald-200 shadow-xs">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-orange-200 shadow-xs">
+              <Sparkles className="w-4 h-4 text-orange-600" />
               <span>المتجر المصري المعتمد للمنتجات العصرية الذكية</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-4xl md:text-6xl font-black font-heading text-slate-900 leading-tight tracking-tight">
               تسوق أرقى المنتجات الذكية{" "}
-              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-slate-950 via-indigo-950 to-orange-600 bg-clip-text text-transparent">
                 بأعلى جودة وأفضل سعر
               </span>
             </h1>
@@ -138,7 +138,7 @@ export default async function HomePage() {
             {/* Description */}
             <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
               في RexRack، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
-              <span className="font-bold text-slate-900 underline decoration-emerald-500 decoration-2">
+              <span className="font-bold text-slate-900 underline decoration-orange-500 decoration-2">
                 معاينة وفحص المنتج بنفسك أمام مندوب الشحن قبل دفع أي مليم
               </span>
               ، مع الدفع عند الاستلام وضمان استبدال مجاني 14 يوماً.
@@ -148,7 +148,7 @@ export default async function HomePage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <a
                 href="#products"
-                className="w-full sm:w-auto py-4 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base shadow-xl shadow-emerald-600/30 hover:shadow-emerald-600/40 active:scale-98 transition flex items-center justify-center gap-2"
+                className="w-full sm:w-auto py-4 px-8 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-extrabold text-base shadow-xl shadow-orange-500/25 hover:shadow-orange-500/35 active:scale-98 transition flex items-center justify-center gap-2"
               >
                 <ShoppingBag className="w-5 h-5" />
                 <span>شاهد المنتجات الحصرية (خصومات حتى 50%)</span>
@@ -160,7 +160,7 @@ export default async function HomePage() {
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto py-4 px-6 rounded-2xl bg-white hover:bg-gray-100 text-slate-800 font-bold text-base border border-gray-300 shadow-sm transition flex items-center justify-center gap-2"
               >
-                <PhoneCall className="w-5 h-5 text-emerald-600" />
+                <PhoneCall className="w-5 h-5 text-orange-600" />
                 <span>تواصل معنا على واتساب</span>
               </a>
             </div>
@@ -168,7 +168,7 @@ export default async function HomePage() {
             {/* 4 Pillars Trust Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 text-right">
               <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
@@ -214,7 +214,7 @@ export default async function HomePage() {
       {/* Products Showcase Section */}
       <section id="products" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
-          <div className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+          <div className="inline-flex items-center gap-1.5 text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
             <BadgePercent className="w-4 h-4" /> العروض والمنتجات المتاحة الآن
           </div>
           <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
@@ -261,7 +261,7 @@ export default async function HomePage() {
               {/* Product Info */}
               <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                 <div>
-                  <h3 className="font-heading font-black text-lg text-slate-900 leading-snug group-hover:text-emerald-600 transition">
+                  <h3 className="font-heading font-black text-lg text-slate-900 leading-snug group-hover:text-orange-600 transition">
                     {product.title_ar}
                   </h3>
                   <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">
@@ -271,7 +271,7 @@ export default async function HomePage() {
 
                 {/* Offers Highlight */}
                 <div className="bg-slate-50 rounded-2xl p-3 border border-gray-100 space-y-1.5 text-xs">
-                  <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
+                  <div className="flex items-center gap-1.5 text-orange-700 font-bold">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                     <span>متوفر في المخزن - شحن فوري اليوم</span>
                   </div>
@@ -288,7 +288,7 @@ export default async function HomePage() {
                       {product.compare_at_price} ج.م
                     </span>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-black font-heading text-emerald-600">
+                      <span className="text-2xl font-black font-heading text-orange-600">
                         {product.base_price}
                       </span>
                       <span className="text-xs font-bold text-gray-600">جنيه مصري</span>
@@ -313,7 +313,7 @@ export default async function HomePage() {
       <section id="features" className="py-20 bg-white border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            <span className="text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
               ضمانات RexRack الذهبية
             </span>
             <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
@@ -326,7 +326,7 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="p-8 rounded-3xl bg-slate-50 border border-gray-200/80 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-orange-700 flex items-center justify-center">
                 <ShieldCheck className="w-7 h-7" />
               </div>
               <h3 className="text-lg font-black font-heading text-slate-900">
@@ -368,7 +368,7 @@ export default async function HomePage() {
       <section className="py-16 bg-slate-50 border-b border-gray-200 px-4">
         <div className="max-w-5xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-black text-emerald-700 bg-emerald-100/60 px-3.5 py-1 rounded-full border border-emerald-200">
+            <span className="text-xs font-black text-orange-700 bg-emerald-100/60 px-3.5 py-1 rounded-full border border-orange-200">
               المقارنة الحقيقية
             </span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
@@ -410,8 +410,8 @@ export default async function HomePage() {
             </div>
 
             {/* The RexRack Way */}
-            <div className="p-6 md:p-8 rounded-3xl bg-emerald-50/80 border-2 border-emerald-500 space-y-4 shadow-lg shadow-emerald-500/10">
-              <div className="flex items-center gap-2.5 text-emerald-700 font-black text-lg font-heading">
+            <div className="p-6 md:p-8 rounded-3xl bg-orange-50/80 border-2 border-emerald-500 space-y-4 shadow-lg shadow-emerald-500/10">
+              <div className="flex items-center gap-2.5 text-orange-700 font-black text-lg font-heading">
                 <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
                   <Check className="w-5 h-5 stroke-[3]" />
                 </div>
@@ -420,19 +420,19 @@ export default async function HomePage() {
 
               <ul className="space-y-3 text-sm text-gray-800">
                 <li className="flex items-start gap-2.5 font-bold">
-                  <span className="text-emerald-600">✓</span>
+                  <span className="text-orange-600">✓</span>
                   <span>خامات فاخرة متينة ومختبرة بأعلى معايير الجودة لتتحمل الاستخدام الشاق.</span>
                 </li>
                 <li className="flex items-start gap-2.5 font-bold">
-                  <span className="text-emerald-600">✓</span>
+                  <span className="text-orange-600">✓</span>
                   <span>ضمان استبدال واسترجاع حقيقي لمدة 14 يوماً مع دعم فني متواصل 24/7.</span>
                 </li>
                 <li className="flex items-start gap-2.5 font-bold">
-                  <span className="text-emerald-600">✓</span>
+                  <span className="text-orange-600">✓</span>
                   <span>حقك الكامل في فتح الطرد ومعاينة المنتج أمام المندوب قبل دفع مليم واحد.</span>
                 </li>
                 <li className="flex items-start gap-2.5 font-bold">
-                  <span className="text-emerald-600">✓</span>
+                  <span className="text-orange-600">✓</span>
                   <span>شحن سريع لجميع محافظات مصر الـ 27 خلال 24 - 48 ساعة لباب بيتك.</span>
                 </li>
               </ul>
@@ -445,7 +445,7 @@ export default async function HomePage() {
       <section className="py-16 bg-white border-b border-gray-200 px-4">
         <div className="max-w-5xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200">
+            <span className="text-xs font-black text-orange-700 bg-orange-50 px-3.5 py-1 rounded-full border border-orange-200">
               تجربة تسوق مريحة
             </span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
@@ -455,7 +455,7 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 font-black text-xl flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-orange-700 font-black text-xl flex items-center justify-center mx-auto">
                 1
               </div>
               <h3 className="font-heading font-black text-base text-slate-900">اختر منتجك</h3>
@@ -541,7 +541,7 @@ export default async function HomePage() {
                 <span className="font-bold text-sm text-slate-900 block">م. أحمد الشناوي</span>
                 <span className="text-xs text-gray-500">القاهرة - التجمع الخامس</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]">
+              <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">
                 مشتري موثق ✓
               </span>
             </div>
@@ -561,7 +561,7 @@ export default async function HomePage() {
                 <span className="font-bold text-sm text-slate-900 block">د. هبة محمود</span>
                 <span className="text-xs text-gray-500">الإسكندرية - سموحة</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]">
+              <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">
                 مشتري موثق ✓
               </span>
             </div>
@@ -581,7 +581,7 @@ export default async function HomePage() {
                 <span className="font-bold text-sm text-slate-900 block">ك. طارق فهمي</span>
                 <span className="text-xs text-gray-500">الجيزة - الدقي</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]">
+              <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">
                 مشتري موثق ✓
               </span>
             </div>
@@ -593,7 +593,7 @@ export default async function HomePage() {
       <section id="faq" className="py-20 bg-white border-t border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3">
-            <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            <span className="text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
               إجابات سريعة
             </span>
             <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
@@ -604,7 +604,7 @@ export default async function HomePage() {
           <div className="space-y-4">
             <div className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
               <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                <HelpCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
                 <span>هل مسموح لي بفتح الشحنة وفحصها قبل الدفع؟</span>
               </h4>
               <p className="text-sm text-gray-600 pr-7 leading-relaxed">
@@ -614,7 +614,7 @@ export default async function HomePage() {
 
             <div className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
               <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                <HelpCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
                 <span>متى سيصلني الطلب بعد تأكيده؟</span>
               </h4>
               <p className="text-sm text-gray-600 pr-7 leading-relaxed">
@@ -624,7 +624,7 @@ export default async function HomePage() {
 
             <div className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
               <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                <HelpCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
                 <span>ما هي طرق الدفع المتاحة في المتجر؟</span>
               </h4>
               <p className="text-sm text-gray-600 pr-7 leading-relaxed">
@@ -634,7 +634,7 @@ export default async function HomePage() {
 
             <div className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
               <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                <HelpCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
                 <span>ماذا لو أردت استبدال أو إرجاع المنتج؟</span>
               </h4>
               <p className="text-sm text-gray-600 pr-7 leading-relaxed">
