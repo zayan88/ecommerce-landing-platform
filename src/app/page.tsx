@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { dbStore } from "@/lib/db/store";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
+import { UrgencyBar } from "@/components/shared/UrgencyBar";
 import {
   ShieldCheck,
   Truck,
@@ -17,8 +18,11 @@ import {
   Clock,
   BadgePercent,
   Check,
+  X,
   ChevronLeft,
   HelpCircle,
+  Flame,
+  HeartHandshake,
 } from "lucide-react";
 import { Metadata } from "next";
 
@@ -63,15 +67,8 @@ export default async function HomePage() {
       {/* Meta Facebook Pixel */}
       <MetaPixel pixelId={pixelId} />
 
-      {/* Top Flash Announcement Bar */}
-      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white text-xs md:text-sm font-bold py-2.5 px-4 text-center shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full text-[11px] font-black">
-            🔥 عروض حصرية
-          </span>
-          <span>شحن سريع لجميع محافظات مصر | المعاينة والفحص مجاناً قبل الدفع | الدفع عند الاستلام</span>
-        </div>
-      </div>
+      {/* Top Flash Urgency Announcement Bar */}
+      <UrgencyBar />
 
       {/* Main Header / Navigation */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs">
@@ -363,6 +360,154 @@ export default async function HomePage() {
                 في حال وجود أي عيب صناعة أو عدم مطابقة، نوفر لك استبدالاً فورياً مجانياً أو استرداد كامل أموالك دون أي تعقيد.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Problem vs RexRack Solution Section (Lovable / High-Converting Pattern) */}
+      <section className="py-16 bg-slate-50 border-b border-gray-200 px-4">
+        <div className="max-w-5xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-black text-emerald-700 bg-emerald-100/60 px-3.5 py-1 rounded-full border border-emerald-200">
+              المقارنة الحقيقية
+            </span>
+            <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
+              لماذا RexRack أفضل بمراحل من المنتجات التقليدية؟
+            </h2>
+            <p className="text-sm text-gray-600">
+              شاهد الفرق العملي بين الشراء من السوق التقليدي والشراء من RexRack المعتمد
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* The Old / Conventional Way */}
+            <div className="p-6 md:p-8 rounded-3xl bg-red-50/60 border border-red-200 space-y-4">
+              <div className="flex items-center gap-2.5 text-red-600 font-black text-lg font-heading">
+                <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center">
+                  <X className="w-5 h-5 stroke-[3]" />
+                </div>
+                <span>المنتجات العادية في السوق</span>
+              </div>
+
+              <ul className="space-y-3 text-sm text-gray-700">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-red-500 font-bold">✕</span>
+                  <span>خامات بلاستيكية ومقلدة تتلف وتنكسر سريعاً بعد أيام قليلة.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-red-500 font-bold">✕</span>
+                  <span>لا يوجد أي ضمان حقيقي ولا خدمة ما بعد البيع إذا ظهر عيب بالمنتج.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-red-500 font-bold">✕</span>
+                  <span>مندوب الشحن يجبرك على دفع الحساب قبل أن تفتح وتفحص محتويات الطرد.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-red-500 font-bold">✕</span>
+                  <span>تأخير طويل في التوصيل لعدة أسابيع دون أي تواصل أو متابعة.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* The RexRack Way */}
+            <div className="p-6 md:p-8 rounded-3xl bg-emerald-50/80 border-2 border-emerald-500 space-y-4 shadow-lg shadow-emerald-500/10">
+              <div className="flex items-center gap-2.5 text-emerald-700 font-black text-lg font-heading">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
+                  <Check className="w-5 h-5 stroke-[3]" />
+                </div>
+                <span>حلول RexRack الأصلية المعتمدة</span>
+              </div>
+
+              <ul className="space-y-3 text-sm text-gray-800">
+                <li className="flex items-start gap-2.5 font-bold">
+                  <span className="text-emerald-600">✓</span>
+                  <span>خامات فاخرة متينة ومختبرة بأعلى معايير الجودة لتتحمل الاستخدام الشاق.</span>
+                </li>
+                <li className="flex items-start gap-2.5 font-bold">
+                  <span className="text-emerald-600">✓</span>
+                  <span>ضمان استبدال واسترجاع حقيقي لمدة 14 يوماً مع دعم فني متواصل 24/7.</span>
+                </li>
+                <li className="flex items-start gap-2.5 font-bold">
+                  <span className="text-emerald-600">✓</span>
+                  <span>حقك الكامل في فتح الطرد ومعاينة المنتج أمام المندوب قبل دفع مليم واحد.</span>
+                </li>
+                <li className="flex items-start gap-2.5 font-bold">
+                  <span className="text-emerald-600">✓</span>
+                  <span>شحن سريع لجميع محافظات مصر الـ 27 خلال 24 - 48 ساعة لباب بيتك.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3-Step Simple Order Section */}
+      <section className="py-16 bg-white border-b border-gray-200 px-4">
+        <div className="max-w-5xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200">
+              تجربة تسوق مريحة
+            </span>
+            <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
+              كيف تتسوق من RexRack في 3 خطوات بسيطة؟
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 font-black text-xl flex items-center justify-center mx-auto">
+                1
+              </div>
+              <h3 className="font-heading font-black text-base text-slate-900">اختر منتجك</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                تصفح العروض واضغط على زر "طلب المنتج" ثم اكتب بياناتك في أقل من 30 ثانية.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 font-black text-xl flex items-center justify-center mx-auto">
+                2
+              </div>
+              <h3 className="font-heading font-black text-base text-slate-900">تأكيد وشحن فوري</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                يتصل بك فريق المبيعات هاتفياً لتأكيد الأوردر ومراجعة العنوان ويتم الشحن في نفس اليوم.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 font-black text-xl flex items-center justify-center mx-auto">
+                3
+              </div>
+              <h3 className="font-heading font-black text-base text-slate-900">معاينة واستلام</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                عاين طلبك وافحصه وتأكد من جودته أمام مندوب شركة الشحن، ثم ادفع نقداً أو بمحفظة.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Golden Guarantee Certificate */}
+      <section className="py-14 px-4 max-w-4xl mx-auto">
+        <div className="p-8 rounded-3xl bg-gradient-to-br from-amber-50 via-white to-amber-50/40 border-2 border-amber-300 shadow-lg text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-md">
+            <HeartHandshake className="w-8 h-8" />
+          </div>
+
+          <h3 className="text-2xl font-black font-heading text-amber-950">
+            شهادة ضمان RexRack الذهبية 100%
+          </h3>
+
+          <p className="text-sm text-gray-700 max-w-2xl mx-auto leading-relaxed">
+            نحن واثقون تماماً من جودة وفائدة منتجاتنا. لذلك نمنحك ضماناً حقيقياً لمدة 14 يوماً كاملاً: إذا وجدت أي عيب صناعة أو لم يكن المنتج مطابقاً تماماً لما رأيته، سنقوم باستبداله فوراً مجاناً أو استرداد كامل المبلغ دون أي تعقيد.
+          </p>
+
+          <div className="pt-2 flex items-center justify-center gap-6 text-xs font-bold text-amber-900">
+            <span>✓ ضمان استبدال 14 يوم</span>
+            <span>•</span>
+            <span>✓ معاينة كاملة قبل الدفع</span>
+            <span>•</span>
+            <span>✓ دعم فني متواصل 24/7</span>
           </div>
         </div>
       </section>
