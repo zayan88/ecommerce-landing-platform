@@ -156,21 +156,21 @@ CREATE INDEX IF NOT EXISTS idx_analytics_event_name ON analytics_events(event_na
 CREATE INDEX IF NOT EXISTS idx_analytics_created_at ON analytics_events(created_at DESC);
 
 -- ==============================================================================
--- SEED DATA: FIRST PRODUCT & OFFERS & LANDING PAGE
+-- SEED DATA: STARTER PRODUCT & OFFERS & LANDING PAGE
 -- ==============================================================================
 INSERT INTO products (id, title_ar, title_en, slug, sku, base_price, compare_at_price, cost_price, images, description_ar, stock_quantity, status)
 VALUES (
     'a1000000-0000-0000-0000-000000000001',
-    'وعاء التبول المحمول المطور لكبار السن والسفر',
-    'Portable Urinal Device with Extension Tube',
-    'portable-urinal',
-    'URINAL-PRO-01',
+    'منتجك التجريبي الجديد (قالب جاهز للتخصيص)',
+    'Demo Product Starter Template',
+    'starter-template',
+    'DEMO-001',
     299.00,
     450.00,
     110.00,
-    '["/landing-pages/portable-urinal/images/hero_product.jpg", "/landing-pages/portable-urinal/images/product_cutout.png", "/landing-pages/portable-urinal/images/product_bedside_elderly.jpg", "/landing-pages/portable-urinal/images/travel_scenario.jpg"]'::jsonb,
-    'وسيلة مساعدة مريحة وعملية لجمع البول بسعة 2000 مل مع خرطوم مرن مضاد للتسريب وغطاء محكم الرائحة، مثالية لكبار السن، مرضى الفراش، والسفر لمسافات طويلة في السيارة.',
-    150,
+    '["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80"]'::jsonb,
+    'قالب صفحة هبوط جاهز لربط أي منتج جديد فوري، يحتوي على كافة أقسام الإقناع، العروض، الشحن، ونموذج الدفع عند الاستلام.',
+    100,
     'active'
 ) ON CONFLICT (slug) DO NOTHING;
 
@@ -178,17 +178,17 @@ INSERT INTO product_offers (id, product_id, title_ar, quantity, price, original_
 VALUES 
     ('b1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001', 'قطعة واحدة', 1, 299.00, 450.00, 'خصم 33%', false, false, 1),
     ('b1000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001', 'قطعتان (الأكثر طلباً)', 2, 499.00, 900.00, 'خصم 45% + شحن مجاني', true, true, 2),
-    ('b1000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000001', '3 قطع (عرض العائلة)', 3, 649.00, 1350.00, 'خصم 52% + شحن مجاني', false, true, 3)
+    ('b1000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000001', '3 قطع (عرض التوفير)', 3, 649.00, 1350.00, 'خصم 52% + شحن مجاني', false, true, 3)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO landing_pages (id, product_id, title, slug, component_key, status, meta_pixel_id, deployment_status)
 VALUES (
     'c1000000-0000-0000-0000-000000000001',
     'a1000000-0000-0000-0000-000000000001',
-    'صفحة وعاء التبول المحمول - حملة الرعاية والسفر',
-    'portable-urinal',
-    'portable-urinal',
+    'صفحة الهبوط النموذجية - جاهزة للمنتج الجديد',
+    'starter-template',
+    'starter-template',
     'active',
-    'PIXEL_URINAL_01',
+    '123456789012345',
     'published'
 ) ON CONFLICT (slug) DO NOTHING;

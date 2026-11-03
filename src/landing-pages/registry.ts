@@ -1,6 +1,6 @@
 import React from "react";
 import { Product, LandingPage } from "@/types";
-import PortableUrinalPage from "./portable-urinal/page";
+import StarterLandingPage from "./starter-template/page";
 
 export interface LandingPageComponentProps {
   product: Product;
@@ -13,12 +13,12 @@ export interface LandingPageComponentProps {
  * Adding a new landing page only requires exporting a component and adding it here.
  */
 export const landingPageRegistry: Record<string, React.ComponentType<LandingPageComponentProps>> = {
-  "portable-urinal": PortableUrinalPage,
+  "starter-template": StarterLandingPage,
 };
 
 /**
  * Resolves a landing page component by key or fallback to the first available component.
  */
 export function getLandingPageComponent(componentKey: string) {
-  return landingPageRegistry[componentKey] || null;
+  return landingPageRegistry[componentKey] || landingPageRegistry["starter-template"] || null;
 }

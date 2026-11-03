@@ -122,11 +122,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <a
-            href="/p/portable-urinal"
+            href="/p/starter-template"
             target="_blank"
             className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition"
           >
-            <span>زيارة صفحة المنتج الأولى</span>
+            <span>معاينة صفحة الهبوط الحية</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
           </a>
         </div>
@@ -149,7 +149,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span>الخادم المركزي: شغال</span>
             </div>
             <a
-              href="/p/portable-urinal"
+              href="/p/starter-template"
               target="_blank"
               className="py-1.5 px-3 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center gap-1 transition"
             >

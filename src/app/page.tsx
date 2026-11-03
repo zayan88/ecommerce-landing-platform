@@ -60,12 +60,12 @@ export default function HomePage() {
             </a>
 
             <a
-              href="/p/portable-urinal"
+              href="/p/starter-template"
               target="_blank"
               className="w-full sm:w-auto py-3.5 px-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-base border border-slate-700 transition flex items-center justify-center gap-2"
             >
               <ShoppingBag className="w-5 h-5 text-emerald-400" />
-              <span>معاينة صفحة المنتج الأولى (Live)</span>
+              <span>معاينة قالب صفحة الهبوط (Live)</span>
               <ExternalLink className="w-4 h-4 text-slate-400" />
             </a>
           </div>
@@ -108,21 +108,21 @@ export default function HomePage() {
         <div className="bg-gradient-to-r from-emerald-950/60 via-slate-800/80 to-slate-800/60 border border-emerald-500/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-right">
             <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-              الصفحة النموذجية الجاهزة للاختبار
+              القالب النموذجي الجاهز لأي منتج جديد
             </span>
             <h2 className="text-2xl font-black text-white font-heading">
-              وعاء التبول المحمول المطور لكبار السن والسفر
+              قالب صفحة هبوط مستقلة وقابلة للتخصيص الفوري
             </h2>
             <p className="text-sm text-slate-300 max-w-xl">
-              صفحة مكتملة العناصر: صور عالية الدقة، حزم عروض متعددة، نموذج دفع عند الاستلام مع قائمة المحافظات المصرية، وتأكيد طلب فوري عبر الواتساب.
+              جاهزة لاستقبال صور ونصوص وأسعار أي منتج تختاره، مع نموذج دفع عند الاستلام لجميع محافظات مصر وتكامل بوابة صفقة وMeta Pixel.
             </p>
           </div>
 
           <a
-            href="/p/portable-urinal"
+            href="/p/starter-template"
             className="py-3 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm whitespace-nowrap shadow-md transition flex items-center gap-2"
           >
-            <span>اختبار الشراء الفعلي</span>
+            <span>معاينة القالب الحي</span>
             <ArrowLeft className="w-4 h-4" />
           </a>
         </div>

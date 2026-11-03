@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Product, LandingPage, ProductOffer } from "@/types";
-import { urinalLandingConfig } from "./config";
+import { starterLandingConfig } from "./config";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import {
@@ -12,27 +12,25 @@ import {
   Truck,
   ShieldCheck,
   RotateCcw,
-  Clock,
-  HeartHandshake,
   ChevronDown,
   Sparkles,
   ArrowDownCircle,
   AlertTriangle,
 } from "lucide-react";
 
-interface PortableUrinalPageProps {
+interface StarterLandingPageProps {
   product: Product;
   landingPage: LandingPage;
 }
 
-export default function PortableUrinalPage({ product, landingPage }: PortableUrinalPageProps) {
+export default function StarterLandingPage({ product, landingPage }: StarterLandingPageProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(
     product.offers?.find((o) => o.is_popular) || product.offers?.[0] || ({} as ProductOffer)
   );
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  const images = urinalLandingConfig.images;
+  const images = starterLandingConfig.images;
 
   const scrollToCheckout = () => {
     const el = document.getElementById("order-form-section");
@@ -47,7 +45,7 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
           <span className="bg-amber-400 text-gray-950 px-2 py-0.5 rounded-full text-xs font-black animate-pulse">
             عرض اليوم الحصري
           </span>
-          <span>شحن مجاني + خصم يصل إلى 50% عند طلب قطعتين أو أكثر لفترة محدودة!</span>
+          <span>شحن مجاني + خصم يصل إلى 45% عند طلب قطعتين أو أكثر لفترة محدودة!</span>
         </div>
       </div>
 
@@ -56,13 +54,13 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-extrabold text-xl shadow-md">
-              ع
+              ★
             </div>
             <div>
               <span className="font-heading font-black text-lg md:text-xl text-gray-900 block leading-tight">
-                الرعاية الطبية الذكية
+                المتجر الرسمي المعتمد
               </span>
-              <span className="text-[11px] text-gray-500 font-medium">وسائل مساعدة صحية معتمدة</span>
+              <span className="text-[11px] text-gray-500 font-medium">منتجات أصلية مع ضمان المعاينة</span>
             </div>
           </div>
 
@@ -85,16 +83,16 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
                 src={images[activeImageIndex].src}
                 alt={images[activeImageIndex].alt}
                 fill
-                className="object-contain p-2"
+                className="object-cover"
                 priority
               />
               <span className="absolute top-4 right-4 bg-emerald-600/90 backdrop-blur-xs text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-md">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" /> خامة طبية أصلية
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" /> منتج أصلي ومضمون
               </span>
             </div>
 
             {/* Thumbnails */}
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {images.map((img, idx) => (
                 <button
                   key={idx}
@@ -105,13 +103,13 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
                       : "border-gray-200 opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <Image src={img.src} alt={img.alt} fill className="object-cover p-1" />
+                  <Image src={img.src} alt={img.alt} fill className="object-cover" />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Product Hero Info & Pitch */}
+          {/* Product Hero Info */}
           <div className="lg:col-span-6 space-y-5 text-right">
             <div className="flex items-center gap-2">
               <div className="flex text-amber-400">
@@ -120,15 +118,15 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
                 ))}
               </div>
               <span className="text-xs font-bold text-gray-700">4.9 / 5</span>
-              <span className="text-xs text-gray-400">(أكثر من 1,400 عميل سعيد في مصر)</span>
+              <span className="text-xs text-gray-400">(تقييم المشترين المعتمد)</span>
             </div>
 
             <h1 className="text-2xl md:text-4xl font-black text-gray-950 font-heading leading-tight">
-              {urinalLandingConfig.productTitle}
+              {product.title_ar || starterLandingConfig.productTitle}
             </h1>
 
             <p className="text-base md:text-lg text-gray-600 leading-relaxed">
-              {urinalLandingConfig.subtitle} — حل عملي ومريح يمنح كبار السن والمرضى الاستقلالية التامة، وينقذك في زحمة السفر والمشاوير الطويلة.
+              {product.description_ar || starterLandingConfig.subtitle}
             </p>
 
             {/* Price Badge */}
@@ -145,13 +143,13 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
                 </div>
               </div>
               <span className="bg-emerald-600 text-white font-extrabold text-xs px-3 py-1.5 rounded-lg">
-                وفر 151 ج.م اليوم
+                وفر {product.compare_at_price ? product.compare_at_price - product.base_price : 150} ج.م اليوم
               </span>
             </div>
 
-            {/* Quick Benefits Checklist */}
+            {/* Badges List */}
             <ul className="space-y-2.5">
-              {urinalLandingConfig.heroBadges.map((badge, idx) => (
+              {starterLandingConfig.heroBadges.map((badge, idx) => (
                 <li key={idx} className="flex items-center gap-2.5 text-sm font-bold text-gray-800">
                   <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                   <span>{badge}</span>
@@ -159,7 +157,7 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
               ))}
             </ul>
 
-            {/* Call To Action Button */}
+            {/* CTA */}
             <div className="pt-2">
               <button
                 onClick={scrollToCheckout}
@@ -177,7 +175,7 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
         </div>
       </section>
 
-      {/* 4. PAIN POINTS / EMPATHY SECTION */}
+      {/* 4. PAIN POINTS */}
       <section className="py-12 bg-white border-y border-gray-100 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-10">
@@ -185,12 +183,12 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
               لماذا تحتاج هذا المنتج؟
             </span>
             <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-3 font-heading">
-              مواقف صعبة لا يجب أن تتركها للصدفة
+              مشاكل وتحديات يبحث الجميع عن حل فعال لها
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {urinalLandingConfig.painPoints.map((point, idx) => (
+            {starterLandingConfig.painPoints.map((point, idx) => (
               <div
                 key={idx}
                 className="p-5 rounded-2xl bg-slate-50 border border-gray-200/80 hover:border-emerald-300 transition-all flex items-start gap-4"
@@ -208,19 +206,19 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
         </div>
       </section>
 
-      {/* 5. FEATURES IN-DEPTH WITH PHOTOS */}
+      {/* 5. FEATURES */}
       <section className="py-16 px-4 max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
             المواصفات والامتيازات
           </span>
           <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-3 font-heading">
-            صُمم ليوفر أقصى درجات الراحة والنظافة
+            صُمم ليوفر أقصى فائدة وجودة عملية
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {urinalLandingConfig.features.map((feat, idx) => (
+          {starterLandingConfig.features.map((feat, idx) => (
             <div
               key={idx}
               className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col"
@@ -234,7 +232,7 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
                   <p className="text-sm text-gray-600 leading-relaxed">{feat.desc}</p>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 text-xs font-semibold text-emerald-600">
-                  <CheckCircle className="w-4 h-4" /> ضمان الجودة الطبية
+                  <CheckCircle className="w-4 h-4" /> ضمان الجودة والأداء
                 </div>
               </div>
             </div>
@@ -242,16 +240,16 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
         </div>
       </section>
 
-      {/* 6. TECHNICAL SPECS TABLE */}
+      {/* 6. TECHNICAL SPECS */}
       <section className="py-12 bg-white border-y border-gray-100 px-4">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-6 font-heading">
-            المواصفات الفنية للوعاء
+            المواصفات والتفاصيل
           </h2>
           <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
             <table className="w-full text-right text-sm">
               <tbody>
-                {urinalLandingConfig.specs.map((item, idx) => (
+                {starterLandingConfig.specs.map((item, idx) => (
                   <tr
                     key={idx}
                     className={`border-b border-gray-100 ${idx % 2 === 0 ? "bg-slate-50/60" : "bg-white"}`}
@@ -266,19 +264,19 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
         </div>
       </section>
 
-      {/* 7. AUTHENTIC CUSTOMER REVIEWS */}
+      {/* 7. CUSTOMER REVIEWS */}
       <section className="py-16 px-4 max-w-5xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
             تجارب حقيقية
           </span>
           <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-3 font-heading">
-            ماذا يقول عملاؤنا في مصر؟
+            آراء المشترين بعد التجربة
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {urinalLandingConfig.reviews.map((rev, idx) => (
+          {starterLandingConfig.reviews.map((rev, idx) => (
             <div
               key={idx}
               className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm flex flex-col justify-between"
@@ -300,7 +298,7 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
         </div>
       </section>
 
-      {/* 8. HIGH-CONVERTING EGYPTIAN CHECKOUT FORM */}
+      {/* 8. COD CHECKOUT FORM */}
       <section className="py-12 bg-slate-100 px-4">
         <div className="max-w-4xl mx-auto">
           <EgyptianCheckoutForm
@@ -318,7 +316,7 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
           الأسئلة الشائعة
         </h2>
         <div className="space-y-3">
-          {urinalLandingConfig.faqs.map((faq, idx) => {
+          {starterLandingConfig.faqs.map((faq, idx) => {
             const isOpen = openFaqIndex === idx;
             return (
               <div
@@ -360,7 +358,7 @@ export default function PortableUrinalPage({ product, landingPage }: PortableUri
             </span>
           </div>
           <p className="text-gray-500 max-w-xl mx-auto">
-            جميع الحقوق محفوظة © {new Date().getFullYear()} - منصة المنتجات الطبية والرعاية الصحية.
+            جميع الحقوق محفوظة © {new Date().getFullYear()} - المتجر الرسمي.
           </p>
         </div>
       </footer>
