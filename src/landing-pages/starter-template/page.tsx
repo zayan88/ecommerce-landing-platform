@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Product, LandingPage, ProductOffer } from "@/types";
 import { starterLandingConfig } from "./config";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
@@ -30,7 +31,10 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   );
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  const images = starterLandingConfig.images;
+  const images =
+    product.images && product.images.length > 0
+      ? product.images.map((src, idx) => ({ src, alt: `${product.title_ar} - صورة ${idx + 1}` }))
+      : starterLandingConfig.images;
 
   const scrollToCheckout = () => {
     const el = document.getElementById("order-form-section");
@@ -52,17 +56,17 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       {/* 2. HEADER */}
       <header className="bg-white border-b border-gray-100 py-4 px-4 sticky top-0 z-40 shadow-xs">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-extrabold text-xl shadow-md">
-              ★
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-xl shadow-md group-hover:scale-105 transition">
+              R
             </div>
             <div>
               <span className="font-heading font-black text-lg md:text-xl text-gray-900 block leading-tight">
-                المتجر الرسمي المعتمد
+                ريكس راك | RexRack
               </span>
-              <span className="text-[11px] text-gray-500 font-medium">منتجات أصلية مع ضمان المعاينة</span>
+              <span className="text-[11px] text-gray-500 font-medium">المتجر المعتمد - معاينة مجانية قبل الدفع</span>
             </div>
-          </div>
+          </Link>
 
           <button
             onClick={scrollToCheckout}

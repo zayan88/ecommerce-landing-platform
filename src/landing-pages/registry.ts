@@ -14,10 +14,13 @@ export interface LandingPageComponentProps {
  */
 export const landingPageRegistry: Record<string, React.ComponentType<LandingPageComponentProps>> = {
   "starter-template": StarterLandingPage,
+  "rexrack-smart-organizer": StarterLandingPage,
+  "rexrack-power-station": StarterLandingPage,
+  "rexrack-mag-mount": StarterLandingPage,
 };
 
 /**
- * Resolves a landing page component by key or fallback to the first available component.
+ * Resolves a landing page component by key or fallback to the starter-template component.
  */
 export function getLandingPageComponent(componentKey: string) {
   return landingPageRegistry[componentKey] || landingPageRegistry["starter-template"] || null;
