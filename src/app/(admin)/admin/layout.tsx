@@ -26,7 +26,7 @@ const navigationItems = [
   { name: "صفحات الهبوط", href: "/admin/landing-pages", icon: Layers },
   { name: "المنتجات والعروض", href: "/admin/products", icon: Tag },
   { name: "تتبع ميتا و CAPI", href: "/admin/tracking", icon: Target },
-  { name: "بوابة دفع صفقة (Safqa)", href: "/admin/safqa", icon: CreditCard },
+  { name: "دروبشيبينغ صفقة (Safka)", href: "/admin/safqa", icon: ShoppingBag },
   { name: "دليل وكيل AI (الإنشاء السريع)", href: "/admin/ai-guide", icon: Bot },
 ];
 

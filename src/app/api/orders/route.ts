@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { orderFormSchema } from "@/lib/validation/order";
 import { dbStore } from "@/lib/db/store";
 import { getGovernorateDeliveryFee } from "@/lib/constants/governorates";
-import { SafqaClient } from "@/lib/safqa/safqa-client";
+import { SafkaClient } from "@/lib/safqa/safka-client";
 import { MetaCapiClient } from "@/lib/tracking/meta-capi";
 import { generateEventId } from "@/lib/tracking/utm";
 
@@ -101,9 +101,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 6. Forward to Safqa API in background (Safe forwarder)
-    SafqaClient.createInvoice(createdOrder).catch((err) => {
-      console.error("[Background Safqa forward error]", err);
+    // 6. Forward order to Safka Egypt Dropshipping API automatically (Safe background forwarder)
+    SafkaClient.createOrder(createdOrder).catch((err) => {
+      console.error("[Background Safka dropshipping forward error]", err);
     });
 
     // 7. Dispatch Meta Conversions API (CAPI) event with identical event_id

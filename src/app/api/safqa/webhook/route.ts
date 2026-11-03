@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
+import { SafkaClient } from "@/lib/safqa/safka-client";
 
 /**
  * Safqa Webhook Verification & Health Check (GET)
- * Used by payment gateways or uptime monitors to verify the webhook endpoint is reachable.
  */
 export async function GET(req: NextRequest) {
   return NextResponse.json({
     success: true,
-    service: "Safqa Payment Gateway Webhook",
+    service: "Safka Egypt Webhook Gateway",
     status: "active and listening",
     timestamp: new Date().toISOString(),
   });
@@ -16,8 +16,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * Safqa Webhook Handler (POST)
- * Receives IPN (Instant Payment Notifications) from Safqa when an invoice is created, paid, or cancelled.
- * Supports JSON, x-www-form-urlencoded, and raw text payloads without throwing errors.
+ * Handles both Product imports from Safka and Order Status notifications.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -60,67 +59,83 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    console.log("[Safqa Webhook Received Payload]", JSON.stringify(payload));
+    console.log("[Safqa Webhook Received Payload]", JSON.stringify(payload).substring(0, 500));
 
-    // Extract identifiers across Safqa's various payload formats
-    const invoiceId =
-      payload.invoice_id ||
-      payload.data?.invoice_id ||
-      payload.InvoiceId ||
-      payload.invoiceId ||
-      payload.id;
+    // CHECK IF PAYLOAD IS A SAFKA PRODUCT PUSH
+    const productData = payload.data || payload.product || payload;
+    if (
+      productData &&
+      (productData.name || productData.barcode || (productData.properties && productData.sale_price))
+    ) {
+      console.log("[Safqa Webhook] Detected Safka Product Import!");
+      const imported = await SafkaClient.importSafkaProduct(productData);
+      return NextResponse.json({
+        success: true,
+        message: "تم استلام المنتج من صفقة وإنشاء صفحة الهبوط له بنجاح",
+        product_id: imported.product.id,
+        landing_page_url: imported.landingPageUrl,
+      });
+    }
+
+    // CHECK IF PAYLOAD IS AN ORDER STATUS UPDATE
+    const safkaOrderId =
+      payload.order_id ||
+      payload._id ||
+      payload.data?._id ||
+      payload.order_number ||
+      payload.invoice_id;
 
     const rawStatus = (
       payload.status ||
       payload.data?.status ||
-      payload.InvoiceStatus ||
-      payload.invoice_status ||
       ""
     ).toLowerCase();
 
-    const referenceId =
-      payload.reference_id ||
-      payload.data?.reference_id ||
-      payload.ReferenceId ||
-      payload.order_id ||
-      payload.customer_reference;
+    if (safkaOrderId) {
+      // Find matching order in dbStore
+      const orders = await dbStore.getOrders();
+      const matched = orders.find(
+        (o) =>
+          o.safqa_invoice_id === safkaOrderId ||
+          o.order_number === safkaOrderId ||
+          (payload.client_phone1 && o.customer_phone === payload.client_phone1)
+      );
 
-    if (referenceId) {
-      const order = await dbStore.getOrder(referenceId);
-      if (order) {
-        let newSafqaStatus: "pending" | "paid" | "failed" = "pending";
-        if (rawStatus === "paid" || rawStatus === "success" || rawStatus === "completed") {
-          newSafqaStatus = "paid";
-        } else if (rawStatus === "failed" || rawStatus === "cancelled" || rawStatus === "expired") {
-          newSafqaStatus = "failed";
+      if (matched) {
+        let newStatus = matched.status;
+        if (rawStatus.includes("ship") || rawStatus.includes("مكتمل") || rawStatus.includes("جار")) {
+          newStatus = "shipped";
+        } else if (rawStatus.includes("deliver") || rawStatus.includes("تم التسليم")) {
+          newStatus = "delivered";
+        } else if (rawStatus.includes("cancel") || rawStatus.includes("ملغي")) {
+          newStatus = "cancelled";
+        } else if (rawStatus.includes("return") || rawStatus.includes("مرتجع")) {
+          newStatus = "returned";
         }
 
-        await dbStore.updateSafqaInfo(order.id, {
-          safqa_invoice_id: invoiceId || order.safqa_invoice_id,
-          safqa_status: newSafqaStatus,
+        await dbStore.updateOrderStatus(matched.id, newStatus);
+        await dbStore.updateSafqaInfo(matched.id, {
+          safqa_status: newStatus === "delivered" ? "paid" : "pending",
           safqa_response: payload,
         });
 
-        if (newSafqaStatus === "paid") {
-          await dbStore.updateOrderStatus(order.id, "confirmed");
-        }
+        return NextResponse.json({
+          success: true,
+          message: `تم تحديث حالة الطلب ${matched.order_number} إلى ${newStatus}`,
+        });
       }
     }
 
-    // Always respond with 200 OK so Safqa considers the notification successfully delivered
     return NextResponse.json({
       success: true,
-      received: true,
-      invoice_id: invoiceId || null,
-      message: "Webhook processed successfully",
+      message: "تم استلام الإشعار بنجاح",
+      received: payload,
     });
   } catch (err: any) {
-    console.error("[Safqa Webhook Processing Error]", err.message);
-    // Even on error, return 200 with error note so the gateway does not retry aggressively
-    return NextResponse.json({
-      success: true,
-      received: true,
-      warning: err.message,
-    });
+    console.error("[Safqa Webhook Error]", err);
+    return NextResponse.json(
+      { success: false, error: err.message || "حدث خطأ أثناء معالجة الويب هوك" },
+      { status: 500 }
+    );
   }
 }
