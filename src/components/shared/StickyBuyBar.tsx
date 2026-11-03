@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBagIcon } from "@heroicons/react/24/solid";
 
 interface StickyBuyBarProps {
   productTitle: string;
@@ -49,7 +49,7 @@ export function StickyBuyBar({
           onClick={scrollToForm}
           className="flex-1 max-w-[210px] py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-sm shadow-md shadow-emerald-600/25 flex items-center justify-center gap-1.5 active:scale-95 transition"
         >
-          <ShoppingCart className="w-4 h-4" />
+          <ShoppingBagIcon className="w-4 h-4" />
           <span>{ctaText}</span>
         </button>
       </div>

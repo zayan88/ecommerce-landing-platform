@@ -6,7 +6,13 @@ import { EGYPTIAN_GOVERNORATES, getGovernorateDeliveryFee } from "@/lib/constant
 import { captureUtmParams, generateEventId } from "@/lib/tracking/utm";
 import { trackMetaEvent } from "@/lib/tracking/meta-pixel";
 import { Product, ProductOffer } from "@/types";
-import { CheckCircle2, ShieldCheck, Truck, Clock, AlertCircle } from "lucide-react";
+import {
+  CheckCircleIcon,
+  ShieldCheckIcon,
+  TruckIcon,
+  ClockIcon,
+  ExclamationCircleIcon,
+} from "@heroicons/react/24/solid";
 
 interface EgyptianCheckoutFormProps {
   product: Product;
@@ -144,7 +150,7 @@ export function EgyptianCheckoutForm({
     >
       <div className="text-center pb-6 border-b border-gray-100">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <Truck className="w-3.5 h-3.5" /> الدفع عند الاستلام بعد المعاينة الكاملة
+          <TruckIcon className="w-3.5 h-3.5" /> الدفع عند الاستلام بعد المعاينة الكاملة
         </span>
         <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-3 font-heading">
           اطلب الآن واستلم في أسرع وقت
@@ -156,7 +162,7 @@ export function EgyptianCheckoutForm({
 
       {errorMessage && (
         <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
+          <ExclamationCircleIcon className="w-5 h-5 flex-shrink-0 text-red-500" />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -346,7 +352,7 @@ export function EgyptianCheckoutForm({
             </div>
           ) : (
             <>
-              <CheckCircle2 className="w-6 h-6" />
+              <CheckCircleIcon className="w-6 h-6" />
               <span>اضغط هنا لتأكيد الطلب الآن</span>
             </>
           )}
@@ -355,15 +361,15 @@ export function EgyptianCheckoutForm({
         {/* Security & Guarantees */}
         <div className="grid grid-cols-3 gap-2 pt-3 text-center text-xs text-gray-500">
           <div className="flex flex-col items-center gap-1">
-            <Truck className="w-4 h-4 text-emerald-600" />
+            <TruckIcon className="w-4 h-4 text-emerald-600" />
             <span>شحن سريع لجميع المحافظات</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <ShieldCheckIcon className="w-4 h-4 text-emerald-600" />
             <span>معاينة قبل الدفع</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <Clock className="w-4 h-4 text-emerald-600" />
+            <ClockIcon className="w-4 h-4 text-emerald-600" />
             <span>ضمان استبدال 14 يوم</span>
           </div>
         </div>

@@ -9,9 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@heroui/react": "^2.8.10",
+    "@heroui/theme": "^2.4.26",
     "@supabase/supabase-js": "^2.45.6",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
+    "framer-motion": "^14.9.0",
     "lucide-react": "^0.453.0",
     "next": "^14.2.15",
     "react": "^18.3.1",

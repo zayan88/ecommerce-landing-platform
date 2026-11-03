@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "منصة إدارة صفحات الهبوط متعددة المنتجات",
+  title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
   description: "المنصة المركزية لإدارة وتتبع صفحات الهبوط ومبيعات الدفع عند الاستلام وبوابة صفقة في مصر",
 };
 
@@ -22,7 +23,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-slate-50 text-gray-900 font-sans">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

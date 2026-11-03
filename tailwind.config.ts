@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { heroui } from "@heroui/react";
 
 const config: Config = {
   content: [
@@ -6,6 +7,7 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/landing-pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -37,7 +39,7 @@ const config: Config = {
         safqa: {
           primary: "#0ea5e9",
           dark: "#0369a1",
-        }
+        },
       },
       fontFamily: {
         sans: ["var(--font-cairo)", "Cairo", "Tajawal", "sans-serif"],
@@ -45,15 +47,16 @@ const config: Config = {
       },
       keyframes: {
         pulseGlow: {
-          '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.4)' },
-          '50%': { transform: 'scale(1.02)', boxShadow: '0 0 0 10px rgba(16, 185, 129, 0)' },
-        }
+          "0%, 100%": { transform: "scale(1)", boxShadow: "0 0 0 0 rgba(16, 185, 129, 0.4)" },
+          "50%": { transform: "scale(1.02)", boxShadow: "0 0 0 10px rgba(16, 185, 129, 0)" },
+        },
       },
       animation: {
-        'pulse-glow': 'pulseGlow 2.5s infinite',
-      }
+        "pulse-glow": "pulseGlow 2.5s infinite",
+      },
     },
   },
-  plugins: [],
+  darkMode: "class",
+  plugins: [heroui()],
 };
 export default config;
