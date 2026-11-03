@@ -232,8 +232,8 @@ export default async function HomePage() {
               key={product.id}
               className="bg-white rounded-3xl border border-gray-200/90 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group"
             >
-              {/* Product Image Container */}
-              <div className="relative aspect-4/3 w-full bg-slate-100 overflow-hidden">
+              {/* Product Image Container (1:1 Square) */}
+              <div className="relative aspect-square w-full bg-slate-100 overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
                 <img
                   src={product.images[0]}
                   alt={product.title_ar}

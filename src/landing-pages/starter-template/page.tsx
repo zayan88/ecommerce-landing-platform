@@ -188,8 +188,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             : "وداعاً للفوضى وتكدس الأغراض.. نظّم بيتك ومكتبك ووفر 80% من المساحة بخامات فولاذية فاخرة تدوم طويلاً وتتحمل أثقل الأوزان بثبات فائق."}
         </p>
 
-        {/* Big Hero Image #1: Solid 480px Height - GUARANTEED TO RENDER */}
-        <div className="relative w-full h-72 sm:h-96 md:h-[480px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-2xl group">
+        {/* Big Hero Image #1: 1:1 Aspect Ratio (Square) */}
+        <div
+          className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-2xl group"
+          style={{ aspectRatio: "1 / 1" }}
+        >
           <img
             src={heroImageSrc}
             alt="صورة RexRack الرئيسية"
@@ -334,8 +337,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </p>
           </div>
 
-          {/* Solid 420px Height Guaranteed Image #2 */}
-          <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl">
+          {/* 1:1 Aspect Ratio Guaranteed Image #2 (Problem) */}
+          <div
+            className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl"
+            style={{ aspectRatio: "1 / 1" }}
+          >
             <img
               src={problemImageSrc}
               alt="مشكلة المنتج"
@@ -415,8 +421,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           </p>
         </div>
 
-        {/* Solid 420px Height Guaranteed Image #3 */}
-        <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl group">
+        {/* 1:1 Aspect Ratio Guaranteed Image #3 (Solution) */}
+        <div
+          className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl group"
+          style={{ aspectRatio: "1 / 1" }}
+        >
           <img
             src={solutionImageSrc}
             alt="حل RexRack الفعلي"
@@ -483,8 +492,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </p>
           </div>
 
-          {/* Solid 420px Height Guaranteed Image #4 */}
-          <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-700 shadow-2xl group">
+          {/* 1:1 Aspect Ratio Guaranteed Image #4 (Quality) */}
+          <div
+            className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-700 shadow-2xl group"
+            style={{ aspectRatio: "1 / 1" }}
+          >
             <img
               src={detailImageSrc}
               alt="تفاصيل خامات وجودة تصنيع RexRack"
@@ -568,8 +580,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </p>
           </div>
 
-          {/* Solid 420px Height Guaranteed Image #5 */}
-          <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl">
+          {/* 1:1 Aspect Ratio Guaranteed Image #5 (Unboxing) */}
+          <div
+            className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl"
+            style={{ aspectRatio: "1 / 1" }}
+          >
             <img
               src={unboxingImageSrc}
               alt="معاينة وفتح الطرد أمام مندوب الشحن"
