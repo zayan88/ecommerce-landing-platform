@@ -17,6 +17,8 @@ export const landingPageRegistry: Record<string, React.ComponentType<LandingPage
   "rexrack-smart-organizer": StarterLandingPage,
   "rexrack-power-station": StarterLandingPage,
   "rexrack-mag-mount": StarterLandingPage,
+  "safka-b5fb3b6b": StarterLandingPage,
+  "rexrack-massage-gun": StarterLandingPage,
 };
 
 /**

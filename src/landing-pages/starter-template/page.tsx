@@ -81,11 +81,16 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     ? Math.round((discountAmount / product.compare_at_price) * 100)
     : 36;
 
+  const isMassageGun =
+    product.title_ar?.includes("مساج") ||
+    product.slug?.includes("massage") ||
+    product.slug?.includes("b5fb3b6b");
+
   // Local, bulletproof, high-speed images
   const heroImageSrc = product.images?.[0] || "/images/hero-organizer.jpg";
-  const problemImageSrc = "/images/problem-clutter.jpg";
-  const solutionImageSrc = product.images?.[2] || "/images/solution-organized.jpg";
-  const detailImageSrc = product.images?.[1] || "/images/materials-quality.jpg";
+  const problemImageSrc = isMassageGun ? "/images/problem-backpain.jpg" : "/images/problem-clutter.jpg";
+  const solutionImageSrc = product.images?.[2] || product.images?.[1] || "/images/solution-organized.jpg";
+  const detailImageSrc = product.images?.[1] || product.images?.[3] || "/images/materials-quality.jpg";
   const unboxingImageSrc = "/images/unboxing-inspection.jpg";
 
   return (
@@ -176,7 +181,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
         {/* Subtitle */}
         <p className="text-base sm:text-lg text-slate-700 max-w-2xl mx-auto leading-relaxed font-medium">
-          وداعاً للفوضى وتكدس الأغراض.. نظّم بيتك ومكتبك ووفر 80% من المساحة بخامات فولاذية فاخرة تدوم طويلاً وتتحمل أثقل الأوزان بثبات فائق.
+          {isMassageGun
+            ? "ودّع إجهاد العضلات واستمتع بمساج مريح في أي وقت! تصميم مبتكر بذراع ممتدة تصل لمناطق الظهر الصعبة بنفسك مع 4 رؤوس تدليك وموتور قوي 20 وات."
+            : product.description_ar
+            ? product.description_ar.replace(/<[^>]*>/g, " ").trim().slice(0, 160)
+            : "وداعاً للفوضى وتكدس الأغراض.. نظّم بيتك ومكتبك ووفر 80% من المساحة بخامات فولاذية فاخرة تدوم طويلاً وتتحمل أثقل الأوزان بثبات فائق."}
         </p>
 
         {/* Big Hero Image #1: Solid 480px Height - GUARANTEED TO RENDER */}
@@ -314,10 +323,14 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               المشكلة اليومية
             </span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-950 font-heading">
-              هل تعاني من فوضى الأغراض وضيق المساحة كل يوم؟
+              {isMassageGun
+                ? "هل تعاني من آلام الظهر، تشنج الرقبة، وإجهاد العضلات؟"
+                : "هل تعاني من فوضى الأغراض وضيق المساحة كل يوم؟"}
             </h2>
             <p className="text-sm text-slate-600">
-              تراكم الأجهزة، الأسلاك، والمستلزمات في كل مكان يسبب مظهراً غير مريح وضياع مستمر للوقت
+              {isMassageGun
+                ? "ساعات الجلوس الطويلة في العمل أو التمارين المجهدة تسبب شد عضلي مستمر وألم في الظهر يصعب الوصول إليه بنفسك"
+                : "تراكم الأجهزة، الأسلاك، والمستلزمات في كل مكان يسبب مظهراً غير مريح وضياع مستمر للوقت"}
             </p>
           </div>
 
@@ -325,17 +338,19 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl">
             <img
               src={problemImageSrc}
-              alt="مشكلة الفوضى وتكدس المساحات"
+              alt="مشكلة المنتج"
               className="w-full h-full object-cover block"
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex items-end p-6 md:p-8">
               <div className="text-white space-y-1">
                 <span className="bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full inline-block">
-                  قبل RexRack
+                  {isMassageGun ? "المعاناة اليومية" : "قبل RexRack"}
                 </span>
                 <p className="text-sm md:text-base font-bold text-slate-100">
-                  فوضى مستمرة على المكتب والمنزل، صعوبة إيجاد أشيائك، ومنتجات بلاستيكية رديئة تنكسر سريعاً
+                  {isMassageGun
+                    ? "آلام وشد مستمر في عضلات الظهر والرقبة، وصعوبة الوصول لمناطق الألم دون مساعدة خارجية"
+                    : "فوضى مستمرة على المكتب والمنزل، صعوبة إيجاد أشيائك، ومنتجات بلاستيكية رديئة تنكسر سريعاً"}
                 </p>
               </div>
             </div>
@@ -346,30 +361,36 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             <div className="p-5 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-2">
               <div className="flex items-center gap-2 text-rose-600 font-black text-sm">
                 <XMarkIcon className="w-5 h-5 text-rose-600" />
-                <span>ضياع الوقت والجهد</span>
+                <span>{isMassageGun ? "ألم وإجهاد مزمن" : "ضياع الوقت والجهد"}</span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                البحث المتكرر عن الهاتف أو المتعلقات وسط كركبة المكتب وتشتت التركيز.
+                {isMassageGun
+                  ? "تشنجات عضلية في الرقبة والأكتاف بعد يوم عمل شاق تحرمك من الاسترخاء والنوم المريح."
+                  : "البحث المتكرر عن الهاتف أو المتعلقات وسط كركبة المكتب وتشتت التركيز."}
               </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-2">
               <div className="flex items-center gap-2 text-rose-600 font-black text-sm">
                 <XMarkIcon className="w-5 h-5 text-rose-600" />
-                <span>حوامل هشة تنكسر</span>
+                <span>{isMassageGun ? "صعوبة تدليك الظهر" : "حوامل هشة تنكسر"}</span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                معظم المنتجات الرخيصة مصنوعة من بلاستيك ضعيف يسقط أجهزتك ويتلف في أيام.
+                {isMassageGun
+                  ? "الأجهزة العادية قصيرة وتتطلب شخصاً آخر ليساعدك في عمل المساج لمناطق الظهر الصعبة."
+                  : "معظم المنتجات الرخيصة مصنوعة من بلاستيك ضعيف يسقط أجهزتك ويتلف في أيام."}
               </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-2">
               <div className="flex items-center gap-2 text-rose-600 font-black text-sm">
                 <XMarkIcon className="w-5 h-5 text-rose-600" />
-                <span>شراء مجهول المصدر</span>
+                <span>{isMassageGun ? "تكاليف جلسات باهظة" : "شراء مجهول المصدر"}</span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                الخوف من الشراء أونلاين واستلام منتج غير مطابق بدون أي ضمان أو معاينة.
+                {isMassageGun
+                  ? "جلسات المساج والسبا مكلفة جداً وتتطلب وقتاً وحجزاً ومصاريف إضافية مستمرة."
+                  : "الخوف من الشراء أونلاين واستلام منتج غير مطابق بدون أي ضمان أو معاينة."}
               </p>
             </div>
           </div>
@@ -383,10 +404,14 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             الحل السحري والنهائي
           </span>
           <h2 className="text-2xl md:text-4xl font-black text-slate-950 font-heading">
-            إليك الحل مع RexRack: تنظيم فوري وتوفير 80% من المساحة
+            {isMassageGun
+              ? "الحل النهائي مع RexRack: مسدس مساج 5×1 بذراع تطويل ممتدة"
+              : "إليك الحل مع RexRack: تنظيم فوري وتوفير 80% من المساحة"}
           </h2>
           <p className="text-sm text-slate-600">
-            تصميم هندسي متطور يستغل المساحات الرأسية ويمنحك شكلاً ديكورياً فائق الرقي
+            {isMassageGun
+              ? "تصميم مريح بذراع ممتدة و4 رؤوس متخصصة يمنحك راحة فورية لكامل الظهر والكتفين بنفسك"
+              : "تصميم هندسي متطور يستغل المساحات الرأسية ويمنحك شكلاً ديكورياً فائق الرقي"}
           </p>
         </div>
 
@@ -394,7 +419,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl group">
           <img
             src={solutionImageSrc}
-            alt="حل RexRack الفعلي لتنظيم المساحة"
+            alt="حل RexRack الفعلي"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 block"
             loading="lazy"
           />
@@ -410,9 +435,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               <CheckIcon className="w-6 h-6 stroke-[3]" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-950 text-sm">استغلال مثالي للمساحات</h4>
+              <h4 className="font-bold text-slate-950 text-sm">
+                {isMassageGun ? "ذراع ممتدة لتدليك الظهر" : "استغلال مثالي للمساحات"}
+              </h4>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                يوفر أكثر من 80% من مساحة مكتبك وغرفتك بتصميم رأسي ذكي يجمع كل أغراضك في مكان واحد.
+                {isMassageGun
+                  ? "تصل لأصعب نقاط الظهر والعمود الفقري بنفسك وبكل راحة بدون أن تطلب مساعدة أحد."
+                  : "يوفر أكثر من 80% من مساحة مكتبك وغرفتك بتصميم رأسي ذكي يجمع كل أغراضك في مكان واحد."}
               </p>
             </div>
           </div>
@@ -422,9 +451,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               <SparklesIcon className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-950 text-sm">مظهر عصري ديكوري فاخر</h4>
+              <h4 className="font-bold text-slate-950 text-sm">
+                {isMassageGun ? "4 رؤوس تدليك متخصصة" : "مظهر عصري ديكوري فاخر"}
+              </h4>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                يضيف لمسة فخامة وأناقة تليق بمنزلك أو مكتبك بدلاً من الفوضى المزعجة.
+                {isMassageGun
+                  ? "رؤوس مختلفة لتدليك العضلات الكبيرة، المفاصل، الرقبة، والأوتار بدقة وكفاءة عالية."
+                  : "يضيف لمسة فخامة وأناقة تليق بمنزلك أو مكتبك بدلاً من الفوضى المزعجة."}
               </p>
             </div>
           </div>
@@ -439,10 +472,14 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               جودة لا تضاهى
             </span>
             <h2 className="text-2xl md:text-4xl font-black text-white font-heading">
-              مصنوع من الفولاذ المقاوم للصدأ ومصمم ليدوم طويلاً
+              {isMassageGun
+                ? "موتور قوي 20 وات وبطارية ليثيوم قابلة لإعادة الشحن"
+                : "مصنوع من الفولاذ المقاوم للصدأ ومصمم ليدوم طويلاً"}
             </h2>
             <p className="text-sm text-slate-300">
-              هيكل صلب معزز بقواعد سيليكون مانعة للانزلاق لتحمل الاستخدام الشاق والأوزان الثقيلة
+              {isMassageGun
+                ? "شحن Type-C سريع، صوت هادئ، وخامات معالجة ضد الصدمات لجلسات استرخاء يومية تدوم طويلاً"
+                : "هيكل صلب معزز بقواعد سيليكون مانعة للانزلاق لتحمل الاستخدام الشاق والأوزان الثقيلة"}
             </p>
           </div>
 
@@ -457,10 +494,12 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-6 md:p-8">
               <div className="text-white space-y-1">
                 <span className="bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-full inline-block">
-                  طلاء حراري معالج
+                  {isMassageGun ? "تقنية التدليك العميق" : "طلاء حراري معالج"}
                 </span>
                 <p className="text-sm md:text-base font-bold text-slate-200">
-                  مقاوم للصدأ، الخدوش، والرطوبة، مع ثبات تام يمنع أي اهتزاز أو سقوط للأجهزة.
+                  {isMassageGun
+                    ? "تدليك فعال يفك العقد العضلية ويزيد تدفق الدورة الدموية لتخفيف الإجهاد والتوتر فوراً."
+                    : "مقاوم للصدأ، الخدوش، والرطوبة، مع ثبات تام يمنع أي اهتزاز أو سقوط للأجهزة."}
                 </p>
               </div>
             </div>
@@ -470,14 +509,22 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
               <ShieldCheckIcon className="w-6 h-6 text-orange-400 mx-auto" />
-              <h4 className="font-black text-sm text-white">فولاذ مقاوم للصدأ</h4>
-              <p className="text-[11px] text-slate-400">يدوم لسنوات</p>
+              <h4 className="font-black text-sm text-white">
+                {isMassageGun ? "4 رؤوس تدليك" : "فولاذ مقاوم للصدأ"}
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                {isMassageGun ? "لكافة عضلات الجسم" : "يدوم لسنوات"}
+              </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
               <CheckCircleIcon className="w-6 h-6 text-emerald-400 mx-auto" />
-              <h4 className="font-black text-sm text-white">ثبات 100%</h4>
-              <p className="text-[11px] text-slate-400">قواعد سيليكونية مانعة</p>
+              <h4 className="font-black text-sm text-white">
+                {isMassageGun ? "ذراع تطويل للظهر" : "ثبات 100%"}
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                {isMassageGun ? "بدون مساعدة أحد" : "قواعد سيليكونية مانعة"}
+              </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">

@@ -153,6 +153,65 @@ const initialProducts: (Product & { offers: ProductOffer[] })[] = [
       },
     ],
   },
+  {
+    id: "prod-1793739856444",
+    title_ar: "مسدس مساج فليكس برو الكهربائي 5×1 بحزام تطويل (RexRack FlexPro)",
+    title_en: "RexRack FlexPro 5-in-1 Massage Gun",
+    slug: "safka-b5fb3b6b",
+    sku: "6kMHAXV",
+    base_price: 540,
+    compare_at_price: 783,
+    cost_price: 100,
+    images: [
+      "https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1792053963744-674BF3D0-017E-4FCC-BE28-3230F5419E5A.webp",
+      "https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1792053963745-02C8AF79-198D-48CC-8B09-DF1A2B625136.webp",
+      "https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1792053963745-IMG_2060.webp",
+      "https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1792053963745-IMG_2053.webp",
+    ],
+    description_ar: "ودّع إجهاد العضلات واستمتع بمساج مريح في أي وقت! مسدس المساج الكهربائي 5×1 من RexRack بذراع ممتدة للوصول للظهر والكتفين بسهولة، مع 4 رؤوس تدليك وموتور قوي 20W وبطارية Type-C تدوم طويلاً.",
+    stock_quantity: 100,
+    status: "active",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    offers: [
+      {
+        id: "off-6ad092978e0e888bb5fb3b6b-1",
+        product_id: "prod-1793739856444",
+        title_ar: "قطعة واحدة (تجربة)",
+        quantity: 1,
+        price: 540,
+        original_price: 783,
+        discount_label: "خصم 31%",
+        is_popular: false,
+        free_shipping: false,
+        sort_order: 1,
+      },
+      {
+        id: "off-6ad092978e0e888bb5fb3b6b-2",
+        product_id: "prod-1793739856444",
+        title_ar: "قطعتان (الأكثر طلباً)",
+        quantity: 2,
+        price: 972,
+        original_price: 1566,
+        discount_label: "وفر 594 ج.م + شحن مجاني",
+        is_popular: true,
+        free_shipping: true,
+        sort_order: 2,
+      },
+      {
+        id: "off-6ad092978e0e888bb5fb3b6b-3",
+        product_id: "prod-1793739856444",
+        title_ar: "3 قطع (عرض التوفير العائلي)",
+        quantity: 3,
+        price: 1296,
+        original_price: 2349,
+        discount_label: "وفر 1053 ج.م + شحن مجاني",
+        is_popular: false,
+        free_shipping: true,
+        sort_order: 3,
+      },
+    ],
+  },
 ];
 
 const initialLandingPages: LandingPage[] = [
@@ -219,6 +278,36 @@ const initialLandingPages: LandingPage[] = [
     created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
     updated_at: new Date().toISOString(),
     product: initialProducts[0],
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000010",
+    product_id: "prod-1793739856444",
+    title: "مسدس مساج فليكس برو الكهربائي 5×1 بحزام تطويل | RexRack FlexPro",
+    slug: "safka-b5fb3b6b",
+    component_key: "starter-template",
+    status: "active",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    deployment_url: "/p/safka-b5fb3b6b",
+    deployment_status: "published",
+    last_published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000011",
+    product_id: "prod-1793739856444",
+    title: "مسدس مساج فليكس برو الكهربائي 5×1 بحزام تطويل | RexRack FlexPro",
+    slug: "rexrack-massage-gun",
+    component_key: "starter-template",
+    status: "active",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    deployment_url: "/p/rexrack-massage-gun",
+    deployment_status: "published",
+    last_published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ];
 
@@ -478,6 +567,29 @@ export const dbStore = {
     }
     saveToFile();
     return newProduct;
+  },
+
+  async deleteProduct(id: string): Promise<boolean> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      await admin.from("product_offers").delete().eq("product_id", id);
+      await admin.from("landing_pages").delete().eq("product_id", id);
+      await admin.from("products").delete().eq("id", id);
+    }
+    const idx = memoryProducts.findIndex((p) => p.id === id || p.slug === id);
+    if (idx >= 0) {
+      const removed = memoryProducts.splice(idx, 1)[0];
+      // Also remove any associated landing page
+      const lpIdx = memoryLandingPages.findIndex(
+        (lp) => lp.product_id === removed.id || lp.slug === removed.slug
+      );
+      if (lpIdx >= 0) {
+        memoryLandingPages.splice(lpIdx, 1);
+      }
+      saveToFile();
+      return true;
+    }
+    return false;
   },
 
   // LANDING PAGES
