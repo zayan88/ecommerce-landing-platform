@@ -170,7 +170,7 @@ const initialSettings: SystemSettings = {
   default_meta_pixel_id: process.env.NEXT_PUBLIC_META_PIXEL_ID || "123456789012345",
   default_meta_capi_token: process.env.META_CAPI_ACCESS_TOKEN || "",
   meta_test_event_code: process.env.META_TEST_EVENT_CODE || "",
-  store_name: "متجر المنصة الذكية",
+  store_name: "ريكس راك | RexRack",
   support_phone: "01000000000",
   support_whatsapp: "201000000000",
 };
