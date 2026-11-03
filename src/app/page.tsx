@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { dbStore } from "@/lib/db/store";
+import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import {
   ShieldCheck,
   Truck,
@@ -35,6 +36,8 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const products = await dbStore.getProducts();
   const landingPages = await dbStore.getLandingPages();
+  const settings = await dbStore.getSettings();
+  const pixelId = settings.default_meta_pixel_id || "1636283807582751";
 
   // Map each product to its landing page slug
   const productCards = products
@@ -57,6 +60,9 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-emerald-500 selection:text-white font-sans" dir="rtl">
+      {/* Meta Facebook Pixel */}
+      <MetaPixel pixelId={pixelId} />
+
       {/* Top Flash Announcement Bar */}
       <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white text-xs md:text-sm font-bold py-2.5 px-4 text-center shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 flex-wrap">
