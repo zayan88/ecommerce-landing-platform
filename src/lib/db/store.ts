@@ -6,154 +6,6 @@ import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 // Initial seed data
 const initialProducts: (Product & { offers: ProductOffer[] })[] = [
   {
-    id: "a1000000-0000-0000-0000-000000000001",
-    title_ar: "حامل ومنظم RexRack الذكي متعدد الوظائف (Smart Organizer)",
-    title_en: "RexRack Multi-Functional Smart Organizer",
-    slug: "rexrack-smart-organizer",
-    sku: "REX-RACK-01",
-    base_price: 349,
-    compare_at_price: 550,
-    cost_price: 150,
-    images: [
-      "/images/hero-organizer.jpg",
-      "/images/materials-quality.jpg",
-      "/images/solution-organized.jpg",
-    ],
-    description_ar: "حامل RexRack الفولاذي المقاوم للصدأ لتنظيم الأغراض والأجهزة والمساحات المنزلية والمكتبية بأقصى كفاءة وثبات فائق ومظهر عصري جذاب.",
-    stock_quantity: 120,
-    status: "active",
-    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-    offers: [
-      {
-        id: "b1000000-0000-0000-0000-000000000001",
-        product_id: "a1000000-0000-0000-0000-000000000001",
-        title_ar: "قطعة واحدة (تجربة)",
-        quantity: 1,
-        price: 349,
-        original_price: 550,
-        discount_label: "خصم 36%",
-        is_popular: false,
-        free_shipping: false,
-        sort_order: 1,
-      },
-      {
-        id: "b1000000-0000-0000-0000-000000000002",
-        product_id: "a1000000-0000-0000-0000-000000000001",
-        title_ar: "قطعتان (الأكثر طلباً)",
-        quantity: 2,
-        price: 599,
-        original_price: 1100,
-        discount_label: "خصم 45% + شحن مجاني",
-        is_popular: true,
-        free_shipping: true,
-        sort_order: 2,
-      },
-      {
-        id: "b1000000-0000-0000-0000-000000000003",
-        product_id: "a1000000-0000-0000-0000-000000000001",
-        title_ar: "3 قطع (عرض التوفير العائلي)",
-        quantity: 3,
-        price: 799,
-        original_price: 1650,
-        discount_label: "خصم 51% + شحن مجاني",
-        is_popular: false,
-        free_shipping: true,
-        sort_order: 3,
-      },
-    ],
-  },
-  {
-    id: "a1000000-0000-0000-0000-000000000002",
-    title_ar: "محطة شحن RexRack الذكية 6 في 1 فائقة السرعة (PowerStation Pro)",
-    title_en: "RexRack PowerStation Pro 6-in-1 Fast Charger",
-    slug: "rexrack-power-station",
-    sku: "REX-PWR-02",
-    base_price: 480,
-    compare_at_price: 720,
-    cost_price: 210,
-    images: [
-      "https://images.unsplash.com/photo-1622445268462-337f1688c49c?w=800&q=80",
-      "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&q=80",
-    ],
-    description_ar: "شاحن مكتبي متعدد المنافذ بقدرة فائقة وتقنية GaN الذكية لشحن 6 هواتف وأجهزة معاً بأمان وسرعة فائقة مع حماية من السخونة والجهد العالي.",
-    stock_quantity: 85,
-    status: "active",
-    created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-    offers: [
-      {
-        id: "b1000000-0000-0000-0000-000000000004",
-        product_id: "a1000000-0000-0000-0000-000000000002",
-        title_ar: "محطة واحدة",
-        quantity: 1,
-        price: 480,
-        original_price: 720,
-        discount_label: "خصم 33%",
-        is_popular: false,
-        free_shipping: false,
-        sort_order: 1,
-      },
-      {
-        id: "b1000000-0000-0000-0000-000000000005",
-        product_id: "a1000000-0000-0000-0000-000000000002",
-        title_ar: "محطتان (عرض البيت والمكتب)",
-        quantity: 2,
-        price: 850,
-        original_price: 1440,
-        discount_label: "خصم 41% + شحن مجاني",
-        is_popular: true,
-        free_shipping: true,
-        sort_order: 2,
-      },
-    ],
-  },
-  {
-    id: "a1000000-0000-0000-0000-000000000003",
-    title_ar: "حامل الموبايل المغناطيسي المطور للسيارة والمكتب (RexRack MagMount)",
-    title_en: "RexRack MagMount 360",
-    slug: "rexrack-mag-mount",
-    sku: "REX-MAG-03",
-    base_price: 260,
-    compare_at_price: 390,
-    cost_price: 90,
-    images: [
-      "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&q=80",
-      "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=800&q=80",
-    ],
-    description_ar: "تثبيت مغناطيسي من النيوديميوم فائق القوة بزاوية دوران كاملة 360 درجة، متوافق مع كافة الهواتف ومقاوم لأقوى المطبات والاهتزازات على الطرق.",
-    stock_quantity: 150,
-    status: "active",
-    created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-    offers: [
-      {
-        id: "b1000000-0000-0000-0000-000000000006",
-        product_id: "a1000000-0000-0000-0000-000000000003",
-        title_ar: "حامل واحد",
-        quantity: 1,
-        price: 260,
-        original_price: 390,
-        discount_label: "خصم 33%",
-        is_popular: false,
-        free_shipping: false,
-        sort_order: 1,
-      },
-      {
-        id: "b1000000-0000-0000-0000-000000000007",
-        product_id: "a1000000-0000-0000-0000-000000000003",
-        title_ar: "حاملان (عرض التوفير)",
-        quantity: 2,
-        price: 440,
-        original_price: 780,
-        discount_label: "خصم 43% + شحن مجاني",
-        is_popular: true,
-        free_shipping: true,
-        sort_order: 2,
-      },
-    ],
-  },
-  {
     id: "prod-1793739856444",
     title_ar: "مسدس مساج فليكس برو الكهربائي 5×1 بحزام تطويل (RexRack FlexPro)",
     title_en: "RexRack FlexPro 5-in-1 Massage Gun",
@@ -216,70 +68,6 @@ const initialProducts: (Product & { offers: ProductOffer[] })[] = [
 
 const initialLandingPages: LandingPage[] = [
   {
-    id: "c1000000-0000-0000-0000-000000000001",
-    product_id: "a1000000-0000-0000-0000-000000000001",
-    title: "حامل ومنظم RexRack الذكي | عرض خاص والدفع عند الاستلام",
-    slug: "rexrack-smart-organizer",
-    component_key: "starter-template",
-    status: "active",
-    meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
-    deployment_url: "/p/rexrack-smart-organizer",
-    deployment_status: "published",
-    last_published_at: new Date().toISOString(),
-    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-    product: initialProducts[0],
-  },
-  {
-    id: "c1000000-0000-0000-0000-000000000002",
-    product_id: "a1000000-0000-0000-0000-000000000002",
-    title: "محطة شحن RexRack الذكية 6 في 1 | شحن مجاني ومعاينة",
-    slug: "rexrack-power-station",
-    component_key: "starter-template",
-    status: "active",
-    meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
-    deployment_url: "/p/rexrack-power-station",
-    deployment_status: "published",
-    last_published_at: new Date().toISOString(),
-    created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-    product: initialProducts[1],
-  },
-  {
-    id: "c1000000-0000-0000-0000-000000000003",
-    product_id: "a1000000-0000-0000-0000-000000000003",
-    title: "حامل الموبايل المغناطيسي RexRack | ثبات فائق ومقاوم للمطبات",
-    slug: "rexrack-mag-mount",
-    component_key: "starter-template",
-    status: "active",
-    meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
-    deployment_url: "/p/rexrack-mag-mount",
-    deployment_status: "published",
-    last_published_at: new Date().toISOString(),
-    created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-    product: initialProducts[2],
-  },
-  {
-    id: "c1000000-0000-0000-0000-000000000004",
-    product_id: "a1000000-0000-0000-0000-000000000001",
-    title: "قالب صفحة الهبوط الافتراضية",
-    slug: "starter-template",
-    component_key: "starter-template",
-    status: "active",
-    meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
-    deployment_url: "/p/starter-template",
-    deployment_status: "published",
-    last_published_at: new Date().toISOString(),
-    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-    product: initialProducts[0],
-  },
-  {
     id: "c1000000-0000-0000-0000-000000000010",
     product_id: "prod-1793739856444",
     title: "مسدس مساج فليكس برو الكهربائي 5×1 بحزام تطويل | RexRack FlexPro",
@@ -293,6 +81,7 @@ const initialLandingPages: LandingPage[] = [
     last_published_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    product: initialProducts[0],
   },
   {
     id: "c1000000-0000-0000-0000-000000000011",
@@ -308,6 +97,23 @@ const initialLandingPages: LandingPage[] = [
     last_published_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    product: initialProducts[0],
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000004",
+    product_id: "prod-1793739856444",
+    title: "مسدس مساج فليكس برو الكهربائي 5×1 بحزام تطويل | RexRack FlexPro",
+    slug: "starter-template",
+    component_key: "starter-template",
+    status: "active",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    deployment_url: "/p/starter-template",
+    deployment_status: "published",
+    last_published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    product: initialProducts[0],
   },
 ];
 
@@ -315,10 +121,10 @@ const initialOrders: Order[] = [
   {
     id: "ord-1001",
     order_number: "EG-261101-4412",
-    landing_page_id: "c1000000-0000-0000-0000-000000000001",
-    landing_page_slug: "starter-template",
-    product_id: "a1000000-0000-0000-0000-000000000001",
-    offer_id: "b1000000-0000-0000-0000-000000000002",
+    landing_page_id: "c1000000-0000-0000-0000-000000000010",
+    landing_page_slug: "safka-b5fb3b6b",
+    product_id: "prod-1793739856444",
+    offer_id: "off-6ad092978e0e888bb5fb3b6b-2",
     customer_name: "محمد عبد الرحمن",
     customer_phone: "01012345678",
     customer_phone2: "01187654321",
@@ -327,11 +133,11 @@ const initialOrders: Order[] = [
     address: "شارع مصطفى النحاس، عمارة 14",
     notes: "يرجى الاتصال قبل الوصول",
     quantity: 2,
-    unit_price: 249.5,
-    total_amount: 499,
+    unit_price: 486,
+    total_amount: 972,
     shipping_fee: 0,
-    discount_amount: 401,
-    final_amount: 499,
+    discount_amount: 594,
+    final_amount: 972,
     currency: "EGP",
     status: "confirmed",
     payment_method: "cod",
@@ -354,21 +160,21 @@ const initialOrders: Order[] = [
   {
     id: "ord-1002",
     order_number: "EG-261102-8874",
-    landing_page_id: "c1000000-0000-0000-0000-000000000001",
-    landing_page_slug: "starter-template",
-    product_id: "a1000000-0000-0000-0000-000000000001",
-    offer_id: "b1000000-0000-0000-0000-000000000001",
+    landing_page_id: "c1000000-0000-0000-0000-000000000010",
+    landing_page_slug: "safka-b5fb3b6b",
+    product_id: "prod-1793739856444",
+    offer_id: "off-6ad092978e0e888bb5fb3b6b-1",
     customer_name: "أحمد حسني فاروق",
     customer_phone: "01234567890",
     governorate: "الإسكندرية",
     city: "سموحة",
     address: "شارع فوزي معاذ بجوار المسجد",
     quantity: 1,
-    unit_price: 299,
-    total_amount: 299,
+    unit_price: 540,
+    total_amount: 540,
     shipping_fee: 50,
-    discount_amount: 151,
-    final_amount: 349,
+    discount_amount: 243,
+    final_amount: 590,
     currency: "EGP",
     status: "shipped",
     payment_method: "cod",
@@ -422,6 +228,25 @@ const getStoreFilePath = () => {
   return path.join(dir, "rexrack-store.json");
 };
 
+const DUMMY_IDS = new Set([
+  "a1000000-0000-0000-0000-000000000001",
+  "a1000000-0000-0000-0000-000000000002",
+  "a1000000-0000-0000-0000-000000000003",
+  "rexrack-smart-organizer",
+  "rexrack-power-station",
+  "rexrack-mag-mount",
+  "c1000000-0000-0000-0000-000000000001",
+  "c1000000-0000-0000-0000-000000000002",
+  "c1000000-0000-0000-0000-000000000003",
+  "b1000000-0000-0000-0000-000000000001",
+  "b1000000-0000-0000-0000-000000000002",
+  "b1000000-0000-0000-0000-000000000003",
+  "b1000000-0000-0000-0000-000000000004",
+  "b1000000-0000-0000-0000-000000000005",
+  "b1000000-0000-0000-0000-000000000006",
+  "b1000000-0000-0000-0000-000000000007",
+]);
+
 function loadFromFile() {
   try {
     const filePath = getStoreFilePath();
@@ -431,7 +256,7 @@ function loadFromFile() {
       if (Array.isArray(data.products) && data.products.length > 0) {
         const existingIds = new Set(memoryProducts.map((p) => p.id));
         for (const p of data.products) {
-          if (!existingIds.has(p.id)) {
+          if (!existingIds.has(p.id) && !DUMMY_IDS.has(p.id) && !DUMMY_IDS.has(p.slug)) {
             memoryProducts.push(p);
             existingIds.add(p.id);
           }
@@ -440,7 +265,7 @@ function loadFromFile() {
       if (Array.isArray(data.landingPages) && data.landingPages.length > 0) {
         const existingIds = new Set(memoryLandingPages.map((lp) => lp.id));
         for (const lp of data.landingPages) {
-          if (!existingIds.has(lp.id)) {
+          if (!existingIds.has(lp.id) && !DUMMY_IDS.has(lp.id) && !DUMMY_IDS.has(lp.product_id) && !DUMMY_IDS.has(lp.slug)) {
             memoryLandingPages.push(lp);
             existingIds.add(lp.id);
           }
@@ -449,7 +274,7 @@ function loadFromFile() {
       if (Array.isArray(data.orders) && data.orders.length > 0) {
         const existingIds = new Set(memoryOrders.map((o) => o.id));
         for (const o of data.orders) {
-          if (!existingIds.has(o.id)) {
+          if (!existingIds.has(o.id) && !DUMMY_IDS.has(o.product_id)) {
             memoryOrders.push(o);
             existingIds.add(o.id);
           }
@@ -462,6 +287,11 @@ function loadFromFile() {
   } catch (e) {
     // ignore
   }
+
+  // Ensure memory state is never polluted with dummy products
+  memoryProducts = memoryProducts.filter((p) => !DUMMY_IDS.has(p.id) && !DUMMY_IDS.has(p.slug));
+  memoryLandingPages = memoryLandingPages.filter((lp) => !DUMMY_IDS.has(lp.id) && !DUMMY_IDS.has(lp.product_id) && !DUMMY_IDS.has(lp.slug));
+  memoryOrders = memoryOrders.filter((o) => !DUMMY_IDS.has(o.product_id));
 }
 
 function saveToFile() {

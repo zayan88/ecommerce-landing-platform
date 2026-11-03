@@ -75,7 +75,7 @@ export default function AdminProductsPage() {
     setComparePrice(750);
     setCostPrice(120);
     setStock(100);
-    setImageUrl("/images/hero-organizer.jpg");
+    setImageUrl("https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1792053963744-674BF3D0-017E-4FCC-BE28-3230F5419E5A.webp");
     setDescriptionAr("");
     setIsModalOpen(true);
   };
