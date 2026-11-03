@@ -1,0 +1,635 @@
+import { Product, ProductOffer, LandingPage, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
+import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
+
+// Initial seed data
+const initialProducts: (Product & { offers: ProductOffer[] })[] = [
+  {
+    id: "a1000000-0000-0000-0000-000000000001",
+    title_ar: "وعاء التبول المحمول المطور لكبار السن والسفر",
+    title_en: "Portable Urinal Device with Extension Tube",
+    slug: "portable-urinal",
+    sku: "URINAL-PRO-01",
+    base_price: 299,
+    compare_at_price: 450,
+    cost_price: 110,
+    images: [
+      "/landing-pages/portable-urinal/images/hero_product.jpg",
+      "/landing-pages/portable-urinal/images/product_cutout.png",
+      "/landing-pages/portable-urinal/images/product_bedside_elderly.jpg",
+      "/landing-pages/portable-urinal/images/travel_scenario.jpg",
+      "/landing-pages/portable-urinal/images/feature_container.jpg",
+    ],
+    description_ar: "وسيلة مساعدة مريحة وعملية لجمع البول بسعة 2000 مل مع خرطوم مرن مضاد للتسريب وغطاء محكم الرائحة، مثالية لكبار السن، مرضى الفراش، والسفر لمسافات طويلة في السيارة.",
+    stock_quantity: 150,
+    status: "active",
+    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+    updated_at: new Date().toISOString(),
+    offers: [
+      {
+        id: "b1000000-0000-0000-0000-000000000001",
+        product_id: "a1000000-0000-0000-0000-000000000001",
+        title_ar: "قطعة واحدة (تجربة)",
+        quantity: 1,
+        price: 299,
+        original_price: 450,
+        discount_label: "خصم 33%",
+        is_popular: false,
+        free_shipping: false,
+        sort_order: 1,
+      },
+      {
+        id: "b1000000-0000-0000-0000-000000000002",
+        product_id: "a1000000-0000-0000-0000-000000000001",
+        title_ar: "قطعتان (الأكثر طلباً)",
+        quantity: 2,
+        price: 499,
+        original_price: 900,
+        discount_label: "خصم 45% + شحن مجاني",
+        is_popular: true,
+        free_shipping: true,
+        sort_order: 2,
+      },
+      {
+        id: "b1000000-0000-0000-0000-000000000003",
+        product_id: "a1000000-0000-0000-0000-000000000001",
+        title_ar: "3 قطع (عرض التوفير العائلي)",
+        quantity: 3,
+        price: 649,
+        original_price: 1350,
+        discount_label: "خصم 52% + شحن مجاني",
+        is_popular: false,
+        free_shipping: true,
+        sort_order: 3,
+      },
+    ],
+  },
+];
+
+const initialLandingPages: LandingPage[] = [
+  {
+    id: "c1000000-0000-0000-0000-000000000001",
+    product_id: "a1000000-0000-0000-0000-000000000001",
+    title: "صفحة وعاء التبول المحمول - حملة الرعاية والسفر",
+    slug: "portable-urinal",
+    component_key: "portable-urinal",
+    status: "active",
+    meta_pixel_id: "123456789012345",
+    meta_capi_token: "MOCK_CAPI_TOKEN_SECURE",
+    deployment_url: "/p/portable-urinal",
+    deployment_status: "published",
+    last_published_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+    updated_at: new Date().toISOString(),
+    product: initialProducts[0],
+  },
+];
+
+const initialOrders: Order[] = [
+  {
+    id: "ord-1001",
+    order_number: "EG-261101-4412",
+    landing_page_id: "c1000000-0000-0000-0000-000000000001",
+    landing_page_slug: "portable-urinal",
+    product_id: "a1000000-0000-0000-0000-000000000001",
+    offer_id: "b1000000-0000-0000-0000-000000000002",
+    customer_name: "محمد عبد الرحمن",
+    customer_phone: "01012345678",
+    customer_phone2: "01187654321",
+    governorate: "القاهرة",
+    city: "مدينة نصر",
+    address: "شارع مصطفى النحاس، عمارة 14، الدور الخامس",
+    notes: "يرجى الاتصال قبل الوصول بنصف ساعة",
+    quantity: 2,
+    unit_price: 249.5,
+    total_amount: 499,
+    shipping_fee: 0,
+    discount_amount: 401,
+    final_amount: 499,
+    currency: "EGP",
+    status: "confirmed",
+    payment_method: "cod",
+    safqa_invoice_id: "INV-SFQ-99120",
+    safqa_invoice_url: "https://pay.safqapay.com/inv/INV-SFQ-99120",
+    safqa_status: "pending",
+    safqa_synced_at: new Date(Date.now() - 48 * 3600000).toISOString(),
+    created_at: new Date(Date.now() - 48 * 3600000).toISOString(),
+    updated_at: new Date(Date.now() - 24 * 3600000).toISOString(),
+    product: initialProducts[0],
+    landing_page: initialLandingPages[0],
+    tracking: {
+      order_id: "ord-1001",
+      utm_source: "facebook",
+      utm_medium: "cpc",
+      utm_campaign: "urinal_egypt_elderly_v1",
+      event_id: "evt_1001",
+    },
+  },
+  {
+    id: "ord-1002",
+    order_number: "EG-261102-8874",
+    landing_page_id: "c1000000-0000-0000-0000-000000000001",
+    landing_page_slug: "portable-urinal",
+    product_id: "a1000000-0000-0000-0000-000000000001",
+    offer_id: "b1000000-0000-0000-0000-000000000001",
+    customer_name: "أحمد حسني فاروق",
+    customer_phone: "01234567890",
+    governorate: "الإسكندرية",
+    city: "سموحة",
+    address: "شارع فوزي معاذ بجوار مسجد علي بن أبي طالب",
+    quantity: 1,
+    unit_price: 299,
+    total_amount: 299,
+    shipping_fee: 50,
+    discount_amount: 151,
+    final_amount: 349,
+    currency: "EGP",
+    status: "shipped",
+    payment_method: "cod",
+    safqa_invoice_id: "INV-SFQ-99145",
+    safqa_status: "pending",
+    safqa_synced_at: new Date(Date.now() - 20 * 3600000).toISOString(),
+    created_at: new Date(Date.now() - 20 * 3600000).toISOString(),
+    updated_at: new Date(Date.now() - 10 * 3600000).toISOString(),
+    product: initialProducts[0],
+    landing_page: initialLandingPages[0],
+    tracking: {
+      order_id: "ord-1002",
+      utm_source: "instagram",
+      utm_medium: "reel_ad",
+      utm_campaign: "travel_drivers_v2",
+      event_id: "evt_1002",
+    },
+  },
+];
+
+const initialSettings: SystemSettings = {
+  safqa_api_base_url: process.env.SAFQA_API_BASE_URL || "https://api.safqapay.com/v1",
+  safqa_merchant_id: process.env.SAFQA_MERCHANT_ID || "MERCHANT_EG_984",
+  safqa_api_secret_token: process.env.SAFQA_API_SECRET_TOKEN || "",
+  safqa_webhook_secret: process.env.SAFQA_WEBHOOK_SECRET || "WH_SECRET_984",
+  safqa_sandbox_mode: true,
+  safqa_auto_forward: true,
+  default_meta_pixel_id: process.env.NEXT_PUBLIC_META_PIXEL_ID || "123456789012345",
+  default_meta_capi_token: process.env.META_CAPI_ACCESS_TOKEN || "",
+  meta_test_event_code: process.env.META_TEST_EVENT_CODE || "",
+  store_name: "متجر المنصة الذكية",
+  support_phone: "01000000000",
+  support_whatsapp: "201000000000",
+};
+
+// In-Memory cache singleton for development & fast fallback
+let memoryProducts = [...initialProducts];
+let memoryLandingPages = [...initialLandingPages];
+let memoryOrders = [...initialOrders];
+let memorySettings = { ...initialSettings };
+let memoryAnalytics: AnalyticsEvent[] = [];
+
+export const dbStore = {
+  // PRODUCTS
+  async getProducts(): Promise<Product[]> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      const { data, error } = await admin
+        .from("products")
+        .select("*, offers:product_offers(*)")
+        .order("created_at", { ascending: false });
+      if (!error && data) return data;
+    }
+    return memoryProducts;
+  },
+
+  async getProduct(idOrSlug: string): Promise<Product | null> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      const { data, error } = await admin
+        .from("products")
+        .select("*, offers:product_offers(*)")
+        .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
+        .single();
+      if (!error && data) return data;
+    }
+    const found = memoryProducts.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
+    return found || null;
+  },
+
+  async saveProduct(productData: Partial<Product> & { offers?: Partial<ProductOffer>[] }): Promise<Product> {
+    const admin = getSupabaseAdmin();
+    const id = productData.id || `prod-${Date.now()}`;
+    const newProduct: Product & { offers: ProductOffer[] } = {
+      id,
+      title_ar: productData.title_ar || "منتج جديد",
+      title_en: productData.title_en || "",
+      slug: productData.slug || `prod-${Date.now()}`,
+      sku: productData.sku || `SKU-${Date.now()}`,
+      base_price: Number(productData.base_price) || 0,
+      compare_at_price: Number(productData.compare_at_price) || 0,
+      cost_price: Number(productData.cost_price) || 0,
+      images: productData.images || [],
+      description_ar: productData.description_ar || "",
+      stock_quantity: Number(productData.stock_quantity) || 50,
+      status: productData.status || "active",
+      created_at: productData.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      offers: (productData.offers as ProductOffer[]) || [],
+    };
+
+    if (admin) {
+      await admin.from("products").upsert({
+        id: newProduct.id,
+        title_ar: newProduct.title_ar,
+        title_en: newProduct.title_en,
+        slug: newProduct.slug,
+        sku: newProduct.sku,
+        base_price: newProduct.base_price,
+        compare_at_price: newProduct.compare_at_price,
+        cost_price: newProduct.cost_price,
+        images: newProduct.images,
+        description_ar: newProduct.description_ar,
+        stock_quantity: newProduct.stock_quantity,
+        status: newProduct.status,
+      });
+      // offers insert
+      if (newProduct.offers && newProduct.offers.length > 0) {
+        await admin.from("product_offers").delete().eq("product_id", newProduct.id);
+        await admin.from("product_offers").insert(
+          newProduct.offers.map((o) => ({
+            ...o,
+            product_id: newProduct.id,
+          }))
+        );
+      }
+    }
+
+    const idx = memoryProducts.findIndex((p) => p.id === id);
+    if (idx >= 0) {
+      memoryProducts[idx] = newProduct;
+    } else {
+      memoryProducts.unshift(newProduct);
+    }
+    return newProduct;
+  },
+
+  // LANDING PAGES
+  async getLandingPages(): Promise<LandingPage[]> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      const { data, error } = await admin
+        .from("landing_pages")
+        .select("*, product:products(*)")
+        .order("created_at", { ascending: false });
+      if (!error && data) return data;
+    }
+    // link products
+    return memoryLandingPages.map((lp) => ({
+      ...lp,
+      product: memoryProducts.find((p) => p.id === lp.product_id),
+    }));
+  },
+
+  async getLandingPage(slug: string): Promise<LandingPage | null> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      const { data, error } = await admin
+        .from("landing_pages")
+        .select("*, product:products(*, offers:product_offers(*))")
+        .eq("slug", slug)
+        .single();
+      if (!error && data) return data;
+    }
+    const lp = memoryLandingPages.find((p) => p.slug === slug);
+    if (!lp) return null;
+    return {
+      ...lp,
+      product: memoryProducts.find((p) => p.id === lp.product_id),
+    };
+  },
+
+  async saveLandingPage(data: Partial<LandingPage>): Promise<LandingPage> {
+    const admin = getSupabaseAdmin();
+    const id = data.id || `lp-${Date.now()}`;
+    const newLp: LandingPage = {
+      id,
+      product_id: data.product_id || memoryProducts[0]?.id || "",
+      title: data.title || "صفحة هبوط جديدة",
+      slug: data.slug || `page-${Date.now()}`,
+      component_key: data.component_key || data.slug || "portable-urinal",
+      custom_domain: data.custom_domain,
+      status: data.status || "active",
+      meta_pixel_id: data.meta_pixel_id || memorySettings.default_meta_pixel_id,
+      meta_capi_token: data.meta_capi_token || memorySettings.default_meta_capi_token,
+      head_scripts: data.head_scripts,
+      custom_css: data.custom_css,
+      deployment_url: data.deployment_url || `/p/${data.slug}`,
+      deployment_status: data.deployment_status || "published",
+      last_published_at: new Date().toISOString(),
+      created_at: data.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    if (admin) {
+      await admin.from("landing_pages").upsert({
+        id: newLp.id,
+        product_id: newLp.product_id,
+        title: newLp.title,
+        slug: newLp.slug,
+        component_key: newLp.component_key,
+        custom_domain: newLp.custom_domain,
+        status: newLp.status,
+        meta_pixel_id: newLp.meta_pixel_id,
+        meta_capi_token: newLp.meta_capi_token,
+        head_scripts: newLp.head_scripts,
+        custom_css: newLp.custom_css,
+        deployment_url: newLp.deployment_url,
+        deployment_status: newLp.deployment_status,
+      });
+    }
+
+    const idx = memoryLandingPages.findIndex((p) => p.id === id);
+    if (idx >= 0) {
+      memoryLandingPages[idx] = newLp;
+    } else {
+      memoryLandingPages.unshift(newLp);
+    }
+    return newLp;
+  },
+
+  async toggleLandingPageStatus(id: string, status: "active" | "paused"): Promise<boolean> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      await admin.from("landing_pages").update({ status }).eq("id", id);
+    }
+    const found = memoryLandingPages.find((p) => p.id === id);
+    if (found) {
+      found.status = status;
+      found.updated_at = new Date().toISOString();
+      return true;
+    }
+    return false;
+  },
+
+  // ORDERS
+  async getOrders(filters?: {
+    landing_page_slug?: string;
+    product_id?: string;
+    status?: OrderStatus;
+    search?: string;
+  }): Promise<Order[]> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      let query = admin
+        .from("orders")
+        .select("*, product:products(*), landing_page:landing_pages(*), tracking:order_tracking_meta(*)")
+        .order("created_at", { ascending: false });
+
+      if (filters?.landing_page_slug) query = query.eq("landing_page_slug", filters.landing_page_slug);
+      if (filters?.product_id) query = query.eq("product_id", filters.product_id);
+      if (filters?.status) query = query.eq("status", filters.status);
+      if (filters?.search) {
+        query = query.or(`customer_name.ilike.%${filters.search}%,customer_phone.ilike.%${filters.search}%,order_number.ilike.%${filters.search}%`);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    }
+
+    let results = [...memoryOrders];
+    if (filters?.landing_page_slug) {
+      results = results.filter((o) => o.landing_page_slug === filters.landing_page_slug);
+    }
+    if (filters?.product_id) {
+      results = results.filter((o) => o.product_id === filters.product_id);
+    }
+    if (filters?.status) {
+      results = results.filter((o) => o.status === filters.status);
+    }
+    if (filters?.search) {
+      const q = filters.search.toLowerCase();
+      results = results.filter(
+        (o) =>
+          o.customer_name.toLowerCase().includes(q) ||
+          o.customer_phone.includes(q) ||
+          o.order_number.toLowerCase().includes(q) ||
+          o.governorate.toLowerCase().includes(q)
+      );
+    }
+    return results;
+  },
+
+  async getOrder(id: string): Promise<Order | null> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      const { data, error } = await admin
+        .from("orders")
+        .select("*, product:products(*), landing_page:landing_pages(*), tracking:order_tracking_meta(*)")
+        .eq("id", id)
+        .single();
+      if (!error && data) return data;
+    }
+    const found = memoryOrders.find((o) => o.id === id || o.order_number === id);
+    return found || null;
+  },
+
+  async createOrder(order: Partial<Order> & { tracking?: Partial<OrderTrackingMeta> }): Promise<Order> {
+    const admin = getSupabaseAdmin();
+    const id = `ord-${Date.now()}`;
+    const orderNumber = `EG-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const newOrder: Order = {
+      id,
+      order_number: orderNumber,
+      landing_page_id: order.landing_page_id,
+      landing_page_slug: order.landing_page_slug || "direct",
+      product_id: order.product_id!,
+      offer_id: order.offer_id,
+      customer_name: order.customer_name!,
+      customer_phone: order.customer_phone!,
+      customer_phone2: order.customer_phone2,
+      governorate: order.governorate!,
+      city: order.city || "",
+      address: order.address!,
+      notes: order.notes,
+      quantity: order.quantity || 1,
+      unit_price: order.unit_price || 0,
+      total_amount: order.total_amount || 0,
+      shipping_fee: order.shipping_fee || 0,
+      discount_amount: order.discount_amount || 0,
+      final_amount: order.final_amount || 0,
+      currency: "EGP",
+      status: "pending",
+      payment_method: order.payment_method || "cod",
+      safqa_status: "not_synced",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      tracking: order.tracking as OrderTrackingMeta,
+    };
+
+    // Attach relations for memory store
+    const product = memoryProducts.find((p) => p.id === newOrder.product_id);
+    const lp = memoryLandingPages.find((p) => p.slug === newOrder.landing_page_slug);
+    newOrder.product = product;
+    newOrder.landing_page = lp;
+
+    if (admin) {
+      await admin.from("orders").insert({
+        id: newOrder.id,
+        order_number: newOrder.order_number,
+        landing_page_id: newOrder.landing_page_id,
+        landing_page_slug: newOrder.landing_page_slug,
+        product_id: newOrder.product_id,
+        offer_id: newOrder.offer_id,
+        customer_name: newOrder.customer_name,
+        customer_phone: newOrder.customer_phone,
+        customer_phone2: newOrder.customer_phone2,
+        governorate: newOrder.governorate,
+        city: newOrder.city,
+        address: newOrder.address,
+        notes: newOrder.notes,
+        quantity: newOrder.quantity,
+        unit_price: newOrder.unit_price,
+        total_amount: newOrder.total_amount,
+        shipping_fee: newOrder.shipping_fee,
+        discount_amount: newOrder.discount_amount,
+        final_amount: newOrder.final_amount,
+        currency: newOrder.currency,
+        status: newOrder.status,
+        payment_method: newOrder.payment_method,
+      });
+
+      if (order.tracking) {
+        await admin.from("order_tracking_meta").insert({
+          order_id: newOrder.id,
+          utm_source: order.tracking.utm_source,
+          utm_medium: order.tracking.utm_medium,
+          utm_campaign: order.tracking.utm_campaign,
+          utm_content: order.tracking.utm_content,
+          utm_term: order.tracking.utm_term,
+          referrer: order.tracking.referrer,
+          ip_address: order.tracking.ip_address,
+          user_agent: order.tracking.user_agent,
+          fbp: order.tracking.fbp,
+          fbc: order.tracking.fbc,
+          event_id: order.tracking.event_id,
+        });
+      }
+    }
+
+    memoryOrders.unshift(newOrder);
+    return newOrder;
+  },
+
+  async updateOrderStatus(id: string, status: OrderStatus): Promise<boolean> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      await admin.from("orders").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+    }
+    const order = memoryOrders.find((o) => o.id === id);
+    if (order) {
+      order.status = status;
+      order.updated_at = new Date().toISOString();
+      return true;
+    }
+    return false;
+  },
+
+  async updateSafqaInfo(id: string, safqaData: {
+    safqa_invoice_id?: string;
+    safqa_invoice_url?: string;
+    safqa_status: SafqaSyncStatus;
+    safqa_response?: any;
+  }): Promise<boolean> {
+    const admin = getSupabaseAdmin();
+    const updatePayload = {
+      ...safqaData,
+      safqa_synced_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    if (admin) {
+      await admin.from("orders").update(updatePayload).eq("id", id);
+    }
+    const order = memoryOrders.find((o) => o.id === id);
+    if (order) {
+      Object.assign(order, updatePayload);
+      return true;
+    }
+    return false;
+  },
+
+  // ANALYTICS & STATS
+  async getAnalyticsSummary() {
+    const orders = await this.getOrders();
+    const landingPages = await this.getLandingPages();
+    const products = await this.getProducts();
+
+    const totalRevenue = orders.reduce((acc, o) => (o.status !== "cancelled" ? acc + Number(o.final_amount) : acc), 0);
+    const totalOrders = orders.length;
+    const deliveredOrders = orders.filter((o) => o.status === "delivered").length;
+    const pendingOrders = orders.filter((o) => o.status === "pending").length;
+    const confirmedOrders = orders.filter((o) => o.status === "confirmed").length;
+    const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+    // By landing page
+    const lpPerformance = landingPages.map((lp) => {
+      const lpOrders = orders.filter((o) => o.landing_page_slug === lp.slug);
+      const lpRevenue = lpOrders.reduce((acc, o) => (o.status !== "cancelled" ? acc + Number(o.final_amount) : acc), 0);
+      const estimatedVisits = Math.max(lpOrders.length * 14 + 120, 150); // realistic mock visits if not tracked yet
+      const conversionRate = estimatedVisits > 0 ? ((lpOrders.length / estimatedVisits) * 100).toFixed(1) : "0.0";
+
+      return {
+        id: lp.id,
+        title: lp.title,
+        slug: lp.slug,
+        status: lp.status,
+        productTitle: lp.product?.title_ar || "منتج",
+        ordersCount: lpOrders.length,
+        revenue: lpRevenue,
+        estimatedVisits,
+        conversionRate: `${conversionRate}%`,
+      };
+    });
+
+    // Top Governorates
+    const govCounts: Record<string, number> = {};
+    orders.forEach((o) => {
+      govCounts[o.governorate] = (govCounts[o.governorate] || 0) + 1;
+    });
+
+    return {
+      totalRevenue,
+      totalOrders,
+      deliveredOrders,
+      pendingOrders,
+      confirmedOrders,
+      avgOrderValue,
+      landingPagesCount: landingPages.length,
+      activeLandingPagesCount: landingPages.filter((lp) => lp.status === "active").length,
+      productsCount: products.length,
+      lpPerformance,
+      topGovernorates: Object.entries(govCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5),
+    };
+  },
+
+  async logAnalyticsEvent(event: AnalyticsEvent) {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      await admin.from("analytics_events").insert({
+        ...event,
+        created_at: new Date().toISOString(),
+      });
+    }
+    memoryAnalytics.push(event);
+  },
+
+  // SETTINGS
+  async getSettings(): Promise<SystemSettings> {
+    return memorySettings;
+  },
+
+  async updateSettings(newSettings: Partial<SystemSettings>): Promise<SystemSettings> {
+    memorySettings = { ...memorySettings, ...newSettings };
+    return memorySettings;
+  },
+};
