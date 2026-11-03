@@ -29,9 +29,25 @@ interface StarterLandingPageProps {
 }
 
 export default function StarterLandingPage({ product, landingPage }: StarterLandingPageProps) {
-  const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(
-    product.offers?.find((o) => o.is_popular) || product.offers?.[0] || ({} as ProductOffer)
-  );
+  const defaultOffer: ProductOffer = {
+    id: `offer-default-${product.id}`,
+    product_id: product.id,
+    title_ar: "قطعة واحدة (عرض العينات)",
+    quantity: 1,
+    price: product.base_price || 299,
+    original_price: product.compare_at_price || 450,
+    discount_label: "خصم خاص",
+    is_popular: true,
+    free_shipping: false,
+    sort_order: 1,
+  };
+
+  const initialOffer =
+    product.offers && product.offers.length > 0
+      ? product.offers.find((o) => o.is_popular) || product.offers[0]
+      : defaultOffer;
+
+  const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   // Live Countdown Timer (Simulated Urgency)

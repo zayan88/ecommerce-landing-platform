@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { Product, ProductOffer, LandingPage, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 
@@ -320,9 +322,80 @@ let memoryOrders = [...initialOrders];
 let memorySettings = { ...initialSettings };
 let memoryAnalytics: AnalyticsEvent[] = [];
 
+const getStoreFilePath = () => {
+  if (process.env.VERCEL) {
+    return "/tmp/rexrack-store.json";
+  }
+  const dir = path.join(process.cwd(), ".next");
+  if (!fs.existsSync(dir)) {
+    try { fs.mkdirSync(dir, { recursive: true }); } catch {}
+  }
+  return path.join(dir, "rexrack-store.json");
+};
+
+function loadFromFile() {
+  try {
+    const filePath = getStoreFilePath();
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.products) && data.products.length > 0) {
+        const existingIds = new Set(memoryProducts.map((p) => p.id));
+        for (const p of data.products) {
+          if (!existingIds.has(p.id)) {
+            memoryProducts.push(p);
+            existingIds.add(p.id);
+          }
+        }
+      }
+      if (Array.isArray(data.landingPages) && data.landingPages.length > 0) {
+        const existingIds = new Set(memoryLandingPages.map((lp) => lp.id));
+        for (const lp of data.landingPages) {
+          if (!existingIds.has(lp.id)) {
+            memoryLandingPages.push(lp);
+            existingIds.add(lp.id);
+          }
+        }
+      }
+      if (Array.isArray(data.orders) && data.orders.length > 0) {
+        const existingIds = new Set(memoryOrders.map((o) => o.id));
+        for (const o of data.orders) {
+          if (!existingIds.has(o.id)) {
+            memoryOrders.push(o);
+            existingIds.add(o.id);
+          }
+        }
+      }
+      if (data.settings) {
+        memorySettings = { ...initialSettings, ...data.settings };
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+function saveToFile() {
+  try {
+    const filePath = getStoreFilePath();
+    const data = {
+      products: memoryProducts,
+      landingPages: memoryLandingPages,
+      orders: memoryOrders,
+      settings: memorySettings,
+    };
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  } catch (e) {
+    // ignore
+  }
+}
+
+loadFromFile();
+
 export const dbStore = {
   // PRODUCTS
   async getProducts(): Promise<Product[]> {
+    loadFromFile();
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data, error } = await admin
@@ -335,6 +408,7 @@ export const dbStore = {
   },
 
   async getProduct(idOrSlug: string): Promise<Product | null> {
+    loadFromFile();
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data, error } = await admin
@@ -402,6 +476,7 @@ export const dbStore = {
     } else {
       memoryProducts.unshift(newProduct);
     }
+    saveToFile();
     return newProduct;
   },
 
@@ -423,6 +498,7 @@ export const dbStore = {
   },
 
   async getLandingPage(slug: string): Promise<LandingPage | null> {
+    loadFromFile();
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data, error } = await admin
@@ -432,12 +508,35 @@ export const dbStore = {
         .single();
       if (!error && data) return data;
     }
-    const lp = memoryLandingPages.find((p) => p.slug === slug);
-    if (!lp) return null;
-    return {
-      ...lp,
-      product: memoryProducts.find((p) => p.id === lp.product_id),
-    };
+    const lp = memoryLandingPages.find((p) => p.slug === slug || p.id === slug);
+    if (lp) {
+      return {
+        ...lp,
+        product: memoryProducts.find((p) => p.id === lp.product_id),
+      };
+    }
+
+    // Auto-synthesize landing page if a product exists with this slug or id
+    const prod = memoryProducts.find((p) => p.slug === slug || p.id === slug);
+    if (prod) {
+      return {
+        id: `lp-auto-${prod.id}`,
+        product_id: prod.id,
+        title: prod.title_ar,
+        slug: prod.slug,
+        component_key: "starter-template",
+        status: "active",
+        deployment_status: "published",
+        meta_pixel_id: memorySettings.default_meta_pixel_id,
+        meta_capi_token: memorySettings.default_meta_capi_token,
+        deployment_url: `/p/${prod.slug}`,
+        created_at: prod.created_at,
+        updated_at: prod.updated_at,
+        product: prod,
+      };
+    }
+
+    return null;
   },
 
   async saveLandingPage(data: Partial<LandingPage>): Promise<LandingPage> {
@@ -486,6 +585,7 @@ export const dbStore = {
     } else {
       memoryLandingPages.unshift(newLp);
     }
+    saveToFile();
     return newLp;
   },
 
@@ -510,6 +610,7 @@ export const dbStore = {
     status?: OrderStatus;
     search?: string;
   }): Promise<Order[]> {
+    loadFromFile();
     const admin = getSupabaseAdmin();
     if (admin) {
       let query = admin
@@ -650,6 +751,7 @@ export const dbStore = {
     }
 
     memoryOrders.unshift(newOrder);
+    saveToFile();
     return newOrder;
   },
 
@@ -662,6 +764,7 @@ export const dbStore = {
     if (order) {
       order.status = status;
       order.updated_at = new Date().toISOString();
+      saveToFile();
       return true;
     }
     return false;
@@ -686,6 +789,7 @@ export const dbStore = {
     const order = memoryOrders.find((o) => o.id === id);
     if (order) {
       Object.assign(order, updatePayload);
+      saveToFile();
       return true;
     }
     return false;
@@ -761,11 +865,13 @@ export const dbStore = {
 
   // SETTINGS
   async getSettings(): Promise<SystemSettings> {
+    loadFromFile();
     return memorySettings;
   },
 
   async updateSettings(newSettings: Partial<SystemSettings>): Promise<SystemSettings> {
     memorySettings = { ...memorySettings, ...newSettings };
+    saveToFile();
     return memorySettings;
   },
 };
