@@ -5,7 +5,7 @@ import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 const initialProducts: (Product & { offers: ProductOffer[] })[] = [
   {
     id: "a1000000-0000-0000-0000-000000000001",
-    title_ar: "حامل ومنظم ريكس راك الذكي متعدد الوظائف (RexRack Smart Organizer)",
+    title_ar: "حامل ومنظم RexRack الذكي متعدد الوظائف (Smart Organizer)",
     title_en: "RexRack Multi-Functional Smart Organizer",
     slug: "rexrack-smart-organizer",
     sku: "REX-RACK-01",
@@ -17,7 +17,7 @@ const initialProducts: (Product & { offers: ProductOffer[] })[] = [
       "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&q=80",
       "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=800&q=80",
     ],
-    description_ar: "حامل ريكس راك الفولاذي المقاوم للصدأ لتنظيم الأغراض والأجهزة والمساحات المنزلية والمكتبية بأقصى كفاءة وثبات فائق ومظهر عصري جذاب.",
+    description_ar: "حامل RexRack الفولاذي المقاوم للصدأ لتنظيم الأغراض والأجهزة والمساحات المنزلية والمكتبية بأقصى كفاءة وثبات فائق ومظهر عصري جذاب.",
     stock_quantity: 120,
     status: "active",
     created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
@@ -63,7 +63,7 @@ const initialProducts: (Product & { offers: ProductOffer[] })[] = [
   },
   {
     id: "a1000000-0000-0000-0000-000000000002",
-    title_ar: "محطة شحن ريكس راك الذكية 6 في 1 فائقة السرعة (PowerStation Pro)",
+    title_ar: "محطة شحن RexRack الذكية 6 في 1 فائقة السرعة (PowerStation Pro)",
     title_en: "RexRack PowerStation Pro 6-in-1 Fast Charger",
     slug: "rexrack-power-station",
     sku: "REX-PWR-02",
@@ -157,7 +157,7 @@ const initialLandingPages: LandingPage[] = [
   {
     id: "c1000000-0000-0000-0000-000000000001",
     product_id: "a1000000-0000-0000-0000-000000000001",
-    title: "حامل ومنظم ريكس راك الذكي | عرض خاص والدفع عند الاستلام",
+    title: "حامل ومنظم RexRack الذكي | عرض خاص والدفع عند الاستلام",
     slug: "rexrack-smart-organizer",
     component_key: "starter-template",
     status: "active",
@@ -173,7 +173,7 @@ const initialLandingPages: LandingPage[] = [
   {
     id: "c1000000-0000-0000-0000-000000000002",
     product_id: "a1000000-0000-0000-0000-000000000002",
-    title: "محطة شحن ريكس راك 6 في 1 السريعة | شحن مجاني ومعاينة",
+    title: "محطة شحن RexRack الذكية 6 في 1 | شحن مجاني ومعاينة",
     slug: "rexrack-power-station",
     component_key: "starter-template",
     status: "active",
@@ -189,7 +189,7 @@ const initialLandingPages: LandingPage[] = [
   {
     id: "c1000000-0000-0000-0000-000000000003",
     product_id: "a1000000-0000-0000-0000-000000000003",
-    title: "حامل الموبايل المغناطيسي ريكس راك | ثبات فائق ومقاوم للمطبات",
+    title: "حامل الموبايل المغناطيسي RexRack | ثبات فائق ومقاوم للمطبات",
     slug: "rexrack-mag-mount",
     component_key: "starter-template",
     status: "active",
@@ -308,7 +308,7 @@ const initialSettings: SystemSettings = {
   default_meta_pixel_id: process.env.NEXT_PUBLIC_META_PIXEL_ID || "123456789012345",
   default_meta_capi_token: process.env.META_CAPI_ACCESS_TOKEN || "",
   meta_test_event_code: process.env.META_TEST_EVENT_CODE || "",
-  store_name: "ريكس راك | RexRack",
+  store_name: "RexRack",
   support_phone: "01000000000",
   support_whatsapp: "201000000000",
 };

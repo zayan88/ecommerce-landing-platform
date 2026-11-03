@@ -62,7 +62,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </div>
             <div>
               <span className="font-heading font-black text-lg md:text-xl text-gray-900 block leading-tight">
-                ريكس راك | RexRack
+                RexRack
               </span>
               <span className="text-[11px] text-gray-500 font-medium">المتجر المعتمد - معاينة مجانية قبل الدفع</span>
             </div>

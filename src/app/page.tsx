@@ -22,11 +22,11 @@ import {
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "ريكس راك | RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
+  title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
   description:
-    "تسوق أحدث المنتجات الذكية والمنظمات العصرية مع ريكس راك في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن سريع لجميع محافظات مصر خلال 24-48 ساعة.",
+    "تسوق أحدث المنتجات الذكية والمنظمات العصرية مع RexRack في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن سريع لجميع محافظات مصر خلال 24-48 ساعة.",
   openGraph: {
-    title: "ريكس راك | RexRack - عروض حصرية في مصر",
+    title: "RexRack - عروض حصرية في مصر",
     description: "معاينة مجانية قبل الدفع + دفع عند الاستلام + ضمان 14 يوم",
     type: "website",
   },
@@ -77,9 +77,9 @@ export default async function HomePage() {
             </div>
             <div>
               <span className="text-2xl font-black font-heading text-slate-900 tracking-tight block">
-                ريكس راك <span className="text-emerald-600 text-lg font-mono">RexRack</span>
+                RexRack
               </span>
-              <span className="text-[11px] font-bold text-gray-500 block -mt-1">
+              <span className="text-[11px] font-bold text-gray-500 block -mt-0.5">
                 الجودة والابتكار في مكان واحد 🇪🇬
               </span>
             </div>
@@ -134,7 +134,7 @@ export default async function HomePage() {
 
             {/* Description */}
             <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
-              في ريكس راك، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
+              في RexRack، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
               <span className="font-bold text-slate-900 underline decoration-emerald-500 decoration-2">
                 معاينة وفحص المنتج بنفسك أمام مندوب الشحن قبل دفع أي مليم
               </span>
@@ -152,7 +152,7 @@ export default async function HomePage() {
               </a>
 
               <a
-                href="https://wa.me/201000000000?text=مرحباً%20ريكس%20راك،%20أود%20الاستفسار%20عن%20العروض"
+                href="https://wa.me/201000000000?text=مرحباً%20RexRack،%20أود%20الاستفسار%20عن%20العروض"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto py-4 px-6 rounded-2xl bg-white hover:bg-gray-100 text-slate-800 font-bold text-base border border-gray-300 shadow-sm transition flex items-center justify-center gap-2"
@@ -311,7 +311,7 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              ضمانات ريكس راك الذهبية
+              ضمانات RexRack الذهبية
             </span>
             <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
               لماذا يثق بنا آلاف العملاء في مصر؟
@@ -371,7 +371,7 @@ export default async function HomePage() {
             ماذا يقول عملاؤنا بعد التجربة؟
           </h2>
           <p className="text-sm text-gray-600">
-            آراء عملاء حقيقيين استلموا وعاينوا طلباتهم من ريكس راك في مختلف المحافظات.
+            آراء عملاء حقيقيين استلموا وعاينوا طلباتهم من RexRack في مختلف المحافظات.
           </p>
         </div>
 
@@ -383,7 +383,7 @@ export default async function HomePage() {
               ))}
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              "المنتج ممتاز والخامات قوية جداً وتستاهل كل مليم. الأهم إن المندوب استنى لما فتحت الكرتونة واتأكدت بنفسي قبل ما أدفع. شكراً ريكس راك على الاحترام والأمانة."
+              "المنتج ممتاز والخامات قوية جداً وتستاهل كل مليم. الأهم إن المندوب استنى لما فتحت الكرتونة واتأكدت بنفسي قبل ما أدفع. شكراً RexRack على الاحترام والأمانة."
             </p>
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
               <div>
@@ -503,7 +503,7 @@ export default async function HomePage() {
                 R
               </div>
               <div>
-                <span className="font-black font-heading text-xl text-white">ريكس راك | RexRack</span>
+                <span className="font-black font-heading text-xl text-white">RexRack</span>
                 <p className="text-xs text-slate-400">منصة التجارة الإلكترونية الموثوقة في مصر</p>
               </div>
             </div>
@@ -518,7 +518,7 @@ export default async function HomePage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-            <p>© {new Date().getFullYear()} ريكس راك (RexRack.com) - جميع الحقوق محفوظة.</p>
+            <p>© {new Date().getFullYear()} RexRack (RexRack.com) - جميع الحقوق محفوظة.</p>
 
             {/* Discreet Admin Login Link for the Owner */}
             <Link
@@ -535,7 +535,7 @@ export default async function HomePage() {
 
       {/* Floating WhatsApp Quick Action Button */}
       <a
-        href="https://wa.me/201000000000?text=مرحباً%20ريكس%20راك،%20أود%20الاستفسار%20عن%20العروض%20المتاحة"
+        href="https://wa.me/201000000000?text=مرحباً%20RexRack،%20أود%20الاستفسار%20عن%20العروض%20المتاحة"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="تواصل معنا عبر واتساب"
