@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Product, LandingPage, ProductOffer } from "@/types";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
@@ -21,7 +20,6 @@ import {
   ShoppingBagIcon,
   CheckCircleIcon,
   HeartIcon,
-  EyeIcon,
   ArrowDownIcon,
 } from "@heroicons/react/24/solid";
 
@@ -67,20 +65,12 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     ? Math.round((discountAmount / product.compare_at_price) * 100)
     : 36;
 
-  // High quality images distributed per section
-  const heroImageSrc =
-    product.images?.[0] ||
-    "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=1200&q=90";
-  const problemImageSrc =
-    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=90";
-  const solutionImageSrc =
-    product.images?.[2] ||
-    "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=1200&q=90";
-  const detailImageSrc =
-    product.images?.[1] ||
-    "https://images.unsplash.com/photo-1544816155-12df9643f363?w=1200&q=90";
-  const unboxingImageSrc =
-    "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=90";
+  // Local, bulletproof, high-speed images
+  const heroImageSrc = product.images?.[0] || "/images/hero-organizer.jpg";
+  const problemImageSrc = "/images/problem-clutter.jpg";
+  const solutionImageSrc = product.images?.[2] || "/images/solution-organized.jpg";
+  const detailImageSrc = product.images?.[1] || "/images/materials-quality.jpg";
+  const unboxingImageSrc = "/images/unboxing-inspection.jpg";
 
   return (
     <div
@@ -144,7 +134,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         </div>
       </header>
 
-      {/* 3. HERO SECTION (Full-Width Impactful Visual Showcase) */}
+      {/* 3. HERO SECTION (With Solid-Height Guaranteed Image #1) */}
       <section className="py-8 md:py-12 px-4 max-w-4xl mx-auto text-center space-y-6">
         {/* Rating and Trust Pill */}
         <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -173,15 +163,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           وداعاً للفوضى وتكدس الأغراض.. نظّم بيتك ومكتبك ووفر 80% من المساحة بخامات فولاذية فاخرة تدوم طويلاً وتتحمل أثقل الأوزان بثبات فائق.
         </p>
 
-        {/* Big Hero Image #1 (Prominent, High-Resolution, Centered) */}
-        <div className="relative aspect-16/10 md:aspect-16/9 w-full rounded-3xl overflow-hidden bg-white border-2 border-slate-300 shadow-2xl group">
-          <Image
+        {/* Big Hero Image #1: Solid 480px Height - GUARANTEED TO RENDER */}
+        <div className="relative w-full h-72 sm:h-96 md:h-[480px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-2xl group">
+          <img
             src={heroImageSrc}
             alt="صورة RexRack الرئيسية"
-            fill
-            sizes="(max-width: 768px) 100vw, 900px"
-            className="object-cover group-hover:scale-105 transition-transform duration-700"
-            priority
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 block"
+            loading="eager"
           />
           {/* Floating badges */}
           <div className="absolute top-4 right-4 bg-slate-950/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-full flex items-center gap-1.5 shadow-xl border border-white/20">
@@ -221,7 +209,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           </div>
         </div>
 
-        {/* Tiered Offer Selector (Khairy / Lovable High-Converting Pattern) */}
+        {/* Tiered Offer Selector */}
         <div className="space-y-3 max-w-xl mx-auto text-right">
           <label className="block text-sm font-black text-slate-950">
             👇 اختر باقة العرض المناسبة لك:
@@ -302,7 +290,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         </div>
       </section>
 
-      {/* 4. SECTION 2: THE PROBLEM (Large Image #2 Distributed Here) */}
+      {/* 4. SECTION 2: THE PROBLEM (Solid-Height Guaranteed Image #2) */}
       <section className="py-14 bg-white border-y border-slate-200 px-4">
         <div className="max-w-4xl mx-auto space-y-8 text-right">
           <div className="text-center max-w-2xl mx-auto space-y-2">
@@ -317,14 +305,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </p>
           </div>
 
-          {/* Distributed Large Image #2: The Problem Context */}
-          <div className="relative aspect-16/10 md:aspect-16/9 w-full rounded-3xl overflow-hidden bg-slate-100 border-2 border-slate-300 shadow-xl">
-            <Image
+          {/* Solid 420px Height Guaranteed Image #2 */}
+          <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl">
+            <img
               src={problemImageSrc}
               alt="مشكلة الفوضى وتكدس المساحات"
-              fill
-              sizes="(max-width: 768px) 100vw, 900px"
-              className="object-cover"
+              className="w-full h-full object-cover block"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex items-end p-6 md:p-8">
               <div className="text-white space-y-1">
@@ -373,7 +360,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         </div>
       </section>
 
-      {/* 5. SECTION 3: THE SOLUTION (Large Image #3 Distributed Here) */}
+      {/* 5. SECTION 3: THE SOLUTION (Solid-Height Guaranteed Image #3) */}
       <section className="py-14 px-4 max-w-4xl mx-auto text-right space-y-8">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-300">
@@ -387,14 +374,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           </p>
         </div>
 
-        {/* Distributed Large Image #3: Solution in Action */}
-        <div className="relative aspect-16/10 md:aspect-16/9 w-full rounded-3xl overflow-hidden bg-white border-2 border-slate-300 shadow-xl group">
-          <Image
+        {/* Solid 420px Height Guaranteed Image #3 */}
+        <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl group">
+          <img
             src={solutionImageSrc}
             alt="حل RexRack الفعلي لتنظيم المساحة"
-            fill
-            sizes="(max-width: 768px) 100vw, 900px"
-            className="object-cover group-hover:scale-105 transition-transform duration-700"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 block"
+            loading="lazy"
           />
           <div className="absolute top-4 right-4 bg-emerald-600 text-white text-xs font-black px-4 py-1.5 rounded-full shadow-lg">
             بعد استخدام RexRack ✓
@@ -429,7 +415,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         </div>
       </section>
 
-      {/* 6. SECTION 4: MATERIALS & QUALITY (Large Image #4 Distributed Here) */}
+      {/* 6. SECTION 4: MATERIALS & QUALITY (Solid-Height Guaranteed Image #4) */}
       <section className="py-14 bg-slate-950 text-white border-y border-slate-800 px-4">
         <div className="max-w-4xl mx-auto space-y-8 text-right">
           <div className="text-center max-w-2xl mx-auto space-y-2">
@@ -444,14 +430,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </p>
           </div>
 
-          {/* Distributed Large Image #4: Detail & Craftsmanship */}
-          <div className="relative aspect-16/10 md:aspect-16/9 w-full rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-700 shadow-2xl group">
-            <Image
+          {/* Solid 420px Height Guaranteed Image #4 */}
+          <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-700 shadow-2xl group">
+            <img
               src={detailImageSrc}
               alt="تفاصيل خامات وجودة تصنيع RexRack"
-              fill
-              sizes="(max-width: 768px) 100vw, 900px"
-              className="object-cover group-hover:scale-105 transition-transform duration-700"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 block"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-6 md:p-8">
               <div className="text-white space-y-1">
@@ -505,7 +490,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         </div>
       </section>
 
-      {/* 7. SECTION 5: UNBOXING & LAWFUL INSPECTION (Large Image #5 Distributed Here) */}
+      {/* 7. SECTION 5: UNBOXING & LAWFUL INSPECTION (Solid-Height Guaranteed Image #5) */}
       <section className="py-14 bg-white border-b border-slate-200 px-4">
         <div className="max-w-4xl mx-auto space-y-8 text-right">
           <div className="text-center max-w-2xl mx-auto space-y-2">
@@ -520,14 +505,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </p>
           </div>
 
-          {/* Distributed Large Image #5: Unboxing & Inspection */}
-          <div className="relative aspect-16/10 md:aspect-16/9 w-full rounded-3xl overflow-hidden bg-slate-100 border-2 border-slate-300 shadow-xl">
-            <Image
+          {/* Solid 420px Height Guaranteed Image #5 */}
+          <div className="relative w-full h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl">
+            <img
               src={unboxingImageSrc}
               alt="معاينة وفتح الطرد أمام مندوب الشحن"
-              fill
-              sizes="(max-width: 768px) 100vw, 900px"
-              className="object-cover"
+              className="w-full h-full object-cover block"
+              loading="lazy"
             />
             <div className="absolute bottom-4 right-4 bg-slate-950/90 text-white text-xs font-black px-4 py-2 rounded-2xl flex items-center gap-2 border border-white/20">
               <ShieldCheckIcon className="w-5 h-5 text-emerald-400" />

@@ -13,9 +13,9 @@ const initialProducts: (Product & { offers: ProductOffer[] })[] = [
     compare_at_price: 550,
     cost_price: 150,
     images: [
-      "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=800&q=80",
-      "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&q=80",
-      "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=800&q=80",
+      "/images/hero-organizer.jpg",
+      "/images/materials-quality.jpg",
+      "/images/solution-organized.jpg",
     ],
     description_ar: "حامل RexRack الفولاذي المقاوم للصدأ لتنظيم الأغراض والأجهزة والمساحات المنزلية والمكتبية بأقصى كفاءة وثبات فائق ومظهر عصري جذاب.",
     stock_quantity: 120,
