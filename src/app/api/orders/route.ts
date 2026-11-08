@@ -34,10 +34,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Resolve pricing & offers
+    // 3. Resolve pricing & offers (All shipping is 100% Free)
+    const finalGov = data.governorate || data.shipping_governorate || "القاهرة";
+    const finalAddress = data.address || data.shipping_address || "العنوان بالتفصيل";
+    const finalNotes = data.notes || data.customer_notes || "";
+
     let unitPrice = product.base_price;
     let totalAmount = unitPrice * data.quantity;
-    let shippingFee = getGovernorateDeliveryFee(data.governorate);
+    let shippingFee = 0; // الشحن مجاني لجميع الطلبات
     let discountAmount = 0;
 
     if (data.offer_id && product.offers) {
@@ -45,19 +49,13 @@ export async function POST(req: NextRequest) {
       if (selectedOffer) {
         totalAmount = selectedOffer.price;
         unitPrice = selectedOffer.price / selectedOffer.quantity;
-        if (selectedOffer.free_shipping) {
-          shippingFee = 0;
-        }
         if (selectedOffer.original_price) {
           discountAmount = selectedOffer.original_price - selectedOffer.price;
         }
       }
-    } else if (data.quantity >= 2) {
-      // Automatic free shipping for 2+ items
-      shippingFee = 0;
     }
 
-    const finalAmount = totalAmount + shippingFee;
+    const finalAmount = totalAmount; // Zero shipping added
 
     // 4. Resolve client IP and User-Agent for CAPI
     const ipAddress =
@@ -71,18 +69,18 @@ export async function POST(req: NextRequest) {
     const createdOrder = await dbStore.createOrder({
       landing_page_slug: data.landing_page_slug,
       product_id: product.id,
-      offer_id: data.offer_id,
+      offer_id: data.offer_id || undefined,
       customer_name: data.customer_name,
       customer_phone: data.customer_phone,
-      customer_phone2: data.customer_phone2,
-      governorate: data.governorate,
-      city: data.city || "",
-      address: data.address,
-      notes: data.notes,
+      customer_phone2: data.customer_phone2 || undefined,
+      governorate: finalGov,
+      city: data.city || data.shipping_city || finalGov,
+      address: finalAddress,
+      notes: finalNotes,
       quantity: data.quantity,
       unit_price: unitPrice,
       total_amount: totalAmount,
-      shipping_fee: shippingFee,
+      shipping_fee: 0,
       discount_amount: discountAmount,
       final_amount: finalAmount,
       payment_method: data.payment_method,

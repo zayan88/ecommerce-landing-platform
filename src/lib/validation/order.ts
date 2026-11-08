@@ -6,7 +6,7 @@ export const egyptianPhoneRegex = /^(?:\+20|002)?01[0125][0-9]{8}$/;
 export const orderFormSchema = z.object({
   customer_name: z
     .string()
-    .min(3, "يرجى كتابة الاسم بالكامل (3 أحرف على الأقل)")
+    .min(2, "يرجى كتابة الاسم بالكامل")
     .max(100, "الاسم طويل جداً"),
   customer_phone: z
     .string()
@@ -14,44 +14,51 @@ export const orderFormSchema = z.object({
     .regex(egyptianPhoneRegex, "يرجى إدخال رقم هاتف مصري صحيح (مثال: 01012345678)"),
   customer_phone2: z
     .string()
-    .optional()
-    .refine((val) => !val || egyptianPhoneRegex.test(val), {
-      message: "رقم الهاتف البديل يجب أن يكون رقم مصري صحيح",
-    }),
+    .nullish(),
   governorate: z
     .string()
-    .min(2, "يرجى اختيار المحافظة"),
+    .nullish(),
+  shipping_governorate: z
+    .string()
+    .nullish(),
   city: z
     .string()
-    .optional(),
+    .nullish(),
+  shipping_city: z
+    .string()
+    .nullish(),
   address: z
     .string()
-    .min(5, "يرجى كتابة العنوان بالتفصيل (اسم الشارع، رقم العمارة، رقم الشقة)")
-    .max(300, "العنوان طويل جداً"),
+    .nullish(),
+  shipping_address: z
+    .string()
+    .nullish(),
   notes: z
     .string()
-    .max(500, "الملاحظات لا يجب أن تتجاوز 500 حرف")
-    .optional(),
+    .nullish(),
+  customer_notes: z
+    .string()
+    .nullish(),
   
   // Selection
   product_id: z.string().min(1, "معرف المنتج مطلوب"),
   landing_page_slug: z.string().min(1, "معرف صفحة الهبوط مطلوب"),
-  offer_id: z.string().optional(),
+  offer_id: z.string().nullish(),
   quantity: z.number().int().min(1, "الكمية يجب أن تكون 1 على الأقل"),
   
   // Payment method
   payment_method: z.enum(["cod", "safqa", "card"]).default("cod"),
   
   // Tracking metadata
-  utm_source: z.string().optional(),
-  utm_medium: z.string().optional(),
-  utm_campaign: z.string().optional(),
-  utm_content: z.string().optional(),
-  utm_term: z.string().optional(),
-  referrer: z.string().optional(),
-  fbp: z.string().optional(),
-  fbc: z.string().optional(),
-  event_id: z.string().optional(),
+  utm_source: z.string().nullish(),
+  utm_medium: z.string().nullish(),
+  utm_campaign: z.string().nullish(),
+  utm_content: z.string().nullish(),
+  utm_term: z.string().nullish(),
+  referrer: z.string().nullish(),
+  fbp: z.string().nullish(),
+  fbc: z.string().nullish(),
+  event_id: z.string().nullish(),
 });
 
 export type OrderFormInput = z.infer<typeof orderFormSchema>;
