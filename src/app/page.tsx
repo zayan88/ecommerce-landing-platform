@@ -29,7 +29,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
   description:
-    "تسوق أحدث المنتجات الذكية والمنظمات العصرية مع RexRack في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن سريع لجميع محافظات مصر خلال 24-48 ساعة.",
+    "تسوق أحدث المنتجات الذكية والمنظمات العصرية مع RexRack في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن لجميع محافظات مصر خلال 5 إلى 7 أيام.",
   openGraph: {
     title: "RexRack - عروض حصرية في مصر",
     description: "معاينة مجانية قبل الدفع + دفع عند الاستلام + ضمان 14 يوم",
@@ -182,7 +182,7 @@ export default async function HomePage() {
                   <Truck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-slate-900">شحن سريع 24-48 ساعة</h4>
+                  <h4 className="text-xs font-black text-slate-900">شحن لجميع المحافظات (5-7 أيام)</h4>
                   <p className="text-[11px] text-gray-500">لكافة المحافظات المصرية</p>
                 </div>
               </div>
@@ -345,7 +345,7 @@ export default async function HomePage() {
                 2. شحن مباشر لجميع المحافظات
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                نتعامل مع كبرى شركات الشحن المصرية لضمان وصول طلبك لباب بيتك خلال 24 إلى 48 ساعة أينما كنت في محافظات مصر.
+                نتعامل مع كبرى شركات الشحن المصرية لضمان وصول طلبك لباب بيتك خلال 5 إلى 7 أيام أينما كنت في محافظات مصر.
               </p>
             </div>
 
@@ -433,7 +433,7 @@ export default async function HomePage() {
                 </li>
                 <li className="flex items-start gap-2.5 font-bold">
                   <span className="text-orange-600">✓</span>
-                  <span>شحن سريع لجميع محافظات مصر الـ 27 خلال 24 - 48 ساعة لباب بيتك.</span>
+                  <span>شحن لجميع محافظات مصر الـ 27 خلال 5 إلى 7 أيام لباب بيتك.</span>
                 </li>
               </ul>
             </div>
@@ -618,7 +618,7 @@ export default async function HomePage() {
                 <span>متى سيصلني الطلب بعد تأكيده؟</span>
               </h4>
               <p className="text-sm text-gray-600 pr-7 leading-relaxed">
-                يصل الطلب خلال 24 إلى 48 ساعة فقط في محافظات القاهرة الكبرى والإسكندرية ومدن القناة، وخلال 2 إلى 3 أيام لباقي محافظات الدلتا والصعيد.
+                يصل الطلب خلال 5 إلى 7 أيام لجميع محافظات مصر.
               </p>
             </div>
 

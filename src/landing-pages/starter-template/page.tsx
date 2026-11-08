@@ -541,7 +541,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
               <TruckIcon className="w-6 h-6 text-blue-400 mx-auto" />
-              <h4 className="font-black text-sm text-white">شحن 24-48 ساعة</h4>
+              <h4 className="font-black text-sm text-white">شحن 5-7 أيام</h4>
               <p className="text-[11px] text-slate-400">لكافة أنحاء مصر</p>
             </div>
 
@@ -607,7 +607,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               استمارة الطلب المباشر
             </span>
             <h2 className="text-2xl md:text-3xl font-black text-slate-950 font-heading">
-              أدخل بياناتك وسيصلك الطلب خلال 24 - 48 ساعة
+              أدخل بياناتك وسيصلك الطلب خلال 5 إلى 7 أيام
             </h2>
             <p className="text-xs text-slate-700 font-bold">
               الدفع عند الاستلام بعد المعاينة والفحص. شحن سريع لكافة محافظات مصر.
@@ -674,7 +674,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               },
               {
                 q: "كم يستغرق وصول الطلب إلى باب منزلي؟",
-                a: "يتم تجهيز وشحن الطلب فورياً؛ يستغرق التوصيل من 24 إلى 48 ساعة فقط لمحافظات القاهرة الكبرى والجيزة والإسكندرية، ومن 2 إلى 3 أيام لباقي محافظات الجمهورية.",
+                a: "يتم تجهيز وشحن الطلب فورياً؛ يستغرق التوصيل من 5 إلى 7 أيام لجميع محافظات الجمهورية.",
               },
               {
                 q: "ما هو ضمان RexRack في حالة وجود أي عيب أو تلف؟",

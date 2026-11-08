@@ -30,6 +30,10 @@ export interface Product {
   description_ar: string;
   stock_quantity: number;
   status: ProductStatus;
+  safka_product_id?: string;
+  safka_property_id?: string;
+  safka_commission?: number;
+  safka_raw?: any;
   offers?: ProductOffer[];
   created_at: string;
   updated_at: string;

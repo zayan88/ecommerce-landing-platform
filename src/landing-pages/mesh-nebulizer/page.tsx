@@ -458,7 +458,7 @@ export default function MeshNebulizerLandingPage({
               <span>معاينة واختبار مع المندوب قبل دفع أي مليم</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
-              اطلب الآن واستلم خلال 24 - 48 ساعة
+              اطلب الآن واستلم خلال 5 إلى 7 أيام
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 mt-1">
               املأ بياناتك أدناه وسيتواصل معك فريق التأكيد لشحن طلبك فوراً

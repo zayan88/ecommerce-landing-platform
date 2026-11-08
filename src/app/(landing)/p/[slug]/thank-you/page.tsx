@@ -11,6 +11,8 @@ export default function ThankYouPage({ params }: { params: { slug: string } }) {
   const orderNumber = searchParams.get("orderNumber") || "EG-ORD-PENDING";
   const customerName = searchParams.get("name") || "عميلنا العزيز";
   const customerPhone = searchParams.get("phone") || "";
+  const customerGov = searchParams.get("gov") || "";
+  const customerAddress = searchParams.get("address") || "";
   const total = searchParams.get("total") || "";
 
   useEffect(() => {
@@ -23,11 +25,6 @@ export default function ThankYouPage({ params }: { params: { slug: string } }) {
       });
     } catch {}
   }, []);
-
-  const whatsappMessage = encodeURIComponent(
-    `مرحباً، قمت بطلب المنتج من الموقع برقم طلب: ${orderNumber}، أرجو تأكيد الشحن السريع.`
-  );
-  const whatsappUrl = `https://wa.me/201000000000?text=${whatsappMessage}`;
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 text-right flex items-center justify-center font-sans" dir="rtl">
@@ -45,7 +42,7 @@ export default function ThankYouPage({ params }: { params: { slug: string } }) {
             شكراً لثقتك بنا يا {customerName}!
           </h1>
           <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-            استلمنا بيانات طلبك وسيقوم فريق المبيعات والتوصيل بالتواصل معك على رقم هاتفك للتأكيد ومتابعة الشحنة.
+            استلمنا بيانات طلبك وسيقوم فريق التأكيد بالتواصل معك على رقم هاتفك لتأكيد الشحن وميعاد الاستلام.
           </p>
         </div>
 
@@ -60,49 +57,66 @@ export default function ThankYouPage({ params }: { params: { slug: string } }) {
             </span>
           </div>
 
+          <div className="flex justify-between items-center text-gray-600">
+            <span>الاسم:</span>
+            <span className="font-bold text-gray-900">{customerName}</span>
+          </div>
+
           {customerPhone && (
             <div className="flex justify-between items-center text-gray-600">
               <span>رقم الهاتف المسجل:</span>
-              <span className="font-semibold text-gray-900" dir="ltr">{customerPhone}</span>
+              <span className="font-semibold text-gray-900 font-mono" dir="ltr">{customerPhone}</span>
             </div>
           )}
 
-          {total && (
+          {customerGov && (
             <div className="flex justify-between items-center text-gray-600">
-              <span>المبلغ الإجمالي عند الاستلام:</span>
-              <span className="text-lg font-black text-emerald-700">{total} ج.م</span>
+              <span>المحافظة:</span>
+              <span className="font-semibold text-gray-800">{customerGov}</span>
+            </div>
+          )}
+
+          {customerAddress && (
+            <div className="flex justify-between items-center text-gray-600">
+              <span>العنوان بالتفصيل:</span>
+              <span className="font-semibold text-gray-800 max-w-[280px] truncate text-left">{customerAddress}</span>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center text-gray-600">
+            <span>تكلفة الشحن:</span>
+            <span className="font-bold text-emerald-600">شحن مجاني 100% 🎁</span>
+          </div>
+
+          {total && (
+            <div className="flex justify-between items-center text-gray-600 pt-2 border-t border-gray-200">
+              <span className="font-bold text-gray-800">المبلغ الإجمالي عند الاستلام:</span>
+              <span className="text-xl font-black text-emerald-700 font-mono">{total} ج.م</span>
             </div>
           )}
 
           <div className="flex justify-between items-center text-gray-600">
             <span>طريقة الدفع:</span>
-            <span className="font-bold text-gray-800">الدفع نقدياً عند الاستلام (COD)</span>
+            <span className="font-bold text-gray-800">الدفع نقدياً عند الاستلام (معاينة قبل الدفع)</span>
           </div>
         </div>
 
-        {/* Quick WhatsApp Action */}
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-right flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-xs text-emerald-900">
-            <div className="font-bold text-sm">هل تود تأكيد طلبك فوراً لتسريع الشحن؟</div>
-            <span>تواصل مباشرة عبر واتساب مع خدمة العملاء</span>
+        {/* Confirmation Notice - Replaced WhatsApp Button */}
+        <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-right flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-amber-700">
+            <PhoneCall className="w-5 h-5" />
           </div>
-
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 transition active:scale-95"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>تأكيد عبر واتساب</span>
-          </a>
+          <div>
+            <div className="font-bold text-sm text-amber-950">هيتواصل معاك تيم التأكيد في أقرب وقت</div>
+            <div className="text-xs text-amber-800 mt-0.5">يرجى الرد على مكالمة خدمة العملاء لتأكيد تجهيز الشحنة وموعد الوصول.</div>
+          </div>
         </div>
 
         {/* Guarantees Box */}
         <div className="grid grid-cols-2 gap-3 text-xs text-gray-600 pt-2 text-right">
           <div className="p-3 rounded-xl bg-slate-50 border border-gray-100 flex items-center gap-2.5">
             <Clock className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <span>توصيل خلال 24 - 48 ساعة</span>
+            <span>التوصيل من 5 إلى 7 أيام</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 border border-gray-100 flex items-center gap-2.5">
             <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />

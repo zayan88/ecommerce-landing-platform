@@ -44,10 +44,22 @@ export interface SafkaOrderResponse {
 let cachedPriceList: SafkaPriceListItem[] = [];
 let priceListFetchedAt = 0;
 
+function normalizeArabicText(t?: string): string {
+  return (t || "")
+    .replace(/^(محافظة|مدينة)\s+/, "")
+    .replace(/\s*\(.*?\)\s*/g, "")
+    .replace(/[إأآا]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[\u064B-\u065F]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 export class SafkaClient {
   private static async getApiKey(): Promise<string> {
     const settings = await dbStore.getSettings();
-    return settings.safqa_api_secret_token || process.env.SAFKA_API_KEY || "";
+    return settings.safqa_api_secret_token || process.env.SAFKA_API_KEY || "sk_542077e40b44f0837da89f7f542f752270ac78644240cfa46a98b9afe8e312fc";
   }
 
   private static getBaseUrl(): string {
@@ -141,23 +153,23 @@ export class SafkaClient {
   static async resolveGovernoratePricingId(governorateName: string): Promise<string> {
     const priceList = await this.getPriceList();
     if (priceList.length === 0) {
-      // Fallback pseudo ID if not synced yet
-      return "654321abcdef1234567890ab";
+      // Fallback Safka governorate ID
+      return "64878fdedc16090c1858e696";
     }
 
-    const cleaned = governorateName.trim().replace(/^محافظة\s+/, "");
+    const cleanGov = normalizeArabicText(governorateName);
 
-    const found = priceList.find((item) => {
-      const ar = item.name_ar || item.governorate || "";
-      const en = item.name_en || "";
+    const found = priceList.find((item: any) => {
+      const ar = normalizeArabicText(item.governorateNameAr || item.name_ar || (typeof item.governorate === "string" ? item.governorate : ""));
+      const en = (item.governorateName || item.name_en || "").toLowerCase();
       return (
-        ar.includes(cleaned) ||
-        cleaned.includes(ar) ||
-        en.toLowerCase().includes(cleaned.toLowerCase())
+        ar.includes(cleanGov) ||
+        cleanGov.includes(ar) ||
+        (en && (en.includes(cleanGov) || cleanGov.includes(en)))
       );
     });
 
-    return found?._id || priceList[0]?._id || "654321abcdef1234567890ab";
+    return found?._id || priceList[0]?._id || "64878fdedc16090c1858e696";
   }
 
   /**
@@ -213,7 +225,7 @@ export class SafkaClient {
 
       // Safka item identifiers
       const safkaProductId = (product as any).safka_product_id || product.id;
-      const safkaPropertyId = (product as any).safka_property_id || (product as any).safka_raw?.properties?.[0]?._id || "673a2c721548cec72da05e37";
+      const safkaPropertyId = (product as any).safka_property_id || (product as any).safka_raw?.properties?.[0]?._id || "69615044356433dea16f0bd9";
 
       // Resolve Safka shipping_governorate ID
       const shippingGovernorateId = await this.resolveGovernoratePricingId(order.governorate);

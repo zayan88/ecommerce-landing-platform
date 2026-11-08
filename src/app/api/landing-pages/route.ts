@@ -33,3 +33,17 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ success: false, error: "معرف الصفحة مطلوب للحذف" }, { status: 400 });
+    }
+    const success = await dbStore.deleteLandingPage(id);
+    return NextResponse.json({ success, message: "تم حذف صفحة الهبوط بنجاح" });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}

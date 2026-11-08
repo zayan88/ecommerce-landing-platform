@@ -18,6 +18,7 @@ import {
   X,
   AlertCircle,
   ShieldCheck,
+  Trash2,
 } from "lucide-react";
 
 export default function AdminLandingPagesPage() {
@@ -85,6 +86,26 @@ export default function AdminLandingPagesPage() {
     navigator.clipboard.writeText(fullUrl);
     setCopiedSlug(slug);
     setTimeout(() => setCopiedSlug(null), 2500);
+  };
+
+  const handleDeleteLandingPage = async (id: string, title: string) => {
+    if (!window.confirm(`هل أنت متأكد من رغبتك في حذف صفحة الهبوط "${title}" نهائياً؟`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/landing-pages?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchData();
+      } else {
+        alert(data.error || "تعذر حذف الصفحة");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء محاولة الحذف");
+    }
   };
 
   const handleCreateLandingPage = async (e: React.FormEvent) => {
@@ -238,26 +259,37 @@ export default function AdminLandingPagesPage() {
 
               {/* Bottom Actions */}
               <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => handleToggleStatus(lp)}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
-                    lp.status === "active"
-                      ? "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-                      : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-                  }`}
-                >
-                  {lp.status === "active" ? (
-                    <>
-                      <PauseCircle className="w-3.5 h-3.5" />
-                      <span>إيقاف مؤقت</span>
-                    </>
-                  ) : (
-                    <>
-                      <PlayCircle className="w-3.5 h-3.5" />
-                      <span>تفعيل الصفحة</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleToggleStatus(lp)}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
+                      lp.status === "active"
+                        ? "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                        : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                    }`}
+                  >
+                    {lp.status === "active" ? (
+                      <>
+                        <PauseCircle className="w-3.5 h-3.5" />
+                        <span>إيقاف مؤقت</span>
+                      </>
+                    ) : (
+                      <>
+                        <PlayCircle className="w-3.5 h-3.5" />
+                        <span>تفعيل الصفحة</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteLandingPage(lp.id, lp.title)}
+                    className="py-2 px-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                    title="حذف صفحة الهبوط"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">حذف</span>
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-1.5">
                   <button

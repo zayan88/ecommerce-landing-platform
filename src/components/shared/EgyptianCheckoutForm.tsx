@@ -137,7 +137,9 @@ export function EgyptianCheckoutForm({
       router.push(
         `/p/${landingPageSlug}/thank-you?orderId=${data.order.id}&orderNumber=${data.order.order_number}&total=${data.order.final_amount}&name=${encodeURIComponent(
           data.order.customer_name
-        )}&phone=${encodeURIComponent(data.order.customer_phone)}`
+        )}&phone=${encodeURIComponent(data.order.customer_phone)}&gov=${encodeURIComponent(
+          data.order.governorate || governorate
+        )}&address=${encodeURIComponent(data.order.address || address.trim())}`
       );
     } catch (err: any) {
       setErrorMessage(err.message || "حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى");
@@ -268,7 +270,7 @@ export function EgyptianCheckoutForm({
           >
             {EGYPTIAN_GOVERNORATES.map((gov) => (
               <option key={gov.id} value={gov.nameAr}>
-                {gov.nameAr} ({gov.deliveryDays} - شحن مجاني 🎁)
+                {gov.nameAr}
               </option>
             ))}
           </select>

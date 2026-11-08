@@ -80,6 +80,9 @@ const initialProducts: (Product & { offers: ProductOffer[] })[] = [
     description_ar: "ودّع رعب جلسات البخار الفجرية في الشتاء! جهاز النيبولايزر المحمول الذكي فائق الهدوء للأطفال والكبار مع ماسك للكبار وماسك للأطفال وقطعة استنشاق للفم، يعمل بالبطاريات وUSB.",
     stock_quantity: 100,
     status: "active",
+    safka_product_id: "69615044356433dea16f0bd8",
+    safka_property_id: "69615044356433dea16f0bd9",
+    safka_commission: 294,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     offers: [
@@ -287,9 +290,9 @@ const initialOrders: Order[] = [
 const initialSettings: SystemSettings = {
   safqa_api_base_url: process.env.SAFQA_API_BASE_URL || "https://api.safqapay.com/v1",
   safqa_merchant_id: process.env.SAFQA_MERCHANT_ID || "MERCHANT_EG_984",
-  safqa_api_secret_token: process.env.SAFQA_API_SECRET_TOKEN || "",
+  safqa_api_secret_token: process.env.SAFQA_API_SECRET_TOKEN || process.env.SAFKA_API_KEY || "sk_542077e40b44f0837da89f7f542f752270ac78644240cfa46a98b9afe8e312fc",
   safqa_webhook_secret: process.env.SAFQA_WEBHOOK_SECRET || "WH_SECRET_984",
-  safqa_sandbox_mode: true,
+  safqa_sandbox_mode: false,
   safqa_auto_forward: true,
   default_meta_pixel_id: process.env.NEXT_PUBLIC_META_PIXEL_ID || "1636283807582751",
   default_meta_capi_token: process.env.META_CAPI_ACCESS_TOKEN || "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
@@ -629,6 +632,20 @@ export const dbStore = {
     if (found) {
       found.status = status;
       found.updated_at = new Date().toISOString();
+      return true;
+    }
+    return false;
+  },
+
+  async deleteLandingPage(id: string): Promise<boolean> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      await admin.from("landing_pages").delete().eq("id", id);
+    }
+    const idx = memoryLandingPages.findIndex((p) => p.id === id || p.slug === id);
+    if (idx >= 0) {
+      memoryLandingPages.splice(idx, 1);
+      saveToFile();
       return true;
     }
     return false;
