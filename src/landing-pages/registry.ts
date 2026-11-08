@@ -1,6 +1,7 @@
 import React from "react";
 import { Product, LandingPage } from "@/types";
 import StarterLandingPage from "./starter-template/page";
+import MeshNebulizerLandingPage from "./mesh-nebulizer/page";
 
 export interface LandingPageComponentProps {
   product: Product;
@@ -16,6 +17,9 @@ export const landingPageRegistry: Record<string, React.ComponentType<LandingPage
   "starter-template": StarterLandingPage,
   "safka-b5fb3b6b": StarterLandingPage,
   "rexrack-massage-gun": StarterLandingPage,
+  "mesh-nebulizer": MeshNebulizerLandingPage,
+  "portable-nebulizer": MeshNebulizerLandingPage,
+  "safka-8ftidwr": MeshNebulizerLandingPage,
 };
 
 /**
