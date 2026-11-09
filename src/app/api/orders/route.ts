@@ -159,6 +159,13 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (id) {
+      const order = await dbStore.getOrder(id);
+      if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
+      return NextResponse.json({ success: true, order });
+    }
+
     const landing_page_slug = searchParams.get("lp") || undefined;
     const status = (searchParams.get("status") as any) || undefined;
     const search = searchParams.get("q") || undefined;
@@ -170,6 +177,37 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, orders });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const body = await req.json().catch(() => ({}));
+    const orderId = searchParams.get("id") || body.id || body.orderId;
+
+    if (!orderId) {
+      return NextResponse.json({ success: false, error: "معرف الطلب مطلوب" }, { status: 400 });
+    }
+
+    const { status, action } = body;
+
+    // Retry Safka Sync action
+    if (action === "retry_safqa") {
+      const order = await dbStore.getOrder(orderId);
+      if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
+      const res = await SafkaClient.createOrder(order);
+      return NextResponse.json(res);
+    }
+
+    if (status) {
+      const updated = await dbStore.updateOrderStatus(orderId, status);
+      return NextResponse.json({ success: updated });
+    }
+
+    return NextResponse.json({ success: false, error: "لا يوجد إجراء محدد" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

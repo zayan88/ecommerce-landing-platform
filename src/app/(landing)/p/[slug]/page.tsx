@@ -12,6 +12,11 @@ interface PageProps {
   };
 }
 
+export async function generateStaticParams() {
+  const landingPages = await dbStore.getLandingPages();
+  return landingPages.map((lp) => ({ slug: lp.slug }));
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const lp = await dbStore.getLandingPage(params.slug);
   if (!lp) return { title: "الصفحة غير موجودة" };

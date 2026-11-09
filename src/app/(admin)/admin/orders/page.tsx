@@ -61,7 +61,7 @@ export default function AdminOrdersPage() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await fetch(`/api/orders?id=${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -81,7 +81,7 @@ export default function AdminOrdersPage() {
   const handleRetrySafqa = async (orderId: string) => {
     try {
       setRetryingId(orderId);
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await fetch(`/api/orders?id=${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "retry_safqa" }),
