@@ -58,7 +58,10 @@ export default function BodyMassagerLandingPage({
   const [activeUseTab, setActiveUseTab] = useState<"shoulder" | "back" | "abdomen" | "knee">("shoulder");
 
   const galleryImages = [
-    { src: "/landing-pages/body-massager/images/hero.webp", label: "الجهاز والشاشة الديجيتال" },
+    { src: "/landing-pages/body-massager/images/hero.webp", label: "الجهاز والمواصفات" },
+    { src: "/landing-pages/body-massager/images/features_1.webp", label: "تشريح ومواصفات الجهاز" },
+    { src: "/landing-pages/body-massager/images/features_2.webp", label: "4 استخدامات في جهاز واحد" },
+    { src: "/landing-pages/body-massager/images/features_3.webp", label: "محتويات العلبة الأصلية" },
     { src: "/landing-pages/body-massager/images/use_case_shoulder.webp", label: "الكتف والرقبة" },
     { src: "/landing-pages/body-massager/images/use_case_back.webp", label: "الظهر والفقرات" },
     { src: "/landing-pages/body-massager/images/use_case_abdomen.webp", label: "البطن والوسط" },
@@ -123,13 +126,13 @@ export default function BodyMassagerLandingPage({
             </div>
 
             {/* Clickable Gallery Thumbnails */}
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
               {galleryImages.map((img, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => setSelectedImage(img.src)}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer p-1 bg-white ${
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer p-0.5 bg-white ${
                     selectedImage === img.src ? "border-orange-600 shadow-md ring-2 ring-orange-200" : "border-slate-200 opacity-70 hover:opacity-100"
                   }`}
                 >
@@ -219,6 +222,70 @@ export default function BodyMassagerLandingPage({
               <span>اطلب الآن - الدفع بعد المعاينة والفحص</span>
               <ArrowDown className="w-5 h-5" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2.5. Comprehensive Visual Infographics Section (يغنيك عن القراءة) */}
+      <section className="py-12 bg-slate-900 text-white px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3.5 py-1 rounded-full border border-amber-500/20">
+              كل التفاصيل واضحة بالصور
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
+              انفوجرافيك تفصيلي للجهاز الأصلي يغنيك عن القراءة
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">
+              تعرّف على التشريح الهندسي، والمناطق العلاجية، ومحتويات العلبة بالكامل قبل الاستلام
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-orange-500/50 transition">
+              <div className="relative aspect-square">
+                <Image
+                  src="/landing-pages/body-massager/images/features_1.webp"
+                  alt="تشريح ومواصفات جهاز التدليك الشامل 5 في 1"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 bg-slate-900/90 text-right space-y-1">
+                <h3 className="font-black text-sm text-orange-400">1. تشريح ومواصفات الجهاز</h3>
+                <p className="text-xs text-slate-300">مواتير اهتزاز عميقة + شاشة ديجيتال باللمس + بطارية ليثيوم</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-orange-500/50 transition">
+              <div className="relative aspect-square">
+                <Image
+                  src="/landing-pages/body-massager/images/features_2.webp"
+                  alt="4 مناطق استخدام في جهاز واحد"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 bg-slate-900/90 text-right space-y-1">
+                <h3 className="font-black text-sm text-orange-400">2. مناطق العلاج والاستخدام</h3>
+                <p className="text-xs text-slate-300">الكتف والرقبة، الظهر والفقرات، البطن والوسط، والركبة والمفاصل</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-orange-500/50 transition">
+              <div className="relative aspect-square">
+                <Image
+                  src="/landing-pages/body-massager/images/features_3.webp"
+                  alt="محتويات العلبة الأصلية كاملة"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 bg-slate-900/90 text-right space-y-1">
+                <h3 className="font-black text-sm text-orange-400">3. محتويات العلبة (افتح واختبر)</h3>
+                <p className="text-xs text-slate-300">الجهاز + أحزمة الفيلكرو + شاحن Type-C + كارت الضمان والكتالوج</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

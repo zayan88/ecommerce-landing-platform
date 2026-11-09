@@ -21,7 +21,19 @@ export const bodyMassagerConfig = {
   images: [
     {
       src: "/landing-pages/body-massager/images/hero.webp",
-      alt: "جهاز التدليك الشامل 5 في 1 الحراري والاهتزازي",
+      alt: "جهاز التدليك والمساج الشامل 5 في 1 الحراري والاهتزازي",
+    },
+    {
+      src: "/landing-pages/body-massager/images/features_1.webp",
+      alt: "تشريح ومواصفات جهاز التدليك الشامل 5 في 1",
+    },
+    {
+      src: "/landing-pages/body-massager/images/features_2.webp",
+      alt: "4 استخدامات في جهاز واحد للكتف والظهر والبطن والرجل",
+    },
+    {
+      src: "/landing-pages/body-massager/images/features_3.webp",
+      alt: "محتويات العلبة الأصلية كاملة",
     },
     {
       src: "/landing-pages/body-massager/images/use_case_shoulder.webp",

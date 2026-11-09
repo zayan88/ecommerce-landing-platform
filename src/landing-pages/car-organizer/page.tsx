@@ -61,9 +61,9 @@ export default function CarOrganizerLandingPage({
 
   const galleryImages = [
     { src: "/landing-pages/car-organizer/images/hero.webp", label: "المنظم والجيوب" },
-    { src: "/landing-pages/car-organizer/images/features_1.webp", label: "التنظيم في السيارة" },
-    { src: "/landing-pages/car-organizer/images/features_2.webp", label: "حامل التابلت" },
-    { src: "/landing-pages/car-organizer/images/features_3.webp", label: "أحزمة التثبيت" },
+    { src: "/landing-pages/car-organizer/images/features_1.webp", label: "تقسيم الجيوب 9×1" },
+    { src: "/landing-pages/car-organizer/images/features_2.webp", label: "حماية الفرش والجلد الفاخر" },
+    { src: "/landing-pages/car-organizer/images/features_3.webp", label: "التثبيت في 10 ثوانٍ" },
   ];
 
   // Live Urgency Timer
@@ -220,6 +220,55 @@ export default function CarOrganizerLandingPage({
               <span>اطلب الآن - الدفع بعد المعاينة والفحص</span>
               <ArrowDown className="w-5 h-5" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2.5. Comprehensive Visual Infographics Section (يغنيك عن القراءة) */}
+      <section className="py-12 bg-slate-900 text-white px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3.5 py-1 rounded-full border border-blue-500/20">
+              كل التفاصيل واضحة بالصور
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
+              انفوجرافيك تفصيلي للمنظم الذكي يغنيك عن القراءة
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">
+              تعرّف على توزيع الجيوب الذكية 9×1، وحماية المقاعد من أقدام الأطفال، وطريقة التركيب
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-blue-500/50 transition">
+              <div className="relative aspect-square">
+                <Image
+                  src="/landing-pages/car-organizer/images/features_1.webp"
+                  alt="تقسيم الجيوب الذكية 9 في 1"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 bg-slate-900/90 text-right space-y-1">
+                <h3 className="font-black text-sm text-blue-400">1. توزيع الجيوب الذكية 9×1</h3>
+                <p className="text-xs text-slate-300">حامل تابلت تفاعلي + 2 جيب حراري + جيب مناديل + جيوب سفلية عميقة</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-blue-500/50 transition">
+              <div className="relative aspect-square">
+                <Image
+                  src="/landing-pages/car-organizer/images/features_2.webp"
+                  alt="حماية المقاعد من الخدوش والأوساخ"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 bg-slate-900/90 text-right space-y-1">
+                <h3 className="font-black text-sm text-blue-400">2. حماية كاملة لفرش كراسي السيارة</h3>
+                <p className="text-xs text-slate-300">جلد PU مقاوم للماء والخدش، يحمي المقاعد ويمسح بلمسة واحدة</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

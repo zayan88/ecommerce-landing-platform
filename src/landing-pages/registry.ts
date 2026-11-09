@@ -29,17 +29,17 @@ export const landingPageRegistry: Record<string, React.ComponentType<LandingPage
   "starter-template": BodyMassagerLandingPage,
   "safka-b5fb3b6b": BodyMassagerLandingPage,
   "rexrack-massage-gun": BodyMassagerLandingPage,
+  "massage-cushion": BodyMassagerLandingPage,
+  "heating-massage-cushion": BodyMassagerLandingPage,
+  "cushion-rxuirx2": BodyMassagerLandingPage,
+  "safka-rxuirx2": BodyMassagerLandingPage,
+  "safka-6726c6a0": BodyMassagerLandingPage,
 
   // Product 3: Car Organizer
   "car-organizer": CarOrganizerLandingPage,
   "car-seat-organizer": CarOrganizerLandingPage,
   "safka-9pkjp8q": CarOrganizerLandingPage,
   "safka-6a29f09b": CarOrganizerLandingPage,
-  "massage-cushion": CarOrganizerLandingPage,
-  "heating-massage-cushion": CarOrganizerLandingPage,
-  "cushion-rxuirx2": CarOrganizerLandingPage,
-  "safka-rxuirx2": CarOrganizerLandingPage,
-  "safka-6726c6a0": CarOrganizerLandingPage,
 };
 
 /**

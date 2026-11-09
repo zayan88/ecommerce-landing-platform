@@ -64,10 +64,10 @@ export default function MeshNebulizerLandingPage({
   const [activeUseTab, setActiveUseTab] = useState<"sleep" | "office" | "travel">("sleep");
 
   const galleryImages = [
-    { src: "/landing-pages/mesh-nebulizer/images/hero.webp", label: "جهاز البخار المحمول" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_1.webp", label: "أثناء نوم الطفل" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_2.webp", label: "في المكتب والشغل" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_3.webp", label: "في السفر والخروج" },
+    { src: "/landing-pages/mesh-nebulizer/images/hero.webp", label: "الجهاز الصامت والمواصفات" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_1.webp", label: "تشريح وأجزاء النيبولايزر" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_2.webp", label: "دواعي الاستعمال العائلية" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_3.webp", label: "محتويات الطقم الطبي كاملة" },
   ];
 
   // Live Urgency Timer
@@ -224,6 +224,70 @@ export default function MeshNebulizerLandingPage({
               <span>اطلب الآن - الدفع بعد المعاينة والفحص</span>
               <ArrowDown className="w-5 h-5" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2.5. Comprehensive Visual Infographics Section (يغنيك عن القراءة) */}
+      <section className="py-12 bg-slate-900 text-white px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3.5 py-1 rounded-full border border-cyan-500/20">
+              كل التفاصيل واضحة بالصور
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
+              انفوجرافيك تفصيلي للنيبولايزر الأصلي يغنيك عن القراءة
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">
+              تعرّف على التشريح الطبي الدقيق، ودواعي الاستخدام، ومحتويات العلبة بالكامل
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-cyan-500/50 transition">
+              <div className="relative aspect-square">
+                <Image
+                  src="/landing-pages/mesh-nebulizer/images/features_1.webp"
+                  alt="تشريح ومواصفات النيبولايزر الذكي"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 bg-slate-900/90 text-right space-y-1">
+                <h3 className="font-black text-sm text-cyan-400">1. تشريح الجهاز والمواصفات</h3>
+                <p className="text-xs text-slate-300">زر تشغيل ذكي بلمسة واحدة + منفذ USB + درج بطاريات AA</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-cyan-500/50 transition">
+              <div className="relative aspect-square">
+                <Image
+                  src="/landing-pages/mesh-nebulizer/images/features_2.webp"
+                  alt="دواعي الاستعمال العائلية"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 bg-slate-900/90 text-right space-y-1">
+                <h3 className="font-black text-sm text-cyan-400">2. دواعي الاستعمال العائلية</h3>
+                <p className="text-xs text-slate-300">للأطفال والرضع أثناء النوم بدون فزع، ولكبار السن في السفر</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-cyan-500/50 transition">
+              <div className="relative aspect-square">
+                <Image
+                  src="/landing-pages/mesh-nebulizer/images/features_3.webp"
+                  alt="محتويات العلبة الطبية كاملة"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4 bg-slate-900/90 text-right space-y-1">
+                <h3 className="font-black text-sm text-cyan-400">3. محتويات الطقم الطبي (افتح واختبر)</h3>
+                <p className="text-xs text-slate-300">ماسك أطفال + ماسك كبار + قطعة فم + كابل USB + دليل التشغيل</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -18,9 +18,24 @@ export const meshNebulizerConfig = {
 
   images: [
     {
-      src: "/landing-pages/mesh-nebulizer/images/hero.jpg",
-      alt: "جهاز استنشاق البخار ميني Mesh Nebulizer محتويات العلبة",
-      caption: "طقم متكامل: الجهاز + ماسك كبار + ماسك أطفال + قطعة استنشاق للفم",
+      src: "/landing-pages/mesh-nebulizer/images/hero.webp",
+      alt: "جهاز استنشاق البخار ميني Mesh Nebulizer الصامت الأصلي",
+      caption: "الجهاز الصامت مع زر تشغيل بلمسة واحدة وشاشة تحكم",
+    },
+    {
+      src: "/landing-pages/mesh-nebulizer/images/features_1.webp",
+      alt: "مواصفات وتشريح جهاز استنشاق البخار الذكي",
+      caption: "كوب دواء شفاف قابل للفك ومنفذ USB ودرج بطاريات AA",
+    },
+    {
+      src: "/landing-pages/mesh-nebulizer/images/features_2.webp",
+      alt: "دواعي الاستعمال للأطفال وكبار السن",
+      caption: "جلسة هادئة والطفل نائم بدون أي فزع أو بكاء",
+    },
+    {
+      src: "/landing-pages/mesh-nebulizer/images/features_3.webp",
+      alt: "طقم الملحقات والعلبة الطبية الأصلية كاملة",
+      caption: "ماسك كبار + ماسك أطفال + قطعة استنشاق للفم + كابل USB",
     },
   ],
 
