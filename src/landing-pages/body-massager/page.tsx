@@ -53,6 +53,14 @@ export default function BodyMassagerLandingPage({
 
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [selectedImage, setSelectedImage] = useState("/landing-pages/body-massager/images/hero.webp");
+
+  const galleryImages = [
+    { src: "/landing-pages/body-massager/images/hero.webp", label: "الجهاز والرؤوس" },
+    { src: "/landing-pages/body-massager/images/features_1.webp", label: "رؤوس التدليك" },
+    { src: "/landing-pages/body-massager/images/features_2.webp", label: "المواصفات" },
+    { src: "/landing-pages/body-massager/images/features_3.webp", label: "طريقة الاستخدام" },
+  ];
 
   // Live Urgency Timer
   const [timeLeft, setTimeLeft] = useState({ hours: 3, minutes: 35, seconds: 20 });
@@ -92,15 +100,15 @@ export default function BodyMassagerLandingPage({
       {/* 2. Hero Section (Above the Fold on Mobile) */}
       <section className="pt-6 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Product Image */}
+          {/* Product Image & Interactive Gallery */}
           <div className="lg:col-span-6 space-y-3">
             <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-white aspect-square">
               <Image
-                src="/landing-pages/body-massager/images/hero.webp"
+                src={selectedImage}
                 alt="جهاز التدليك والمساج الشامل 5×1 الحراري والاهتزازي"
                 fill
                 priority
-                className="object-contain p-4"
+                className="object-contain p-4 transition-all duration-300"
               />
               <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                 <Flame className="w-3.5 h-3.5" />
@@ -109,6 +117,22 @@ export default function BodyMassagerLandingPage({
               <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
                 طقم 5 رؤوس مساج سيليكونية مرفق
               </div>
+            </div>
+
+            {/* Clickable Gallery Thumbnails */}
+            <div className="grid grid-cols-4 gap-2">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedImage(img.src)}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer p-1 bg-white ${
+                    selectedImage === img.src ? "border-orange-600 shadow-md ring-2 ring-orange-200" : "border-slate-200 opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  <Image src={img.src} alt={img.label} fill className="object-contain p-1" />
+                </button>
+              ))}
             </div>
 
             {/* Quick Micro Badges */}

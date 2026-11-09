@@ -55,6 +55,14 @@ export default function MeshNebulizerLandingPage({
 
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [selectedImage, setSelectedImage] = useState("/landing-pages/mesh-nebulizer/images/hero.webp");
+
+  const galleryImages = [
+    { src: "/landing-pages/mesh-nebulizer/images/hero.webp", label: "الجهاز والملحقات" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_1.webp", label: "والطفل نائم" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_2.webp", label: "دواعي الاستعمال" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_5.webp", label: "مكونات الطقم" },
+  ];
 
   // Live Urgency Timer
   const [timeLeft, setTimeLeft] = useState({ hours: 3, minutes: 28, seconds: 45 });
@@ -94,15 +102,15 @@ export default function MeshNebulizerLandingPage({
       {/* 2. Hero Section (Above the Fold on Mobile) */}
       <section className="pt-6 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Product Image */}
+          {/* Product Image & Interactive Gallery */}
           <div className="lg:col-span-6 space-y-3">
             <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-white aspect-square">
               <Image
-                src="/landing-pages/mesh-nebulizer/images/hero.jpg"
+                src={selectedImage}
                 alt="جهاز استنشاق البخار المحمول ميني Mesh Nebulizer"
                 fill
                 priority
-                className="object-contain p-4"
+                className="object-contain p-4 transition-all duration-300"
               />
               <div className="absolute top-3 right-3 bg-cyan-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                 <VolumeX className="w-3.5 h-3.5" />
@@ -111,6 +119,22 @@ export default function MeshNebulizerLandingPage({
               <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
                 ماسك أطفال + ماسك كبار + قطعة فم
               </div>
+            </div>
+
+            {/* Clickable Gallery Thumbnails */}
+            <div className="grid grid-cols-4 gap-2">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedImage(img.src)}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer p-1 bg-white ${
+                    selectedImage === img.src ? "border-cyan-600 shadow-md ring-2 ring-cyan-200" : "border-slate-200 opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  <Image src={img.src} alt={img.label} fill className="object-contain p-1" />
+                </button>
+              ))}
             </div>
 
             {/* Quick Micro Badges */}

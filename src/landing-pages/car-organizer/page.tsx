@@ -53,6 +53,14 @@ export default function CarOrganizerLandingPage({
 
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [selectedImage, setSelectedImage] = useState("/landing-pages/car-organizer/images/hero.webp");
+
+  const galleryImages = [
+    { src: "/landing-pages/car-organizer/images/hero.webp", label: "المنظم والجيوب" },
+    { src: "/landing-pages/car-organizer/images/features_1.webp", label: "التنظيم في السيارة" },
+    { src: "/landing-pages/car-organizer/images/features_2.webp", label: "حامل التابلت" },
+    { src: "/landing-pages/car-organizer/images/features_3.webp", label: "أحزمة التثبيت" },
+  ];
 
   // Live Urgency Timer
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 18, seconds: 40 });
@@ -92,15 +100,15 @@ export default function CarOrganizerLandingPage({
       {/* 2. Hero Section (Above the Fold on Mobile) */}
       <section className="pt-6 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Product Image */}
+          {/* Product Image & Interactive Gallery */}
           <div className="lg:col-span-6 space-y-3">
             <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-white aspect-square">
               <Image
-                src="/landing-pages/car-organizer/images/hero.webp"
+                src={selectedImage}
                 alt="منظم ظهر مقعد السيارة متعدد الجيوب مع حامل تابلت"
                 fill
                 priority
-                className="object-contain p-4"
+                className="object-contain p-4 transition-all duration-300"
               />
               <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                 <Tablet className="w-3.5 h-3.5" />
@@ -109,6 +117,22 @@ export default function CarOrganizerLandingPage({
               <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
                 جيوب متعددة + أحزمة تثبيت محكمة
               </div>
+            </div>
+
+            {/* Clickable Gallery Thumbnails */}
+            <div className="grid grid-cols-4 gap-2">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedImage(img.src)}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer p-1 bg-white ${
+                    selectedImage === img.src ? "border-blue-600 shadow-md ring-2 ring-blue-200" : "border-slate-200 opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  <Image src={img.src} alt={img.label} fill className="object-contain p-1" />
+                </button>
+              ))}
             </div>
 
             {/* Quick Micro Badges */}
