@@ -22,9 +22,7 @@ import {
   Package,
   Activity,
   Layers,
-  Home,
-  Laptop,
-  Car,
+  BatteryCharging,
 } from "lucide-react";
 
 interface BodyMassagerPageProps {
@@ -57,13 +55,14 @@ export default function BodyMassagerLandingPage({
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [selectedImage, setSelectedImage] = useState("/landing-pages/body-massager/images/hero.webp");
-  const [activeUseTab, setActiveUseTab] = useState<"home" | "office" | "car">("home");
+  const [activeUseTab, setActiveUseTab] = useState<"shoulder" | "back" | "abdomen" | "knee">("shoulder");
 
   const galleryImages = [
-    { src: "/landing-pages/body-massager/images/hero.webp", label: "شلتة المساج والريموت" },
-    { src: "/landing-pages/body-massager/images/use_case_car.webp", label: "في مقعد السيارة" },
-    { src: "/landing-pages/body-massager/images/use_case_home.webp", label: "في كنب المنزل" },
-    { src: "/landing-pages/body-massager/images/use_case_office.webp", label: "على كرسي المكتب" },
+    { src: "/landing-pages/body-massager/images/hero.webp", label: "الجهاز والشاشة الديجيتال" },
+    { src: "/landing-pages/body-massager/images/use_case_shoulder.webp", label: "الكتف والرقبة" },
+    { src: "/landing-pages/body-massager/images/use_case_back.webp", label: "الظهر والفقرات" },
+    { src: "/landing-pages/body-massager/images/use_case_abdomen.webp", label: "البطن والوسط" },
+    { src: "/landing-pages/body-massager/images/use_case_knee.webp", label: "الركبة والمفاصل" },
   ];
 
   // Live Urgency Timer
@@ -109,22 +108,22 @@ export default function BodyMassagerLandingPage({
             <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-white aspect-square">
               <Image
                 src={selectedImage}
-                alt="جهاز التدليك والمساج الشامل 5×1 الحراري والاهتزازي"
+                alt={bodyMassagerConfig.productTitle}
                 fill
                 priority
                 className="object-contain p-4 transition-all duration-300"
               />
               <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                 <Flame className="w-3.5 h-3.5" />
-                <span>تدفئة حرارية + مساج اهتزازي كامل</span>
+                <span>كمادات حرارية + مساج اهتزازي</span>
               </div>
               <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
-                فيشة منزلية 220V + وصلة سيارة 12V + ريموت كنترول
+                لاسلكي بشاشة ديجيتال + شحن USB
               </div>
             </div>
 
             {/* Clickable Gallery Thumbnails */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               {galleryImages.map((img, idx) => (
                 <button
                   key={idx}
@@ -134,7 +133,7 @@ export default function BodyMassagerLandingPage({
                     selectedImage === img.src ? "border-orange-600 shadow-md ring-2 ring-orange-200" : "border-slate-200 opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <Image src={img.src} alt={img.label} fill className="object-contain p-1" />
+                  <Image src={img.src} alt={img.label} fill className="object-cover rounded-lg" />
                 </button>
               ))}
             </div>
@@ -143,15 +142,15 @@ export default function BodyMassagerLandingPage({
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
                 <Zap className="w-4 h-4 text-amber-500 mx-auto mb-1" />
-                <span className="font-bold text-[11px] text-slate-800">5 مواتير اهتزاز</span>
+                <span className="font-bold text-[11px] text-slate-800">5 استخدامات بجهاز 1</span>
               </div>
               <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
                 <Flame className="w-4 h-4 text-red-500 mx-auto mb-1" />
-                <span className="font-bold text-[11px] text-slate-800">حرارة مهدئة للفقرات</span>
+                <span className="font-bold text-[11px] text-slate-800">3 درجات حرارة</span>
               </div>
               <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
-                <span className="font-bold text-[11px] text-slate-800">معاينة قبل الدفع</span>
+                <BatteryCharging className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+                <span className="font-bold text-[11px] text-slate-800">لاسلكي تماماً</span>
               </div>
             </div>
           </div>
@@ -169,30 +168,30 @@ export default function BodyMassagerLandingPage({
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black font-heading text-slate-950 leading-tight">
-              جلسة مساج اهتزازي كامل وتدفئة حرارية للفقرات في عربيتك وبيتك ومكتبك
+              جهاز التدليك والمساج الشامل 5×1 بالحرارة والاهتزاز للكتف والظهر والبطن والرجل
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              شلتة وكرسي المساج متعدد الاستخدامات المتطور. يجمع بين المساج الاهتزازي العميق لكامل الظهر والفقرات والتدفئة الحرارية لتسكين الآلام وتنشيط الدورة الدموية أثناء القيادة أو الجلوس الطويل.
+              ودّع تشنج الكتفين وآلام أسفل الظهر وخشونة الركبتين! جهاز ذكي شامل يجمع بين المساج الاهتزازي العميق والتدفئة الحرارية لتسكين فوري للألم وتنشيط الدورة الدموية وأنت بتتحرك بحرية.
             </p>
 
             {/* Checklist of Core Benefits */}
             <div className="space-y-2 text-xs sm:text-sm text-slate-700 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-semibold">تغطية شاملة للرقبة والكتفين والفقرات القطنية والفخذين بـ 5 مواتير</span>
+                <span className="font-semibold">يغطي 5 مناطق رئيسية: الكتف، الظهر، البطن، الركبة، والرجل</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-semibold">خاصية التدفئة الحرارية اللطيفة لتخفيف آلام الفقرات وتنشيط الدورة الدموية</span>
+                <span className="font-semibold">كمادات تدفئة حرارية بالأشعة تحت الحمراء لتسكين الألم والالتهابات</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-semibold">مزودة بفيشة كهرباء للمنزل 220V + وصلة ولاعة سيارة 12V</span>
+                <span className="font-semibold">شاشة ديجيتال ذكية باللمس لاختيار أوضاع المساج ومستويات الحرارة</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-semibold">ريموت كنترول ذكي للتحكم في السرعات ومناطق التدليك بلمسة واحدة</span>
+                <span className="font-semibold">لاسلكي بالكامل ويعمل ببطارية ليثيوم قوية قابلة لإعادة الشحن USB</span>
               </div>
             </div>
 
@@ -228,29 +227,29 @@ export default function BodyMassagerLandingPage({
       <section className="py-12 bg-white border-y border-slate-200 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto space-y-6 text-center">
           <span className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">
-            المعاناة اليومية مع إجهاد العضلات
+            المعاناة اليومية مع آلام المفاصل والشد العضلي
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
-            آلام وتصلب عضلات الرقبة والظهر اللي بتعطلك عن يومك
+            آلام الرقبة، الظهر، والمفاصل اللي بتعطلك عن يومك وشغلك
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right pt-2">
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
               <div className="text-red-600 font-bold text-sm">❌ قعدة الشاشات والمكاتب الطويلة</div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                الجلوس الخاطئ 8 ساعات قدام الكمبيوتر أو الموبايل بيسبب شد عضلي مستمر في الرقبة والكتف وصداع يومي مزمن.
+                الجلوس لساعات أمام الكمبيوتر يسبب تيبس مؤلم في لوح الكتف والفقرات، ويجعلك تنهي يومك بصداع وإرهاق شديد.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="text-red-600 font-bold text-sm">❌ تكاليف جلسات المساج والعلاج الطبيعي</div>
+              <div className="text-red-600 font-bold text-sm">❌ خشونة الركبتين وآلام المفاصل</div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                جلسات المساج بقت بمئات الجنيهات ومفيش وقت تروح مراكز متخصصة بعد يوم شغل وتعب في الزحمة.
+                صعوبة الحركة وصعود السلالم، وتكاليف جلسات العلاج الطبيعي والمراكز المتخصصة الباهظة أسبوعياً.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. How It Works in 3 Steps (من فيديو اللايت فانلز) */}
+      {/* 4. How It Works in 3 Steps */}
       <section className="py-12 px-4 sm:px-6 max-w-4xl mx-auto space-y-6 text-center">
         <span className="text-xs font-bold text-orange-700 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
           سهولة في 3 خطوات فقط
@@ -272,109 +271,116 @@ export default function BodyMassagerLandingPage({
         </div>
       </section>
 
-      {/* 4.5. Interactive Use Cases Section (حالات الاستخدام اليومية - تصميم صورة العميل) */}
+      {/* 4.5. Interactive Use Cases Section (حالات الاستخدام الشاملة - تصميم صورة العميل) */}
       <section className="py-14 bg-[#0a0f1d] text-white px-4 sm:px-6">
         <div className="max-w-5xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3.5 py-1 rounded-full border border-amber-500/20">
-              جهاز واحد لكل أوقاتك
+              جهاز واحد لكل احتياجاتك
             </span>
             <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
-              أينما كنت.. جلسة استرخاء كاملة في متناول يدك
+              جلسة علاج طبيعي واسترخاء لأي منطقة في جسمك
             </h2>
             <p className="text-xs sm:text-sm text-slate-400">
-              اختر وضع الاستخدام وشوف إزاي الجهاز بيخدمك في كل لحظات يومك
+              اختر المنطقة وشوف إزاي الجهاز بيعالج الألم ويفك الشد العضلي فوراً
             </p>
           </div>
 
           {/* Interactive Rounded Pill Tab Switcher */}
-          <div className="flex justify-center gap-2 max-w-md mx-auto p-1.5 rounded-full bg-[#11192e] border border-slate-800">
+          <div className="flex flex-wrap justify-center gap-2 max-w-xl mx-auto p-1.5 rounded-full bg-[#11192e] border border-slate-800">
             <button
-              onClick={() => setActiveUseTab("home")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
-                activeUseTab === "home"
+              onClick={() => setActiveUseTab("shoulder")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[110px] ${
+                activeUseTab === "shoulder"
                   ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 font-black"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              <Home className="w-4 h-4" />
-              <span>في المنزل</span>
+              <span>الكتف والرقبة</span>
             </button>
             <button
-              onClick={() => setActiveUseTab("office")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
-                activeUseTab === "office"
+              onClick={() => setActiveUseTab("back")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[110px] ${
+                activeUseTab === "back"
                   ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 font-black"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              <Laptop className="w-4 h-4" />
-              <span>في المكتب</span>
+              <span>الظهر والفقرات</span>
             </button>
             <button
-              onClick={() => setActiveUseTab("car")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
-                activeUseTab === "car"
+              onClick={() => setActiveUseTab("abdomen")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[110px] ${
+                activeUseTab === "abdomen"
                   ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 font-black"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              <Car className="w-4 h-4" />
-              <span>في السيارة</span>
+              <span>البطن والوسط</span>
+            </button>
+            <button
+              onClick={() => setActiveUseTab("knee")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer min-w-[110px] ${
+                activeUseTab === "knee"
+                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 font-black"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <span>الركبة والمفاصل والرجل</span>
             </button>
           </div>
 
           {/* Active Tab Showcase Card */}
           <div className="p-6 sm:p-8 rounded-3xl bg-[#0f172a] border border-slate-800 text-right">
-            {activeUseTab === "home" && (
+            {activeUseTab === "shoulder" && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
                   <Image
-                    src="/landing-pages/body-massager/images/use_case_home.webp"
-                    alt="جلسة استرخاء على كنب وفوتيه المنزل"
+                    src="/landing-pages/body-massager/images/use_case_shoulder.webp"
+                    alt="تدليك وفك تشنج الكتف والرقبة"
                     fill
                     className="object-cover"
                   />
                   <div className="absolute top-3 right-3 bg-orange-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    فيشة 220V منزلية
+                    فك فوري لتشنج الأكتاف
                   </div>
                 </div>
                 <div className="md:col-span-7 space-y-4">
                   <div className="inline-flex items-center gap-2 text-emerald-400 font-black text-lg sm:text-xl">
-                    <Home className="w-6 h-6 shrink-0" />
-                    <span>جلسة استرخاء على كنب المنزل (Home Living Mode)</span>
+                    <Activity className="w-6 h-6 shrink-0" />
+                    <span>تسكين وتفكيك فوري لتشنج الكتف والرقبة (Shoulder & Neck Relief)</span>
                   </div>
                   <p className="text-sm text-slate-300 leading-relaxed">
-                    بعد يوم شاق من التعب والوقفة، ثبّته على كرسي الليفينج أو الفوتيه واشرب كوبايتك المفضلة في الدفا. جلسة مساج اهتزازي كامل ترجع الحيوية لجسمك وتساعدك على النوم العميق والمريح.
+                    ثبّته بسهولة على مفصل الكتف ولوح الظهر واضبط درجة التدفئة والاهتزاز. ينشط الدورة الدموية في ثوانٍ ويفك التصلب الناتج عن قعدة الشاشات والموبايل والإجهاد اليومي.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>مثالي لكبار السن وآلام المفاصل</span>
+                      <span>فك فوري لشد الكتف وتيبس الرقبة</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>فيشة منزلية 220V مرفقة</span>
+                      <span>حرارة دافئة بالأشعة تحت الحمراء</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>خامة مريحة وسهلة التنظيف</span>
+                      <span>حزام مرن يمسك بإحكام بدون مساعدة</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>تدفئة حرارية لتنشيط الدورة الدموية</span>
+                      <span>خفيف وتتحرك بيه بحرية في البيت أو المكتب</span>
                     </span>
                   </div>
                 </div>
               </div>
             )}
 
-            {activeUseTab === "office" && (
+            {activeUseTab === "back" && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
                   <Image
-                    src="/landing-pages/body-massager/images/use_case_office.webp"
-                    alt="تخفيف إجهاد العمل المكتبي على كرسي المكتب"
+                    src="/landing-pages/body-massager/images/use_case_back.webp"
+                    alt="دعم وتسكين فقرات الظهر"
                     fill
                     className="object-cover"
                   />
@@ -384,71 +390,114 @@ export default function BodyMassagerLandingPage({
                 </div>
                 <div className="md:col-span-7 space-y-4">
                   <div className="inline-flex items-center gap-2 text-amber-400 font-black text-lg sm:text-xl">
-                    <Laptop className="w-6 h-6 shrink-0" />
-                    <span>تخفيف إجهاد العمل المكتبي (Office Work Mode)</span>
+                    <Layers className="w-6 h-6 shrink-0" />
+                    <span>راحة تامة وتسكين لآلام فقرات وأسفل الظهر (Spine & Back Therapy)</span>
                   </div>
                   <p className="text-sm text-slate-300 leading-relaxed">
-                    بعد ساعات طويلة من الجلوس أمام شاشة الكمبيوتر، ثبته على كرسي مكتبك بضغطة زر لفك تشنج الأكتاف وتجديد النشاط بدون إيقاف شغلك أو إزعاج زملائك في العمل.
+                    يعمل ككمادة حرارية ومساج عميق لفقرات العمود الفقري والقطنية. يزيل الضغط الواقع على الغضاريف بعد ساعات الوقوف الطويلة أو القيادة المرهقة ويساعد على الاسترخاء والنوم العميق.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>فك فوري لشد الرقبة والكتفين</span>
+                      <span>تخفيف آلام الانزلاق والفقرات القطنية</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>صوت هادئ لا يشتت تركيز العمل</span>
+                      <span>مساج اهتزازي عميق يريح العضلات المتصلبة</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>تصميم مريح يدعم تقوس الفقرات القطنية</span>
+                      <span>يحسن استقامة الظهر وتدفق الدم</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>استخدام آمن مع إيقاف تلقائي ذكي</span>
+                      <span>3 مستويات حرارة أمان تناسب حساسيتك</span>
                     </span>
                   </div>
                 </div>
               </div>
             )}
 
-            {activeUseTab === "car" && (
+            {activeUseTab === "abdomen" && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
                   <Image
-                    src="/landing-pages/body-massager/images/use_case_car.webp"
-                    alt="مساج وتدفئة في مشاوير السفر والسيارة"
+                    src="/landing-pages/body-massager/images/use_case_abdomen.webp"
+                    alt="تدفئة مهدئة وراحة للبطن والوسط"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-red-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                    تدفئة كمادات مهدئة
+                  </div>
+                </div>
+                <div className="md:col-span-7 space-y-4">
+                  <div className="inline-flex items-center gap-2 text-rose-400 font-black text-lg sm:text-xl">
+                    <Heart className="w-6 h-6 shrink-0" />
+                    <span>تدفئة مهدئة وراحة سريعة لتقلصات البطن والوسط (Abdomen & Core Warmth)</span>
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    لف الحزام حول البطن أو الخصر واستمتع بكمادات حرارية مهدئة تريح المغص والتقلصات المعوية وآلام البرد في الشتاء، مع اهتزاز خفيف يساعد على تحسين راحة الجهاز الهضمي.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>تسكين سريع للتقلصات والمغص والبرد</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>حرارة مهدئة ومريحة جداً لمنطقة الخصر</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>حزام لاصق فيلكرو يناسب أي مقاس بطن</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>إيقاف تلقائي ذكي لضمان الأمان التام</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeUseTab === "knee" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
+                  <Image
+                    src="/landing-pages/body-massager/images/use_case_knee.webp"
+                    alt="علاج خشونة وتسكين آلام الركبة والمفاصل والرجل"
                     fill
                     className="object-cover"
                   />
                   <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    وصلة ولاعة 12V مرفقة
+                    تسكين خشونة المفاصل
                   </div>
                 </div>
                 <div className="md:col-span-7 space-y-4">
-                  <div className="inline-flex items-center gap-2 text-sky-400 font-black text-lg sm:text-xl">
-                    <Car className="w-6 h-6 shrink-0" />
-                    <span>راحة وريلاكس في مشاوير السفر والزحمة (Car Travel Mode)</span>
+                  <div className="inline-flex items-center gap-2 text-emerald-400 font-black text-lg sm:text-xl">
+                    <Zap className="w-6 h-6 shrink-0" />
+                    <span>علاج خشونة المفاصل وتسكين آلام الركبة والرجل (Knee & Joint Recovery)</span>
                   </div>
                   <p className="text-sm text-slate-300 leading-relaxed">
-                    زحمة الطرق ومشاوير السفر الطويلة بتسبب إجهاد للفقرات القطنية وعضلات الساقين. استمتع بتدليك عميق يمنع تشنج الظهر ويخلي مشوارك وسفرك متعة واسترخاء.
+                    الحل الأمثل لكبار السن والرياضيين! يلتف حول الركبة أو السمانة مباشرة ليمد المفصل بدفء عميق واهتزاز يقلل احتكاك الغضاريف والالتهابات ويعيد لك حرية المشي وصعود السلم بدون ألم.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>تخفيف تيبس العضلات بعد القيادة الطويلة</span>
+                      <span>تخفيف فوري لخشونة الركبة والتهاب المفاصل</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>سهل التثبيت وخفيف في الحمل</span>
+                      <span>ممتاز لكبار السن وصعود السلالم</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>تدفئة مهدئة للظهر أثناء السفر الشتوي</span>
+                      <span>ينشط الدورة الدموية في الساقين والقدمين</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>حجم عملي يمكن تركه في شنطة السيارة دائماً</span>
+                      <span>بطارية لاسلكية قوية للاستخدام في أي مكان</span>
                     </span>
                   </div>
                 </div>
@@ -458,160 +507,146 @@ export default function BodyMassagerLandingPage({
         </div>
       </section>
 
-      {/* 5. Before & After Comparison Box (تصميم فريم 4 من الفيديو) */}
-      <section className="py-12 bg-slate-100/80 border-y border-slate-200 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto space-y-6 text-center">
-          <span className="text-xs font-bold text-orange-700 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-2xs">
-            الفرق واضح
+      {/* 5. Before vs After Comparison */}
+      <section className="py-12 px-4 sm:px-6 max-w-4xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <span className="text-xs font-bold text-orange-700 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
+            الفرق واضح تماماً
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
-            يومك قبل وبعد جهاز التدليك الشامل 5×1
+            حياتك ويومك قبل وبعد جهاز المساج الشامل
           </h2>
-          <p className="text-xs text-slate-600">نفس المجهود والعمل... لكن مع راحة واسترخاء فوري لعضلاتك</p>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 text-right">
-            {/* Without */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
-              <div className="text-red-600 font-black text-base flex items-center gap-1.5">
-                <span>من غيره</span> <span>😵</span>
-              </div>
-              <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
-                {bodyMassagerConfig.beforeAfter.without.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-red-600">
-                    <span>❌</span> <span className="text-slate-700">{item}</span>
-                  </li>
-                ))}
-              </ul>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right pt-2">
+          <div className="p-6 rounded-3xl bg-red-50/50 border border-red-200 space-y-3">
+            <div className="font-bold text-red-700 text-sm flex items-center gap-2">
+              <span>❌ من غير الجهاز (المعاناة المستمرة):</span>
             </div>
-
-            {/* With Device */}
-            <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-3 border border-slate-800">
-              <div className="text-amber-400 font-black text-base flex items-center gap-1.5">
-                <span>معاه</span> <span>😌</span>
-              </div>
-              <ul className="space-y-2 text-xs sm:text-sm text-slate-200">
-                {bodyMassagerConfig.beforeAfter.with.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-emerald-400">
-                    <span>✓</span> <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
+              {bodyMassagerConfig.beforeAfter.without.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold shrink-0">•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Value Hook */}
-          <div className="pt-4 text-center">
-            <h3 className="text-lg sm:text-xl font-black text-slate-950 font-heading">
-              {bodyMassagerConfig.beforeAfter.valueHook}
-            </h3>
-            <p className="text-xs text-slate-600 mt-1 max-w-xl mx-auto">
-              مش محتاج تسيب بيتك أو تدفع مبالغ ضخمة في جلسات خارجية.. راحة عضلاتك أصبحت في متناول يدك دائماً.
-            </p>
+          <div className="p-6 rounded-3xl bg-emerald-50/60 border border-emerald-300 space-y-3 shadow-xs">
+            <div className="font-bold text-emerald-800 text-sm flex items-center gap-2">
+              <span>✅ مع جهاز التدليك الشامل (الراحة والنشاط):</span>
+            </div>
+            <ul className="space-y-2 text-xs sm:text-sm text-slate-800">
+              {bodyMassagerConfig.beforeAfter.with.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <span className="font-medium">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Value Hook */}
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center text-xs sm:text-sm font-bold text-amber-950">
+          💡 {bodyMassagerConfig.beforeAfter.valueHook}
+        </div>
+      </section>
+
+      {/* 6. Real Customer Reviews */}
+      <section className="py-12 bg-white border-y border-slate-200 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto space-y-6 text-center">
+          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            تجارب حقيقية
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
+            آراء عملائنا الذين تخلصوا من آلام المفاصل والشد العضلي
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-right pt-2">
+            {bodyMassagerConfig.reviews.map((rev, idx) => (
+              <div key={idx} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">{rev.name}</h3>
+                    <span className="text-[11px] text-slate-500">{rev.city}</span>
+                  </div>
+                  <div className="flex text-amber-500">
+                    {[...Array(rev.rating)].map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-amber-500" />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">{rev.comment}</p>
+                <div className="text-[10px] text-slate-400">{rev.date}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 6. Customer Reviews */}
-      <section className="py-12 px-4 sm:px-6 max-w-4xl mx-auto space-y-6 text-center">
-        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-          تجارب حقيقية
-        </span>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
-          آراء العملاء بعد تجربة الجهاز
-        </h2>
+      {/* 7. The Order Form Section */}
+      <section id="order-form-section" className="py-12 px-4 sm:px-6 max-w-3xl mx-auto">
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-orange-500 shadow-xl space-y-6">
+          <div className="text-center space-y-2">
+            <span className="inline-block text-xs font-bold text-orange-600 bg-orange-50 px-3.5 py-1 rounded-full border border-orange-200">
+              خطوة واحدة فقط
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
+              اطلب الآن واستلم شحنتك مع حق المعاينة
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600">
+              املأ البيانات التالية وسيصلك اتصال لتأكيد الطلب ثم الشحن فوراً
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-right pt-2">
-          {bodyMassagerConfig.reviews.map((rev, idx) => (
-            <div key={idx} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-amber-500">
-                  {[...Array(rev.rating)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                  ))}
+          <EgyptianCheckoutForm
+            product={product}
+            landingPage={landingPage}
+            selectedOffer={selectedOffer}
+            onOfferChange={setSelectedOffer}
+          />
+        </div>
+      </section>
+
+      {/* 8. FAQs Accordion */}
+      <section className="py-12 px-4 sm:px-6 max-w-3xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+            الأسئلة الشائعة
+          </span>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-950 font-heading">
+            كل ما تود معرفته عن جهاز التدليك الشامل 5×1
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {bodyMassagerConfig.faqs.map((faq, idx) => (
+            <div key={idx} className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
+                className="w-full p-4 text-right flex items-center justify-between gap-4 font-bold text-sm text-slate-900 cursor-pointer"
+              >
+                <span>{faq.q}</span>
+                <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${openFaqIndex === idx ? "rotate-180 text-orange-600" : ""}`} />
+              </button>
+              {openFaqIndex === idx && (
+                <div className="px-4 pb-4 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                  {faq.a}
                 </div>
-                <span className="text-[11px] text-slate-400">{rev.date}</span>
-              </div>
-              <p className="text-xs text-slate-700 leading-relaxed">&ldquo;{rev.comment}&rdquo;</p>
-              <div className="text-xs font-bold text-orange-800 pt-1 border-t border-slate-100 flex items-center justify-between">
-                <span>{rev.name}</span>
-                <span className="text-[10px] text-slate-400 font-normal">{rev.city}</span>
-              </div>
+              )}
             </div>
           ))}
         </div>
       </section>
 
-      {/* 7. Embedded Checkout Form Section (بياناتك للتوصيل) */}
-      <section id="order-form-section" className="py-12 bg-gradient-to-b from-slate-100 to-slate-200 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-6 space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>معاينة وفحص واختبار مع المندوب قبل دفع أي مليم</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
-              بياناتك للتوصيل
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600 font-medium">
-              مش هتدفع أي حاجة دلوقتي — هنكلمك نأكد الأوردر وميعاد الاستلام قبل الشحن
-            </p>
-          </div>
-
-          {/* The Form */}
-          <div className="bg-white rounded-3xl shadow-xl p-4 sm:p-8 border border-slate-200/90">
-            <EgyptianCheckoutForm
-              product={product}
-              landingPageSlug={landingPage.slug}
-              selectedOffer={selectedOffer}
-              onOfferSelect={(offer) => setSelectedOffer(offer)}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* 8. FAQs & Objection Handling */}
-      <section className="py-12 px-4 sm:px-6 max-w-3xl mx-auto space-y-6 text-center">
-        <h2 className="text-2xl font-black text-slate-950 font-heading">الأسئلة الشائعة</h2>
-        <div className="space-y-3 text-right">
-          {bodyMassagerConfig.faqs.map((faq, idx) => {
-            const isOpen = openFaqIndex === idx;
-            return (
-              <div key={idx} className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-2xs">
-                <button
-                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  className="w-full p-4 font-bold text-sm text-slate-900 flex items-center justify-between gap-4 text-right cursor-pointer"
-                >
-                  <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-orange-600 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isOpen && (
-                  <div className="px-4 pb-4 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
-                    {faq.a}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 9. 14-Day Golden Guarantee */}
-      <section className="py-10 px-4 max-w-3xl mx-auto text-center">
-        <div className="p-6 rounded-3xl bg-emerald-50 border border-emerald-200 space-y-2">
-          <ShieldCheck className="w-10 h-10 text-emerald-600 mx-auto" />
-          <h3 className="text-lg font-black text-emerald-950">ضمان ذهبي 14 يوماً مع حق المعاينة قبل الاستلام</h3>
-          <p className="text-xs text-emerald-800 max-w-lg mx-auto leading-relaxed">
-            افتح الشحنة بنفسك مع المندوب واختبر محتويات العلبة وسلامة الجهاز والرؤوس المرفقة قبل أن تدفع أي مليم. وفي حالة وجود أي عيب صناعة، يتم الاستبدال فوراً حتى باب بيتك.
-          </p>
-        </div>
-      </section>
-
-      {/* 10. Sticky Mobile Buy Bar */}
+      {/* 9. Sticky Buy Bar on Mobile */}
       <StickyBuyBar
-        productTitle={product.title_ar}
-        price={selectedOffer.price || product.base_price}
-        compareAtPrice={selectedOffer.original_price || product.compare_at_price}
-        onCtaClick={scrollToCheckout}
+        product={product}
+        selectedOffer={selectedOffer}
+        onOrderClick={scrollToCheckout}
       />
     </main>
   );
