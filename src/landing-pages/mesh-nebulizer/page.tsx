@@ -24,6 +24,11 @@ import {
   Package,
   Activity,
   ThumbsUp,
+  Moon,
+  Briefcase,
+  Plane,
+  Home,
+  Zap,
 } from "lucide-react";
 
 interface MeshNebulizerPageProps {
@@ -56,6 +61,7 @@ export default function MeshNebulizerLandingPage({
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [selectedImage, setSelectedImage] = useState("/landing-pages/mesh-nebulizer/images/hero.webp");
+  const [activeUseTab, setActiveUseTab] = useState<"sleep" | "office" | "travel">("sleep");
 
   const galleryImages = [
     { src: "/landing-pages/mesh-nebulizer/images/hero.webp", label: "الجهاز والملحقات" },
@@ -286,6 +292,192 @@ export default function MeshNebulizerLandingPage({
             <p className="text-xs text-slate-600 leading-relaxed">
               بلمسة زر واحدة يبدأ البخار الناعم بالتدفق في هدوء تام وامتصاص فوري في الرئة.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 4.5. Interactive Use Cases Section (حالات الاستخدام اليومية) */}
+      <section className="py-14 bg-slate-900 text-white px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">
+              جهاز واحد لكل أوقاتك وعائلتك
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
+              أينما كنت.. جلسة استنشاق هادئة وفعالة في متناول يدك
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">
+              حل فوري متكامل صمم ليعمل في كافة الظروف اليومية بهدوء وكفاءة
+            </p>
+          </div>
+
+          {/* Interactive Rounded Pill Tab Switcher */}
+          <div className="flex justify-center gap-2 max-w-md mx-auto p-1.5 rounded-full bg-[#11192e] border border-slate-800">
+            <button
+              onClick={() => setActiveUseTab("sleep")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                activeUseTab === "sleep"
+                  ? "bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/30 font-black"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Moon className="w-4 h-4" />
+              <span>أثناء نوم الطفل</span>
+            </button>
+            <button
+              onClick={() => setActiveUseTab("office")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                activeUseTab === "office"
+                  ? "bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/30 font-black"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>في المكتب</span>
+            </button>
+            <button
+              onClick={() => setActiveUseTab("travel")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                activeUseTab === "travel"
+                  ? "bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/30 font-black"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Plane className="w-4 h-4" />
+              <span>في السفر</span>
+            </button>
+          </div>
+
+          {/* Active Tab Showcase Card */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-slate-950 border border-slate-800 text-right">
+            {activeUseTab === "sleep" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
+                  <Image
+                    src="/landing-pages/mesh-nebulizer/images/features_1.webp"
+                    alt="جلسة استنشاق والطفل نائم في السرير"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-cyan-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                    صوت هادئ أقل من 25dB
+                  </div>
+                </div>
+                <div className="md:col-span-7 space-y-4">
+                  <div className="inline-flex items-center gap-2 text-cyan-400 font-black text-lg">
+                    <Moon className="w-5 h-5" />
+                    <span>جلسة هادئة والطفل مستغرق في نومه (Night Sleep Mode)</span>
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    ودّع معارك وبكاء منتصف الليل! الجهاز صامت تماماً بتقنية الـ Ultrasonic Mesh، تقدر تقربه من أنف طفلك وهو نايم في سريره وتعمل له الجلسة كاملة بدون ما يصحى أو يتفزع من صوت الموتور الضخم.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-xs text-slate-300">
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>ماسك سيليكون طبي ناعم للأطفال</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>بدون اهتزاز أو سخونة للجهاز</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>إسعاف فوري لأزمات ضيق التنفس والكحة</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>يغلق تلقائياً عند انتهاء الدواء بأمان</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeUseTab === "office" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
+                  <Image
+                    src="/landing-pages/mesh-nebulizer/images/features_2.webp"
+                    alt="دواعي استعمال جهاز البخار في المكتب"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-cyan-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                    وزن 100 جرام بحجم الجيب
+                  </div>
+                </div>
+                <div className="md:col-span-7 space-y-4">
+                  <div className="inline-flex items-center gap-2 text-amber-400 font-black text-lg">
+                    <Briefcase className="w-5 h-5" />
+                    <span>إسعاف فوري لأزمات الحساسية والربو في العمل (Office Emergency)</span>
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    لو بتعاني من حساسية الصدر أو الجيوب الأنفية مع تكييفات المكاتب والتراب، الجهاز بحجم كف اليد تقدر تشغله على مكتبك بوصلة الـ USB أو البطاريات وتاخد جرعتك بقطعة الفم في 3 دقائق وتكمل شغلك براحة تامة.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-xs text-slate-300">
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>يعمل على شاحن الموبايل أو اللابتوب</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>قطعة استنشاق فموية سريعة ومباشرة</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>لا يسبب أي إحراج أو إزعاج لزملائك</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>خزان محكم مانع للتسريب في الحقيبة</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeUseTab === "travel" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
+                  <Image
+                    src="/landing-pages/mesh-nebulizer/images/features_5.webp"
+                    alt="جهاز استنشاق البخار في السفر والسيارة"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-cyan-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                    جاهز للسفر والطوارئ
+                  </div>
+                </div>
+                <div className="md:col-span-7 space-y-4">
+                  <div className="inline-flex items-center gap-2 text-emerald-400 font-black text-lg">
+                    <Plane className="w-5 h-5" />
+                    <span>رفيقك في شنطة السفر والسيارة (Travel & On-the-Go)</span>
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    تقلبات الجو في السفر ونزلات البرد المفاجئة على الطرق السريعة مش هتقلقك بعد اليوم. ركّب بطاريتين عاديتين أو وصّله بولاعة العربية واستخدمه فوراً دون الحاجة للبحث عن صيدليات أو مستشفيات طوارئ.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-xs text-slate-300">
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>يعمل ببطاريتين AA أو باور بانك</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>طقم متكامل للكبار والأطفال في علبة واحدة</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>خفيف وسهل الغسيل بمياه دافئة في ثوانٍ</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>أمان تام ومعتمد للاستخدام المنزلي والخارجي</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>

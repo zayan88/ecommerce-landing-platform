@@ -22,6 +22,9 @@ import {
   Package,
   Activity,
   Layers,
+  Home,
+  Laptop,
+  Car,
 } from "lucide-react";
 
 interface BodyMassagerPageProps {
@@ -54,6 +57,7 @@ export default function BodyMassagerLandingPage({
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [selectedImage, setSelectedImage] = useState("/landing-pages/body-massager/images/hero.webp");
+  const [activeUseTab, setActiveUseTab] = useState<"home" | "office" | "car">("home");
 
   const galleryImages = [
     { src: "/landing-pages/body-massager/images/hero.webp", label: "الجهاز والرؤوس" },
@@ -265,6 +269,192 @@ export default function BodyMassagerLandingPage({
               <p className="text-xs text-slate-600 leading-relaxed">{st.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 4.5. Interactive Use Cases Section (حالات الاستخدام اليومية - تصميم صورة العميل) */}
+      <section className="py-14 bg-[#0a0f1d] text-white px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-3.5 py-1 rounded-full border border-amber-500/20">
+              جهاز واحد لكل أوقاتك
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
+              أينما كنت.. جلسة استرخاء كاملة في متناول يدك
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">
+              اختر وضع الاستخدام وشوف إزاي الجهاز بيخدمك في كل لحظات يومك
+            </p>
+          </div>
+
+          {/* Interactive Rounded Pill Tab Switcher */}
+          <div className="flex justify-center gap-2 max-w-md mx-auto p-1.5 rounded-full bg-[#11192e] border border-slate-800">
+            <button
+              onClick={() => setActiveUseTab("home")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+                activeUseTab === "home"
+                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 font-black"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              <span>في المنزل</span>
+            </button>
+            <button
+              onClick={() => setActiveUseTab("office")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+                activeUseTab === "office"
+                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 font-black"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Laptop className="w-4 h-4" />
+              <span>في المكتب</span>
+            </button>
+            <button
+              onClick={() => setActiveUseTab("car")}
+              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+                activeUseTab === "car"
+                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 font-black"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Car className="w-4 h-4" />
+              <span>في السيارة</span>
+            </button>
+          </div>
+
+          {/* Active Tab Showcase Card */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#0f172a] border border-slate-800 text-right">
+            {activeUseTab === "home" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
+                  <Image
+                    src="/landing-pages/body-massager/images/features_3.webp"
+                    alt="جلسة استرخاء على كنب المنزل"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-orange-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                    فيشة 220V منزلية
+                  </div>
+                </div>
+                <div className="md:col-span-7 space-y-4">
+                  <div className="inline-flex items-center gap-2 text-emerald-400 font-black text-lg sm:text-xl">
+                    <Home className="w-6 h-6 shrink-0" />
+                    <span>جلسة استرخاء على كنب المنزل (Home Living Mode)</span>
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    بعد يوم شاق من التعب والوقفة، ثبّته على كرسي الليفينج أو الفوتيه واشرب كوبايتك المفضلة في الدفا. جلسة مساج اهتزازي كامل ترجع الحيوية لجسمك وتساعدك على النوم العميق والمريح.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>مثالي لكبار السن وآلام المفاصل</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>فيشة منزلية 220V مرفقة</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>خامة مريحة وسهلة التنظيف</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>تدفئة حرارية لتنشيط الدورة الدموية</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeUseTab === "office" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
+                  <Image
+                    src="/landing-pages/body-massager/images/features_2.webp"
+                    alt="تخفيف إجهاد العمل المكتبي"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-amber-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                    مريح للظهر والفقرات
+                  </div>
+                </div>
+                <div className="md:col-span-7 space-y-4">
+                  <div className="inline-flex items-center gap-2 text-amber-400 font-black text-lg sm:text-xl">
+                    <Laptop className="w-6 h-6 shrink-0" />
+                    <span>تخفيف إجهاد العمل المكتبي (Office Work Mode)</span>
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    بعد ساعات طويلة من الجلوس أمام شاشة الكمبيوتر، ضعه خلف ظهرك أو حول رقبتك وأنت على مكتبك لفك تشنج الأكتاف وتجديد النشاط بدون إيقاف شغلك أو تشتيت زملائك.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>فك فوري لشد الرقبة والكتفين</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>صوت هادئ لا يشتت تركيز العمل</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>تصميم مريح يدعم تقوس الفقرات القطنية</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>استخدام آمن مع إيقاف تلقائي ذكي</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeUseTab === "car" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
+                  <Image
+                    src="/landing-pages/body-massager/images/features_1.webp"
+                    alt="مساج وراحة في مشاوير السفر والسيارة"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                    مثالي للمسافات الطويلة
+                  </div>
+                </div>
+                <div className="md:col-span-7 space-y-4">
+                  <div className="inline-flex items-center gap-2 text-sky-400 font-black text-lg sm:text-xl">
+                    <Car className="w-6 h-6 shrink-0" />
+                    <span>راحة وريلاكس في مشاوير السفر والزحمة (Car Travel Mode)</span>
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    زحمة الطرق ومشاوير السفر الطويلة بتسبب إجهاد للفقرات القطنية وعضلات الساقين. استمتع بتدليك عميق يمنع تشنج الظهر ويخلي مشوارك وسفرك متعة واسترخاء.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>تخفيف تيبس العضلات بعد القيادة الطويلة</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>سهل التثبيت وخفيف في الحمل</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>تدفئة مهدئة للظهر أثناء السفر الشتوي</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>حجم عملي يمكن تركه في شنطة السيارة دائماً</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
