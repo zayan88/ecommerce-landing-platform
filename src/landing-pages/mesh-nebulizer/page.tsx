@@ -45,7 +45,7 @@ export default function MeshNebulizerLandingPage({
     product_id: product.id,
     title_ar: "قطعة واحدة (تجربة)",
     quantity: 1,
-    price: product.base_price || 549,
+    price: product.base_price || 599,
     original_price: product.compare_at_price || 850,
     discount_label: "خصم 35%",
     is_popular: false,

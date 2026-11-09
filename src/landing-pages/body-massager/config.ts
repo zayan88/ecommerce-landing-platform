@@ -5,8 +5,8 @@ export const bodyMassagerConfig = {
   safkaPropertyId: "68c0caddc79e01ee5439126c",
   productTitle: "جهاز التدليك والمساج الشامل 5×1 الحراري والاهتزازي للجسم والفقرات",
   subtitle: "ودّع تشنج عضلات الرقبة والكتفين وآلام أسفل الظهر! تدليك اهتزازي عميق مع خاصية التدفئة الحرارية بالأشعة تحت الحمراء و 5 رؤوس تدليك مخصصة لكل جزء في جسمك.",
-  basePrice: 499,
-  comparePrice: 750,
+  basePrice: 799,
+  comparePrice: 1200,
   rating: 4.93,
   reviewsCount: 345,
 

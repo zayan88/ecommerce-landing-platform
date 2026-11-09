@@ -5,8 +5,8 @@ export const carOrganizerConfig = {
   safkaPropertyId: "6a29f09bf6c8815f8d0500e0",
   productTitle: "منظم ظهر مقعد السيارة الذكي متعدد الجيوب مع حامل تابلت مدمج",
   subtitle: "ودّع فوضى العربية وكركبة السفر مع الأطفال! تصميم عملي فاخر بجيوب متعددة لحفظ المناديل، زجاجات المياه، الشواحن، وحامل شفاف للتابلت لمشاهدة الأفلام بأعلى درجات الراحة.",
-  basePrice: 299,
-  comparePrice: 450,
+  basePrice: 499,
+  comparePrice: 750,
   rating: 4.96,
   reviewsCount: 412,
 

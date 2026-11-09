@@ -3,7 +3,7 @@ export const meshNebulizerConfig = {
   sku: "8fTIdWR",
   productTitle: "جهاز استنشاق البخار المحمول ميني (Mesh Nebulizer) فائق الهدوء",
   subtitle: "الحل الإسعافي الأسرع لمشاكل الحساسية، الربو، نزلات البرد والكحة للأطفال والكبار بدون صوت مزعج وبحجم الجيب أينما كنت.",
-  basePrice: 549,
+  basePrice: 599,
   comparePrice: 850,
   rating: 4.95,
   reviewsCount: 428,
