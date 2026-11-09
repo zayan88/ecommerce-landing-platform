@@ -3,6 +3,8 @@ import { Product, LandingPage } from "@/types";
 import StarterLandingPage from "./starter-template/page";
 import MeshNebulizerLandingPage from "./mesh-nebulizer/page";
 import MassageCushionLandingPage from "./massage-cushion/page";
+import BodyMassagerLandingPage from "./body-massager/page";
+import CarOrganizerLandingPage from "./car-organizer/page";
 
 export interface LandingPageComponentProps {
   product: Product;
@@ -15,17 +17,29 @@ export interface LandingPageComponentProps {
  * Adding a new landing page only requires exporting a component and adding it here.
  */
 export const landingPageRegistry: Record<string, React.ComponentType<LandingPageComponentProps>> = {
-  "starter-template": StarterLandingPage,
-  "safka-b5fb3b6b": StarterLandingPage,
-  "rexrack-massage-gun": StarterLandingPage,
+  // Product 1: Mesh Nebulizer
   "mesh-nebulizer": MeshNebulizerLandingPage,
   "portable-nebulizer": MeshNebulizerLandingPage,
   "safka-8ftidwr": MeshNebulizerLandingPage,
-  "massage-cushion": MassageCushionLandingPage,
-  "heating-massage-cushion": MassageCushionLandingPage,
-  "cushion-rxuirx2": MassageCushionLandingPage,
-  "safka-rxuirx2": MassageCushionLandingPage,
-  "safka-6726c6a0": MassageCushionLandingPage,
+
+  // Product 2: Body Massager 5x1 (Replacing Massage Cushion as requested)
+  "body-massager": BodyMassagerLandingPage,
+  "body-massager-5in1": BodyMassagerLandingPage,
+  "safka-7mebpwu": BodyMassagerLandingPage,
+  "starter-template": BodyMassagerLandingPage,
+  "safka-b5fb3b6b": BodyMassagerLandingPage,
+  "rexrack-massage-gun": BodyMassagerLandingPage,
+
+  // Product 3: Car Organizer
+  "car-organizer": CarOrganizerLandingPage,
+  "car-seat-organizer": CarOrganizerLandingPage,
+  "safka-9pkjp8q": CarOrganizerLandingPage,
+  "safka-6a29f09b": CarOrganizerLandingPage,
+  "massage-cushion": CarOrganizerLandingPage,
+  "heating-massage-cushion": CarOrganizerLandingPage,
+  "cushion-rxuirx2": CarOrganizerLandingPage,
+  "safka-rxuirx2": CarOrganizerLandingPage,
+  "safka-6726c6a0": CarOrganizerLandingPage,
 };
 
 /**
