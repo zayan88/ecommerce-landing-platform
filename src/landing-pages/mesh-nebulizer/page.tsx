@@ -60,15 +60,6 @@ export default function MeshNebulizerLandingPage({
 
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [selectedImage, setSelectedImage] = useState("/landing-pages/mesh-nebulizer/images/hero.webp");
-  const [activeUseTab, setActiveUseTab] = useState<"sleep" | "office" | "travel">("sleep");
-
-  const galleryImages = [
-    { src: "/landing-pages/mesh-nebulizer/images/hero.webp", label: "الجهاز الصامت والمواصفات" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_1.webp", label: "تشريح وأجزاء النيبولايزر" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_2.webp", label: "دواعي الاستعمال العائلية" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_3.webp", label: "محتويات الطقم الطبي كاملة" },
-  ];
 
   // Live Urgency Timer
   const [timeLeft, setTimeLeft] = useState({ hours: 3, minutes: 28, seconds: 45 });
@@ -108,15 +99,15 @@ export default function MeshNebulizerLandingPage({
       {/* 2. Hero Section (Above the Fold on Mobile) */}
       <section className="pt-6 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Product Image & Interactive Gallery */}
+          {/* Product Image (Clean Hero - No Clutter) */}
           <div className="lg:col-span-6 space-y-3">
             <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-white aspect-square">
               <Image
-                src={selectedImage}
+                src="/landing-pages/mesh-nebulizer/images/hero.webp"
                 alt="جهاز استنشاق البخار المحمول ميني Mesh Nebulizer"
                 fill
                 priority
-                className="object-contain p-4 transition-all duration-300"
+                className="object-contain p-4"
               />
               <div className="absolute top-3 right-3 bg-cyan-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                 <VolumeX className="w-3.5 h-3.5" />
@@ -125,22 +116,6 @@ export default function MeshNebulizerLandingPage({
               <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
                 ماسك أطفال + ماسك كبار + قطعة فم
               </div>
-            </div>
-
-            {/* Clickable Gallery Thumbnails */}
-            <div className="grid grid-cols-4 gap-2">
-              {galleryImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setSelectedImage(img.src)}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer p-1 bg-white ${
-                    selectedImage === img.src ? "border-cyan-600 shadow-md ring-2 ring-cyan-200" : "border-slate-200 opacity-70 hover:opacity-100"
-                  }`}
-                >
-                  <Image src={img.src} alt={img.label} fill className="object-contain p-1" />
-                </button>
-              ))}
             </div>
 
             {/* Quick Micro Badges */}
@@ -228,70 +203,6 @@ export default function MeshNebulizerLandingPage({
         </div>
       </section>
 
-      {/* 2.5. Comprehensive Visual Infographics Section (يغنيك عن القراءة) */}
-      <section className="py-12 bg-slate-900 text-white px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto space-y-8">
-          <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3.5 py-1 rounded-full border border-cyan-500/20">
-              كل التفاصيل واضحة بالصور
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
-              انفوجرافيك تفصيلي للنيبولايزر الأصلي يغنيك عن القراءة
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              تعرّف على التشريح الطبي الدقيق، ودواعي الاستخدام، ومحتويات العلبة بالكامل
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-cyan-500/50 transition">
-              <div className="relative aspect-square">
-                <Image
-                  src="/landing-pages/mesh-nebulizer/images/features_1.webp"
-                  alt="تشريح ومواصفات النيبولايزر الذكي"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="p-4 bg-slate-900/90 text-right space-y-1">
-                <h3 className="font-black text-sm text-cyan-400">1. تشريح الجهاز والمواصفات</h3>
-                <p className="text-xs text-slate-300">زر تشغيل ذكي بلمسة واحدة + منفذ USB + درج بطاريات AA</p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-cyan-500/50 transition">
-              <div className="relative aspect-square">
-                <Image
-                  src="/landing-pages/mesh-nebulizer/images/features_2.webp"
-                  alt="دواعي الاستعمال العائلية"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="p-4 bg-slate-900/90 text-right space-y-1">
-                <h3 className="font-black text-sm text-cyan-400">2. دواعي الاستعمال العائلية</h3>
-                <p className="text-xs text-slate-300">للأطفال والرضع أثناء النوم بدون فزع، ولكبار السن في السفر</p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-cyan-500/50 transition">
-              <div className="relative aspect-square">
-                <Image
-                  src="/landing-pages/mesh-nebulizer/images/features_3.webp"
-                  alt="محتويات العلبة الطبية كاملة"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="p-4 bg-slate-900/90 text-right space-y-1">
-                <h3 className="font-black text-sm text-cyan-400">3. محتويات الطقم الطبي (افتح واختبر)</h3>
-                <p className="text-xs text-slate-300">ماسك أطفال + ماسك كبار + قطعة فم + كابل USB + دليل التشغيل</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* 3. The Problem Section */}
       <section className="py-12 bg-white border-y border-slate-200 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto space-y-6 text-center">
@@ -360,188 +271,219 @@ export default function MeshNebulizerLandingPage({
         </div>
       </section>
 
-      {/* 4.5. Interactive Use Cases Section (حالات الاستخدام اليومية) */}
+      {/* 4. Specifications & Anatomy Breakdown (Image 2) */}
       <section className="py-14 bg-slate-900 text-white px-4 sm:px-6">
         <div className="max-w-5xl mx-auto space-y-8">
           <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">
-              جهاز واحد لكل أوقاتك وعائلتك
+            <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3.5 py-1 rounded-full border border-cyan-500/20">
+              التشريح الطبي والمواصفات
             </span>
             <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
-              أينما كنت.. جلسة استنشاق هادئة وفعالة في متناول يدك
+              تشريح ومواصفات جهاز Mesh Nebulizer المحمول
             </h2>
             <p className="text-xs sm:text-sm text-slate-400">
-              حل فوري متكامل صمم ليعمل في كافة الظروف اليومية بهدوء وكفاءة
+              تقنية شبكية دقيقة تحول الدواء إلى رذاذ فائق النعومة يخترق الشعب الهوائية فوراً
             </p>
           </div>
 
-          {/* Interactive Rounded Pill Tab Switcher */}
-          <div className="flex justify-center gap-2 max-w-md mx-auto p-1.5 rounded-full bg-[#11192e] border border-slate-800">
-            <button
-              onClick={() => setActiveUseTab("sleep")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                activeUseTab === "sleep"
-                  ? "bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/30 font-black"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Moon className="w-4 h-4" />
-              <span>أثناء نوم الطفل</span>
-            </button>
-            <button
-              onClick={() => setActiveUseTab("office")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                activeUseTab === "office"
-                  ? "bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/30 font-black"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Briefcase className="w-4 h-4" />
-              <span>في المكتب</span>
-            </button>
-            <button
-              onClick={() => setActiveUseTab("travel")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                activeUseTab === "travel"
-                  ? "bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-600/30 font-black"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Plane className="w-4 h-4" />
-              <span>في السفر</span>
-            </button>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Infographic Image 2 */}
+            <div className="lg:col-span-6">
+              <div className="relative aspect-square rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl">
+                <Image
+                  src="/landing-pages/mesh-nebulizer/images/features_1.webp"
+                  alt="تشريح ومواصفات جهاز استنشاق البخار المحمول"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Feature Cards Column */}
+            <div className="lg:col-span-6 space-y-3.5 text-right">
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-cyan-400 font-black text-sm">
+                  <VolumeX className="w-4 h-4 shrink-0" />
+                  <span>محرك صامت تماماً بتقنية Ultrasonic Mesh</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  مستوى صوت أقل من 25dB يتيح عمل الجلسة للطفل أثناء نومه دون أي فزع أو انزعاج.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-cyan-400 font-black text-sm">
+                  <Sparkles className="w-4 h-4 shrink-0" />
+                  <span>حجم جزيئات رذاذ ميكروني دقيق جداً (≤ 5µm)</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  أقصى كفاءة امتصاص للدواء في الحويصلات الهوائية مع تقليل الهدر والترسيب.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-cyan-400 font-black text-sm">
+                  <BatteryCharging className="w-4 h-4 shrink-0" />
+                  <span>تشغيل مزدوج (بطاريات AA + منفذ USB Type-C)</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  مرونة كاملة في الاستخدام المنزلي أو أثناء السفر والرحلات بدون الحاجة لمصدر كهرباء ثابت.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-cyan-400 font-black text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>إيقاف تلقائي ذكي عند انتهاء الدواء</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  نظام حماية يوقف الجهاز تلقائياً لحماية الشبكة المعدنية وإطالة عمر الجهاز.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Family Use Cases & Scenarios (Image 3) */}
+      <section className="py-14 bg-white border-b border-slate-200 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-cyan-700 bg-cyan-50 px-3.5 py-1 rounded-full border border-cyan-200">
+              دواعي الاستعمال العائلية
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-slate-950">
+              جهاز واحد يلبي احتياجات كل أفراد الأسرة
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600">
+              من الرضع والأطفال حتى كبار السن ومرضى الجيوب الأنفية وحساسية الصدر
+            </p>
           </div>
 
-          {/* Active Tab Showcase Card */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-slate-950 border border-slate-800 text-right">
-            {activeUseTab === "sleep" && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
-                  <Image
-                    src="/landing-pages/mesh-nebulizer/images/features_1.webp"
-                    alt="جلسة استنشاق والطفل نائم في السرير"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 right-3 bg-cyan-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    صوت هادئ أقل من 25dB
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Scenarios Description Column */}
+            <div className="lg:col-span-6 space-y-3 text-right order-2 lg:order-1">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                <div className="font-black text-sm text-slate-900 flex items-center gap-2">
+                  <Baby className="w-4 h-4 text-cyan-600 shrink-0" />
+                  <span>للأطفال والرضع أثناء النوم</span>
                 </div>
-                <div className="md:col-span-7 space-y-4">
-                  <div className="inline-flex items-center gap-2 text-cyan-400 font-black text-lg">
-                    <Moon className="w-5 h-5" />
-                    <span>جلسة هادئة والطفل مستغرق في نومه (Night Sleep Mode)</span>
-                  </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    ودّع معارك وبكاء منتصف الليل! الجهاز صامت تماماً بتقنية الـ Ultrasonic Mesh، تقدر تقربه من أنف طفلك وهو نايم في سريره وتعمل له الجلسة كاملة بدون ما يصحى أو يتفزع من صوت الموتور الضخم.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-xs text-slate-300">
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>ماسك سيليكون طبي ناعم للأطفال</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>بدون اهتزاز أو سخونة للجهاز</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>إسعاف فوري لأزمات ضيق التنفس والكحة</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>يغلق تلقائياً عند انتهاء الدواء بأمان</span>
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  تسكين فوري للكحة وضيق التنفس الفجري دون إيقاظ الطفل أو مقاومة وبكاء.
+                </p>
               </div>
-            )}
 
-            {activeUseTab === "office" && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
-                  <Image
-                    src="/landing-pages/mesh-nebulizer/images/features_2.webp"
-                    alt="دواعي استعمال جهاز البخار في المكتب"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 right-3 bg-cyan-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    وزن 100 جرام بحجم الجيب
-                  </div>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                <div className="font-black text-sm text-slate-900 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-cyan-600 shrink-0" />
+                  <span>في المكتب وبيئات العمل المكيفة</span>
                 </div>
-                <div className="md:col-span-7 space-y-4">
-                  <div className="inline-flex items-center gap-2 text-amber-400 font-black text-lg">
-                    <Briefcase className="w-5 h-5" />
-                    <span>إسعاف فوري لأزمات الحساسية والربو في العمل (Office Emergency)</span>
-                  </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    لو بتعاني من حساسية الصدر أو الجيوب الأنفية مع تكييفات المكاتب والتراب، الجهاز بحجم كف اليد تقدر تشغله على مكتبك بوصلة الـ USB أو البطاريات وتاخد جرعتك بقطعة الفم في 3 دقائق وتكمل شغلك براحة تامة.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-xs text-slate-300">
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>يعمل على شاحن الموبايل أو اللابتوب</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>قطعة استنشاق فموية سريعة ومباشرة</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>لا يسبب أي إحراج أو إزعاج لزملائك</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>خزان محكم مانع للتسريب في الحقيبة</span>
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  جلسة سريعة في 3 دقائق بقطعة الفم لتخفيف جفاف الشعب الهوائية وتهيج الحساسية.
+                </p>
               </div>
-            )}
 
-            {activeUseTab === "travel" && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
-                  <Image
-                    src="/landing-pages/mesh-nebulizer/images/features_3.webp"
-                    alt="جهاز استنشاق البخار في السفر والسيارة"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 right-3 bg-cyan-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    جاهز للسفر والطوارئ
-                  </div>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                <div className="font-black text-sm text-slate-900 flex items-center gap-2">
+                  <Plane className="w-4 h-4 text-cyan-600 shrink-0" />
+                  <span>في السفر والسيارة والطوارئ</span>
                 </div>
-                <div className="md:col-span-7 space-y-4">
-                  <div className="inline-flex items-center gap-2 text-emerald-400 font-black text-lg">
-                    <Plane className="w-5 h-5" />
-                    <span>رفيقك في شنطة السفر والسيارة (Travel & On-the-Go)</span>
-                  </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    تقلبات الجو في السفر ونزلات البرد المفاجئة على الطرق السريعة مش هتقلقك بعد اليوم. ركّب بطاريتين عاديتين أو وصّله بولاعة العربية واستخدمه فوراً دون الحاجة للبحث عن صيدليات أو مستشفيات طوارئ.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-xs text-slate-300">
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>يعمل ببطاريتين AA أو باور بانك</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>طقم متكامل للكبار والأطفال في علبة واحدة</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>خفيف وسهل الغسيل بمياه دافئة في ثوانٍ</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>أمان تام ومعتمد للاستخدام المنزلي والخارجي</span>
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  حجم جيب فائق الخفة يغنيك عن البحث عن مستشفيات أو صيدليات على الطرق السريعة.
+                </p>
               </div>
-            )}
+            </div>
+
+            {/* Infographic Image 3 */}
+            <div className="lg:col-span-6 order-1 lg:order-2">
+              <div className="relative aspect-square rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-slate-950">
+                <Image
+                  src="/landing-pages/mesh-nebulizer/images/features_2.webp"
+                  alt="دواعي الاستعمال العائلية لجهاز استنشاق البخار"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Medical Kit Checklist & Guarantee (Image 4) */}
+      <section className="py-14 bg-slate-900 text-white px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3.5 py-1 rounded-full border border-cyan-500/20">
+              طقم طبي متكامل
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
+              محتويات العلبة الأصلية وحق المعاينة
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">
+              كل ما تحتاجه لبدء الجلسة فوراً مع حق الفحص والتجربة قبل الدفع
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Infographic Image 4 */}
+            <div className="lg:col-span-6">
+              <div className="relative aspect-square rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl">
+                <Image
+                  src="/landing-pages/mesh-nebulizer/images/features_3.webp"
+                  alt="محتويات علبة جهاز استنشاق البخار ميني نيبولايزر"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Checklist Column */}
+            <div className="lg:col-span-6 space-y-3.5 text-right">
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-black text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>جهاز النيبولايزر الذكي الأصلي</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  الوحدة الأساسية المجهزة بالشبكة الميكرونية وخزان المحلول الطبي.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-black text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>ماسك سيليكون طبي للأطفال + ماسك للكبار</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  ماسكات ناعمة ومريحة ومضادة للحساسية تناسب كل الأعمار.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-black text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>قطعة استنشاق فموية مباشرة (Mouthpiece)</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  لجلسات الكبار السريعة ومرضى الجيوب الأنفية والربو.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-black text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>كابل شحن USB + كتيب تعليمات التشغيل</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  دليل إرشادات الاستخدام والتنظيف مع كابل توصيل سريع.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-bold flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-cyan-400 shrink-0" />
+                <span>ضمان 14 يوم استبدال فوري + حق فتح الكرتونة ومعاينة المحتويات قبل الدفع للمندوب.</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -663,9 +605,11 @@ export default function MeshNebulizerLandingPage({
           <div className="bg-white rounded-3xl shadow-xl p-4 sm:p-8 border border-slate-200/90">
             <EgyptianCheckoutForm
               product={product}
-              landingPageSlug={landingPage.slug}
+              landingPageSlug={landingPage.slug || "mesh-nebulizer"}
+              landingPage={landingPage}
               selectedOffer={selectedOffer}
               onOfferSelect={(offer) => setSelectedOffer(offer)}
+              onOfferChange={(offer) => setSelectedOffer(offer)}
             />
           </div>
         </div>

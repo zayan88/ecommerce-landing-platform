@@ -13,10 +13,11 @@ export async function POST(req: NextRequest) {
     // 1. Validate payload with Zod
     const validation = orderFormSchema.safeParse(body);
     if (!validation.success) {
+      const firstErrorMessage = validation.error.issues?.[0]?.message || "بيانات الطلب غير صالحة";
       return NextResponse.json(
         {
           success: false,
-          error: "بيانات الطلب غير صالحة",
+          error: firstErrorMessage,
           details: validation.error.format(),
         },
         { status: 400 }

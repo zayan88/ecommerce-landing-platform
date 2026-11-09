@@ -16,17 +16,21 @@ import {
 
 interface EgyptianCheckoutFormProps {
   product: Product;
-  landingPageSlug: string;
+  landingPageSlug?: string;
+  landingPage?: { slug?: string; [key: string]: any };
   selectedOffer?: ProductOffer;
   onOfferSelect?: (offer: ProductOffer) => void;
+  onOfferChange?: (offer: ProductOffer) => void;
   accentColor?: string;
 }
 
 export function EgyptianCheckoutForm({
   product,
   landingPageSlug,
+  landingPage,
   selectedOffer,
   onOfferSelect,
+  onOfferChange,
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
 
@@ -40,10 +44,42 @@ export function EgyptianCheckoutForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Offers & Pricing calculations (100% Free Shipping Everywhere)
-  const currentOffer = (selectedOffer && selectedOffer.price) ? selectedOffer : product.offers?.[0];
-  const quantity = currentOffer?.quantity || 1;
-  const totalAmount = currentOffer?.price || product.base_price || 0;
+  // Default initial offer (First offer or fallback)
+  const defaultFirstOffer = product.offers && product.offers.length > 0
+    ? (product.offers.find((o) => o.is_popular) || product.offers[0])
+    : {
+        id: `offer-default-${product.id}`,
+        product_id: product.id,
+        title_ar: "قطعة واحدة (تجربة)",
+        quantity: 1,
+        price: product.base_price || 799,
+        original_price: product.compare_at_price || 1200,
+        discount_label: "خصم خاص",
+        is_popular: false,
+        free_shipping: true,
+        sort_order: 1,
+      };
+
+  // Internal active offer state (guarantees clicking an offer ALWAYS updates immediately)
+  const [activeOffer, setActiveOffer] = useState<ProductOffer>(() => {
+    return selectedOffer && selectedOffer.price ? selectedOffer : defaultFirstOffer;
+  });
+
+  // Sync if selectedOffer prop updates from parent
+  React.useEffect(() => {
+    if (selectedOffer && selectedOffer.id && selectedOffer.id !== activeOffer.id) {
+      setActiveOffer(selectedOffer);
+    }
+  }, [selectedOffer]);
+
+  const handleSelectOffer = (offer: ProductOffer) => {
+    setActiveOffer(offer);
+    if (onOfferSelect) onOfferSelect(offer);
+    if (onOfferChange) onOfferChange(offer);
+  };
+
+  const quantity = activeOffer?.quantity || 1;
+  const totalAmount = activeOffer?.price || product.base_price || 0;
 
   // Track InitiateCheckout on initial interaction
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -68,7 +104,7 @@ export function EgyptianCheckoutForm({
       return "يرجى كتابة رقم هاتف مصري صحيح (11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015)";
     }
     if (!address.trim() || address.trim().length < 3) {
-      return "يرجى كتابة العنوان (المدينة أو الشارع أو علامة مميزة)";
+      return "يرجى كتابة العنوان بالتفصيل (المدينة أو الشارع أو علامة مميزة)";
     }
     return null;
   };
@@ -90,7 +126,14 @@ export function EgyptianCheckoutForm({
       const eventId = generateEventId();
       const cleanedPhone = phone.trim().replace(/\s+/g, "");
 
-      // Track Lead / Purchase on Client-Side Pixel
+      // Resolve landing page slug safely
+      const effectiveSlug =
+        landingPageSlug ||
+        landingPage?.slug ||
+        product?.slug ||
+        "body-massager";
+
+      // Track Purchase on Client-Side Pixel
       trackMetaEvent(
         "Purchase",
         {
@@ -105,16 +148,16 @@ export function EgyptianCheckoutForm({
 
       const payload = {
         product_id: product.id,
-        landing_page_slug: landingPageSlug,
+        landing_page_slug: effectiveSlug,
         customer_name: name.trim(),
         customer_phone: cleanedPhone,
-        governorate: governorate,
-        shipping_governorate: governorate,
-        city: governorate,
-        shipping_city: governorate,
+        governorate: governorate || "القاهرة",
+        shipping_governorate: governorate || "القاهرة",
+        city: governorate || "القاهرة",
+        shipping_city: governorate || "القاهرة",
         address: address.trim(),
         shipping_address: address.trim(),
-        offer_id: currentOffer?.id || undefined,
+        offer_id: activeOffer?.id || undefined,
         quantity,
         payment_method: "cod",
         event_id: eventId,
@@ -135,7 +178,7 @@ export function EgyptianCheckoutForm({
 
       // Redirect to customized Arabic thank-you page
       router.push(
-        `/p/${landingPageSlug}/thank-you?orderId=${data.order.id}&orderNumber=${data.order.order_number}&total=${data.order.final_amount}&name=${encodeURIComponent(
+        `/p/${effectiveSlug}/thank-you?orderId=${data.order.id}&orderNumber=${data.order.order_number}&total=${data.order.final_amount}&name=${encodeURIComponent(
           data.order.customer_name
         )}&phone=${encodeURIComponent(data.order.customer_phone)}&gov=${encodeURIComponent(
           data.order.governorate || governorate
@@ -181,11 +224,11 @@ export function EgyptianCheckoutForm({
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {product.offers.map((offer) => {
-                const isSelected = currentOffer?.id === offer.id;
+                const isSelected = activeOffer?.id === offer.id || activeOffer?.quantity === offer.quantity;
                 return (
                   <div
                     key={offer.id}
-                    onClick={() => onOfferSelect && onOfferSelect(offer)}
+                    onClick={() => handleSelectOffer(offer)}
                     className={`relative cursor-pointer rounded-2xl p-3 border-2 transition-all ${
                       isSelected
                         ? "border-orange-500 bg-orange-50/70 shadow-sm ring-2 ring-orange-500/20"
@@ -294,7 +337,7 @@ export function EgyptianCheckoutForm({
         {/* Pricing Summary (Zero Shipping Guaranteed) */}
         <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200 space-y-1.5 text-xs sm:text-sm">
           <div className="flex justify-between text-slate-600">
-            <span>سعر المنتج ({currentOffer?.title_ar || "الطلب"}):</span>
+            <span>سعر المنتج ({activeOffer?.title_ar || "الطلب"}):</span>
             <span className="font-bold text-slate-900">{totalAmount} ج.م</span>
           </div>
           <div className="flex justify-between text-slate-600">

@@ -56,15 +56,6 @@ export default function CarOrganizerLandingPage({
 
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [selectedImage, setSelectedImage] = useState("/landing-pages/car-organizer/images/hero.webp");
-  const [activeUseTab, setActiveUseTab] = useState<"cinema" | "storage" | "protection">("cinema");
-
-  const galleryImages = [
-    { src: "/landing-pages/car-organizer/images/hero.webp", label: "المنظم والجيوب" },
-    { src: "/landing-pages/car-organizer/images/features_1.webp", label: "تقسيم الجيوب 9×1" },
-    { src: "/landing-pages/car-organizer/images/features_2.webp", label: "حماية الفرش والجلد الفاخر" },
-    { src: "/landing-pages/car-organizer/images/features_3.webp", label: "التثبيت في 10 ثوانٍ" },
-  ];
 
   // Live Urgency Timer
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 18, seconds: 40 });
@@ -104,15 +95,15 @@ export default function CarOrganizerLandingPage({
       {/* 2. Hero Section (Above the Fold on Mobile) */}
       <section className="pt-6 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Product Image & Interactive Gallery */}
+          {/* Product Image (Clean Hero - No Clutter) */}
           <div className="lg:col-span-6 space-y-3">
             <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-white aspect-square">
               <Image
-                src={selectedImage}
+                src="/landing-pages/car-organizer/images/hero.webp"
                 alt="منظم ظهر مقعد السيارة متعدد الجيوب مع حامل تابلت"
                 fill
                 priority
-                className="object-contain p-4 transition-all duration-300"
+                className="object-contain p-4"
               />
               <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                 <Tablet className="w-3.5 h-3.5" />
@@ -121,22 +112,6 @@ export default function CarOrganizerLandingPage({
               <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
                 جيوب متعددة + أحزمة تثبيت محكمة
               </div>
-            </div>
-
-            {/* Clickable Gallery Thumbnails */}
-            <div className="grid grid-cols-4 gap-2">
-              {galleryImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setSelectedImage(img.src)}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer p-1 bg-white ${
-                    selectedImage === img.src ? "border-blue-600 shadow-md ring-2 ring-blue-200" : "border-slate-200 opacity-70 hover:opacity-100"
-                  }`}
-                >
-                  <Image src={img.src} alt={img.label} fill className="object-contain p-1" />
-                </button>
-              ))}
             </div>
 
             {/* Quick Micro Badges */}
@@ -224,55 +199,6 @@ export default function CarOrganizerLandingPage({
         </div>
       </section>
 
-      {/* 2.5. Comprehensive Visual Infographics Section (يغنيك عن القراءة) */}
-      <section className="py-12 bg-slate-900 text-white px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto space-y-8">
-          <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3.5 py-1 rounded-full border border-blue-500/20">
-              كل التفاصيل واضحة بالصور
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
-              انفوجرافيك تفصيلي للمنظم الذكي يغنيك عن القراءة
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              تعرّف على توزيع الجيوب الذكية 9×1، وحماية المقاعد من أقدام الأطفال، وطريقة التركيب
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-blue-500/50 transition">
-              <div className="relative aspect-square">
-                <Image
-                  src="/landing-pages/car-organizer/images/features_1.webp"
-                  alt="تقسيم الجيوب الذكية 9 في 1"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="p-4 bg-slate-900/90 text-right space-y-1">
-                <h3 className="font-black text-sm text-blue-400">1. توزيع الجيوب الذكية 9×1</h3>
-                <p className="text-xs text-slate-300">حامل تابلت تفاعلي + 2 جيب حراري + جيب مناديل + جيوب سفلية عميقة</p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl group hover:border-blue-500/50 transition">
-              <div className="relative aspect-square">
-                <Image
-                  src="/landing-pages/car-organizer/images/features_2.webp"
-                  alt="حماية المقاعد من الخدوش والأوساخ"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="p-4 bg-slate-900/90 text-right space-y-1">
-                <h3 className="font-black text-sm text-blue-400">2. حماية كاملة لفرش كراسي السيارة</h3>
-                <p className="text-xs text-slate-300">جلد PU مقاوم للماء والخدش، يحمي المقاعد ويمسح بلمسة واحدة</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* 3. The Problem Section */}
       <section className="py-12 bg-white border-y border-slate-200 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto space-y-6 text-center">
@@ -321,188 +247,209 @@ export default function CarOrganizerLandingPage({
         </div>
       </section>
 
-      {/* 4.5. Interactive Use Cases Section (حالات الاستخدام اليومية - تصميم صورة العميل) */}
-      <section className="py-14 bg-[#0a0f1d] text-white px-4 sm:px-6">
+      {/* 4. 9-in-1 Smart Pockets Architecture (Image 2) */}
+      <section className="py-14 bg-slate-900 text-white px-4 sm:px-6">
         <div className="max-w-5xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3.5 py-1 rounded-full border border-blue-500/20">
-              منظم واحد لكل مشاويرك وعائلتك
+              التشريح الهندسي والجيوب
             </span>
             <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
-              أينما انطلقت.. سيارة مرتبة وترفيه كامل في متناول يدك
+              تقسيم الجيوب الذكية 9×1 لكل احتياجات العائلة
             </h2>
             <p className="text-xs sm:text-sm text-slate-400">
-              اختر وضع الاستخدام وشوف إزاي المنظم بيحول رحلتك لتجربة راقية ومريحة
+              استغلال مثالي لمساحة الكنبة الخلفية وحفظ الأغراض في مكانها الثابت
             </p>
           </div>
 
-          {/* Interactive Rounded Pill Tab Switcher */}
-          <div className="flex justify-center gap-2 max-w-md mx-auto p-1.5 rounded-full bg-[#11192e] border border-slate-800">
-            <button
-              onClick={() => setActiveUseTab("cinema")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
-                activeUseTab === "cinema"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 font-black"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Tv className="w-4 h-4" />
-              <span>سينما السفر</span>
-            </button>
-            <button
-              onClick={() => setActiveUseTab("storage")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
-                activeUseTab === "storage"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 font-black"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Coffee className="w-4 h-4" />
-              <span>تنظيم المشروبات</span>
-            </button>
-            <button
-              onClick={() => setActiveUseTab("protection")}
-              className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
-                activeUseTab === "protection"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 font-black"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Shield className="w-4 h-4" />
-              <span>حماية الفرش</span>
-            </button>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Infographic Image 2 */}
+            <div className="lg:col-span-6">
+              <div className="relative aspect-square rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl">
+                <Image
+                  src="/landing-pages/car-organizer/images/features_1.webp"
+                  alt="تقسيم الجيوب الذكية 9 في 1 لمنظم السيارة"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Feature Cards Column */}
+            <div className="lg:col-span-6 space-y-3.5 text-right">
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-blue-400 font-black text-sm">
+                  <Tablet className="w-4 h-4 shrink-0" />
+                  <span>حامل تابلت تفاعلي بلمس الشاشة</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  نافذة شفافة تدعم اللمس المباشر لتابلت حتى 10.5 بوصة مع فتحات لسماعات الرأس والشاحن.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-blue-400 font-black text-sm">
+                  <Coffee className="w-4 h-4 shrink-0" />
+                  <span>2 جيب مخصص لزجاجات المياه والكانز</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  جيوب عميقة محكمة تمنع تدحرج وسقوط الزجاجات أثناء المطبات والفرامل المفاجئة.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-blue-400 font-black text-sm">
+                  <Package className="w-4 h-4 shrink-0" />
+                  <span>جيب مركزي لسحب المناديل الفوري</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  فتحة سحب مباشرة لعلبة المناديل لسهولة الوصول في حالات انسكاب العصائر وتنظيف الأيدي.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-blue-400 font-black text-sm">
+                  <Layers className="w-4 h-4 shrink-0" />
+                  <span>جيوب سفلية عميقة للألعاب والكتب والمظلات</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  سعة تخزين واسعة تضمن بقاء الكنبة الخلفية فارغة ونظيفة تماماً طوال الرحلة.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Premium Leather & Seat Protection (Image 3) */}
+      <section className="py-14 bg-white border-b border-slate-200 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3.5 py-1 rounded-full border border-blue-200">
+              حماية كاملة للصالون
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-slate-950">
+              حماية فرش المقاعد من أقدام الأطفال والخدوش
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600">
+              جلد PU فاخر متعدد الطبقات مقاوم للماء والأوساخ وسهل التنظيف بلمسة واحدة
+            </p>
           </div>
 
-          {/* Active Tab Showcase Card */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#0f172a] border border-slate-800 text-right">
-            {activeUseTab === "cinema" && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
-                  <Image
-                    src="/landing-pages/car-organizer/images/features_2.webp"
-                    alt="حامل تابلت وسينما سفر للأطفال"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 right-3 bg-blue-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    شاشة تاتش شفافة
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Protection Description Column */}
+            <div className="lg:col-span-6 space-y-3 text-right order-2 lg:order-1">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                <div className="font-black text-sm text-slate-900 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>مضاد لأقدام وركلات الأطفال</span>
                 </div>
-                <div className="md:col-span-7 space-y-4">
-                  <div className="inline-flex items-center gap-2 text-cyan-400 font-black text-lg sm:text-xl">
-                    <Tv className="w-6 h-6 shrink-0" />
-                    <span>سينما السفر وترفيه الأطفال في الكنبة الخلفية (Kids Road Cinema)</span>
-                  </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    جيب تابلت شفاف يدعم التاتش من الخارج، يشغل كرتون وفيديوهات للأطفال طول الطريق بدون ما يمسكوا الأجهزة في إيديهم أو يوقعوها، لرحلة سفر هادئة وبدون زن وصراخ.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>نافذة شفافة تدعم لمس شاشة التابلت</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>فتحات جانبية لكابل الشاحن والسماعات</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>ثبات تام بدون اهتزاز أثناء المطبات السريعة</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>يمنع دوار الحركة ويحافظ على استقامة رقبة الطفل</span>
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  يغطي ظهر المقعد بالكامل ويمنع وصول آثار الأحذية والأتربة للفرش الأصلي للسيارة.
+                </p>
               </div>
-            )}
 
-            {activeUseTab === "storage" && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
-                  <Image
-                    src="/landing-pages/car-organizer/images/features_1.webp"
-                    alt="تنظيم ذكي للزجاجات والمناديل"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 right-3 bg-indigo-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    9 جيوب ذكية
-                  </div>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                <div className="font-black text-sm text-slate-900 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>مقاوم للماء وسهل التنظيف في 5 ثوانٍ</span>
                 </div>
-                <div className="md:col-span-7 space-y-4">
-                  <div className="inline-flex items-center gap-2 text-indigo-400 font-black text-lg sm:text-xl">
-                    <Coffee className="w-6 h-6 shrink-0" />
-                    <span>تنظيم ذكي للزجاجات والمناديل والوجبات (Smart Storage Mode)</span>
-                  </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    ودّع فوضى الكنبة والكركبة تحت الكراسي! جيوب مخصصة لعلب المناديل، زجاجات المياه والعصير، الألعاب، وشواحن الموبايل في مكان واحد سهل الوصول إليه بدون تشتيت السائق.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>جيب مركزي مخصص لعلبة المناديل سريعة السحب</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>جيبين شبكيين لزجاجات المياه والكانز بأمان</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>جيوب سفلية واسعة للألعاب والوجبات الخفيفة</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>وصول فوري لكل احتياجاتك وأنت سايق بأمان</span>
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  أي عصير أو بقعة تنمسح بفوطة مبللة فوراً ويرجع يلمع كأنه جديد بدون غسيل مكلف.
+                </p>
               </div>
-            )}
 
-            {activeUseTab === "protection" && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
-                  <Image
-                    src="/landing-pages/car-organizer/images/features_3.webp"
-                    alt="حماية فرش ظهر مقاعد السيارة"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    مقاوم للماء والأتربة
-                  </div>
+              <div className="p-4 rounded-2xl bg-slate-800/80 p-3 rounded-xl border border-slate-200 space-y-1">
+                <div className="font-black text-sm text-blue-400 flex items-center gap-2">
+                  <Car className="w-4 h-4 text-blue-400 shrink-0" />
+                  <span>مظهر جلدي أنيق يليق بأفخم السيارات</span>
                 </div>
-                <div className="md:col-span-7 space-y-4">
-                  <div className="inline-flex items-center gap-2 text-emerald-400 font-black text-lg sm:text-xl">
-                    <Shield className="w-6 h-6 shrink-0" />
-                    <span>حماية فائقة لظهر الكراسي من بقع وأقدام الأطفال (Kick Mat Mode)</span>
-                  </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    أقدام الأطفال بتخبط طول الوقت في ظهر الكرسي الأمامي وبتسيب بقع تراب وعصير صعبة. المنظم مصنوع من خامة جلد أوكسفورد عازلة تحمي فرش العربية بنسبة 100% وتتنظف بمسحة منديل مبلل.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>عازل تام للمياه والسوائل والأتربة والطين</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>تنظيف فوري بمسحة فوطة أو منديل بدون فك</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>أحزمة قوية ومخفية تلتف بإحكام حول الكرسي</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>يحافظ على فخامة صالون سيارتك كأنها جديدة</span>
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  خياطة دقيقة وملمس ناعم يمنح صالون سيارتك طابعاً فاخراً ومنظماً.
+                </p>
               </div>
-            )}
+            </div>
+
+            {/* Infographic Image 3 */}
+            <div className="lg:col-span-6 order-1 lg:order-2">
+              <div className="relative aspect-square rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-slate-950">
+                <Image
+                  src="/landing-pages/car-organizer/images/features_2.webp"
+                  alt="حماية كاملة لفرش كراسي السيارة من الأوساخ والخدوش"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Quick Installation & Guarantee (Image 4) */}
+      <section className="py-14 bg-slate-900 text-white px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3.5 py-1 rounded-full border border-blue-500/20">
+              تركيب فوري وسهل
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
+              تثبيت محكم في 10 ثوانٍ وحق المعاينة قبل الدفع
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400">
+              أحزمة مطاطية وكلبسات مخفية تثبت على أي سيارة سيدان أو SUV أو هاتشباك
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Infographic Image 4 */}
+            <div className="lg:col-span-6">
+              <div className="relative aspect-square rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl">
+                <Image
+                  src="/landing-pages/car-organizer/images/features_3.webp"
+                  alt="تثبيت منظم ظهر مقعد السيارة وضمان المعاينة"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Checklist Column */}
+            <div className="lg:col-span-6 space-y-3.5 text-right">
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-black text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>حزام علوي يلتف حول مسند الرأس</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  كلبس سريع الإغلاق قابل للتعديل ليتناسب مع ارتفاع أي كرسي.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-black text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>خطافات سفلية مخفية لتثبيت أسفل المقعد</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  تمنع المنظم من التأرجح أو الابتعاد عن ظهر الكرسي أثناء حركة الركاب.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400 font-black text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>مقاس قياسي يغطي ظهر الكرسي بالكامل (Universal Fit)</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  مناسب لجميع أنواع السيارات بدون استثناء.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-bold flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-blue-400 shrink-0" />
+                <span>ضمان 14 يوم استبدال فوري + حق فتح الشحنة وتركيب المنظم وتجربته قبل دفع مليم للمندوب.</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -610,9 +557,11 @@ export default function CarOrganizerLandingPage({
           <div className="bg-white rounded-3xl shadow-xl p-4 sm:p-8 border border-slate-200/90">
             <EgyptianCheckoutForm
               product={product}
-              landingPageSlug={landingPage.slug}
+              landingPageSlug={landingPage.slug || "car-organizer"}
+              landingPage={landingPage}
               selectedOffer={selectedOffer}
               onOfferSelect={(offer) => setSelectedOffer(offer)}
+              onOfferChange={(offer) => setSelectedOffer(offer)}
             />
           </div>
         </div>
