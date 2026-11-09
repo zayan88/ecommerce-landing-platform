@@ -60,10 +60,10 @@ export default function BodyMassagerLandingPage({
   const [activeUseTab, setActiveUseTab] = useState<"home" | "office" | "car">("home");
 
   const galleryImages = [
-    { src: "/landing-pages/body-massager/images/hero.webp", label: "الجهاز والرؤوس" },
-    { src: "/landing-pages/body-massager/images/features_1.webp", label: "رؤوس التدليك" },
-    { src: "/landing-pages/body-massager/images/features_2.webp", label: "المواصفات" },
-    { src: "/landing-pages/body-massager/images/features_3.webp", label: "طريقة الاستخدام" },
+    { src: "/landing-pages/body-massager/images/hero.webp", label: "شلتة المساج والريموت" },
+    { src: "/landing-pages/body-massager/images/use_case_car.webp", label: "في مقعد السيارة" },
+    { src: "/landing-pages/body-massager/images/use_case_home.webp", label: "في كنب المنزل" },
+    { src: "/landing-pages/body-massager/images/use_case_office.webp", label: "على كرسي المكتب" },
   ];
 
   // Live Urgency Timer
@@ -116,10 +116,10 @@ export default function BodyMassagerLandingPage({
               />
               <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                 <Flame className="w-3.5 h-3.5" />
-                <span>تدفئة حرارية + اهتزاز عميق</span>
+                <span>تدفئة حرارية + مساج اهتزازي كامل</span>
               </div>
               <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
-                طقم 5 رؤوس مساج سيليكونية مرفق
+                فيشة منزلية 220V + وصلة سيارة 12V + ريموت كنترول
               </div>
             </div>
 
@@ -143,11 +143,11 @@ export default function BodyMassagerLandingPage({
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
                 <Zap className="w-4 h-4 text-amber-500 mx-auto mb-1" />
-                <span className="font-bold text-[11px] text-slate-800">موتور قوي وعميق</span>
+                <span className="font-bold text-[11px] text-slate-800">5 مواتير اهتزاز</span>
               </div>
               <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
                 <Flame className="w-4 h-4 text-red-500 mx-auto mb-1" />
-                <span className="font-bold text-[11px] text-slate-800">حرارة مهدئة</span>
+                <span className="font-bold text-[11px] text-slate-800">حرارة مهدئة للفقرات</span>
               </div>
               <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
@@ -165,34 +165,34 @@ export default function BodyMassagerLandingPage({
                   <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                 ))}
               </div>
-              <span className="font-bold text-orange-950">4.93 (أكثر من 340 عميل راضٍ في مصر)</span>
+              <span className="font-bold text-orange-950">4.95 (أكثر من 380 عميل راضٍ في مصر)</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black font-heading text-slate-950 leading-tight">
-              فك تشنج الرقبة والكتفين وآلام أسفل الظهر بلمسة زر واحدة في بيتك
+              جلسة مساج اهتزازي كامل وتدفئة حرارية للفقرات في عربيتك وبيتك ومكتبك
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              جهاز التدليك والمساج الشامل 5×1 المتطور. يجمع بين المساج الاهتزازي العميق والتدفئة الحرارية لتنشيط الدورة الدموية وإراحة العضلات المتصلبة بعد ساعات العمل والقيادة.
+              شلتة وكرسي المساج متعدد الاستخدامات المتطور. يجمع بين المساج الاهتزازي العميق لكامل الظهر والفقرات والتدفئة الحرارية لتسكين الآلام وتنشيط الدورة الدموية أثناء القيادة أو الجلوس الطويل.
             </p>
 
             {/* Checklist of Core Benefits */}
             <div className="space-y-2 text-xs sm:text-sm text-slate-700 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-semibold">تفكيك فوري للشد العضلي والكتف المتصلب بعد يوم شغل مرهق</span>
+                <span className="font-semibold">تغطية شاملة للرقبة والكتفين والفقرات القطنية والفخذين بـ 5 مواتير</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-semibold">خاصية التدفئة الحرارية اللطيفة لتخفيف آلام الفقرات والمفاصل</span>
+                <span className="font-semibold">خاصية التدفئة الحرارية اللطيفة لتخفيف آلام الفقرات وتنشيط الدورة الدموية</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-semibold">5 رؤوس تدليك متخصصة تناسب الرقبة، الظهر، الكتف، والساقين</span>
+                <span className="font-semibold">مزودة بفيشة كهرباء للمنزل 220V + وصلة ولاعة سيارة 12V</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-semibold">لاسلكي ويعمل بالشحن السريع USB-C لسهولة الحمل في أي مكان</span>
+                <span className="font-semibold">ريموت كنترول ذكي للتحكم في السرعات ومناطق التدليك بلمسة واحدة</span>
               </div>
             </div>
 
@@ -330,8 +330,8 @@ export default function BodyMassagerLandingPage({
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
                   <Image
-                    src="/landing-pages/body-massager/images/features_3.webp"
-                    alt="جلسة استرخاء على كنب المنزل"
+                    src="/landing-pages/body-massager/images/use_case_home.webp"
+                    alt="جلسة استرخاء على كنب وفوتيه المنزل"
                     fill
                     className="object-cover"
                   />
@@ -373,8 +373,8 @@ export default function BodyMassagerLandingPage({
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
                   <Image
-                    src="/landing-pages/body-massager/images/features_2.webp"
-                    alt="تخفيف إجهاد العمل المكتبي"
+                    src="/landing-pages/body-massager/images/use_case_office.webp"
+                    alt="تخفيف إجهاد العمل المكتبي على كرسي المكتب"
                     fill
                     className="object-cover"
                   />
@@ -388,7 +388,7 @@ export default function BodyMassagerLandingPage({
                     <span>تخفيف إجهاد العمل المكتبي (Office Work Mode)</span>
                   </div>
                   <p className="text-sm text-slate-300 leading-relaxed">
-                    بعد ساعات طويلة من الجلوس أمام شاشة الكمبيوتر، ضعه خلف ظهرك أو حول رقبتك وأنت على مكتبك لفك تشنج الأكتاف وتجديد النشاط بدون إيقاف شغلك أو تشتيت زملائك.
+                    بعد ساعات طويلة من الجلوس أمام شاشة الكمبيوتر، ثبته على كرسي مكتبك بضغطة زر لفك تشنج الأكتاف وتجديد النشاط بدون إيقاف شغلك أو إزعاج زملائك في العمل.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs sm:text-sm text-slate-300">
                     <span className="flex items-center gap-2">
@@ -416,13 +416,13 @@ export default function BodyMassagerLandingPage({
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
                   <Image
-                    src="/landing-pages/body-massager/images/features_1.webp"
-                    alt="مساج وراحة في مشاوير السفر والسيارة"
+                    src="/landing-pages/body-massager/images/use_case_car.webp"
+                    alt="مساج وتدفئة في مشاوير السفر والسيارة"
                     fill
                     className="object-cover"
                   />
                   <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                    مثالي للمسافات الطويلة
+                    وصلة ولاعة 12V مرفقة
                   </div>
                 </div>
                 <div className="md:col-span-7 space-y-4">

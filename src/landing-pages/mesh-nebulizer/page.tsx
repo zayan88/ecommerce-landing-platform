@@ -64,10 +64,10 @@ export default function MeshNebulizerLandingPage({
   const [activeUseTab, setActiveUseTab] = useState<"sleep" | "office" | "travel">("sleep");
 
   const galleryImages = [
-    { src: "/landing-pages/mesh-nebulizer/images/hero.webp", label: "الجهاز والملحقات" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_1.webp", label: "والطفل نائم" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_2.webp", label: "دواعي الاستعمال" },
-    { src: "/landing-pages/mesh-nebulizer/images/features_5.webp", label: "مكونات الطقم" },
+    { src: "/landing-pages/mesh-nebulizer/images/hero.webp", label: "جهاز البخار المحمول" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_1.webp", label: "أثناء نوم الطفل" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_2.webp", label: "في المكتب والشغل" },
+    { src: "/landing-pages/mesh-nebulizer/images/features_3.webp", label: "في السفر والخروج" },
   ];
 
   // Live Urgency Timer
@@ -440,7 +440,7 @@ export default function MeshNebulizerLandingPage({
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-5 relative aspect-square rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
                   <Image
-                    src="/landing-pages/mesh-nebulizer/images/features_5.webp"
+                    src="/landing-pages/mesh-nebulizer/images/features_3.webp"
                     alt="جهاز استنشاق البخار في السفر والسيارة"
                     fill
                     className="object-cover"
