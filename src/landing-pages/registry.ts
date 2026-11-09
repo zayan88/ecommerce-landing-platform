@@ -2,6 +2,7 @@ import React from "react";
 import { Product, LandingPage } from "@/types";
 import StarterLandingPage from "./starter-template/page";
 import MeshNebulizerLandingPage from "./mesh-nebulizer/page";
+import MassageCushionLandingPage from "./massage-cushion/page";
 
 export interface LandingPageComponentProps {
   product: Product;
@@ -20,6 +21,11 @@ export const landingPageRegistry: Record<string, React.ComponentType<LandingPage
   "mesh-nebulizer": MeshNebulizerLandingPage,
   "portable-nebulizer": MeshNebulizerLandingPage,
   "safka-8ftidwr": MeshNebulizerLandingPage,
+  "massage-cushion": MassageCushionLandingPage,
+  "heating-massage-cushion": MassageCushionLandingPage,
+  "cushion-rxuirx2": MassageCushionLandingPage,
+  "safka-rxuirx2": MassageCushionLandingPage,
+  "safka-6726c6a0": MassageCushionLandingPage,
 };
 
 /**
