@@ -564,21 +564,31 @@ export default function MeshNebulizerLandingPage({
           آراء الأمهات والآباء بعد التجربة
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-right pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right pt-2">
           {meshNebulizerConfig.reviews.map((rev, idx) => (
-            <div key={idx} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-amber-500">
-                  {[...Array(rev.rating)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                  ))}
+            <div key={idx} className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-2xs space-y-3 flex flex-col justify-between">
+              <div className="space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">{rev.name}</h3>
+                    <span className="text-[11px] text-slate-500">{rev.location}</span>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex text-amber-500">
+                      {[...Array(rev.rating)].map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                      ))}
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> شراء مؤكد
+                    </span>
+                  </div>
                 </div>
-                <span className="text-[11px] text-slate-400">{rev.date}</span>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">&ldquo;{rev.text || (rev as any).comment}&rdquo;</p>
               </div>
-              <p className="text-xs text-slate-700 leading-relaxed">&ldquo;{rev.text || (rev as any).comment}&rdquo;</p>
-              <div className="text-xs font-bold text-cyan-800 pt-1 border-t border-slate-100 flex items-center justify-between">
-                <span>{rev.name}</span>
-                <span className="text-[10px] text-slate-400 font-normal">{rev.location}</span>
+              <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
+                <span>تجربة علاجية موثقة</span>
+                <span>{rev.date}</span>
               </div>
             </div>
           ))}
