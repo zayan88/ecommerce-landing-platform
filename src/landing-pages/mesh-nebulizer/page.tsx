@@ -107,15 +107,8 @@ export default function MeshNebulizerLandingPage({
                 alt="جهاز استنشاق البخار المحمول ميني Mesh Nebulizer"
                 fill
                 priority
-                className="object-contain p-4"
+                className="object-cover"
               />
-              <div className="absolute top-3 right-3 bg-cyan-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-                <VolumeX className="w-3.5 h-3.5" />
-                <span>صامت تماماً 0dB</span>
-              </div>
-              <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
-                ماسك أطفال + ماسك كبار + قطعة فم
-              </div>
             </div>
 
             {/* Quick Micro Badges */}
