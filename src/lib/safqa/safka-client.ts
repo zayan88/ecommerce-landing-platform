@@ -148,18 +148,25 @@ export class SafkaClient {
   }
 
   /**
-   * Resolve Egyptian governorate name to Safka shipping_governorate pricing _id
+   * Resolve Egyptian governorate name and city/address to Safka shipping_governorate ID and numeric city ID
    */
-  static async resolveGovernoratePricingId(governorateName: string): Promise<string> {
+  static async resolveLocation(
+    governorateName: string,
+    cityName?: string,
+    address?: string
+  ): Promise<{ shippingGovernorateId: string; cityId: number }> {
     const priceList = await this.getPriceList();
     if (priceList.length === 0) {
-      // Fallback Safka governorate ID
-      return "64878fdedc16090c1858e696";
+      return {
+        shippingGovernorateId: "64878fdedc16090c1858e696",
+        cityId: 1,
+      };
     }
 
-    const cleanGov = normalizeArabicText(governorateName);
+    const cleanGov = normalizeArabicText(governorateName || "القاهرة");
 
-    const found = priceList.find((item: any) => {
+    // 1. Find matching governorate
+    const foundGov = priceList.find((item: any) => {
       const ar = normalizeArabicText(item.governorateNameAr || item.name_ar || (typeof item.governorate === "string" ? item.governorate : ""));
       const en = (item.governorateName || item.name_en || "").toLowerCase();
       return (
@@ -167,9 +174,44 @@ export class SafkaClient {
         cleanGov.includes(ar) ||
         (en && (en.includes(cleanGov) || cleanGov.includes(en)))
       );
-    });
+    }) || priceList[0];
 
-    return found?._id || priceList[0]?._id || "64878fdedc16090c1858e696";
+    const shippingGovernorateId = foundGov?._id || "64878fdedc16090c1858e696";
+
+    // 2. Resolve city ID (Safka Mongoose strictly requires a Number, never a string or NaN)
+    let cityId = 1;
+    const cities: Array<{ id: string | number; city_name_ar?: string; city_name_en?: string; name_ar?: string; name_en?: string }> = foundGov?.cities || [];
+
+    if (cities.length > 0) {
+      // Default to the first city of the governorate
+      const firstCityNum = Number(cities[0].id);
+      cityId = !isNaN(firstCityNum) ? firstCityNum : 1;
+
+      // Try to find a more specific matching city from customer's city name or address
+      const candidateText = normalizeArabicText(`${cityName || ""} ${address || ""}`);
+      const matchedCity = cities.find((c) => {
+        const ar = normalizeArabicText(c.city_name_ar || c.name_ar || "");
+        const en = (c.city_name_en || c.name_en || "").toLowerCase();
+        return (ar && ar.length > 1 && candidateText.includes(ar)) || (en && en.length > 1 && candidateText.includes(en));
+      });
+
+      if (matchedCity) {
+        const parsed = Number(matchedCity.id);
+        if (!isNaN(parsed)) {
+          cityId = parsed;
+        }
+      }
+    }
+
+    return { shippingGovernorateId, cityId };
+  }
+
+  /**
+   * Resolve Egyptian governorate name to Safka shipping_governorate pricing _id
+   */
+  static async resolveGovernoratePricingId(governorateName: string): Promise<string> {
+    const res = await this.resolveLocation(governorateName);
+    return res.shippingGovernorateId;
   }
 
   /**
@@ -227,8 +269,12 @@ export class SafkaClient {
       const safkaProductId = (product as any).safka_product_id || product.id;
       const safkaPropertyId = (product as any).safka_property_id || (product as any).safka_raw?.properties?.[0]?._id || "69615044356433dea16f0bd9";
 
-      // Resolve Safka shipping_governorate ID
-      const shippingGovernorateId = await this.resolveGovernoratePricingId(order.governorate);
+      // Resolve Safka shipping_governorate ID & numeric city ID
+      const { shippingGovernorateId, cityId } = await this.resolveLocation(
+        order.governorate,
+        order.city,
+        order.address
+      );
 
       // Calculate commission: Total paid minus cost price
       const costPerItem = product.cost_price || 0;
@@ -247,7 +293,7 @@ export class SafkaClient {
         client_phone1: order.customer_phone,
         client_phone2: order.customer_phone2 || undefined,
         shipping_governorate: shippingGovernorateId,
-        city: order.city || order.governorate,
+        city: Number(cityId),
         client_address: order.address,
         total: Number(order.final_amount),
         commission: Number(calculatedCommission),

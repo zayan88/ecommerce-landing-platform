@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import confetti from "canvas-confetti";
 import Link from "next/link";
-import { CheckCircle2, MessageCircle, PhoneCall, Clock, ShieldCheck, ArrowRight, Package } from "lucide-react";
+import { CheckCircle2, PhoneCall, Clock, ShieldCheck, ArrowRight, Package } from "lucide-react";
 
-export default function ThankYouPage({ params }: { params: { slug: string } }) {
+function ThankYouContent({ slug }: { slug: string }) {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber") || "EG-ORD-PENDING";
   const customerName = searchParams.get("name") || "عميلنا العزيز";
@@ -127,7 +127,7 @@ export default function ThankYouPage({ params }: { params: { slug: string } }) {
         {/* Back Link */}
         <div className="pt-2">
           <Link
-            href={`/p/${params.slug}`}
+            href={`/p/${slug}`}
             className="text-sm font-bold text-gray-500 hover:text-emerald-700 inline-flex items-center gap-1.5 transition"
           >
             <ArrowRight className="w-4 h-4" />
@@ -136,5 +136,13 @@ export default function ThankYouPage({ params }: { params: { slug: string } }) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ThankYouPage({ params }: { params: { slug: string } }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans text-slate-500">جاري تحميل بيانات الطلب...</div>}>
+      <ThankYouContent slug={params.slug} />
+    </Suspense>
   );
 }
