@@ -101,15 +101,8 @@ export default function BodyMassagerLandingPage({
                 alt={bodyMassagerConfig.productTitle}
                 fill
                 priority
-                className="object-contain p-4"
+                className="object-cover"
               />
-              <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-                <Flame className="w-3.5 h-3.5" />
-                <span>كمادات حرارية + مساج اهتزازي</span>
-              </div>
-              <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
-                لاسلكي بشاشة ديجيتال + شحن USB
-              </div>
             </div>
 
             {/* Quick Micro Badges */}
