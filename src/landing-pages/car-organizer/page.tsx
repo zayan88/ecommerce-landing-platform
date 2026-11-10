@@ -103,15 +103,8 @@ export default function CarOrganizerLandingPage({
                 alt="منظم ظهر مقعد السيارة متعدد الجيوب مع حامل تابلت"
                 fill
                 priority
-                className="object-contain p-4"
+                className="object-cover"
               />
-              <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-                <Tablet className="w-3.5 h-3.5" />
-                <span>حامل تابلت شفاف مدمج</span>
-              </div>
-              <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold px-3 py-1 rounded-xl">
-                جيوب متعددة + أحزمة تثبيت محكمة
-              </div>
             </div>
 
             {/* Quick Micro Badges */}
