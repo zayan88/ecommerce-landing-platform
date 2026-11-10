@@ -200,14 +200,14 @@ export function EgyptianCheckoutForm({
       dir="rtl"
     >
       <div className="text-center pb-5 border-b border-slate-100">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <TruckIcon className="w-3.5 h-3.5 text-emerald-600" /> شحن مجاني 100% لكافة محافظات مصر
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <TruckIcon className="w-4 h-4 text-emerald-600" /> الشحن علينا لحد باب بيتك + معاينة كاملة قبل ما تدفع
         </span>
-        <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-2 font-heading">
-          اطلب الآن واستلم في أسرع وقت
+        <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-2.5 font-heading">
+          اطلب دلوقتي.. وادفع بس لما الشحنة توصلك وتعاينها
         </h2>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1">
-          أدخل بياناتك وسيتم شحن المنتج فوراً مع إمكانية فتح الشحنة والتأكد منها قبل الدفع
+        <p className="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-lg mx-auto leading-relaxed">
+          مش هتدفع ولا جنيه دلوقتي. سيب بياناتك، ولما المندوب يوصلك افتح الشحنة وعاينها براحتك، وبعدين ادفع.
         </p>
       </div>
 
@@ -276,7 +276,7 @@ export function EgyptianCheckoutForm({
         {/* 1. Name */}
         <div>
           <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
-            الاسم بالكامل <span className="text-red-500">*</span>
+            اسمك بالكامل <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -288,11 +288,14 @@ export function EgyptianCheckoutForm({
           />
         </div>
 
-        {/* 2. Phone (Single clean phone field) */}
+        {/* 2. Phone */}
         <div>
-          <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
-            رقم الهاتف المحمول (للتواصل والشحن) <span className="text-red-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs sm:text-sm font-bold text-slate-800">
+              رقم موبايلك (هنكلمك نأكد معاك الشحن) <span className="text-red-500">*</span>
+            </label>
+            <span className="text-[10px] text-emerald-700 font-medium">🔒 في أمان تام</span>
+          </div>
           <input
             type="tel"
             required
@@ -300,14 +303,14 @@ export function EgyptianCheckoutForm({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="01012345678"
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition text-right"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition text-right font-mono"
           />
         </div>
 
-        {/* 3. Governorate (Free delivery across all) */}
+        {/* 3. Governorate */}
         <div>
           <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
-            المحافظة <span className="text-red-500">*</span>
+            محافظتك <span className="text-red-500">*</span>
           </label>
           <select
             value={governorate}
@@ -325,45 +328,48 @@ export function EgyptianCheckoutForm({
         {/* 4. Detailed Address */}
         <div>
           <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
-            العنوان بالتفصيل <span className="text-red-500">*</span>
+            عنوانك بالتفصيل <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             required
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder="المدينة / المنطقة، اسم الشارع، أو علامة مميزة"
+            placeholder="المدينة، اسم الشارع، أو أقرب علامة مميزة"
             className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition"
           />
         </div>
 
-        {/* 5. Details / Notes (New optional field requested by user) */}
+        {/* 5. Details / Notes */}
         <div>
           <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
-            تفاصيل أو ملاحظات إضافية <span className="text-slate-400 font-normal">(اختياري)</span>
+            عندك ملاحظة للمندوب؟ <span className="text-slate-400 font-normal">(اختياري)</span>
           </label>
           <textarea
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="أي تفاصيل خاصة بالعنوان (رقم العمارة / الشقة) أو موعد الاستلام المفضل..."
+            placeholder="رقم العمارة والشقة، أو الوقت الأنسب لك للاستلام..."
             className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition resize-none"
           />
         </div>
 
-        {/* Pricing Summary (Zero Shipping Guaranteed) */}
-        <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200 space-y-1.5 text-xs sm:text-sm">
+        {/* Pricing Summary */}
+        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2 text-xs sm:text-sm">
           <div className="flex justify-between text-slate-600">
-            <span>سعر المنتج ({activeOffer?.title_ar || "الطلب"}):</span>
+            <span>سعر الطلب ({activeOffer?.title_ar || "المنتج"}):</span>
             <span className="font-bold text-slate-900">{totalAmount} ج.م</span>
           </div>
           <div className="flex justify-between text-slate-600">
-            <span>تكلفة الشحن إلى {governorate}:</span>
-            <span className="font-black text-emerald-600">مجاني 100% 🎁</span>
+            <span>الشحن والتوصيل إلى {governorate}:</span>
+            <span className="font-bold text-emerald-600">مجاناً بالكامل علينا 🎁</span>
           </div>
-          <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline text-sm sm:text-base font-extrabold text-slate-900">
-            <span>الإجمالي عند الاستلام (معاينة قبل الدفع):</span>
+          <div className="pt-2.5 border-t border-slate-200 flex justify-between items-baseline text-sm sm:text-base font-extrabold text-slate-900">
+            <span>المبلغ المطلوب عند الاستلام:</span>
             <span className="text-2xl font-black text-orange-600 font-mono">{totalAmount} ج.م</span>
+          </div>
+          <div className="text-[11px] text-slate-500 pt-0.5">
+            ✓ هتدفع للمندوب بس لما تستلم الشحنة وتعاينها بنفسك.
           </div>
         </div>
 
@@ -381,10 +387,15 @@ export function EgyptianCheckoutForm({
           ) : (
             <>
               <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span>اضغط هنا لتأكيد الطلب الآن</span>
+              <span>أكّد طلبي.. وهدفع عند الاستلام 🛒</span>
             </>
           )}
         </button>
+
+        {/* Security & Guarantees Strip */}
+        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center text-xs text-slate-600 font-medium">
+          🔒 مفيش دفع أونلاين • معاينة كاملة قبل الدفع للمندوب • استبدال فوري لو في أي عيب
+        </div>
 
         {/* Security & Guarantees */}
         <div className="grid grid-cols-3 gap-2 pt-2 text-center text-[11px] text-slate-500">

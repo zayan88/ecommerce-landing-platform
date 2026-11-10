@@ -35,14 +35,14 @@ function ThankYouContent({ slug }: { slug: string }) {
         </div>
 
         <div>
-          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            تم تسجيل طلبك بنجاح 🎉
+          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200">
+            ✅ طلبك اتسجل بنجاح يا {customerName}!
           </span>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-950 mt-3 font-heading">
-            شكراً لثقتك بنا يا {customerName}!
+          <h1 className="text-2xl md:text-3xl font-black text-gray-950 mt-3.5 font-heading">
+            شكراً يا {customerName}.. طلبك في إيدينا وبنجهزه 🙌
           </h1>
-          <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-            استلمنا بيانات طلبك وسيقوم فريق التأكيد بالتواصل معك على رقم هاتفك لتأكيد الشحن وميعاد الاستلام.
+          <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
+            استلمنا بياناتك وهيتواصل معاك فريق التأكيد على رقمك {customerPhone ? <span className="font-mono font-bold text-slate-800 dir-ltr inline-block">({customerPhone})</span> : ""} لتأكيد ميعاد التوصيل المناسب لك.
           </p>
         </div>
 
@@ -101,26 +101,28 @@ function ThankYouContent({ slug }: { slug: string }) {
           </div>
         </div>
 
-        {/* Confirmation Notice - Replaced WhatsApp Button */}
-        <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-right flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-amber-700">
+        {/* Confirmation Notice - Optimized by Claude to prevent dropoffs */}
+        <div className="p-4 rounded-2xl bg-amber-50/95 border border-amber-300 text-right flex items-center gap-3 shadow-xs">
+          <div className="w-11 h-11 rounded-full bg-amber-200/90 flex items-center justify-center shrink-0 text-amber-900 animate-pulse">
             <PhoneCall className="w-5 h-5" />
           </div>
           <div>
-            <div className="font-bold text-sm text-amber-950">هيتواصل معاك تيم التأكيد في أقرب وقت</div>
-            <div className="text-xs text-amber-800 mt-0.5">يرجى الرد على مكالمة خدمة العملاء لتأكيد تجهيز الشحنة وموعد الوصول.</div>
+            <div className="font-black text-sm text-amber-950">📞 مهم جداً: ردّ على مكالمتنا عشان طلبك يتشحن فوراً</div>
+            <div className="text-xs text-amber-900 mt-1 leading-relaxed">
+              هيتصل بيك فريق التأكيد لتأكيد العنوان وميعاد الاستلام.. الرد السريع بيضمن خروج شحنتك فوراً لحد باب بيتك.
+            </div>
           </div>
         </div>
 
         {/* Guarantees Box */}
-        <div className="grid grid-cols-2 gap-3 text-xs text-gray-600 pt-2 text-right">
-          <div className="p-3 rounded-xl bg-slate-50 border border-gray-100 flex items-center gap-2.5">
+        <div className="grid grid-cols-2 gap-3 text-xs text-gray-700 pt-1 text-right font-medium">
+          <div className="p-3 rounded-xl bg-slate-50 border border-gray-200/80 flex items-center gap-2.5">
             <Clock className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <span>التوصيل من 5 إلى 7 أيام</span>
+            <span>التوصيل من 3 إلى 5 أيام عمل</span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 border border-gray-100 flex items-center gap-2.5">
+          <div className="p-3 rounded-xl bg-slate-50 border border-gray-200/80 flex items-center gap-2.5">
             <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <span>معاينة كاملة قبل الدفع للمندوب</span>
+            <span>افتح الشحنة وعاين قبل الدفع</span>
           </div>
         </div>
 
