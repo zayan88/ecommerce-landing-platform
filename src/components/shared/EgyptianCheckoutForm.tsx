@@ -34,11 +34,12 @@ export function EgyptianCheckoutForm({
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
 
-  // Simplified Form fields (Name, Phone once, Governorate, Address)
+  // Simplified Form fields (Name, Phone once, Governorate, Address, Notes/Details)
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [governorate, setGovernorate] = useState("القاهرة");
   const [address, setAddress] = useState("");
+  const [notes, setNotes] = useState("");
 
   // States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -157,6 +158,8 @@ export function EgyptianCheckoutForm({
         shipping_city: governorate || "القاهرة",
         address: address.trim(),
         shipping_address: address.trim(),
+        notes: notes.trim() || undefined,
+        customer_notes: notes.trim() || undefined,
         offer_id: activeOffer?.id || undefined,
         quantity,
         payment_method: "cod",
@@ -331,6 +334,20 @@ export function EgyptianCheckoutForm({
             onChange={(e) => setAddress(e.target.value)}
             placeholder="المدينة / المنطقة، اسم الشارع، أو علامة مميزة"
             className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition"
+          />
+        </div>
+
+        {/* 5. Details / Notes (New optional field requested by user) */}
+        <div>
+          <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
+            تفاصيل أو ملاحظات إضافية <span className="text-slate-400 font-normal">(اختياري)</span>
+          </label>
+          <textarea
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="أي تفاصيل خاصة بالعنوان (رقم العمارة / الشقة) أو موعد الاستلام المفضل..."
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition resize-none"
           />
         </div>
 
