@@ -538,7 +538,7 @@ export default async function HomePage() {
             </p>
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
               <div>
-                <span className="font-bold text-sm text-slate-900 block">م. أحمد الشناوي</span>
+                <span className="font-bold text-sm text-slate-900 block">أحمد الشناوي</span>
                 <span className="text-xs text-gray-500">القاهرة - التجمع الخامس</span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">
@@ -554,11 +554,11 @@ export default async function HomePage() {
               ))}
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              "سرعة التوصيل خرافية، طلبت العرض الساعة 2 الظهر وصلني تاني يوم الصبح في الإسكندرية. التغليف محكم والمنتج شغال بكفاءة عالية جداً."
+              "الطلب وصلني في ميعاده والتغليف محكم والمنتج شغال بكفاءة عالية جداً، والمندوب كان محترم وانتظرني لما عاينت كل حاجة بنفسي."
             </p>
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
               <div>
-                <span className="font-bold text-sm text-slate-900 block">د. هبة محمود</span>
+                <span className="font-bold text-sm text-slate-900 block">هبة محمود</span>
                 <span className="text-xs text-gray-500">الإسكندرية - سموحة</span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">
@@ -578,7 +578,7 @@ export default async function HomePage() {
             </p>
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
               <div>
-                <span className="font-bold text-sm text-slate-900 block">ك. طارق فهمي</span>
+                <span className="font-bold text-sm text-slate-900 block">طارق فهمي</span>
                 <span className="text-xs text-gray-500">الجيزة - الدقي</span>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">

@@ -78,7 +78,7 @@ export const starterLandingConfig = {
 
   reviews: [
     {
-      name: "م. أحمد إبراهيم",
+      name: "أحمد إبراهيم",
       location: "المعادي، القاهرة",
       rating: 5,
       date: "منذ يومين",
@@ -87,16 +87,16 @@ export const starterLandingConfig = {
       productLabel: "RexRack Smart Organizer"
     },
     {
-      name: "د. سارة محمود",
+      name: "سارة محمود",
       location: "سموحة، الإسكندرية",
       rating: 5,
       date: "منذ 4 أيام",
-      text: "طلبت عرض القطعتين وصلني تاني يوم على طول. فادني جداً في تنظيم مكتبي والعيادة والشكل شيك جداً وراقي.",
+      text: "طلبت عرض القطعتين وصلني في ميعاده. فادني جداً في تنظيم مكتبي والبيت والشكل شيك جداً وراقي.",
       photo: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=500&q=80",
       productLabel: "عرض القطعتين (توفير)"
     },
     {
-      name: "أ/ محمود حسن",
+      name: "محمود حسن",
       location: "حي الجامعة، المنصورة",
       rating: 5,
       date: "منذ أسبوع",

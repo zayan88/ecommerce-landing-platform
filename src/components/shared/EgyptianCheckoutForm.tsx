@@ -401,7 +401,7 @@ export function EgyptianCheckoutForm({
         <div className="grid grid-cols-3 gap-2 pt-2 text-center text-[11px] text-slate-500">
           <div className="flex flex-col items-center gap-1">
             <TruckIcon className="w-4 h-4 text-emerald-600" />
-            <span>شحن مجاني وسريع</span>
+            <span>شحن مجاني (5-7 أيام)</span>
           </div>
           <div className="flex flex-col items-center gap-1">
             <ShieldCheckIcon className="w-4 h-4 text-emerald-600" />

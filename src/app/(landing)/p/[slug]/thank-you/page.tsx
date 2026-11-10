@@ -118,7 +118,7 @@ function ThankYouContent({ slug }: { slug: string }) {
         <div className="grid grid-cols-2 gap-3 text-xs text-gray-700 pt-1 text-right font-medium">
           <div className="p-3 rounded-xl bg-slate-50 border border-gray-200/80 flex items-center gap-2.5">
             <Clock className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <span>التوصيل من 3 إلى 5 أيام عمل</span>
+            <span>التوصيل من 5 إلى 7 أيام عمل</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 border border-gray-200/80 flex items-center gap-2.5">
             <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
