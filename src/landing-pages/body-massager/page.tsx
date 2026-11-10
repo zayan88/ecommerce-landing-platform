@@ -124,22 +124,27 @@ export default function BodyMassagerLandingPage({
 
           {/* Headline & Immediate Value Hook */}
           <div className="lg:col-span-6 space-y-4 text-right">
-            {/* Rating */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-xs">
-              <div className="flex items-center text-amber-500">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                ))}
+            {/* Rating & Hook */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-xs">
+                <div className="flex items-center text-amber-500">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  ))}
+                </div>
+                <span className="font-bold text-orange-950">4.95 (أكثر من 380 عميل راضٍ في مصر)</span>
               </div>
-              <span className="font-bold text-orange-950">4.95 (أكثر من 380 عميل راضٍ في مصر)</span>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-[11px] font-bold">
+                ⚡ كتفك وضهرك بيصرخوا من قعدة الشغل؟ بطّل تستحمل الوجع كل ليلة
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black font-heading text-slate-950 leading-tight">
-              جهاز التدليك والمساج الشامل 5×1 بالحرارة والاهتزاز للكتف والظهر والبطن والرجل
+              مساج حراري وتدفئة تفك تشنج عضلاتك وتيبس مفاصلك في 15 دقيقة.. وأنت مرتاح في بيتك بدون مسكنات
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              ودّع تشنج الكتفين وآلام أسفل الظهر وخشونة الركبتين! جهاز ذكي شامل يجمع بين المساج الاهتزازي العميق والتدفئة الحرارية لتسكين فوري للألم وتنشيط الدورة الدموية وأنت بتتحرك بحرية.
+              جهاز التدليك والمساج الشامل 5×1 بالحرارة العميقة والاهتزاز الذكي للكتف، أسفل الظهر، الركبة، والبطن. لاسلكي بالكامل يمنحك راحة جلسات العلاج الطبيعي وتسكين فوري وأنت بتتحرك براحتك.
             </p>
 
             {/* Checklist of Core Benefits */}

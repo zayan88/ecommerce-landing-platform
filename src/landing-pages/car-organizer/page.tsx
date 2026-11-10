@@ -126,22 +126,27 @@ export default function CarOrganizerLandingPage({
 
           {/* Headline & Immediate Value Hook */}
           <div className="lg:col-span-6 space-y-4 text-right">
-            {/* Rating */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs">
-              <div className="flex items-center text-amber-500">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                ))}
+            {/* Rating & Hook */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs">
+                <div className="flex items-center text-amber-500">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  ))}
+                </div>
+                <span className="font-bold text-blue-950">4.96 (أكثر من 410 تقييم حقيقي في مصر)</span>
               </div>
-              <span className="font-bold text-blue-950">4.96 (أكثر من 410 تقييم حقيقي في مصر)</span>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-[11px] font-bold">
+                🚗 كراسي عربيتك اتبهدلت من تخبيط رجلين العيال والأكياس المدحرجة؟
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black font-heading text-slate-950 leading-tight">
-              سيارة مرتبة وفندقية بدون كركبة.. وحامل تابلت يسلي أولادك طول الطريق
+              منظم الكراسي مع حامل التابلت الشفاف: يحمي الفرش، يلم الفوضى، ويخلي الأولاد هاديين ومبسوطين طول الطريق
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              منظم مقعد السيارة الذكي متعدد الجيوب. يجمع أغراضك، زجاجات المياه، والمناديل في مكان واحد، ويحمي مقاعد سيارتك من أقدام الأطفال، مع شاشة تابلت لمشاهدة الكرتون في كل رحلة.
+              منظم ظهر مقعد السيارة الفاخر متعدد الجيوب من الجلد المعالج. يجمع كل أغراضك وزجاجات المياه والمناديل في مكانها، ويحمي كراسي سيارتك من البقع والخدوش مع جيب تابلت تاتش لرحلات هادئة.
             </p>
 
             {/* Checklist of Core Benefits */}

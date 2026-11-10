@@ -130,22 +130,27 @@ export default function MeshNebulizerLandingPage({
 
           {/* Headline & Immediate Value Hook */}
           <div className="lg:col-span-6 space-y-4 text-right">
-            {/* Rating */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-xs">
-              <div className="flex items-center text-amber-500">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                ))}
+            {/* Rating & Hook */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-xs">
+                <div className="flex items-center text-amber-500">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  ))}
+                </div>
+                <span className="font-bold text-cyan-900">4.95 (أكثر من 420 أسرة راضية)</span>
               </div>
-              <span className="font-bold text-cyan-900">4.95 (أكثر من 420 أسرة راضية)</span>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold">
+                ⚠️ مفيش أصعب من نَفَس طفلك وهو تقيل الساعة 3 الفجر
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black font-heading text-slate-950 leading-tight">
-              جلسة بخار هادئة لطفلك وهو نايم في سريره وبدون بكاء ولا خوف
+              كحّة ابنك بتسهّدك بالليل؟ جلسة بخار صامتة وفورية بتوصل العلاج لصدره في دقايق.. وهو نايم ومستغطي في سريره
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              جهاز استنشاق البخار المحمول ميني (Mesh Nebulizer) فائق الهدوء. يحول الدواء والمحلول لرذاذ دقيق وسريع الامتصاص للرئة، بحجم الجيب للبيت والسفر والمستشفى.
+              جهاز استنشاق البخار المحمول ميني (Mesh Nebulizer) فائق الهدوء. يحول الدواء والمحلول لرذاذ ناعم دقيق يمتصه الصدر فوراً، بدون صوت رعب ولا بهدلة نزول طوارئ في عز برد الشتاء.
             </p>
 
             {/* Checklist of Core Benefits */}
