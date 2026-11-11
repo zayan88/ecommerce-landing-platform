@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Product, LandingPage, ProductOffer } from "@/types";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
+import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import { bodyMassagerConfig } from "./config";
 import {
   Star,
@@ -166,6 +167,14 @@ export default function BodyMassagerLandingPage({
                 <span className="font-semibold">لاسلكي بالكامل ويعمل ببطارية ليثيوم قوية قابلة لإعادة الشحن USB</span>
               </div>
             </div>
+
+            {/* Interactive Hero Offer Selector */}
+            <HeroOfferSelector
+              offers={product.offers || []}
+              selectedOffer={selectedOffer}
+              onSelectOffer={(offer) => setSelectedOffer(offer)}
+              accentColor="orange"
+            />
 
             {/* Pricing Summary */}
             <div className="flex items-baseline justify-between pt-1">

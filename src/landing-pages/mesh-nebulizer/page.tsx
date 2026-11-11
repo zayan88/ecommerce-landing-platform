@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Product, LandingPage, ProductOffer } from "@/types";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
+import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import { meshNebulizerConfig } from "./config";
 import {
   Star,
@@ -55,7 +56,7 @@ export default function MeshNebulizerLandingPage({
 
   const initialOffer =
     product.offers && product.offers.length > 0
-      ? product.offers.find((o) => o.is_popular) || product.offers[0]
+      ? product.offers.find((o) => o.quantity === 1) || product.offers[0]
       : defaultOffer;
 
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
@@ -173,14 +174,29 @@ export default function MeshNebulizerLandingPage({
               </div>
             </div>
 
+            {/* Interactive Hero Offer Selector */}
+            <HeroOfferSelector
+              offers={product.offers || []}
+              selectedOffer={selectedOffer}
+              onSelectOffer={(offer) => setSelectedOffer(offer)}
+              accentColor="cyan"
+            />
+
             {/* Pricing Summary */}
             <div className="flex items-baseline justify-between pt-1">
               <div>
-                <span className="text-xs text-slate-500 block">سعر العرض الخاص اليوم:</span>
+                <span className="text-xs text-slate-500 block">
+                  {selectedOffer.quantity === 1 ? "سعر القطعة الواحدة في العرض:" : `سعر العرض (${selectedOffer.quantity} قطع):`}
+                </span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-black text-cyan-700 font-mono">{selectedOffer.price} ج.م</span>
                   {selectedOffer.original_price && (
                     <span className="text-sm text-slate-400 line-through">{selectedOffer.original_price} ج.م</span>
+                  )}
+                  {selectedOffer.quantity === 1 && (
+                    <span className="text-xs font-bold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                      قطعة واحدة
+                    </span>
                   )}
                 </div>
               </div>

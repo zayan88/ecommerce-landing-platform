@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Product, LandingPage, ProductOffer } from "@/types";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
+import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import { astrobeamConfig } from "./config";
 import {
   Star,
@@ -51,7 +52,7 @@ export default function AstroBeamLandingPage({
 
   const initialOffer =
     product.offers && product.offers.length > 0
-      ? product.offers.find((o) => o.is_popular) || product.offers[0]
+      ? product.offers.find((o) => o.quantity === 1) || product.offers[0]
       : defaultOffer;
 
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
@@ -166,10 +167,21 @@ export default function AstroBeamLandingPage({
               ))}
             </div>
 
+            {/* Interactive Hero Offer Selector */}
+            <HeroOfferSelector
+              offers={product.offers || []}
+              selectedOffer={selectedOffer}
+              onSelectOffer={(offer) => setSelectedOffer(offer)}
+              accentColor="purple"
+              isDarkTheme={true}
+            />
+
             {/* Pricing Box */}
             <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/80 to-slate-900 border border-purple-500/40 shadow-lg flex items-center justify-between">
               <div>
-                <span className="text-xs text-purple-300 block font-bold">سعر العرض الحصري اليوم:</span>
+                <span className="text-xs text-purple-300 block font-bold">
+                  {selectedOffer?.quantity === 1 ? "سعر القطعة الواحدة في العرض:" : `سعر العرض (${selectedOffer?.quantity} قطع):`}
+                </span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-black text-amber-400 font-heading">
                     {selectedOffer?.price || astrobeamConfig.basePrice} ج.م
@@ -177,9 +189,16 @@ export default function AstroBeamLandingPage({
                   <span className="text-sm text-slate-400 line-through">
                     {selectedOffer?.original_price || astrobeamConfig.comparePrice} ج.م
                   </span>
-                  <span className="text-xs bg-red-600/90 text-white font-bold px-2 py-0.5 rounded-full">
-                    {selectedOffer?.discount_label || "خصم 31%"}
-                  </span>
+                  {selectedOffer?.quantity === 1 && (
+                    <span className="text-xs bg-purple-900/90 text-purple-200 font-bold px-2 py-0.5 rounded-full border border-purple-700">
+                      قطعة واحدة
+                    </span>
+                  )}
+                  {selectedOffer?.discount_label && selectedOffer.quantity > 1 && (
+                    <span className="text-xs bg-red-600/90 text-white font-bold px-2 py-0.5 rounded-full">
+                      {selectedOffer.discount_label}
+                    </span>
+                  )}
                 </div>
               </div>
 
