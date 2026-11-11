@@ -286,7 +286,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: "معرف الطلب مطلوب" }, { status: 400 });
     }
 
-    const { status, action } = body;
+    const { action } = body;
 
     // Retry Safka Sync action
     if (action === "retry_safqa") {
@@ -296,12 +296,43 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json(res);
     }
 
-    if (status) {
-      const updated = await dbStore.updateOrderStatus(orderId, status);
-      return NextResponse.json({ success: updated });
+    // General update for order fields
+    const allowedFields = [
+      "status",
+      "customer_name",
+      "customer_phone",
+      "customer_phone2",
+      "governorate",
+      "city",
+      "address",
+      "notes",
+      "product_id",
+      "offer_id",
+      "quantity",
+      "unit_price",
+      "total_amount",
+      "shipping_fee",
+      "discount_amount",
+      "final_amount",
+      "landing_page_slug",
+    ];
+
+    const updates: any = {};
+    for (const key of allowedFields) {
+      if (key in body && body[key] !== undefined) {
+        updates[key] = body[key];
+      }
     }
 
-    return NextResponse.json({ success: false, error: "لا يوجد إجراء محدد" }, { status: 400 });
+    if (Object.keys(updates).length > 0) {
+      const updated = await dbStore.updateOrder(orderId, updates);
+      if (!updated) {
+        return NextResponse.json({ success: false, error: "الطلب غير موجود للتحديث" }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, order: updated });
+    }
+
+    return NextResponse.json({ success: false, error: "لا يوجد حقول محددة للتحديث" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

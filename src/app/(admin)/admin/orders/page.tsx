@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus, Product } from "@/types";
+import { EditOrderModal } from "./EditOrderModal";
 import {
   Search,
   Filter,
@@ -20,6 +21,8 @@ import {
   MapPin,
   Calendar,
   Trash2,
+  Pencil,
+  Package,
 } from "lucide-react";
 
 export default function AdminOrdersPage() {
@@ -32,6 +35,9 @@ export default function AdminOrdersPage() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
 
   const [syncingSafka, setSyncingSafka] = useState(false);
 
@@ -59,9 +65,36 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch("/api/products");
+      const json = await res.json();
+      if (json.success && json.products) {
+        setProducts(json.products);
+      }
+    } catch (err) {
+      console.error("Failed to fetch products", err);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
   }, [statusFilter]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleOrderUpdated = (updatedOrder: Order) => {
+    setOrders((prev) =>
+      prev.map((ord) => (ord.id === updatedOrder.id ? updatedOrder : ord))
+    );
+    if (selectedOrder && selectedOrder.id === updatedOrder.id) {
+      setSelectedOrder(updatedOrder);
+    }
+    setActionMessage(`✓ تم تحديث بيانات الطلب (${updatedOrder.order_number}) بنجاح`);
+    setTimeout(() => setActionMessage(null), 4000);
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -323,11 +356,11 @@ export default function AdminOrdersPage() {
                 <th className="py-3.5 px-4">رقم الطلب</th>
                 <th className="py-3.5 px-4">العميل والهاتف</th>
                 <th className="py-3.5 px-4">المحافظة</th>
-                <th className="py-3.5 px-4">صفحة الهبوط</th>
+                <th className="py-3.5 px-4 min-w-[220px]">المنتج والباقة المطلوبة</th>
                 <th className="py-3.5 px-4">المبلغ</th>
                 <th className="py-3.5 px-4">حالة الطلب</th>
                 <th className="py-3.5 px-4">بوابة صفقة</th>
-                <th className="py-3.5 px-4">إجراءات سريعة</th>
+                <th className="py-3.5 px-4 text-center">إجراءات سريعة</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -382,9 +415,38 @@ export default function AdminOrdersPage() {
                       </td>
 
                       <td className="py-3.5 px-4 text-xs">
-                        <span className="font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                          {ord.landing_page_slug}
-                        </span>
+                        <div className="flex items-center gap-2.5">
+                          {ord.product?.images?.[0] ? (
+                            <img
+                              src={ord.product.images[0]}
+                              alt={ord.product.title_ar}
+                              className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0 shadow-2xs"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 border border-gray-200">
+                              <Package className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div className="min-w-0 max-w-[220px]">
+                            <div className="font-bold text-gray-900 truncate" title={ord.product?.title_ar || "منتج غير محدد"}>
+                              {ord.product?.title_ar || "منتج غير محدد"}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              <span className="font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px]">
+                                {ord.quantity === 1
+                                  ? "قطعة واحدة"
+                                  : ord.quantity === 2
+                                  ? "قطعتين (عرض خاص)"
+                                  : ord.quantity === 3
+                                  ? "3 قطع (توفير)"
+                                  : `${ord.quantity} قطع`}
+                              </span>
+                              <span className="font-mono text-gray-400 text-[10px] truncate">
+                                /p/{ord.landing_page_slug}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-4 font-black text-gray-900">
@@ -441,7 +503,7 @@ export default function AdminOrdersPage() {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1.5">
                           {/* WhatsApp button */}
                           <a
                             href={whatsappLink}
@@ -452,6 +514,15 @@ export default function AdminOrdersPage() {
                           >
                             <MessageCircle className="w-4 h-4" />
                           </a>
+
+                          {/* Edit Order Button */}
+                          <button
+                            onClick={() => setEditingOrder(ord)}
+                            className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition cursor-pointer"
+                            title="تعديل بيانات الطلب (المنتج، العنوان، السعر)"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
 
                           {/* Details Button */}
                           <button
@@ -499,6 +570,66 @@ export default function AdminOrdersPage() {
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Product & Offer Card */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  المنتج والعرض المطلوب
+                </h4>
+                <button
+                  onClick={() => setEditingOrder(selectedOrder)}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>تعديل الطلب</span>
+                </button>
+              </div>
+              <div className="bg-slate-50 rounded-2xl p-4 border border-gray-200/80 flex items-start gap-4">
+                {selectedOrder.product?.images?.[0] ? (
+                  <img
+                    src={selectedOrder.product.images[0]}
+                    alt={selectedOrder.product.title_ar}
+                    className="w-16 h-16 rounded-2xl object-cover border border-gray-200 shrink-0 shadow-xs"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                    <Package className="w-8 h-8" />
+                  </div>
+                )}
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <h5 className="font-black text-gray-950 text-sm leading-snug">
+                    {selectedOrder.product?.title_ar || "منتج غير محدد"}
+                  </h5>
+                  <div className="flex items-center gap-2 flex-wrap text-xs">
+                    <span className="font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                      {selectedOrder.quantity === 1
+                        ? "باقة: قطعة واحدة"
+                        : selectedOrder.quantity === 2
+                        ? "باقة: قطعتين (عرض خاص)"
+                        : selectedOrder.quantity === 3
+                        ? "باقة: 3 قطع"
+                        : `باقة: ${selectedOrder.quantity} قطع`}
+                    </span>
+                    <span className="text-gray-500 font-mono text-[11px]">
+                      SKU: {selectedOrder.product?.sku || "N/A"}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 flex items-center gap-1 pt-1">
+                    <span>صفحة الهبوط:</span>
+                    <a
+                      href={`/p/${selectedOrder.landing_page_slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-600 hover:underline font-mono inline-flex items-center gap-1"
+                    >
+                      /p/{selectedOrder.landing_page_slug}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Customer Details */}
@@ -600,14 +731,24 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-between">
-              <button
-                onClick={() => handleDeleteOrder(selectedOrder.id, selectedOrder.order_number)}
-                className="py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>حذف هذا الطلب نهائياً</span>
-              </button>
+            <div className="pt-2 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDeleteOrder(selectedOrder.id, selectedOrder.order_number)}
+                  className="py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>حذف الطلب نهائياً</span>
+                </button>
+
+                <button
+                  onClick={() => setEditingOrder(selectedOrder)}
+                  className="py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span>تعديل بيانات الطلب</span>
+                </button>
+              </div>
 
               <button
                 onClick={() => setSelectedOrder(null)}
@@ -618,6 +759,17 @@ export default function AdminOrdersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Order Modal */}
+      {editingOrder && (
+        <EditOrderModal
+          isOpen={!!editingOrder}
+          order={editingOrder}
+          products={products}
+          onClose={() => setEditingOrder(null)}
+          onOrderUpdated={handleOrderUpdated}
+        />
       )}
     </div>
   );

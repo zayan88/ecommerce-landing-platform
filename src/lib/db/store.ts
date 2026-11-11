@@ -962,7 +962,50 @@ export const dbStore = {
           o.governorate.toLowerCase().includes(q)
       );
     }
+
+    // Always ensure product is attached for display
+    results.forEach((ord) => {
+      if (!ord.product && ord.product_id) {
+        ord.product = memoryProducts.find((p) => p.id === ord.product_id);
+      }
+      if (!ord.product && ord.landing_page_slug) {
+        const lp = memoryLandingPages.find((l) => l.slug === ord.landing_page_slug);
+        if (lp?.product) ord.product = lp.product;
+      }
+    });
+
     return results;
+  },
+
+  async updateOrder(id: string, updates: Partial<Order>): Promise<Order | null> {
+    loadFromFile();
+    const admin = getSupabaseAdmin();
+    const updatePayload = {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (admin) {
+      try {
+        await admin.from("orders").update(updatePayload).eq("id", id);
+      } catch (e) {
+        console.error("[Supabase updateOrder error]", e);
+      }
+    }
+
+    const order = memoryOrders.find((o) => o.id === id || o.order_number === id);
+    if (order) {
+      Object.assign(order, updatePayload);
+      if (updates.product_id) {
+        const p = memoryProducts.find((mp) => mp.id === updates.product_id);
+        if (p) {
+          order.product = p;
+        }
+      }
+      saveToFile();
+      return order;
+    }
+    return null;
   },
 
   async getOrder(id: string): Promise<Order | null> {
