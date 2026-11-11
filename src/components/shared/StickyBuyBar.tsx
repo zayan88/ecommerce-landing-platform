@@ -2,20 +2,27 @@
 
 import React from "react";
 import { ShoppingBagIcon } from "@heroicons/react/24/solid";
+import { Product, ProductOffer } from "@/types";
 
 interface StickyBuyBarProps {
-  productTitle: string;
-  price: number;
+  product?: Product;
+  selectedOffer?: ProductOffer;
+  onOrderClick?: () => void;
+  productTitle?: string;
+  price?: number;
   compareAtPrice?: number;
   onCtaClick?: () => void;
   ctaText?: string;
 }
 
 export function StickyBuyBar({
-  productTitle,
-  price,
-  compareAtPrice,
-  onCtaClick,
+  product,
+  selectedOffer,
+  onOrderClick,
+  productTitle = product?.title_ar || "",
+  price = selectedOffer?.price || product?.base_price || 0,
+  compareAtPrice = selectedOffer?.original_price || product?.compare_at_price,
+  onCtaClick = onOrderClick,
   ctaText = "أكّد طلبك الآن 🛒",
 }: StickyBuyBarProps) {
   const scrollToForm = () => {

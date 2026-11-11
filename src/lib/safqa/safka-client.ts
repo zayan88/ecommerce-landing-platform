@@ -28,8 +28,11 @@ export interface SafkaPriceListItem {
   name_ar?: string;
   name_en?: string;
   governorate?: string;
+  governorateNameAr?: string;
+  governorateName?: string;
   price?: number;
   delivery_cost?: number;
+  cities?: Array<{ id: string | number; city_name_ar?: string; city_name_en?: string; name_ar?: string; name_en?: string }>;
 }
 
 export interface SafkaOrderResponse {
