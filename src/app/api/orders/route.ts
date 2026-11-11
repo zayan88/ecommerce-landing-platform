@@ -100,10 +100,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 6. Forward order to Safka Egypt Dropshipping API automatically (Safe background forwarder)
-    SafkaClient.createOrder(createdOrder).catch((err) => {
-      console.error("[Background Safka dropshipping forward error]", err);
-    });
+    // 6. Forward order to Safka Egypt Dropshipping API (Awaited to ensure completion on Serverless/Vercel)
+    let safkaResult = null;
+    try {
+      safkaResult = await SafkaClient.createOrder(createdOrder);
+      console.log(`[Order Created] Linked to Safka Egypt:`, safkaResult);
+    } catch (err) {
+      console.error("[Safka dropshipping forward error]", err);
+    }
 
     // 7. Dispatch Meta Conversions API (CAPI) event with identical event_id
     MetaCapiClient.sendEvent({
@@ -170,12 +174,67 @@ export async function GET(req: NextRequest) {
     const landing_page_slug = searchParams.get("lp") || undefined;
     const status = (searchParams.get("status") as any) || undefined;
     const search = searchParams.get("q") || undefined;
+    const syncSafka = searchParams.get("sync") === "true";
 
     const orders = await dbStore.getOrders({
       landing_page_slug,
       status,
       search,
     });
+
+    // Sync live orders from Safka Dropshipping platform
+    if (syncSafka || orders.length <= 2) {
+      try {
+        const safkaOrders = await SafkaClient.fetchSafkaMcpOrders(20);
+        if (Array.isArray(safkaOrders) && safkaOrders.length > 0) {
+          const existingSerials = new Set(
+            orders.map((o) => o.safqa_invoice_id || o.order_number)
+          );
+
+          for (const sOrd of safkaOrders) {
+            if (!existingSerials.has(sOrd.serial_number)) {
+              let mappedStatus: any = "pending";
+              if (sOrd.status?.startsWith("declined")) mappedStatus = "cancelled";
+              else if (sOrd.status === "shipped") mappedStatus = "shipped";
+              else if (sOrd.status === "available" || sOrd.status === "collected") mappedStatus = "delivered";
+              else if (sOrd.status === "preparing" || sOrd.status === "printing") mappedStatus = "confirmed";
+
+              const virtualOrder: any = {
+                id: `sfk-${sOrd.serial_number}`,
+                order_number: sOrd.serial_number,
+                landing_page_slug: "safka-direct",
+                product_id: "prod-astrobeam-6ab19443",
+                customer_name: "عميل صفقة",
+                customer_phone: sOrd.client_phone1 || "01000000000",
+                governorate: typeof sOrd.governorate === "string" ? sOrd.governorate : sOrd.governorate?.untrustedText || "القاهرة",
+                address: "طلب مسجل في منصة صفقة (دروبشيبينغ)",
+                quantity: 1,
+                unit_price: sOrd.total || 0,
+                total_amount: sOrd.total || 0,
+                shipping_fee: 0,
+                discount_amount: 0,
+                final_amount: sOrd.total || 0,
+                currency: "EGP",
+                status: mappedStatus,
+                payment_method: "cod",
+                safqa_invoice_id: sOrd.serial_number,
+                safqa_status: "paid",
+                created_at: sOrd.created_at || new Date().toISOString(),
+                updated_at: sOrd.created_at || new Date().toISOString(),
+                safqa_response: sOrd,
+              };
+
+              orders.push(virtualOrder);
+              existingSerials.add(sOrd.serial_number);
+            }
+          }
+
+          orders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+      } catch (e) {
+        console.error("[Safka Sync in GET Orders Error]", e);
+      }
+    }
 
     return NextResponse.json({ success: true, orders });
   } catch (err: any) {

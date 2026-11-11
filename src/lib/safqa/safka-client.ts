@@ -297,9 +297,9 @@ export class SafkaClient {
         client_address: order.address,
         total: Number(order.final_amount),
         commission: Number(calculatedCommission),
-        page_name: `RexRack - ${order.landing_page_slug}`,
-        page_id: "rexrack-main",
-        note: order.notes || `طلب من صفحة هبوط RexRack (رقم الطلب: ${order.order_number})`,
+        page_name: "RexRack",
+        page_id: "6a9c1268c9d99a6b86b85208", // Safka marketer page ObjectId for RexRack
+        note: order.notes || `طلب من متجر RexRack صفحة ${order.landing_page_slug} (رقم الطلب: ${order.order_number})`,
       };
 
       console.log("[SafkaClient] Forwarding order to Safka Egypt:", JSON.stringify(payload));
@@ -476,5 +476,60 @@ export class SafkaClient {
       product,
       landingPageUrl: `/p/${cleanSlug}`,
     };
+  }
+
+  /**
+   * Fetch recent orders directly from Safka MCP reporting API
+   */
+  static async fetchSafkaMcpOrders(limit = 30): Promise<any[]> {
+    try {
+      let accessToken = process.env.SAFKA_ACCESS_TOKEN || "";
+      const tokensPath = "d:/AI Project/safka-mcp/tokens.json";
+      if (typeof window === "undefined") {
+        try {
+          const fs = await import("fs");
+          if (fs.existsSync(tokensPath)) {
+            const raw = fs.readFileSync(tokensPath, "utf-8");
+            const parsed = JSON.parse(raw);
+            if (parsed.access_token) {
+              accessToken = parsed.access_token;
+            }
+          }
+        } catch {}
+      }
+
+      if (!accessToken) return [];
+
+      const res = await fetch("https://api.safka-eg.com/api/v1/mcp", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          Accept: "application/json, text/event-stream",
+          "MCP-Protocol-Version": "2024-11-05",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: Date.now(),
+          method: "tools/call",
+          params: {
+            name: "search_orders",
+            arguments: { limit },
+          },
+        }),
+      });
+
+      if (!res.ok) return [];
+
+      const json = await res.json();
+      const textContent = json.result?.content?.[0]?.text;
+      if (!textContent) return [];
+
+      const parsedData = JSON.parse(textContent);
+      return parsedData.orders || [];
+    } catch (err) {
+      console.error("[SafkaClient fetchSafkaMcpOrders Error]", err);
+      return [];
+    }
   }
 }

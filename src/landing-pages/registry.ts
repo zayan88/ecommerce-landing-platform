@@ -5,6 +5,7 @@ import MeshNebulizerLandingPage from "./mesh-nebulizer/page";
 import MassageCushionLandingPage from "./massage-cushion/page";
 import BodyMassagerLandingPage from "./body-massager/page";
 import CarOrganizerLandingPage from "./car-organizer/page";
+import AstroBeamLandingPage from "./astrobeam/page";
 
 export interface LandingPageComponentProps {
   product: Product;
@@ -40,6 +41,12 @@ export const landingPageRegistry: Record<string, React.ComponentType<LandingPage
   "car-seat-organizer": CarOrganizerLandingPage,
   "safka-9pkjp8q": CarOrganizerLandingPage,
   "safka-6a29f09b": CarOrganizerLandingPage,
+
+  // Product 4: AstroBeam Mini Space Projector
+  "astrobeam": AstroBeamLandingPage,
+  "astrobeam-projector": AstroBeamLandingPage,
+  "safka-6ab19443": AstroBeamLandingPage,
+  "safka-6ab19443ca38d5013c7cb9fb": AstroBeamLandingPage,
 };
 
 /**

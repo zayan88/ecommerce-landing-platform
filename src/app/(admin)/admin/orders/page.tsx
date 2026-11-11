@@ -29,13 +29,17 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
-  const fetchOrders = async () => {
+  const [syncingSafka, setSyncingSafka] = useState(false);
+
+  const fetchOrders = async (sync = false) => {
     try {
       setLoading(true);
+      if (sync) setSyncingSafka(true);
       let url = "/api/orders";
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (search.trim()) params.append("q", search.trim());
+      if (sync) params.append("sync", "true");
       if (params.toString()) url += `?${params.toString()}`;
 
       const res = await fetch(url);
@@ -47,6 +51,7 @@ export default function AdminOrdersPage() {
       console.error(err);
     } finally {
       setLoading(false);
+      setSyncingSafka(false);
     }
   };
 
@@ -127,13 +132,24 @@ export default function AdminOrdersPage() {
           </p>
         </div>
 
-        <button
-          onClick={fetchOrders}
-          className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-xs transition"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>تحديث الطلبات</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchOrders(true)}
+            disabled={syncingSafka}
+            className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncingSafka ? "animate-spin" : ""}`} />
+            <span>مزامنة مباشرة مع صفقة (Safka Sync)</span>
+          </button>
+
+          <button
+            onClick={() => fetchOrders(false)}
+            className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading && !syncingSafka ? "animate-spin" : ""}`} />
+            <span>تحديث</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}

@@ -196,6 +196,68 @@ const initialProducts: (Product & { offers: ProductOffer[] })[] = [
       },
     ],
   },
+  {
+    id: "prod-astrobeam-6ab19443",
+    title_ar: "بروجكتور الفضاء المصغر AstroBeam مع 6 غيارات لعرض القمر والمجرات",
+    title_en: "AstroBeam Mini Space Projector 6-in-1",
+    slug: "astrobeam",
+    sku: "57HolKg",
+    base_price: 450,
+    compare_at_price: 650,
+    cost_price: 250,
+    images: [
+      "/landing-pages/astrobeam/images/hero.webp",
+      "/landing-pages/astrobeam/images/features_1.webp",
+      "/landing-pages/astrobeam/images/features_2.webp",
+      "https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1790022747701-03AEB4FE-2DE6-4FE0-BB19-C6776568EC5C.webp",
+    ],
+    description_ar: "حوّل أوضتك لعالم تاني مع AstroBeam، بروجكتور فضاء مصغر بيعرض أشكال مستوحاة من القمر والكواكب والمجرات على الحائط أو السقف مع 6 غيارات مختلفة وذراع مرن 360 درجة وتشغيل USB.",
+    stock_quantity: 100,
+    status: "active",
+    safka_product_id: "6ab19443ca38d5013c7cb9fb",
+    safka_property_id: "6ab19443ca38d5013c7cb9fc",
+    safka_commission: 200,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    offers: [
+      {
+        id: "off-astrobeam-1",
+        product_id: "prod-astrobeam-6ab19443",
+        title_ar: "قطعة واحدة (تجربة)",
+        quantity: 1,
+        price: 450,
+        original_price: 650,
+        discount_label: "خصم 31%",
+        is_popular: false,
+        free_shipping: true,
+        sort_order: 1,
+      },
+      {
+        id: "off-astrobeam-2",
+        product_id: "prod-astrobeam-6ab19443",
+        title_ar: "قطعتان (الأكثر طلباً - لغرفتين أو هدية مميزة)",
+        quantity: 2,
+        price: 790,
+        original_price: 1300,
+        discount_label: "وفر 510 ج.م + شحن مجاني",
+        is_popular: true,
+        free_shipping: true,
+        sort_order: 2,
+      },
+      {
+        id: "off-astrobeam-3",
+        product_id: "prod-astrobeam-6ab19443",
+        title_ar: "3 قطع (عرض التوفير العائلي الشامل)",
+        quantity: 3,
+        price: 1090,
+        original_price: 1950,
+        discount_label: "وفر 860 ج.م + شحن مجاني",
+        is_popular: false,
+        free_shipping: true,
+        sort_order: 3,
+      },
+    ],
+  },
 ];
 
 const initialLandingPages: LandingPage[] = [
@@ -364,6 +426,40 @@ const initialLandingPages: LandingPage[] = [
     updated_at: new Date().toISOString(),
     product: initialProducts[2],
   },
+
+  // 4. AstroBeam Space Projector
+  {
+    id: "c1000000-0000-0000-0000-000000000040",
+    product_id: "prod-astrobeam-6ab19443",
+    title: "بروجكتور الفضاء المصغر AstroBeam مع 6 غيارات لعرض القمر والمجرات",
+    slug: "astrobeam",
+    component_key: "astrobeam",
+    status: "active",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    deployment_url: "/p/astrobeam",
+    deployment_status: "published",
+    last_published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    product: initialProducts[3],
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000041",
+    product_id: "prod-astrobeam-6ab19443",
+    title: "بروجكتور الفضاء المصغر AstroBeam | صفقة",
+    slug: "safka-6ab19443",
+    component_key: "astrobeam",
+    status: "active",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    deployment_url: "/p/safka-6ab19443",
+    deployment_status: "published",
+    last_published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    product: initialProducts[3],
+  },
 ];
 
 const initialOrders: Order[] = [
@@ -470,11 +566,8 @@ const getStoreFilePath = () => {
   if (process.env.VERCEL) {
     return "/tmp/rexrack-store.json";
   }
-  const dir = path.join(process.cwd(), ".next");
-  if (!fs.existsSync(dir)) {
-    try { fs.mkdirSync(dir, { recursive: true }); } catch {}
-  }
-  return path.join(dir, "rexrack-store.json");
+  // Store directly in project root for reliable persistence across builds
+  return path.join(process.cwd(), "rexrack-store.json");
 };
 
 const DUMMY_IDS = new Set([
@@ -524,7 +617,7 @@ function loadFromFile() {
         const existingIds = new Set(memoryOrders.map((o) => o.id));
         for (const o of data.orders) {
           if (!existingIds.has(o.id) && !DUMMY_IDS.has(o.product_id)) {
-            memoryOrders.push(o);
+            memoryOrders.unshift(o);
             existingIds.add(o.id);
           }
         }
@@ -541,6 +634,8 @@ function loadFromFile() {
   memoryProducts = memoryProducts.filter((p) => !DUMMY_IDS.has(p.id) && !DUMMY_IDS.has(p.slug));
   memoryLandingPages = memoryLandingPages.filter((lp) => !DUMMY_IDS.has(lp.id) && !DUMMY_IDS.has(lp.product_id) && !DUMMY_IDS.has(lp.slug));
   memoryOrders = memoryOrders.filter((o) => !DUMMY_IDS.has(o.product_id));
+  // Sort orders descending by created_at so newest always appear on top
+  memoryOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 function saveToFile() {
