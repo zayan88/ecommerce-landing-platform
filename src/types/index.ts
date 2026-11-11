@@ -125,14 +125,21 @@ export interface OrderTrackingMeta {
 
 export interface AnalyticsEvent {
   id?: string;
+  visitor_id?: string;
+  session_id?: string;
   landing_page_id?: string;
+  landing_page_slug?: string;
   product_id?: string;
-  event_name: 'PageView' | 'ViewContent' | 'InitiateCheckout' | 'Purchase' | 'AddToCart';
+  event_name: 'PageView' | 'ViewContent' | 'InitiateCheckout' | 'Purchase' | 'AddToCart' | 'ScrollDepth' | 'ClickCTA' | 'SelectOffer' | 'FormInteraction' | string;
   event_id: string;
   page_url: string;
+  page_title?: string;
+  device_type?: 'mobile' | 'desktop' | 'tablet';
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
+  utm_content?: string;
+  referrer?: string;
   ip_address?: string;
   user_agent?: string;
   metadata?: Record<string, any>;

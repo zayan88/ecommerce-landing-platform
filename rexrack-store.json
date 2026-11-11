@@ -99,7 +99,7 @@
           "price": 799,
           "original_price": 1200,
           "discount_label": "خصم 33%",
-          "is_popular": false,
+          "is_popular": true,
           "free_shipping": true,
           "sort_order": 1
         },
@@ -111,7 +111,7 @@
           "price": 1390,
           "original_price": 2400,
           "discount_label": "وفر 1010 ج.م + شحن مجاني",
-          "is_popular": true,
+          "is_popular": false,
           "free_shipping": true,
           "sort_order": 2
         },

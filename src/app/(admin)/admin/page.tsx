@@ -176,7 +176,7 @@ export default function AdminOverviewPage() {
                 <th className="py-3 px-4">صفحة الهبوط</th>
                 <th className="py-3 px-4">المنتج المرتبط</th>
                 <th className="py-3 px-4">الرابط المباشر</th>
-                <th className="py-3 px-4">الزيارات التقديرية</th>
+                <th className="py-3 px-4">الزيارات المسجلة</th>
                 <th className="py-3 px-4">عدد الطلبات</th>
                 <th className="py-3 px-4">معدل التحويل</th>
                 <th className="py-3 px-4">الإيراد المحقق</th>

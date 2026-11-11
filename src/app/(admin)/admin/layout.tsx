@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   LogOut,
   Lock,
+  Activity,
 } from "lucide-react";
 
 const navigationItems = [
@@ -25,7 +26,7 @@ const navigationItems = [
   { name: "إدارة الطلبات", href: "/admin/orders", icon: ShoppingBag },
   { name: "صفحات الهبوط", href: "/admin/landing-pages", icon: Layers },
   { name: "المنتجات والعروض", href: "/admin/products", icon: Tag },
-  { name: "تتبع ميتا و CAPI", href: "/admin/tracking", icon: Target },
+  { name: "تتبع الزوار والنشاط", href: "/admin/tracking", icon: Activity },
   { name: "دروبشيبينغ صفقة (Safka)", href: "/admin/safqa", icon: ShoppingBag },
   { name: "دليل وكيل AI (الإنشاء السريع)", href: "/admin/ai-guide", icon: Bot },
 ];

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
+import { VisitorTracker } from "@/components/tracking/VisitorTracker";
 
 export const metadata: Metadata = {
   title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
@@ -23,6 +25,9 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-slate-50 text-gray-900 font-sans">
+        <Suspense fallback={null}>
+          <VisitorTracker />
+        </Suspense>
         <Providers>{children}</Providers>
       </body>
     </html>

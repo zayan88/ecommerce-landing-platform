@@ -45,9 +45,9 @@ export function EgyptianCheckoutForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Default initial offer (First offer or fallback)
+  // Default initial offer (Prioritize single piece offer or fallback)
   const defaultFirstOffer = product.offers && product.offers.length > 0
-    ? (product.offers.find((o) => o.is_popular) || product.offers[0])
+    ? (product.offers.find((o) => o.quantity === 1) || product.offers[0])
     : {
         id: `offer-default-${product.id}`,
         product_id: product.id,
@@ -77,6 +77,14 @@ export function EgyptianCheckoutForm({
     setActiveOffer(offer);
     if (onOfferSelect) onOfferSelect(offer);
     if (onOfferChange) onOfferChange(offer);
+    if (typeof window !== "undefined" && window.rexrackTrack) {
+      window.rexrackTrack("SelectOffer", {
+        offer_id: offer.id,
+        title: offer.title_ar,
+        quantity: offer.quantity,
+        price: offer.price,
+      });
+    }
   };
 
   const quantity = activeOffer?.quantity || 1;

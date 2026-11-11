@@ -182,8 +182,8 @@ export async function GET(req: NextRequest) {
       search,
     });
 
-    // Sync live orders from Safka Dropshipping platform
-    if (syncSafka || orders.length <= 2) {
+    // Sync live orders from Safka Dropshipping platform only when sync is explicitly requested
+    if (syncSafka) {
       try {
         const safkaOrders = await SafkaClient.fetchSafkaMcpOrders(20);
         if (Array.isArray(safkaOrders) && safkaOrders.length > 0) {
@@ -192,7 +192,7 @@ export async function GET(req: NextRequest) {
           );
 
           for (const sOrd of safkaOrders) {
-            if (!existingSerials.has(sOrd.serial_number)) {
+            if (!existingSerials.has(sOrd.serial_number) && !dbStore.isOrderDeleted(sOrd.serial_number)) {
               let mappedStatus: any = "pending";
               if (sOrd.status?.startsWith("declined")) mappedStatus = "cancelled";
               else if (sOrd.status === "shipped") mappedStatus = "shipped";
@@ -237,6 +237,40 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, orders });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const body = await req.json().catch(() => ({}));
+    const singleId = searchParams.get("id") || body.id;
+    const ids: string[] = body.ids || (singleId ? [singleId] : []);
+
+    if (!ids || ids.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "معرف الطلب أو قائمة الطلبات مطلوبة للحذف" },
+        { status: 400 }
+      );
+    }
+
+    if (ids.length === 1) {
+      const deleted = await dbStore.deleteOrder(ids[0]);
+      return NextResponse.json({
+        success: deleted,
+        message: "تم حذف الطلب بنجاح نهائياً",
+        deletedId: ids[0],
+      });
+    }
+
+    const result = await dbStore.deleteOrders(ids);
+    return NextResponse.json({
+      success: true,
+      message: `تم حذف ${result.count} طلب بنجاح`,
+      deletedCount: result.count,
+    });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

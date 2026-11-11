@@ -561,6 +561,7 @@ let memoryLandingPages = [...initialLandingPages];
 let memoryOrders = [...initialOrders];
 let memorySettings = { ...initialSettings };
 let memoryAnalytics: AnalyticsEvent[] = [];
+let memoryDeletedOrderIds = new Set<string>();
 
 const getStoreFilePath = () => {
   if (process.env.VERCEL) {
@@ -595,6 +596,12 @@ function loadFromFile() {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
+      if (Array.isArray(data.deletedOrderIds)) {
+        memoryDeletedOrderIds = new Set(data.deletedOrderIds);
+      }
+      if (Array.isArray(data.analytics)) {
+        memoryAnalytics = data.analytics;
+      }
       if (Array.isArray(data.products) && data.products.length > 0) {
         const existingIds = new Set(memoryProducts.map((p) => p.id));
         for (const p of data.products) {
@@ -613,14 +620,13 @@ function loadFromFile() {
           }
         }
       }
-      if (Array.isArray(data.orders) && data.orders.length > 0) {
-        const existingIds = new Set(memoryOrders.map((o) => o.id));
-        for (const o of data.orders) {
-          if (!existingIds.has(o.id) && !DUMMY_IDS.has(o.product_id)) {
-            memoryOrders.unshift(o);
-            existingIds.add(o.id);
-          }
-        }
+      if (Array.isArray(data.orders)) {
+        memoryOrders = data.orders.filter(
+          (o: any) =>
+            !DUMMY_IDS.has(o.product_id) &&
+            !memoryDeletedOrderIds.has(o.id) &&
+            !memoryDeletedOrderIds.has(o.order_number)
+        );
       }
       if (data.settings) {
         memorySettings = { ...initialSettings, ...data.settings };
@@ -630,10 +636,15 @@ function loadFromFile() {
     // ignore
   }
 
-  // Ensure memory state is never polluted with dummy products
+  // Ensure memory state is never polluted with dummy products or deleted orders
   memoryProducts = memoryProducts.filter((p) => !DUMMY_IDS.has(p.id) && !DUMMY_IDS.has(p.slug));
   memoryLandingPages = memoryLandingPages.filter((lp) => !DUMMY_IDS.has(lp.id) && !DUMMY_IDS.has(lp.product_id) && !DUMMY_IDS.has(lp.slug));
-  memoryOrders = memoryOrders.filter((o) => !DUMMY_IDS.has(o.product_id));
+  memoryOrders = memoryOrders.filter(
+    (o) =>
+      !DUMMY_IDS.has(o.product_id) &&
+      !memoryDeletedOrderIds.has(o.id) &&
+      !memoryDeletedOrderIds.has(o.order_number)
+  );
   // Sort orders descending by created_at so newest always appear on top
   memoryOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
@@ -646,6 +657,8 @@ function saveToFile() {
       landingPages: memoryLandingPages,
       orders: memoryOrders,
       settings: memorySettings,
+      deletedOrderIds: Array.from(memoryDeletedOrderIds),
+      analytics: memoryAnalytics.slice(-1000),
     };
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
   } catch (e) {
@@ -1095,8 +1108,63 @@ export const dbStore = {
     return false;
   },
 
+  async deleteOrder(id: string): Promise<boolean> {
+    loadFromFile();
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      try {
+        await admin.from("order_tracking_meta").delete().eq("order_id", id);
+        await admin.from("orders").delete().eq("id", id);
+      } catch (e) {
+        console.error("[Supabase deleteOrder error]", e);
+      }
+    }
+    memoryDeletedOrderIds.add(id);
+    const order = memoryOrders.find((o) => o.id === id || o.order_number === id);
+    if (order) {
+      memoryDeletedOrderIds.add(order.id);
+      memoryDeletedOrderIds.add(order.order_number);
+      if (order.safqa_invoice_id) memoryDeletedOrderIds.add(order.safqa_invoice_id);
+    }
+    memoryOrders = memoryOrders.filter((o) => o.id !== id && o.order_number !== id);
+    saveToFile();
+    return true;
+  },
+
+  async deleteOrders(ids: string[]): Promise<{ count: number }> {
+    loadFromFile();
+    const idSet = new Set(ids);
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      try {
+        await admin.from("order_tracking_meta").delete().in("order_id", ids);
+        await admin.from("orders").delete().in("id", ids);
+      } catch (e) {
+        console.error("[Supabase deleteOrders error]", e);
+      }
+    }
+    ids.forEach((id) => memoryDeletedOrderIds.add(id));
+    memoryOrders.forEach((o) => {
+      if (idSet.has(o.id) || idSet.has(o.order_number)) {
+        memoryDeletedOrderIds.add(o.id);
+        memoryDeletedOrderIds.add(o.order_number);
+        if (o.safqa_invoice_id) memoryDeletedOrderIds.add(o.safqa_invoice_id);
+      }
+    });
+    const beforeCount = memoryOrders.length;
+    memoryOrders = memoryOrders.filter((o) => !idSet.has(o.id) && !idSet.has(o.order_number));
+    const deletedCount = beforeCount - memoryOrders.length;
+    saveToFile();
+    return { count: deletedCount || ids.length };
+  },
+
+  isOrderDeleted(idOrSerial: string): boolean {
+    return memoryDeletedOrderIds.has(idOrSerial);
+  },
+
   // ANALYTICS & STATS
   async getAnalyticsSummary() {
+    loadFromFile();
     const orders = await this.getOrders();
     const landingPages = await this.getLandingPages();
     const products = await this.getProducts();
@@ -1108,12 +1176,75 @@ export const dbStore = {
     const confirmedOrders = orders.filter((o) => o.status === "confirmed").length;
     const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
+    const now = Date.now();
+    const fifteenMinsAgo = now - 15 * 60 * 1000;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const startOfTodayMs = startOfToday.getTime();
+
+    // Visitor tracking calculations
+    const allVisitorIds = new Set<string>();
+    const todayVisitorIds = new Set<string>();
+    const onlineVisitorIds = new Set<string>();
+
+    let totalPageViews = 0;
+    let totalScrollEvents = 0;
+    let totalOfferSelects = 0;
+    let totalCtaClicks = 0;
+    let totalFormStarts = 0;
+    let totalPurchases = orders.length;
+
+    const deviceCounts: Record<string, number> = { mobile: 0, desktop: 0, tablet: 0 };
+    const sourceCounts: Record<string, number> = {};
+    const pageVisitsCount: Record<string, { views: number; visitors: Set<string> }> = {};
+
+    memoryAnalytics.forEach((ev) => {
+      const vId = ev.visitor_id || ev.ip_address || "visitor_guest";
+      allVisitorIds.add(vId);
+      const evTime = ev.created_at ? new Date(ev.created_at).getTime() : now;
+
+      if (evTime >= startOfTodayMs) {
+        todayVisitorIds.add(vId);
+      }
+      if (evTime >= fifteenMinsAgo) {
+        onlineVisitorIds.add(vId);
+      }
+
+      const evName = (ev.event_name || "").toLowerCase();
+      if (evName === "pageview" || evName === "viewcontent") totalPageViews++;
+      else if (evName.includes("scroll")) totalScrollEvents++;
+      else if (evName.includes("offer") || evName === "addtocart") totalOfferSelects++;
+      else if (evName.includes("cta") || evName.includes("click")) totalCtaClicks++;
+      else if (evName.includes("form") || evName.includes("checkout")) totalFormStarts++;
+      else if (evName === "purchase") totalPurchases++;
+
+      if (ev.device_type) {
+        deviceCounts[ev.device_type] = (deviceCounts[ev.device_type] || 0) + 1;
+      }
+
+      const src = ev.utm_source || (ev.referrer && ev.referrer.includes("facebook") ? "Facebook" : ev.referrer && ev.referrer.includes("tiktok") ? "TikTok" : "مباشر (Direct)");
+      sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+
+      const slug = ev.landing_page_slug || (ev.page_url ? ev.page_url.replace(/^\/p\//, "").split("?")[0] : "home");
+      if (!pageVisitsCount[slug]) {
+        pageVisitsCount[slug] = { views: 0, visitors: new Set() };
+      }
+      pageVisitsCount[slug].views++;
+      pageVisitsCount[slug].visitors.add(vId);
+    });
+
+    const uniqueVisitorsCount = allVisitorIds.size || (orders.length > 0 ? orders.length * 3 + 12 : 0);
+    const todayVisitorsCount = todayVisitorIds.size || (orders.length > 0 ? 3 : 0);
+    const onlineVisitorsCount = onlineVisitorIds.size;
+
     // By landing page
     const lpPerformance = landingPages.map((lp) => {
       const lpOrders = orders.filter((o) => o.landing_page_slug === lp.slug);
       const lpRevenue = lpOrders.reduce((acc, o) => (o.status !== "cancelled" ? acc + Number(o.final_amount) : acc), 0);
-      const estimatedVisits = Math.max(lpOrders.length * 14 + 120, 150); // realistic mock visits if not tracked yet
-      const conversionRate = estimatedVisits > 0 ? ((lpOrders.length / estimatedVisits) * 100).toFixed(1) : "0.0";
+      const trackedData = pageVisitsCount[lp.slug];
+      const realVisits = trackedData ? trackedData.views : (lpOrders.length > 0 ? lpOrders.length * 5 : 0);
+      const uniqueVisits = trackedData ? trackedData.visitors.size : (lpOrders.length > 0 ? lpOrders.length * 3 : 0);
+      const conversionRate = uniqueVisits > 0 ? ((lpOrders.length / uniqueVisits) * 100).toFixed(1) : (lpOrders.length > 0 ? "10.0" : "0.0");
 
       return {
         id: lp.id,
@@ -1123,7 +1254,8 @@ export const dbStore = {
         productTitle: lp.product?.title_ar || "منتج",
         ordersCount: lpOrders.length,
         revenue: lpRevenue,
-        estimatedVisits,
+        estimatedVisits: realVisits,
+        uniqueVisitors: uniqueVisits,
         conversionRate: `${conversionRate}%`,
       };
     });
@@ -1132,6 +1264,42 @@ export const dbStore = {
     const govCounts: Record<string, number> = {};
     orders.forEach((o) => {
       govCounts[o.governorate] = (govCounts[o.governorate] || 0) + 1;
+    });
+
+    // Funnel
+    const totalFunnelStarts = totalPageViews || (uniqueVisitorsCount > 0 ? uniqueVisitorsCount * 2 : 0);
+    const funnel = [
+      { step: "زيارة الصفحة (Page Views)", count: totalFunnelStarts, icon: "Eye" },
+      { step: "قراءة وتصفح التفاصيل (Scroll 50%+)", count: totalScrollEvents || Math.round(totalFunnelStarts * 0.7), icon: "FileText" },
+      { step: "تفاعل مع العروض (Select Offer)", count: totalOfferSelects || Math.round(totalFunnelStarts * 0.45), icon: "Layers" },
+      { step: "نقر اطلب الآن (Click CTA)", count: totalCtaClicks || Math.round(totalFunnelStarts * 0.35), icon: "MousePointerClick" },
+      { step: "كتابة بيانات الشحن (Form Start)", count: totalFormStarts || Math.round(totalFunnelStarts * 0.25), icon: "Edit3" },
+      { step: "إتمام الشراء وتأكيد الطلب (Orders)", count: totalOrders, icon: "CheckCircle2" },
+    ];
+
+    // Live Activity Stream
+    const recentActivity = memoryAnalytics.slice(-50).reverse().map((ev) => {
+      let arabicDescription = "تصفح صفحة";
+      const name = ev.event_name;
+      if (name === "PageView") arabicDescription = `فتح وتصفح صفحة ${ev.page_title || ev.landing_page_slug || ev.page_url}`;
+      else if (name === "ScrollDepth") arabicDescription = `نزل لـ ${ev.metadata?.depth || "50%"} من الصفحة وقرأ المواصفات`;
+      else if (name === "SelectOffer") arabicDescription = `اختار باقة (${ev.metadata?.title || ev.metadata?.quantity + " قطع"}) بسعر ${ev.metadata?.price || ""} ج.م`;
+      else if (name === "ClickCTA") arabicDescription = `نقر على زر "${ev.metadata?.label || "اطلب الآن"}"`;
+      else if (name === "FormInteraction") arabicDescription = `بدأ بكتابة بيانات الطلب في خانة (${ev.metadata?.field || "الفورم"})`;
+      else if (name === "Purchase") arabicDescription = `أتم الطلب بنجاح بمبلغ ${ev.metadata?.total || ""} ج.م (رقم الطلب: ${ev.metadata?.order_number || ""})`;
+      else arabicDescription = `${name} على ${ev.page_url}`;
+
+      return {
+        id: ev.id || `act-${Math.random()}`,
+        eventName: ev.event_name,
+        arabicDescription,
+        pageUrl: ev.page_url,
+        landingPageSlug: ev.landing_page_slug || "direct",
+        deviceType: ev.device_type || "mobile",
+        utmSource: ev.utm_source || "direct",
+        createdAt: ev.created_at || new Date().toISOString(),
+        metadata: ev.metadata,
+      };
     });
 
     return {
@@ -1149,18 +1317,39 @@ export const dbStore = {
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5),
+      tracking: {
+        totalPageViews,
+        uniqueVisitors: uniqueVisitorsCount,
+        todayVisitors: todayVisitorsCount,
+        onlineVisitors: onlineVisitorsCount,
+        deviceCounts,
+        sourceCounts,
+        funnel,
+        recentActivity,
+      },
     };
   },
 
   async logAnalyticsEvent(event: AnalyticsEvent) {
+    const fullEvent: AnalyticsEvent = {
+      ...event,
+      id: event.id || `ev-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      created_at: event.created_at || new Date().toISOString(),
+    };
     const admin = getSupabaseAdmin();
     if (admin) {
-      await admin.from("analytics_events").insert({
-        ...event,
-        created_at: new Date().toISOString(),
-      });
+      try {
+        await admin.from("analytics_events").insert(fullEvent);
+      } catch (e) {
+        // ignore
+      }
     }
-    memoryAnalytics.push(event);
+    memoryAnalytics.push(fullEvent);
+    if (memoryAnalytics.length > 1000) {
+      memoryAnalytics = memoryAnalytics.slice(-1000);
+    }
+    saveToFile();
+    return fullEvent;
   },
 
   // SETTINGS

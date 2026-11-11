@@ -19,6 +19,7 @@ import {
   X,
   MapPin,
   Calendar,
+  Trash2,
 } from "lucide-react";
 
 export default function AdminOrdersPage() {
@@ -28,6 +29,9 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const [syncingSafka, setSyncingSafka] = useState(false);
 
@@ -102,6 +106,80 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleDeleteOrder = async (orderId: string, orderNumber: string) => {
+    if (!confirm(`هل أنت متأكد من حذف الطلب (${orderNumber}) نهائياً من النظام؟\nلا يمكن التراجع عن هذا الإجراء.`)) {
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/api/orders?id=${orderId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        setSelectedOrderIds((prev) => prev.filter((id) => id !== orderId));
+        if (selectedOrder?.id === orderId) setSelectedOrder(null);
+        setActionMessage(`✓ تم حذف الطلب (${orderNumber}) بنجاح`);
+        setTimeout(() => setActionMessage(null), 3500);
+      } else {
+        alert(data.error || "فشل حذف الطلب");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء محاولة حذف الطلب");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedOrderIds.length === 0) return;
+    if (
+      !confirm(
+        `هل أنت متأكد من مسح (${selectedOrderIds.length}) طلبات محددة نهائياً من النظام؟`
+      )
+    ) {
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      const res = await fetch("/api/orders", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedOrderIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const deletedSet = new Set(selectedOrderIds);
+        setOrders((prev) => prev.filter((o) => !deletedSet.has(o.id)));
+        const count = selectedOrderIds.length;
+        setSelectedOrderIds([]);
+        setActionMessage(`✓ تم مسح (${count}) طلبات بنجاح`);
+        setTimeout(() => setActionMessage(null), 3500);
+      } else {
+        alert(data.error || "فشل حذف الطلبات المحددة");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء محاولة حذف الطلبات");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.length === orders.length && orders.length > 0) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(orders.map((o) => o.id));
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
       case "pending":
@@ -128,7 +206,7 @@ export default function AdminOrdersPage() {
             إدارة طلبات المبيعات
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            سجل موحد لجميع الطلبات الواردة من كافة صفحات الهبوط مع حالة بوابة صفقة وتأكيد الواتساب
+            سجل موحد لجميع الطلبات الواردة من كافة صفحات الهبوط مع إمكانية مسح وحذف أي طلب ومزامنة صفقة
           </p>
         </div>
 
@@ -151,6 +229,41 @@ export default function AdminOrdersPage() {
           </button>
         </div>
       </div>
+
+      {/* Action Notification Alert */}
+      {actionMessage && (
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs transition-all">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{actionMessage}</span>
+        </div>
+      )}
+
+      {/* Bulk Delete Floating/Top Bar */}
+      {selectedOrderIds.length > 0 && (
+        <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2 text-xs font-bold text-red-950">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+            <span>تم تحديد ({selectedOrderIds.length}) طلبات</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+              className="py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeleting ? "جاري المسح..." : `مسح (${selectedOrderIds.length}) طلبات نهائياً`}</span>
+            </button>
+            <button
+              onClick={() => setSelectedOrderIds([])}
+              className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 transition cursor-pointer"
+            >
+              إلغاء التحديد
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
@@ -198,6 +311,15 @@ export default function AdminOrdersPage() {
           <table className="w-full text-right text-sm">
             <thead className="bg-gray-50/80 text-gray-500 text-xs font-bold border-b border-gray-100">
               <tr>
+                <th className="py-3.5 px-3 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    checked={orders.length > 0 && selectedOrderIds.length === orders.length}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                    title="تحديد الكل"
+                  />
+                </th>
                 <th className="py-3.5 px-4">رقم الطلب</th>
                 <th className="py-3.5 px-4">العميل والهاتف</th>
                 <th className="py-3.5 px-4">المحافظة</th>
@@ -211,14 +333,14 @@ export default function AdminOrdersPage() {
             <tbody className="divide-y divide-gray-100">
               {loading && orders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-gray-400">
+                  <td colSpan={9} className="py-8 text-center text-gray-400">
                     <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     <span>جاري تحميل الطلبات...</span>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-400">
+                  <td colSpan={9} className="py-12 text-center text-gray-400">
                     لا توجد طلبات تطابق هذا البحث
                   </td>
                 </tr>
@@ -228,8 +350,19 @@ export default function AdminOrdersPage() {
                     `أهلاً بحضرتك يا فندم، بنكلمك من متجرنا لتأكيد طلبك رقم (${ord.order_number}) الخاص بـ ${ord.product?.title_ar || "المنتج"}. العنوان: ${ord.governorate} - ${ord.address}. هل الميعاد مناسب للشحن؟`
                   )}`;
 
+                  const isChecked = selectedOrderIds.includes(ord.id);
+
                   return (
-                    <tr key={ord.id} className="hover:bg-slate-50/70 transition">
+                    <tr key={ord.id} className={`hover:bg-slate-50/70 transition ${isChecked ? "bg-red-50/40" : ""}`}>
+                      <td className="py-3.5 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSelectOrder(ord.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                        />
+                      </td>
+
                       <td className="py-3.5 px-4 font-mono font-bold text-xs text-slate-800">
                         {ord.order_number}
                         <div className="text-[10px] text-gray-400 font-sans">
@@ -308,7 +441,7 @@ export default function AdminOrdersPage() {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           {/* WhatsApp button */}
                           <a
                             href={whatsappLink}
@@ -323,10 +456,20 @@ export default function AdminOrdersPage() {
                           {/* Details Button */}
                           <button
                             onClick={() => setSelectedOrder(ord)}
-                            className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+                            className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer"
                             title="عرض تفاصيل الطلب والتتبع"
                           >
                             <Eye className="w-4 h-4" />
+                          </button>
+
+                          {/* Delete Order Button */}
+                          <button
+                            onClick={() => handleDeleteOrder(ord.id, ord.order_number)}
+                            disabled={isDeleting}
+                            className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition cursor-pointer"
+                            title="مسح / حذف هذا الطلب نهائياً"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -457,10 +600,18 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="pt-2 flex items-center justify-between">
+              <button
+                onClick={() => handleDeleteOrder(selectedOrder.id, selectedOrder.order_number)}
+                className="py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>حذف هذا الطلب نهائياً</span>
+              </button>
+
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="py-2.5 px-6 rounded-xl bg-slate-900 text-white font-bold text-sm cursor-pointer"
+                className="py-2.5 px-6 rounded-xl bg-slate-900 text-white font-bold text-sm cursor-pointer hover:bg-slate-800 transition"
               >
                 إغلاق النافذة
               </button>
