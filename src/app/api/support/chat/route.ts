@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       message.includes("اوردر") ||
       message.includes("طلبي") ||
       message.includes("فين طلبي") ||
-      phoneMatch ||
+      (phoneMatch && !message.includes("واتساب")) ||
       orderNumberMatch
     ) {
       const searchPhone = phoneMatch ? phoneMatch[0] : null;
@@ -115,35 +115,35 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Try Gemini API if GEMINI_API_KEY is available
+    // 2. Try Gemini API / LLM Providers if available
     const geminiKey = process.env.GEMINI_API_KEY;
-    if (geminiKey) {
-      try {
-        const systemPrompt = `أنت المساعد الذكي لخدمة عملاء متجر "RexRack" المصري (RexRack AI Assistant).
-أنت ترد على العملاء باللهجة المصرية الودية المحترمة والواضحة (مثال: "أهلاً بحضرتك يا فندم"، "تحت أمرك"، "شرفتنا").
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY;
 
-بيانات المتجر وسياساته:
-- الدفع عند الاستلام (COD) 100%، يحق للعميل فتح الطرد وفحص ومعاينة المنتج بالكامل بحضور المندوب قبل دفع أي جنيه.
-- الشحن لجميع محافظات مصر (القاهرة، الجيزة، الإسكندرية، الدلتا، القناة، والصعيد) خلال 5 إلى 7 أيام عمل.
-- ضمان استبدال واسترجاع 14 يوماً مجاناً في حالة وجود أي عيب صناعة.
-- الشحن مجاني على أي عرض من قطعتين فأكثر.
+    const systemPrompt = `أنت المساعد الذكي متعدد المهام لمتجر "RexRack" المصري وشات بوت ذكاء اصطناعي عام وممتع.
+أنت تتحدث بلباقة وود وذكاء باللهجة المصرية المحترمة أو العربية الفصحى المبسطة.
 
-قائمة المنتجات الحالية:
+تعليماتك الأساسية:
+1. تجيب على أي سؤال يطرحه المستخدم (سواء كان في العلوم، البرمجة، الحياة، الدردشة العامة، النكت، المعلومات العامة، أو اختبار النظام) كشات بوت ذكي متكامل مثل ChatGPT و Gemini. لا ترفض أي سؤال عام وتفاعل معه بحيوية وذكاء.
+2. إذا سأل المستخدم عن متجر RexRack أو منتجاته، فأنت خبير المتجر وتوضح له كل التفاصيل بدقة:
+   - الدفع عند الاستلام (COD) متاح 100%.
+   - معاينة وفحص الشحنة بالكامل مع المندوب قبل دفع مليم واحد.
+   - شحن لجميع محافظات مصر (5 إلى 7 أيام عمل).
+   - ضمان استبدال واسترجاع 14 يوماً مجاناً ضد عيوب الصناعة.
+   - الشحن مجاني على أي عرض من قطعتين فأكثر.
+
+المنتجات المتوفرة في المتجر:
 ${activeProducts
   .map(
-    (p) => `- ${p.title_ar} (Slug: /p/${p.slug})
+    (p) => `- ${p.title_ar} (رابط الشراء: /p/${p.slug})
   السعر: ${p.base_price} ج.م (قبل الخصم: ${p.compare_at_price || p.base_price} ج.م)
   الوصف: ${p.description_ar}
   العروض: ${p.offers?.map((o) => `${o.title_ar}: ${o.price} ج.م`).join(" | ") || "قطعة واحدة"}`
   )
-  .join("\n\n")}
+  .join("\n\n")}`;
 
-تعليماتك:
-1. أجب باختصار وبأسلوب مقنع ومهني.
-2. إذا سأل العميل عن منتج معين، رشح له العرض المزدوج (قطعتين) للاستفادة من الشحن المجاني والتوفير.
-3. وجه العميل إلى رابط المنتج المباشر إذا كان يريد الشراء.
-4. طمئن العميل دائماً بشأن المعاينة قبل الدفع والضمان.`;
-
+    if (geminiKey) {
+      try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
           {
@@ -153,7 +153,7 @@ ${activeProducts
               contents: [
                 {
                   role: "user",
-                  parts: [{ text: `${systemPrompt}\n\nرسالة العميل: ${message}` }],
+                  parts: [{ text: `${systemPrompt}\n\nسؤال المستخدم: ${message}` }],
                 },
               ],
             }),
@@ -162,15 +162,12 @@ ${activeProducts
 
         if (geminiRes.ok) {
           const data = await geminiRes.json();
-          const candidateText =
-            data.candidates?.[0]?.content?.parts?.[0]?.text;
+          const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (candidateText) {
-            // Find matched product if any
             const matchedP = activeProducts.find(
               (p) =>
                 message.toLowerCase().includes(p.slug) ||
-                message.includes(p.title_ar.slice(0, 10)) ||
-                candidateText.includes(p.slug)
+                message.includes(p.title_ar.slice(0, 10))
             );
 
             return NextResponse.json({
@@ -187,20 +184,182 @@ ${activeProducts
                   }
                 : undefined,
               quickReplies: [
-                "عايز أطلب قطعتين مع شحن مجاني",
-                "هل في معاينة مع المندوب؟",
-                "مدة التوصيل للمحافظات؟",
+                "💨 عروض جهاز استنشاق البخار",
+                "💆‍♂️ تفاصيل جهاز المساج 5×1",
+                "🚚 مدة الشحن والمعاينة",
               ],
             } satisfies ChatResponseData);
           }
         }
       } catch (err) {
-        console.warn("Gemini API call failed, falling back to smart intent engine", err);
+        console.warn("Gemini API call error:", err);
       }
     }
 
-    // 3. Ultra-Smart Native Intent & Knowledge Engine
+    if (groqKey) {
+      try {
+        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${groqKey}`,
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: message },
+            ],
+          }),
+        });
+
+        if (groqRes.ok) {
+          const data = await groqRes.json();
+          const reply = data.choices?.[0]?.message?.content;
+          if (reply) {
+            return NextResponse.json({
+              reply,
+              quickReplies: ["اسألني عن أي حاجة تانية", "عروض RexRack الحالية"],
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Groq API error:", err);
+      }
+    }
+
+    // 3. Ultra-Smart Native Intent & Knowledge Engine (Rich Multipurpose Chatbot)
     const lower = message.toLowerCase();
+
+    // Check Testing & Greeting keywords
+    const isTest =
+      lower === "test" ||
+      lower === "تيست" ||
+      lower.includes("تجربة") ||
+      lower.includes("بجرب") ||
+      lower.includes("الو") ||
+      lower.includes("سامعني") ||
+      lower.includes("شغال") ||
+      lower.includes("ping");
+
+    const isHowAreYou =
+      lower.includes("عامل ايه") ||
+      lower.includes("اخبارك") ||
+      lower.includes("ازيك") ||
+      lower.includes("كيف حالك") ||
+      lower.includes("شخبارك");
+
+    const isWhoAreYou =
+      lower.includes("مين انت") ||
+      lower.includes("انت مين") ||
+      lower.includes("اسمك ايه") ||
+      lower.includes("عرفني بنفسك") ||
+      lower.includes("مين صنعك") ||
+      lower.includes("ذكاء اصطناعي");
+
+    const isJoke =
+      lower.includes("نكتة") ||
+      lower.includes("نكته") ||
+      lower.includes("ضحكني") ||
+      lower.includes("حاجة تضحك");
+
+    const isThanks =
+      lower.includes("شكرا") ||
+      lower.includes("شكراً") ||
+      lower.includes("تسلم") ||
+      lower.includes("حبيبي") ||
+      lower.includes("ربنا يخليك") ||
+      lower.includes("تمام") ||
+      lower.includes("اوك") ||
+      lower.includes("أوك") ||
+      lower.includes("ماشي");
+
+    const isCapabilities =
+      lower.includes("تقدر تعمل ايه") ||
+      lower.includes("بتعرف تعمل ايه") ||
+      lower.includes("بتساعدني في ايه") ||
+      lower.includes("خدماتك");
+
+    // Handling Test & Ping
+    if (isTest) {
+      return NextResponse.json({
+        reply: `أهلاً بيك يا فندم! النظام شغال 100% وفي أتم الاستعداد 🚀.\n\nأنا سامعك وشايف رسايلك كلها لحظة بلحظة. تقدر تسألني أو تختبرني في أي حاجة:\n• اسألني عن أي منتج من منتجات RexRack وأسعاره وعروضه.\n• اسألني عن الشحن، المعاينة قبل الدفع، أو الضمان.\n• أو حتى دردش معايا في أي موضوع عام تحبه!`,
+        quickReplies: [
+          "قولي نكتة كدة اختبرك بها",
+          "جهاز استنشاق البخار النيبولايزر",
+          "جهاز التدليك والمساج 5×1",
+          "شغال ازاي في السحاب؟",
+        ],
+      } satisfies ChatResponseData);
+    }
+
+    // Handling "عامل ايه"
+    if (isHowAreYou) {
+      return NextResponse.json({
+        reply: `الحمد لله كله تمام وفي أفضل حال! تسلم على سؤالك ولطفك يا فندم ❤️.\n\nأنا جاهز ومتحمس أرد على أي سؤال ييجي في بالك، سواء بخصوص منتجاتنا وعروض التوفير في RexRack، أو أي حاجة تانية حابب ندردش فيها!`,
+        quickReplies: [
+          "تقدر تعمل ايه بالظبط؟",
+          "إيه أفضل منتج عليه خصم النهاردة؟",
+          "قولي نكتة سريعة",
+        ],
+      } satisfies ChatResponseData);
+    }
+
+    // Handling "مين انت"
+    if (isWhoAreYou) {
+      return NextResponse.json({
+        reply: `أنا المساعد الذكي لمتجر **RexRack** المصري 🇪🇬🤖!\n\nتم تطويري وتدريبي بنماذج الذكاء الاصطناعي السحابية علشان أرد عليك فوري وبشكل تفاعلي:\n1. الإجابة عن مواصفات المنتجات الذكية، عروض التوفير، والأسعار.\n2. شرح سياسات المتجر (الدفع عند الاستلام، المعاينة الكاملة للطرد قبل الدفع، وضمان 14 يوم).\n3. تتبع شحنتك وأوردرك برقم الهاتف في ثواني.\n4. وإجراء محادثات ذكية وسريعة معاك زي أي شات بوت متطور!`,
+        quickReplies: [
+          "تقدر تتبع طلبي؟",
+          "عايز جهاز استنشاق البخار",
+          "عايز أكلم خدمة العملاء واتساب",
+        ],
+      } satisfies ChatResponseData);
+    }
+
+    // Handling Jokes
+    if (isJoke) {
+      const jokes = [
+        `مرة مبرمج دخل سوبر ماركت، مراته قالتله: "هات كيس لبن، ولو لقيت بيض هات عشرة".. رجع البيت معاه 10 أكياس لبن! قالتله: "ليه جبت 10 أكياس لبن؟!" قالها: "لأني لقيت بيض!" 😂`,
+        `واحد راح لدكتور قاله: "يا دكتور، أنا كل ما أشرب شاي عيني اليمين بتوجعني جداً!".. الدكتور فحص وقاله: "ابقى شيل المعلقة من الكوباية وأنت بتشرب يا فندم!" 🤣`,
+        `مرة واحد سأل كمبيوتر: "مين أحسن شات بوت في العالم؟".. الكمبيوتر قاله: "أنا، بس متقولش لـ RexRack لحسن يزعل!" 😉`,
+      ];
+      const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+
+      return NextResponse.json({
+        reply: `${randomJoke}\n\nضحكت؟ قول بقى، عايز ندردش في إيه تاني، ولا حابب تستغل عروض المتجر والشحن المجاني النهاردة؟ 😄`,
+        quickReplies: [
+          "نكتة تانية سريعة",
+          "وريني عروض RexRack",
+          "جهاز المساج عليه خصم؟",
+        ],
+      } satisfies ChatResponseData);
+    }
+
+    // Handling Thanks
+    if (isThanks) {
+      return NextResponse.json({
+        reply: `العفو يا فندم، أنا تحت أمرك وفي خدمتك في أي وقت! يسعدني جداً دائماً التحدث معاك ومساعدتك 🌟.\n\nلو عندك أي سؤال تاني في أي وقت أنا دايماً متواجد 24/7.`,
+        quickReplies: [
+          "تصفح عروض المنتجات",
+          "مدة الشحن لجميع المحافظات",
+          "تتبع طلبي برقم الهاتف",
+        ],
+      } satisfies ChatResponseData);
+    }
+
+    // Handling Capabilities
+    if (isCapabilities) {
+      return NextResponse.json({
+        reply: `أقدر أساعدك في حاجات كتير جداً:\n\n1. 🩺 **تفاصيل الأجهزة الطبية:** مواصفات جهاز استنشاق البخار النيبولايزر الصامت للأطفال والكبار ومقارنة الأسعار.\n2. 💆‍♂️ **أجهزة المساج والراحة:** جهاز التدليك 5×1 اللاسلكي بالحرارة والاهتزاز للمفاصل والظهر.\n3. 🚗 **إكسسوارات السيارات والديكور:** منظم مقاعد السيارة الفاخر، وبروجكتور رائد الفضاء الذكي.\n4. 🚚 **الشحن والمحافظات:** شرح مدة التوصيل وتكاليف الشحن لكل محافظات مصر.\n5. 🛡️ **فحص الطرد والضمان:** شرح إمكانية معاينة الطرد مع المندوب قبل دفع أي مليم، وضمان الـ 14 يوم.\n6. 📦 **تتبع الشحنات:** اكتب رقم تليفونك وسأبحث لك عن أوردرك فوراً!`,
+        quickReplies: [
+          "جهاز استنشاق البخار النيبولايزر",
+          "جهاز المساج والتدليك الشامل",
+          "منظم مقاعد السيارة الجلد",
+          "تتبع طلبي برقم الهاتف",
+        ],
+      } satisfies ChatResponseData);
+    }
 
     // Check specific products
     const isNebulizer =
@@ -279,10 +438,13 @@ ${activeProducts
     const isGreeting =
       lower.includes("سلام") ||
       lower.includes("مرحبا") ||
-      lower.includes("ازيك") ||
       lower.includes("صباح") ||
       lower.includes("مساء") ||
-      lower.includes("مين معايا");
+      lower.includes("أهلا") ||
+      lower.includes("اهلين") ||
+      lower.includes("هاي") ||
+      lower.includes("hello") ||
+      lower.includes("hi");
 
     // Product response: Nebulizer
     if (isNebulizer) {
@@ -433,25 +595,24 @@ ${activeProducts
     // Greetings
     if (isGreeting) {
       return NextResponse.json({
-        reply: `أهلاً وسهلاً بحضرتك في متجر **RexRack**! أنا مساعدك الذكي لخدمة العملاء 🤖🇪🇬.\n\nأنا هنا لمساعدتك على مدار الساعة في أي استفسار بخصوص:\n1. مواصفات وأسعار وعروض المنتجات الذكية.\n2. مدة ومصاريف الشحن لمحافظتك.\n3. سياسة المعاينة قبل الدفع وضمان الـ 14 يوم.\n4. تتبع حالة أوردرك الحالي برقم الهاتف.\n\nقولي تحب نساعدك في إيه النهاردة؟`,
+        reply: `أهلاً وسهلاً بحضرتك يا فندم! نورت متجر **RexRack** 🇪🇬✨.\n\nأنا مساعدك وشات بوت المتجر الذكي، جاهز أرد عليك في أي حاجة، سواء بخصوص منتجاتنا وعروضنا الحالية، أو ندردش ونجاوب على أي سؤال تحبه!\n\nتحب نبدأ بإيه؟`,
         quickReplies: [
-          "💨 مواصفات وسعر جهاز استنشاق البخار",
-          "💆‍♂️ تفاصيل جهاز تدليك الجسم 5×1",
-          "🚚 مدة الشحن والمعاينة مع المندوب",
-          "📦 تتبع طلبي برقم الهاتف",
+          "💨 عروض جهاز استنشاق البخار",
+          "💆‍♂️ تفاصيل جهاز مساج وتدليك الجسم",
+          "قولي نكتة كدة اختبرك بها",
+          "🚚 مدة الشحن وهل يوجد معاينة؟",
         ],
       } satisfies ChatResponseData);
     }
 
-    // General fallback: helpful and proactive
+    // General conversational response (Chatbot mode)
     return NextResponse.json({
-      reply: `أهلاً بحضرتك يا فندم! يسعدني دائماً مساعدتك في متجر **RexRack**.\n\nبخصوص استفسارك، نحن نوفر لك أفضل المنتجات الذكية المعتمدة مع:\n• **دفع عند الاستلام كاش (COD)**\n• **معاينة الطرد مع المندوب قبل دفع أي مليم**\n• **شحن لجميع محافظات مصر خلال 5 إلى 7 أيام**\n• **ضمان استبدال واسترجاع 14 يوماً**\n\nتقدر تختار أحد الخيارات السريعة بالأسفل أو تسألني عن أي منتج محدد!`,
+      reply: `أهلاً بحضرتك يا فندم! أنا معاك وسامعك كويس جداً 🤖.\n\nبخصوص رسالتك: "${message}"\nأنا جاهز أساعدك وأتفاعل معاك في أي استفسار أو تجربة حابب تعملها. سواء كنت بتجرب الشات، أو عندك استفسار عن المنتجات الذكية والأسعار وعروض التوفير والشحن في RexRack، قولي وخليني أجاوبك فوراً!`,
       quickReplies: [
-        "جهاز استنشاق البخار النيبولايزر",
-        "جهاز المساج والتدليك الشامل",
-        "منظم مقاعد السيارة الجلد",
-        "مدة الشحن لجميع المحافظات",
-        "تتبع طلبي برقم الهاتف",
+          "💨 جهاز استنشاق البخار",
+          "💆‍♂️ جهاز تدليك الجسم",
+          "قولي نكتة سريعة",
+          "🚚 تفاصيل الشحن والمعاينة",
       ],
     } satisfies ChatResponseData);
   } catch (error: any) {
