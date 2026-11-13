@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Flame,
   HeartHandshake,
+  Bot,
 } from "lucide-react";
 import { Metadata } from "next";
 
@@ -102,6 +103,13 @@ export default async function HomePage() {
             <a href="#faq" className="hover:text-orange-600 transition">
               الأسئلة الشائعة
             </a>
+            <Link
+              href="/support"
+              className="flex items-center gap-1.5 text-orange-600 hover:text-orange-700 font-extrabold transition bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-200"
+            >
+              <Bot className="w-4 h-4" />
+              <span>خدمة العملاء الذكية</span>
+            </Link>
           </nav>
 
           {/* Direct CTA */}
@@ -671,18 +679,43 @@ export default async function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
             <p>© {new Date().getFullYear()} RexRack (RexRack.com) - جميع الحقوق محفوظة.</p>
 
-            {/* Discreet Admin Login Link for the Owner */}
-            <Link
-              href="/admin"
-              className="text-slate-600 hover:text-slate-400 flex items-center gap-1 transition text-[11px]"
-              title="دخول المسؤول"
-            >
-              <Lock className="w-3 h-3" />
-              <span>لوحة التحكم المركزية</span>
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/support"
+                className="text-orange-400 hover:text-orange-300 flex items-center gap-1.5 transition text-xs font-bold"
+              >
+                <Bot className="w-3.5 h-3.5" />
+                <span>خدمة العملاء الذكية</span>
+              </Link>
+              <span className="text-slate-700">•</span>
+              {/* Discreet Admin Login Link for the Owner */}
+              <Link
+                href="/admin"
+                className="text-slate-600 hover:text-slate-400 flex items-center gap-1 transition text-[11px]"
+                title="دخول المسؤول"
+              >
+                <Lock className="w-3 h-3" />
+                <span>لوحة التحكم المركزية</span>
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
+
+      {/* Floating AI Customer Service Chat Button */}
+      <Link
+        href="/support"
+        aria-label="خدمة العملاء الذكية"
+        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white px-4 py-3 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 font-bold text-xs sm:text-sm border-2 border-white/40 group"
+      >
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+        </span>
+        <Bot className="w-5 h-5" />
+        <span className="hidden sm:inline">خدمة العملاء الذكية (رد فوري)</span>
+        <span className="sm:hidden">المساعد الذكي</span>
+      </Link>
 
       {/* Floating WhatsApp Quick Action Button */}
       <a
