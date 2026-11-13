@@ -143,78 +143,89 @@ ${activeProducts
   .join("\n\n")}`;
 
     if (geminiKey) {
-      try {
-        // Build contents with history if available
-        const contentsPayload = [
-          {
-            role: "user",
-            parts: [{ text: `تعليمات النظام:\n${systemPrompt}` }],
-          },
-          {
-            role: "model",
-            parts: [{ text: "أهلاً بك! أنا جاهز تماماً كمساعد ذكي عام وشات بوت RexRack." }],
-          },
-        ];
+      // Cascade through available models to prevent any 503 / 429 temporary spikes
+      const candidateModels = [
+        "gemini-3.5-flash-lite",
+        "gemini-3.8-flash",
+        "gemini-flash-latest",
+      ];
 
-        // Append recent history (up to last 6 messages)
-        const recentHistory = history.slice(-6);
-        for (const h of recentHistory) {
+      for (const modelName of candidateModels) {
+        try {
+          // Build contents with history if available
+          const contentsPayload = [
+            {
+              role: "user",
+              parts: [{ text: `تعليمات النظام:\n${systemPrompt}` }],
+            },
+            {
+              role: "model",
+              parts: [{ text: "أهلاً بك! أنا جاهز تماماً كمساعد ذكي عام وشات بوت RexRack." }],
+            },
+          ];
+
+          // Append recent history (up to last 6 messages)
+          const recentHistory = history.slice(-6);
+          for (const h of recentHistory) {
+            contentsPayload.push({
+              role: h.role === "assistant" ? "model" : "user",
+              parts: [{ text: h.content }],
+            });
+          }
+
+          // Append current message
           contentsPayload.push({
-            role: h.role === "assistant" ? "model" : "user",
-            parts: [{ text: h.content }],
+            role: "user",
+            parts: [{ text: message }],
           });
-        }
 
-        // Append current message
-        contentsPayload.push({
-          role: "user",
-          parts: [{ text: message }],
-        });
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ contents: contentsPayload }),
+            }
+          );
 
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: contentsPayload }),
+          if (geminiRes.ok) {
+            const data = await geminiRes.json();
+            const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (candidateText) {
+              const matchedP = activeProducts.find(
+                (p) =>
+                  message.toLowerCase().includes(p.slug) ||
+                  message.includes(p.title_ar.slice(0, 10))
+              );
+
+              return NextResponse.json({
+                reply: candidateText,
+                product: matchedP
+                  ? {
+                      id: matchedP.id,
+                      title_ar: matchedP.title_ar,
+                      slug: matchedP.slug,
+                      base_price: matchedP.base_price,
+                      compare_at_price: matchedP.compare_at_price,
+                      image: matchedP.images[0] || "",
+                      offer_text: "شحن مجاني على القطعتين",
+                    }
+                  : undefined,
+                quickReplies: [
+                  "💨 عروض جهاز استنشاق البخار",
+                  "💆‍♂️ تفاصيل جهاز المساج 5×1",
+                  "🚚 مدة الشحن والمعاينة",
+                ],
+              } satisfies ChatResponseData);
+            }
+          } else {
+            const errText = await geminiRes.text();
+            console.warn(`Gemini model ${modelName} returned status ${geminiRes.status}:`, errText);
+            // Continue to next candidate model
           }
-        );
-
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (candidateText) {
-            const matchedP = activeProducts.find(
-              (p) =>
-                message.toLowerCase().includes(p.slug) ||
-                message.includes(p.title_ar.slice(0, 10))
-            );
-
-            return NextResponse.json({
-              reply: candidateText,
-              product: matchedP
-                ? {
-                    id: matchedP.id,
-                    title_ar: matchedP.title_ar,
-                    slug: matchedP.slug,
-                    base_price: matchedP.base_price,
-                    compare_at_price: matchedP.compare_at_price,
-                    image: matchedP.images[0] || "",
-                    offer_text: "شحن مجاني على القطعتين",
-                  }
-                : undefined,
-              quickReplies: [
-                "💨 عروض جهاز استنشاق البخار",
-                "💆‍♂️ تفاصيل جهاز المساج 5×1",
-                "🚚 مدة الشحن والمعاينة",
-              ],
-            } satisfies ChatResponseData);
-          }
-        } else {
-          console.warn("Gemini API status not ok:", geminiRes.status, await geminiRes.text());
+        } catch (err) {
+          console.warn(`Gemini API error on model ${modelName}:`, err);
         }
-      } catch (err) {
-        console.warn("Gemini API call error:", err);
       }
     }
 
