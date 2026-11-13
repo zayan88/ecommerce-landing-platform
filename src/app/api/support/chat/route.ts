@@ -115,11 +115,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Try Gemini API / LLM Providers if available
-    const geminiKey = process.env.GEMINI_API_KEY;
-    const openaiKey = process.env.OPENAI_API_KEY;
-    const groqKey = process.env.GROQ_API_KEY;
-
+    // 2. Define System Prompt & Store Knowledge
     const systemPrompt = `أنت المساعد الذكي متعدد المهام لمتجر "RexRack" المصري وشات بوت ذكاء اصطناعي عام وممتع ولطيف.
 أنت تتحدث بلباقة وود وذكاء فائق باللهجة المصرية المحترمة أو العربية الفصحى المبسطة حسب رغبة المستخدم.
 
@@ -141,6 +137,76 @@ ${activeProducts
   العروض: ${p.offers?.map((o) => `${o.title_ar}: ${o.price} ج.م`).join(" | ") || "قطعة واحدة"}`
   )
   .join("\n\n")}`;
+
+    // 3. Try FreeLLMAPI Desktop (Local Endpoint on Device: 127.0.0.1:31415)
+    const localLLMEndpoint = process.env.LOCAL_LLM_URL || "http://127.0.0.1:31415/v1";
+    const localLLMKey = process.env.LOCAL_LLM_KEY || "freellmapi-5b1dfb896b96b0ebef236da94071dc05d5839bb65a489913";
+
+    try {
+      const abortCtrl = new AbortController();
+      const timeoutId = setTimeout(() => abortCtrl.abort(), 4000);
+      const localRes = await fetch(`${localLLMEndpoint}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localLLMKey}`,
+        },
+        body: JSON.stringify({
+          model: "auto",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...history.slice(-6).map((h) => ({
+              role: h.role === "assistant" ? "assistant" : "user",
+              content: h.content,
+            })),
+            { role: "user", content: message },
+          ],
+        }),
+        signal: abortCtrl.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (localRes.ok) {
+        const localData = await localRes.json();
+        const reply = localData.choices?.[0]?.message?.content;
+        if (reply) {
+          const matchedP = activeProducts.find(
+            (p) =>
+              message.toLowerCase().includes(p.slug) ||
+              message.includes(p.title_ar.slice(0, 10))
+          );
+
+          return NextResponse.json({
+            reply: reply + "\n\n*(⚡ رد فوري عبر FreeLLMAPI من جهازك)*",
+            product: matchedP
+              ? {
+                  id: matchedP.id,
+                  title_ar: matchedP.title_ar,
+                  slug: matchedP.slug,
+                  base_price: matchedP.base_price,
+                  compare_at_price: matchedP.compare_at_price,
+                  image: matchedP.images[0] || "",
+                  offer_text: "شحن مجاني على القطعتين",
+                }
+              : undefined,
+            quickReplies: [
+              "💨 عروض جهاز استنشاق البخار",
+              "💆‍♂️ تفاصيل جهاز المساج 5×1",
+              "🚚 مدة الشحن والمعاينة",
+            ],
+          } satisfies ChatResponseData);
+        }
+      } else {
+        console.warn("FreeLLMAPI non-ok status:", localRes.status, await localRes.text());
+      }
+    } catch (err) {
+      console.warn("FreeLLMAPI catch error:", err);
+    }
+
+    // 4. Fallback to Google Gemini API
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY;
 
     if (geminiKey) {
       // Cascade through available models to prevent any 503 / 429 temporary spikes
