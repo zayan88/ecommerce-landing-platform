@@ -120,15 +120,15 @@ export async function POST(req: NextRequest) {
     const openaiKey = process.env.OPENAI_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
 
-    const systemPrompt = `أنت المساعد الذكي متعدد المهام لمتجر "RexRack" المصري وشات بوت ذكاء اصطناعي عام وممتع.
-أنت تتحدث بلباقة وود وذكاء باللهجة المصرية المحترمة أو العربية الفصحى المبسطة.
+    const systemPrompt = `أنت المساعد الذكي متعدد المهام لمتجر "RexRack" المصري وشات بوت ذكاء اصطناعي عام وممتع ولطيف.
+أنت تتحدث بلباقة وود وذكاء فائق باللهجة المصرية المحترمة أو العربية الفصحى المبسطة حسب رغبة المستخدم.
 
 تعليماتك الأساسية:
-1. تجيب على أي سؤال يطرحه المستخدم (سواء كان في العلوم، البرمجة، الحياة، الدردشة العامة، النكت، المعلومات العامة، أو اختبار النظام) كشات بوت ذكي متكامل مثل ChatGPT و Gemini. لا ترفض أي سؤال عام وتفاعل معه بحيوية وذكاء.
+1. تجيب على أي سؤال يطرحه المستخدم (سواء كان في العلوم، البرمجة، الحياة، الدردشة العامة، النكت، الألغاز، المعلومات العامة، أو اختبار النظام) كشات بوت ذكي متكامل مثل ChatGPT و Gemini تماماً. لا ترفض أي سؤال عام وتفاعل معه بحيوية وذكاء وطبيعية وبدون تكلف.
 2. إذا سأل المستخدم عن متجر RexRack أو منتجاته، فأنت خبير المتجر وتوضح له كل التفاصيل بدقة:
    - الدفع عند الاستلام (COD) متاح 100%.
    - معاينة وفحص الشحنة بالكامل مع المندوب قبل دفع مليم واحد.
-   - شحن لجميع محافظات مصر (5 إلى 7 أيام عمل).
+   - شحن لجميع محافظات مصر الـ 27 (خلال 5 إلى 7 أيام عمل).
    - ضمان استبدال واسترجاع 14 يوماً مجاناً ضد عيوب الصناعة.
    - الشحن مجاني على أي عرض من قطعتين فأكثر.
 
@@ -144,19 +144,39 @@ ${activeProducts
 
     if (geminiKey) {
       try {
+        // Build contents with history if available
+        const contentsPayload = [
+          {
+            role: "user",
+            parts: [{ text: `تعليمات النظام:\n${systemPrompt}` }],
+          },
+          {
+            role: "model",
+            parts: [{ text: "أهلاً بك! أنا جاهز تماماً كمساعد ذكي عام وشات بوت RexRack." }],
+          },
+        ];
+
+        // Append recent history (up to last 6 messages)
+        const recentHistory = history.slice(-6);
+        for (const h of recentHistory) {
+          contentsPayload.push({
+            role: h.role === "assistant" ? "model" : "user",
+            parts: [{ text: h.content }],
+          });
+        }
+
+        // Append current message
+        contentsPayload.push({
+          role: "user",
+          parts: [{ text: message }],
+        });
+
         const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [{ text: `${systemPrompt}\n\nسؤال المستخدم: ${message}` }],
-                },
-              ],
-            }),
+            body: JSON.stringify({ contents: contentsPayload }),
           }
         );
 
@@ -190,6 +210,8 @@ ${activeProducts
               ],
             } satisfies ChatResponseData);
           }
+        } else {
+          console.warn("Gemini API status not ok:", geminiRes.status, await geminiRes.text());
         }
       } catch (err) {
         console.warn("Gemini API call error:", err);
