@@ -46,13 +46,12 @@ export interface LandingPageSectionConfig {
 }
 
 export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
-  { id: "hero", name_ar: "المعرض الرئيسي والسعر والزر السريع", enabled: true },
+  { id: "hero", name_ar: "المعرض الرئيسي والسعر وباقات العروض والزر السريع", enabled: true },
   { id: "comparison", name_ar: "المقارنة البصرية (القديم vs الجديد)", enabled: true },
   { id: "box_contents", name_ar: "محتويات العلبة الأصلية", enabled: true },
   { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: true },
   { id: "reviews", name_ar: "آراء وتجارب العملاء الواقعية (Social Proof)", enabled: true },
-  { id: "offers", name_ar: "باقات وعروض التوفير (عروض الكميات)", enabled: true },
-  { id: "order_form", name_ar: "فورم الطلب السريع والدفع عند الاستلام", enabled: true },
+  { id: "order_form", name_ar: "فورم الطلب السريع وباقات العروض والدفع عند الاستلام", enabled: true },
   { id: "guarantees", name_ar: "شريط الضمانات والتطمين", enabled: true },
 ];
 

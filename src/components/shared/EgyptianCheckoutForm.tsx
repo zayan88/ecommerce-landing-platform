@@ -6,6 +6,7 @@ import { EGYPTIAN_GOVERNORATES } from "@/lib/constants/governorates";
 import { captureUtmParams, generateEventId } from "@/lib/tracking/utm";
 import { trackMetaEvent } from "@/lib/tracking/meta-pixel";
 import { Product, ProductOffer } from "@/types";
+import { HeroOfferSelector } from "./HeroOfferSelector";
 import {
   CheckCircleIcon,
   ShieldCheckIcon,
@@ -31,6 +32,7 @@ export function EgyptianCheckoutForm({
   selectedOffer,
   onOfferSelect,
   onOfferChange,
+  accentColor = "orange",
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
 
@@ -229,55 +231,13 @@ export function EgyptianCheckoutForm({
       <form onSubmit={handleSubmit} className="mt-5 space-y-4" onFocus={handleFirstInteraction}>
         {/* Tiered Offers Selection */}
         {product.offers && product.offers.length > 0 && (
-          <div className="space-y-2.5">
-            <label className="block text-sm font-bold text-slate-900">
-              اختر العرض المناسب لك:
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {product.offers.map((offer) => {
-                const isSelected = activeOffer?.id === offer.id || activeOffer?.quantity === offer.quantity;
-                return (
-                  <div
-                    key={offer.id}
-                    onClick={() => handleSelectOffer(offer)}
-                    className={`relative cursor-pointer rounded-2xl p-3 border-2 transition-all ${
-                      isSelected
-                        ? "border-orange-500 bg-orange-50/70 shadow-sm ring-2 ring-orange-500/20"
-                        : "border-slate-200 hover:border-slate-300 bg-white"
-                    }`}
-                  >
-                    {offer.is_popular && (
-                      <span className="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
-                        الأكثر طلباً ⭐
-                      </span>
-                    )}
-                    <div className="flex items-start justify-between">
-                      <div className="font-bold text-slate-900 text-xs sm:text-sm">{offer.title_ar}</div>
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-0.5 ${
-                          isSelected ? "border-orange-600 bg-orange-600" : "border-slate-300"
-                        }`}
-                      >
-                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                    </div>
-                    <div className="mt-1.5 flex items-baseline gap-1.5">
-                      <span className="text-base sm:text-lg font-black text-orange-600 font-mono">
-                        {offer.price} ج.م
-                      </span>
-                      {offer.original_price && (
-                        <span className="text-xs text-slate-400 line-through">
-                          {offer.original_price} ج.م
-                        </span>
-                      )}
-                    </div>
-                    <span className="inline-block mt-0.5 text-[10px] font-bold text-emerald-600">
-                      ✓ شحن مجاني
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="pb-1">
+            <HeroOfferSelector
+              offers={product.offers}
+              selectedOffer={activeOffer || product.offers[0]}
+              onSelectOffer={(offer) => handleSelectOffer(offer)}
+              accentColor={(accentColor as any) || "orange"}
+            />
           </div>
         )}
 

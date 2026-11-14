@@ -231,7 +231,7 @@ export default function MeshNebulizerLandingPage({
 
   // 2. COMPARISON SECTION
   const renderComparison = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-center">
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-5 text-center">
       <div>
         <span className="text-xs font-bold text-cyan-800 bg-cyan-50 px-3 py-1 rounded-full border border-cyan-200">
           ليه تغير جهازك القديم؟
@@ -241,29 +241,52 @@ export default function MeshNebulizerLandingPage({
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-right pt-1">
-        <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/80 space-y-2">
-          <div className="flex items-center gap-2 text-rose-700 font-bold text-sm">
-            <XCircle className="w-5 h-5 shrink-0" />
-            <span>أجهزة النيبولايزر التقليدية</span>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center text-right pt-1">
+        {/* Comparison Cards (7 cols on desktop) */}
+        <div className="md:col-span-7 space-y-3">
+          <div className="p-4 rounded-2xl bg-rose-50/70 border border-rose-200/80 space-y-2">
+            <div className="flex items-center gap-2 text-rose-700 font-bold text-sm">
+              <XCircle className="w-5 h-5 shrink-0" />
+              <span>أجهزة النيبولايزر التقليدية القديمة</span>
+            </div>
+            <ul className="text-xs text-rose-900 space-y-1.5 pr-2">
+              <li>• صوت موتور عالي ومخيف بيخلي الطفل يصرخ ويرفض الجلسة.</li>
+              <li>• حجم ضخم وتقيل ولازم فيشة كهرباء جنبك ومقيد بمكانك.</li>
+              <li>• بهدلة نزول طوارئ ومستشفيات الفجر في البرد بسبب ضيق التنفس.</li>
+            </ul>
           </div>
-          <ul className="text-xs text-rose-900 space-y-1.5 pr-2">
-            <li>• صوت موتور عالي ومخيف بيخلي الطفل يصرخ ويرفض الجلسة.</li>
-            <li>• حجم ضخم وتقيل ولازم فيشة كهرباء جنبك.</li>
-            <li>• نزول طوارئ ومستشفيات الفجر في البرد بسبب ضيق التنفس.</li>
-          </ul>
+
+          <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-2">
+            <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
+              <span>جهاز Mesh Nebulizer الصامت المحمول</span>
+            </div>
+            <ul className="text-xs text-emerald-900 space-y-1.5 pr-2">
+              <li>• صامت تماماً، بتعمل الجلسة للطفل في سريره وهو نايم في هدوء تام.</li>
+              <li>• حجم جيب 100 جرام، يشتغل بالبطاريات أو USB في أي مكان وفي العربية.</li>
+              <li>• إسعاف فوري وسريع في البيت بلمسة زر واحدة بدون بهدلة.</li>
+            </ul>
+          </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
-          <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
-            <span>جهاز Mesh Nebulizer المحمول</span>
+        {/* Visual Real-Life Image (5 cols on desktop) */}
+        <div className="md:col-span-5">
+          <div className="relative aspect-4/3 md:aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm group">
+            <Image
+              src="/landing-pages/mesh-nebulizer/images/use_case_baby.webp"
+              alt="جلسة بخار هادئة أثناء نوم الطفل"
+              fill
+              className="object-cover group-hover:scale-105 transition duration-500"
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent p-3 text-white text-right">
+              <span className="inline-block text-[10px] font-bold bg-cyan-600/90 text-white px-2 py-0.5 rounded-full mb-1">
+                صوت معدوم &lt; 25dB
+              </span>
+              <p className="text-xs font-bold leading-tight">
+                جلسة بخار هادية لطفلك وهو نايم في سريره بدون أي صوت يزعجه
+              </p>
+            </div>
           </div>
-          <ul className="text-xs text-emerald-900 space-y-1.5 pr-2">
-            <li>• صامت تماماً، بتعمل الجلسة للطفل في سريره وهو نايم في هدوء.</li>
-            <li>• حجم جيب 100 جرام، يشتغل بالبطاريات أو USB في أي مكان.</li>
-            <li>• إسعاف فوري في البيت بلمسة زر واحدة بدون بهدلة.</li>
-          </ul>
         </div>
       </div>
     </div>
@@ -271,55 +294,124 @@ export default function MeshNebulizerLandingPage({
 
   // 3. BOX CONTENTS
   const renderBoxContents = () => (
-    <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-3 text-right">
-      <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
-        <Package className="w-5 h-5 text-cyan-700" />
-        <span>محتويات العلبة الأصلية (طقم متكامل):</span>
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-right">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
+          <Package className="w-5 h-5 text-cyan-700" />
+          <span>محتويات العلبة الأصلية (طقم عائلي متكامل):</span>
+        </div>
+        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          ✓ جاهز للاستخدام الفوري
+        </span>
       </div>
-      <ul className="text-xs sm:text-sm text-slate-700 space-y-2 pr-1">
-        <li className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
-          <span><strong>1× جهاز النيبولايزر المحمول</strong> الأصلي.</span>
-        </li>
-        <li className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
-          <span><strong>1× ماسك مخصص للأطفال</strong> سيليكون ناعم ومريح.</span>
-        </li>
-        <li className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
-          <span><strong>1× ماسك مخصص للكبار</strong> مناسب لكل الأعمار.</span>
-        </li>
-        <li className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
-          <span><strong>1× قطعة استنشاق للفم</strong> (Mouthpiece).</span>
-        </li>
-        <li className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
-          <span><strong>1× كابل شحن USB</strong> + كتالوج التعليمات.</span>
-        </li>
-      </ul>
+
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center pt-1">
+        {/* Image of real box contents (5 cols) */}
+        <div className="md:col-span-5 order-2 md:order-1">
+          <div className="relative aspect-4/3 md:aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
+            <Image
+              src="/landing-pages/mesh-nebulizer/images/features_3.webp"
+              alt="محتويات علبة جهاز استنشاق البخار"
+              fill
+              className="object-contain p-2"
+            />
+            <span className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+              صورة حقيقية للمحتويات
+            </span>
+          </div>
+        </div>
+
+        {/* Checklist of contents (7 cols) */}
+        <div className="md:col-span-7 order-1 md:order-2 space-y-2.5">
+          <ul className="text-xs sm:text-sm text-slate-700 space-y-2.5 pr-1">
+            <li className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="w-5 h-5 rounded-lg bg-cyan-100 text-cyan-700 font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+              <div>
+                <strong className="text-slate-900 block font-bold">1× جهاز النيبولايزر المحمول الأصلي:</strong>
+                <span className="text-slate-600 text-xs">حجم ميني بتقنية Mesh المتطورة وشاشة مؤشر التشغيل.</span>
+              </div>
+            </li>
+            <li className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="w-5 h-5 rounded-lg bg-cyan-100 text-cyan-700 font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+              <div>
+                <strong className="text-slate-900 block font-bold">1× ماسك سيليكون مخصص للأطفال:</strong>
+                <span className="text-slate-600 text-xs">خامة طبية ناعمة جداً ومريحة بدون أي ضغط على الوجه.</span>
+              </div>
+            </li>
+            <li className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="w-5 h-5 rounded-lg bg-cyan-100 text-cyan-700 font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+              <div>
+                <strong className="text-slate-900 block font-bold">1× ماسك مخصص للكبار:</strong>
+                <span className="text-slate-600 text-xs">مقاس مريح مناسب لجميع أفراد الأسرة وكبار السن.</span>
+              </div>
+            </li>
+            <li className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="w-5 h-5 rounded-lg bg-cyan-100 text-cyan-700 font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+              <div>
+                <strong className="text-slate-900 block font-bold">1× قطعة فم (Mouthpiece) + كابل USB:</strong>
+                <span className="text-slate-600 text-xs">للاستنشاق المباشر وكابل توصيل للشاحن أو الباوربانك.</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   );
 
   // 4. HOW TO USE (3 QUICK STEPS)
   const renderHowToUse = () => (
-    <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-3 text-right">
-      <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
-        <Zap className="w-5 h-5 text-amber-600" />
-        <span>طريقة الاستخدام السريعة في 3 خطوات:</span>
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-right">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
+          <Zap className="w-5 h-5 text-amber-600" />
+          <span>طريقة الاستخدام السريعة والمواصفات:</span>
+        </div>
+        <span className="text-xs font-bold text-cyan-800 bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-200">
+          سهل وبسيط في 3 خطوات
+        </span>
       </div>
-      <div className="space-y-2 text-xs sm:text-sm text-slate-700 pr-1">
-        <div className="flex items-start gap-2.5">
-          <span className="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
-          <span>افتح الغطاء وضع جرعة محلول الملح أو الدواء في الكوب.</span>
+
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center pt-1">
+        {/* Steps (7 cols) */}
+        <div className="md:col-span-7 space-y-2.5">
+          <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <span className="w-7 h-7 rounded-xl bg-cyan-600 text-white font-bold text-sm flex items-center justify-center shrink-0">1</span>
+            <div>
+              <strong className="text-slate-900 block font-bold text-sm">ضع المحلول في الكوب:</strong>
+              <span className="text-slate-600 text-xs">افتح الغطاء وضع جرعة محلول الملح أو الدواء الموصوف في الكوب الطبي.</span>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <span className="w-7 h-7 rounded-xl bg-cyan-600 text-white font-bold text-sm flex items-center justify-center shrink-0">2</span>
+            <div>
+              <strong className="text-slate-900 block font-bold text-sm">ركب الماسك المناسب:</strong>
+              <span className="text-slate-600 text-xs">اختر ماسك الأطفال أو الكبار أو قطعة الفم وركبها بسهولة وبضغطة واحدة.</span>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <span className="w-7 h-7 rounded-xl bg-cyan-600 text-white font-bold text-sm flex items-center justify-center shrink-0">3</span>
+            <div>
+              <strong className="text-slate-900 block font-bold text-sm">اضغط زر التشغيل وابدأ الجلسة:</strong>
+              <span className="text-slate-600 text-xs">يخرج البخار فوراً برذاذ ميكروني ناعم بدون أي صوت وبراحة تامة.</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-start gap-2.5">
-          <span className="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
-          <span>اختر الماسك المناسب (أطفال أو كبار) وركبه بسهولة على الجهاز.</span>
-        </div>
-        <div className="flex items-start gap-2.5">
-          <span className="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
-          <span>اضغط زر التشغيل، واستنشق البخار في هدوء تام وامتصاص سريع.</span>
+
+        {/* Feature / Anatomy Graphic (5 cols) */}
+        <div className="md:col-span-5">
+          <div className="relative aspect-4/3 md:aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
+            <Image
+              src="/landing-pages/mesh-nebulizer/images/features_1.webp"
+              alt="تشريح ومواصفات جهاز النيبولايزر"
+              fill
+              className="object-contain p-2"
+            />
+            <span className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+              تشريح ومواصفات الجهاز
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -374,39 +466,20 @@ export default function MeshNebulizerLandingPage({
     </div>
   );
 
-  // 6. OFFERS & TIERS
-  const renderOffers = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4">
-      <div className="text-right">
-        <span className="text-xs font-bold text-cyan-800 bg-cyan-50 px-3 py-1 rounded-full border border-cyan-200">
-          عروض التوفير الخاصة
-        </span>
-        <h2 className="text-lg sm:text-xl font-black text-slate-950 mt-2 font-heading">
-          اختر العرض المناسب لك (شحن مجاني لجميع العروض)
-        </h2>
-      </div>
-
-      <HeroOfferSelector
-        offers={product.offers || []}
-        selectedOffer={selectedOffer}
-        onSelectOffer={(offer) => setSelectedOffer(offer)}
-        accentColor="cyan"
-      />
-    </div>
-  );
-
-  // 7. ORDER FORM (COD CHECKOUT)
+  // 6. ORDER FORM (COD CHECKOUT)
   const renderOrderForm = () => (
     <div id="order-form-section" className="scroll-mt-6">
       <EgyptianCheckoutForm
         product={product}
         selectedOffer={selectedOffer}
+        onOfferChange={(offer) => setSelectedOffer(offer)}
         landingPageSlug={landingPage.slug}
+        accentColor="cyan"
       />
     </div>
   );
 
-  // 8. GUARANTEES FOOTER
+  // 7. GUARANTEES FOOTER
   const renderGuarantees = () => (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs text-slate-600 pt-2">
       <div className="p-3 rounded-2xl bg-white border border-slate-200">
@@ -444,8 +517,6 @@ export default function MeshNebulizerLandingPage({
         return renderHowToUse();
       case "reviews":
         return renderReviews();
-      case "offers":
-        return renderOffers();
       case "order_form":
         return renderOrderForm();
       case "guarantees":
