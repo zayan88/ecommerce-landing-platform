@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { MessageCircle, X, Sparkles, Bot, ShoppingBag } from "lucide-react";
+import { X, Sparkles, Bot } from "lucide-react";
 import { SalesChatBox } from "./SalesChatBox";
 import { Product } from "@/types";
 
@@ -32,10 +32,13 @@ export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) 
   };
 
   return (
-    <div className="fixed bottom-5 left-5 z-50 font-sans" dir="rtl">
+    <div
+      className="fixed bottom-24 md:bottom-8 right-5 md:right-8 z-50 font-sans"
+      dir="rtl"
+    >
       {/* Floating Chat Modal / Drawer */}
       {isOpen && (
-        <div className="fixed inset-0 sm:inset-auto sm:bottom-20 sm:left-5 z-50 flex items-end sm:items-center justify-center p-0 sm:p-0">
+        <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-8 z-50 flex items-end sm:items-center justify-center p-0 sm:p-0">
           {/* Backdrop on mobile */}
           <div
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs sm:hidden"
@@ -54,17 +57,17 @@ export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) 
         </div>
       )}
 
-      {/* Proactive Sales Teaser Bubble */}
+      {/* Proactive Sales Teaser Bubble (Small, unobtrusive, above circle) */}
       {showTeaser && !isOpen && (
         <div
           onClick={handleToggle}
-          className="absolute bottom-16 left-0 mb-2 w-72 bg-slate-900 border border-orange-500/40 text-slate-100 p-3.5 rounded-2xl shadow-xl cursor-pointer hover:border-orange-500 transition animate-in fade-in slide-in-from-bottom-2 duration-300"
+          className="absolute bottom-16 right-0 mb-2 w-64 sm:w-72 bg-slate-900/95 backdrop-blur-md border border-orange-500/50 text-slate-100 p-3 rounded-2xl shadow-2xl cursor-pointer hover:border-orange-400 transition animate-in fade-in slide-in-from-bottom-2 duration-300"
         >
           <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-[11px] font-black text-orange-400 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> مستشارك البيعي في RexRack
+                <Sparkles className="w-3 h-3" /> مستشارك البيعي AI
               </span>
             </div>
             <button
@@ -73,41 +76,39 @@ export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) 
                 setShowTeaser(false);
                 setHasInteracted(true);
               }}
-              className="text-slate-500 hover:text-slate-300 text-xs"
+              className="text-slate-400 hover:text-white text-xs p-0.5"
             >
               ✕
             </button>
           </div>
-          <p className="text-xs text-slate-200 mt-1.5 leading-relaxed font-bold">
+          <p className="text-xs text-slate-200 mt-1 leading-relaxed font-bold">
             {currentProduct
-              ? `بتفكر في ${currentProduct.title_ar}؟ كلمني أعرفك عرض القطعتين والشحن المجاني والمعاينة قبل الدفع! 🎁`
-              : "👋 محتار بين العروض؟ كلمني لايف أساعدك تختار الأنسب وتستفيد من عروض الشحن المجاني! 🚚"}
+              ? `بتفكر في ${currentProduct.title_ar.slice(0, 24)}...؟ كلمني أعرفك عروض الشحن المجاني والمعاينة!`
+              : "👋 محتار بين العروض؟ كلمني لايف أساعدك تختار الأنسب والشحن مجاني! 🚚"}
           </p>
-          <span className="inline-block mt-2 text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-md font-bold">
-            اضغط لبدء الشات الفوري 💬
-          </span>
         </div>
       )}
 
-      {/* Floating Trigger Button */}
+      {/* Pure Circular AI Floating Button (No Text - AI Shape Only) */}
       <button
         onClick={handleToggle}
         aria-label="افتح شات المبيعات الذكي"
-        className="group relative flex items-center gap-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-slate-950 font-black px-4 py-3 rounded-full shadow-2xl shadow-orange-500/40 hover:shadow-orange-500/60 transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-white/20"
+        className="group relative w-14 h-14 rounded-full bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950 border-2 border-orange-500/80 hover:border-orange-400 text-orange-400 hover:text-white shadow-[0_8px_25px_rgba(249,115,22,0.4)] hover:shadow-[0_8px_35px_rgba(249,115,22,0.6)] flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+        title="شات المبيعات الذكي AI"
       >
-        <div className="relative">
-          <Bot className="w-5 h-5 text-slate-950" />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 border border-slate-950 rounded-full animate-pulse" />
-        </div>
+        {/* Glowing pulse aura */}
+        <span className="absolute -inset-1 rounded-full bg-orange-500/20 blur-xs group-hover:bg-orange-500/35 transition" />
 
-        <span className="text-xs md:text-sm font-black tracking-wide">
-          {isOpen ? "إغلاق الشات" : "شات المبيعات الذكي"}
-        </span>
+        {/* Live Status Indicator Dot */}
+        <span className="absolute top-0.5 left-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-950 rounded-full animate-pulse z-10" />
 
-        {!isOpen && (
-          <span className="bg-slate-950 text-orange-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-            لايف
-          </span>
+        {/* Pure AI Shape Icon */}
+        {isOpen ? (
+          <X className="w-6 h-6 text-white transition-transform duration-200 rotate-90 group-hover:rotate-0 relative z-10" />
+        ) : (
+          <div className="relative z-10 flex items-center justify-center">
+            <Bot className="w-7 h-7 text-orange-400 group-hover:text-amber-300 transition-colors" />
+          </div>
         )}
       </button>
     </div>
