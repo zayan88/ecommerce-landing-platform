@@ -30,6 +30,9 @@ import {
   RotateCcw,
   Edit3,
   Image as ImageIcon,
+  Code,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 export default function AdminLandingPagesPage() {
@@ -60,8 +63,70 @@ export default function AdminLandingPagesPage() {
   const [newSlug, setNewSlug] = useState("");
   const [newProductId, setNewProductId] = useState("");
   const [newPixelId, setNewPixelId] = useState("");
+  const [customHeadScripts, setCustomHeadScripts] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+
+  // AI Code / Content Input State
+  const [aiInputText, setAiInputText] = useState("");
+  const [aiParseMessage, setAiParseMessage] = useState<string | null>(null);
+  const [showContentEditorInCreate, setShowContentEditorInCreate] = useState(false);
+  const [activeCreateTab, setActiveCreateTab] = useState<"hero" | "comparison" | "box" | "steps" | "reviews">("hero");
+  const [creationContent, setCreationContent] = useState<LandingPageContentConfig>({});
+
+  const initCreationContentForProduct = (prod: Product) => {
+    return {
+      announcement_bar: "عرض خاص: شحن مجاني لجميع المحافظات + حق المعاينة والتجربة قبل الدفع 💵",
+      hero_headline: prod.title_ar,
+      hero_subheadline:
+        prod.description_ar?.slice(0, 140) ||
+        "💡 احصل على أفضل تجربة مع المنتج الأصلي المعتمد وبأعلى معايير الجودة.",
+      hero_badge: "4.9 / 5.0 (أكثر من 400 تقييم موثق في مصر)",
+      hero_image: prod.images?.[0] || "",
+      hero_bullets: [
+        "خامات أصلية عالية الجودة تضمن المتانة والتحمل طويل الأمد.",
+        "تصميم عملي وعصري يلبي احتياجات الاستخدام اليومي بكل سهولة.",
+        "آمن وسهل الاستخدام مع ضمان كامل وحق الفحص والمعاينة قبل الدفع.",
+        "شحن سريع ومجاني لجميع محافظات مصر وتأكيد فوري للطلب.",
+      ],
+      comparison_badge: "ليه ده أفضل اختيار؟",
+      comparison_title: "الفرق بين المنتجات التقليدية والمنتج الأصلي",
+      comparison_old_title: "المنتجات والبدائل التقليدية",
+      comparison_old_points: [
+        "خامات رديئة وضعيفة تتلف بسرعة.",
+        "بدون ضمان أو معاينة حقيقية قبل الدفع.",
+        "صعوبة في الاستخدام ولا تلبي النتيجة المتوقعة.",
+      ],
+      comparison_new_title: "المنتج الأصلي من متجرنا",
+      comparison_new_points: [
+        "خامات أصلية 100% مختبرة ومضمونة الجودة.",
+        "حق فتح الشحنة والفحص والتجربة قبل الدفع للمندوب.",
+        "استبدال واسترجاع مجاني خلال 14 يوماً وخدمة عملاء مستمرة.",
+      ],
+      comparison_image: prod.images && prod.images.length > 1 ? prod.images[1] : "",
+      comparison_image_badge: "أعلى جودة واعتمادية",
+      box_title: "محتويات الشحنة الأصلية (طقم كامل متكامل):",
+      box_items: [
+        "المنتج الأصلي بكافة ملحقاته المعتمدة ومغلف بعناية.",
+        "كتالوج ودليل الاستخدام السريع باللغة العربية.",
+        "كارت الضمان الرسمي وحق الاستبدال والمعاينة.",
+      ],
+      box_image: prod.images && prod.images.length > 2 ? prod.images[2] : "",
+      how_to_use_title: "طريقة الاستخدام السريعة والمواصفات:",
+      how_to_use_steps: [
+        { step_num: 1, title: "الخطوة الأولى:", desc: "تجهيز المنتج وتركيب الملحق المناسب بسهولة." },
+        { step_num: 2, title: "الخطوة الثانية:", desc: "التشغيل بضغطة زر واحدة واختيار الوضع المطلوب." },
+        { step_num: 3, title: "الخطوة الثالثة:", desc: "الاستمتاع بالنتيجة الفورية وبراحة تامة." },
+      ],
+      how_to_use_image: prod.images && prod.images.length > 3 ? prod.images[3] : "",
+      reviews_title: "تجارب حقيقية لعملائنا في مصر:",
+      reviews: [
+        { name: "أم سليم", location: "التجمع، القاهرة", comment: "المنتج ممتاز ونفس المواصفات المكتوبة بالظبط، والتوصيل كان سريع جداً واستلمت بعد 3 أيام.", rating: 5 },
+        { name: "د. محمود كمال", location: "الجيزة", comment: "الخامات ممتازة وخدمة العملاء محترمة وعاينت وجربت مع المندوب قبل ما أدفع.", rating: 5 },
+        { name: "هدى عبد الرحمن", location: "الإسكندرية", comment: "اشتريت عرض التوفير والتغليف فندقي ومحترم وأنصح أي حد يشتري منهم.", rating: 5 },
+      ],
+    };
+  };
 
   const fetchData = async () => {
     try {
@@ -76,9 +141,11 @@ export default function AdminLandingPagesPage() {
       if (prodJson.success) {
         setProducts(prodJson.products);
         if (prodJson.products.length > 0 && !newProductId) {
-          setNewProductId(prodJson.products[0].id);
-          setNewTitle(`صفحة ${prodJson.products[0].title_ar}`);
-          setNewSlug(prodJson.products[0].slug || "new-product");
+          const first = prodJson.products[0];
+          setNewProductId(first.id);
+          setNewTitle(`صفحة ${first.title_ar}`);
+          setNewSlug(first.slug || "new-product");
+          setCreationContent(initCreationContentForProduct(first));
         }
       }
     } catch (err) {
@@ -98,26 +165,128 @@ export default function AdminLandingPagesPage() {
     if (prod) {
       setNewTitle(`صفحة ${prod.title_ar}`);
       setNewSlug(prod.slug || `offer-${Date.now().toString().slice(-4)}`);
+      setCreationContent(initCreationContentForProduct(prod));
     }
   };
 
   const handleCopyPrompt = () => {
     const selectedProd = products.find((p) => p.id === newProductId);
     const prodName = selectedProd?.title_ar || "المنتج";
-    const promptText = `أنت خبير كتابة صفحات هبوط (Direct Response Copywriter) للتجارة الإلكترونية في مصر بنظام الدفع عند الاستلام.
-المنتج هو: "${prodName}".
-المطلوب استخراج وكتابة الآتي باللهجة المصرية المقنعة والمختصرة جداً بدون رغي أو حشو:
-1. عنوان جذاب مباشر في سطر واحد يوضح الفائدة الأساسية.
-2. 4 مميزات أساسية للمنتج (كل ميزة في جملة واحدة واضحة).
-3. محتويات العلبة (بتستلم إيه لما تفتح الشحنة).
-4. باقات العروض:
-   - قطعة واحدة
-   - قطعتان (وفر أكثر + شحن مجاني)
-   - 3 قطع (العرض العائلي الشامل)`;
+    const promptText = `أنت خبير كتابة صفحات هبوط احترافية ومقنعة (Direct Response Copywriting) للتجارة الإلكترونية في مصر بنظام الدفع عند الاستلام.
+المنتج المطلوب هو: "${prodName}".
+
+المطلوب: توليد محتوى كامل ومقنع باللهجة المصرية في صيغة كود JSON فقط لتوليد صفحة هبوط ذات معدل تحويل مرتفع، بالهيكل التالي:
+
+\`\`\`json
+{
+  "announcement_bar": "عرض خاص: شحن مجاني لجميع المحافظات + حق المعاينة والتجربة قبل الدفع 💵",
+  "hero_headline": "${prodName} الأصلي في مصر",
+  "hero_subheadline": "جلسة مريحة وحل عملي ونهائي لمشاكل الاستخدام اليومي مع ضمان كامل.",
+  "hero_badge": "4.9 / 5.0 (أكثر من 450 تقييم موثق في مصر)",
+  "hero_bullets": [
+    "خامات أصلية عالية الجودة تضمن المتانة والتحمل طويل الأمد.",
+    "تصميم عملي وعصري يلبي احتياجات الاستخدام اليومي بكل سهولة.",
+    "آمن وسهل الاستخدام مع ضمان كامل وحق الفحص والمعاينة قبل الدفع.",
+    "شحن سريع ومجاني لجميع محافظات مصر وتأكيد فوري للطلب."
+  ],
+  "comparison_title": "الفرق بين المنتجات التقليدية والمنتج الأصلي",
+  "comparison_old_points": [
+    "خامات رديئة وضعيفة تتلف بسرعة.",
+    "بدون ضمان أو معاينة حقيقية قبل الدفع.",
+    "صعوبة في الاستخدام ولا تلبي النتيجة المتوقعة."
+  ],
+  "comparison_new_points": [
+    "خامات أصلية 100% مختبرة ومضمونة الجودة.",
+    "حق فتح الشحنة والفحص والتجربة قبل الدفع للمندوب.",
+    "استبدال واسترجاع مجاني خلال 14 يوماً وخدمة عملاء مستمرة."
+  ],
+  "box_title": "محتويات الشحنة الأصلية (طقم كامل متكامل):",
+  "box_items": [
+    "المنتج الأصلي بكافة ملحقاته المعتمدة ومغلف بعناية.",
+    "كتالوج ودليل الاستخدام السريع باللغة العربية.",
+    "كارت الضمان الرسمي وحق الاستبدال والمعاينة."
+  ],
+  "how_to_use_title": "طريقة الاستخدام السريعة والمواصفات:",
+  "how_to_use_steps": [
+    {"step_num": 1, "title": "الخطوة الأولى:", "desc": "تجهيز المنتج وتركيب الملحق المناسب بسهولة."},
+    {"step_num": 2, "title": "الخطوة الثانية:", "desc": "التشغيل بضغطة زر واحدة واختيار الوضع المطلوب."},
+    {"step_num": 3, "title": "الخطوة الثالثة:", "desc": "الاستمتاع بالنتيجة الفورية وبراحة تامة."}
+  ],
+  "reviews_title": "تجارب حقيقية لعملائنا في مصر:",
+  "reviews": [
+    {"name": "أم سليم", "location": "التجمع، القاهرة", "comment": "المنتج ممتاز ونفس المواصفات المكتوبة بالظبط، والتوصيل كان سريع جداً واستلمت بعد 3 أيام.", "rating": 5},
+    {"name": "د. محمود كمال", "location": "الجيزة", "comment": "الخامات ممتازة وخدمة العملاء محترمة وعاينت وجربت مع المندوب قبل ما أدفع.", "rating": 5},
+    {"name": "هدى عبد الرحمن", "location": "الإسكندرية", "comment": "اشتريت عرض التوفير والتغليف فندقي ومحترم وأنصح أي حد يشتري منهم.", "rating": 5}
+  ]
+}
+\`\`\`
+قم بتخصيص النصوص بدقة للمنتج وأخرج كود الـ JSON فقط بدون أي مقدمات أو كلام خارجي.`;
 
     navigator.clipboard.writeText(promptText);
     setCopiedPrompt(true);
     setTimeout(() => setCopiedPrompt(false), 3000);
+  };
+
+  const handleParseAiResponse = () => {
+    if (!aiInputText.trim()) {
+      setAiParseMessage("يرجى لصق الرد أو الكود أولاً في الصندوق");
+      return;
+    }
+
+    try {
+      let jsonStr = "";
+      const jsonBlockMatch = aiInputText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonBlockMatch && jsonBlockMatch[1]) {
+        jsonStr = jsonBlockMatch[1].trim();
+      } else {
+        const firstBrace = aiInputText.indexOf("{");
+        const lastBrace = aiInputText.lastIndexOf("}");
+        if (firstBrace > -1 && lastBrace > firstBrace) {
+          jsonStr = aiInputText.substring(firstBrace, lastBrace + 1);
+        }
+      }
+
+      if (jsonStr) {
+        const parsed = JSON.parse(jsonStr);
+        if (typeof parsed === "object" && parsed !== null) {
+          setCreationContent((prev) => ({
+            ...prev,
+            ...parsed,
+          }));
+          if (parsed.hero_headline && !newTitle) {
+            setNewTitle(parsed.hero_headline);
+          }
+          setAiParseMessage("✓ تم استخراج كود الـ JSON بنجاح وتعبئة جميع أقسام صفحة الهبوط!");
+          setShowContentEditorInCreate(true);
+          return;
+        }
+      }
+    } catch {}
+
+    // Fallback: Smart Arabic text extraction
+    const lines = aiInputText.split("\n").map((l) => l.trim()).filter(Boolean);
+    const extracted: LandingPageContentConfig = { ...creationContent };
+    const bullets: string[] = [];
+
+    lines.forEach((line) => {
+      if (/^[-•*]\s*(.+)/.test(line) || /^\d+[\.\-\)]\s*(.+)/.test(line)) {
+        const clean = line.replace(/^[-•*\d\.\)\s]+/, "").trim();
+        if (clean.length > 5 && bullets.length < 4) {
+          bullets.push(clean);
+        }
+      }
+      if (line.includes("العنوان:") || line.includes("عنوان:")) {
+        extracted.hero_headline = line.replace(/.*(?:العنوان|عنوان)\s*[:：]/, "").trim();
+      }
+    });
+
+    if (bullets.length > 0) {
+      extracted.hero_bullets = bullets;
+    }
+
+    setCreationContent(extracted);
+    setAiParseMessage("✓ تم استخراج النصوص وتطبيقها على أقسام الصفحة!");
+    setShowContentEditorInCreate(true);
   };
 
   const handleCreateLandingPage = async (e: React.FormEvent) => {
@@ -133,6 +302,8 @@ export default function AdminLandingPagesPage() {
         component_key: "starter-template", // Automatically uses the Universal High-Converting COD Template
         product_id: newProductId,
         meta_pixel_id: newPixelId.trim() || undefined,
+        head_scripts: customHeadScripts.trim() || undefined,
+        content_config: creationContent,
         status: "active",
         deployment_url: `/p/${cleanSlug}`,
         deployment_status: "published",
@@ -148,6 +319,9 @@ export default function AdminLandingPagesPage() {
       const data = await res.json();
       if (data.success) {
         setIsModalOpen(false);
+        setAiInputText("");
+        setAiParseMessage(null);
+        setShowContentEditorInCreate(false);
         fetchData();
       }
     } catch (err) {
@@ -1350,44 +1524,643 @@ export default function AdminLandingPagesPage() {
                     <span>توليد تلقائي فوري 100%</span>
                   </div>
                   <p className="text-[11px] leading-relaxed text-emerald-700">
-                    السيستم هيسحب صور المنتج وأسعاره ومواصفاته أوتوماتيك ويولّد صفحة هبوط رشيقة متطابقة مع معايير الـ COD (سلايدر صور + باقات عروض + فورم طلب مباشر + إشعار تليجرام).
+                    السيستم هيسحب صور المنتج وأسعاره ومواصفاته أوتوماتيك ويولّد صفحة هبوط رشيقة متطابقة مع معايير الـ COD (سلايدر صور + باقات عروض + فورم طلب مباشر + إشعار تليجرام). يمكنك أيضاً فتح قسم التخصيص بالأسفل لتعديل أي كلام أو صور قبل النشر.
                   </p>
                 </div>
               ) : (
-                <div className="p-4 bg-indigo-50/70 rounded-2xl border border-indigo-200/80 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
-                      <Wand2 className="w-4 h-4 text-indigo-600" />
-                      <span>برومبت الذكاء الاصطناعي المجاني:</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleCopyPrompt}
-                      className="py-1 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-xs transition"
-                    >
-                      {copiedPrompt ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedPrompt ? "تم النسخ!" : "نسخ البرومبت لـ ChatGPT"}</span>
-                    </button>
+                <div className="space-y-3">
+                  {/* Step 1: Copy AI Prompt */}
+                  <div className="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-200/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                        <Wand2 className="w-4 h-4 text-indigo-600" />
+                        <span>الخطوة 1: انسخ برومبت الـ AI لـ ChatGPT أو Claude</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCopyPrompt}
+                        className="py-1 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-xs transition"
+                      >
+                        {copiedPrompt ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedPrompt ? "تم النسخ!" : "نسخ البرومبت"}</span>
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-indigo-800 leading-relaxed">
+                      البرومبت يطلب من الذكاء الاصطناعي تجهيز محتوى بيعي مقنع باللهجة المصرية وإخراجه في كود JSON منظم لملء الصفحة بنقرة واحدة.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-indigo-800 leading-relaxed">
-                    انسخ البرومبت وافتحه في حسابك المجاني في ChatGPT، وانسخ النتيجة هنا لو عايز تعدل وصف المنتج.
-                  </p>
+
+                  {/* Step 2: Paste AI Response Box */}
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-right">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-800">
+                        الخطوة 2: الصق كود الـ JSON أو الرد الذي نسخته من ChatGPT هنا:
+                      </label>
+                      <span className="text-[10px] text-gray-500 font-mono">يدعم JSON أو نصوص</span>
+                    </div>
+
+                    <textarea
+                      rows={4}
+                      value={aiInputText}
+                      onChange={(e) => setAiInputText(e.target.value)}
+                      placeholder='الصق الرد هنا... مثلاً: {"hero_headline": "...", "hero_bullets": [...]} أو النص المكتوب'
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 text-xs font-mono text-slate-900 bg-white outline-hidden leading-relaxed"
+                    />
+
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleParseAiResponse}
+                        className="py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition"
+                      >
+                        <Zap className="w-3.5 h-3.5 text-amber-300" />
+                        <span>استخراج وتطبيق كود الذكاء الاصطناعي على نصوص الصفحة</span>
+                      </button>
+
+                      {aiInputText && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiInputText("");
+                            setAiParseMessage(null);
+                          }}
+                          className="text-[11px] text-gray-400 hover:text-gray-600 underline"
+                        >
+                          مسح
+                        </button>
+                      )}
+                    </div>
+
+                    {aiParseMessage && (
+                      <div
+                        className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                          aiParseMessage.startsWith("✓")
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : "bg-amber-50 text-amber-800 border border-amber-200"
+                        }`}
+                      >
+                        {aiParseMessage.startsWith("✓") ? (
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                        )}
+                        <span>{aiParseMessage}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* Meta Pixel Override (Optional) */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  معرف بيكسل فيسبوك مخصص للحملة (اختياري)
-                </label>
-                <input
-                  type="text"
-                  dir="ltr"
-                  value={newPixelId}
-                  onChange={(e) => setNewPixelId(e.target.value)}
-                  placeholder="اتركه فارغاً لاستخدام البيكسل الافتراضي للمتجر"
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden font-mono text-right"
-                />
+              {/* Collapsible Section 1: Content & Copy Editor (Before Creation) */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
+                <button
+                  type="button"
+                  onClick={() => setShowContentEditorInCreate(!showContentEditorInCreate)}
+                  className="w-full p-3.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-xs font-bold text-gray-800 transition cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <Edit3 className="w-4 h-4 text-cyan-600" />
+                    <span>تخصيص ومراجعة نصوص وصور الصفحة (محتوى الأقسام)</span>
+                    <span className="text-[10px] text-cyan-700 font-normal bg-cyan-50 px-2 py-0.5 rounded-full border border-cyan-200">
+                      اختياري
+                    </span>
+                  </span>
+                  {showContentEditorInCreate ? (
+                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+
+                {showContentEditorInCreate && (
+                  <div className="p-4 space-y-4 border-t border-gray-200 text-xs">
+                    {/* Tab Navigation */}
+                    <div className="flex items-center gap-1.5 border-b border-gray-200 pb-2 overflow-x-auto font-bold">
+                      <button
+                        type="button"
+                        onClick={() => setActiveCreateTab("hero")}
+                        className={`py-1.5 px-2.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                          activeCreateTab === "hero"
+                            ? "bg-cyan-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        الهيرو والإعلان
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveCreateTab("comparison")}
+                        className={`py-1.5 px-2.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                          activeCreateTab === "comparison"
+                            ? "bg-cyan-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        المقارنة
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveCreateTab("box")}
+                        className={`py-1.5 px-2.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                          activeCreateTab === "box"
+                            ? "bg-cyan-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        محتويات العلبة
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveCreateTab("steps")}
+                        className={`py-1.5 px-2.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                          activeCreateTab === "steps"
+                            ? "bg-cyan-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        طريقة الاستخدام
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveCreateTab("reviews")}
+                        className={`py-1.5 px-2.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                          activeCreateTab === "reviews"
+                            ? "bg-cyan-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        آراء العملاء
+                      </button>
+                    </div>
+
+                    {/* Tab 1: Hero */}
+                    {activeCreateTab === "hero" && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block font-bold text-gray-700 mb-1">
+                            نص شريط الإعلان العلوي
+                          </label>
+                          <input
+                            type="text"
+                            value={creationContent.announcement_bar || ""}
+                            onChange={(e) =>
+                              setCreationContent({
+                                ...creationContent,
+                                announcement_bar: e.target.value,
+                              })
+                            }
+                            placeholder="عرض خاص: شحن مجاني لجميع المحافظات + حق المعاينة والتجربة قبل الدفع"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-gray-700 mb-1">
+                            عنوان الهيرو الرئيسي
+                          </label>
+                          <input
+                            type="text"
+                            value={creationContent.hero_headline || ""}
+                            onChange={(e) =>
+                              setCreationContent({
+                                ...creationContent,
+                                hero_headline: e.target.value,
+                              })
+                            }
+                            placeholder="اسم المنتج والعنوان الجذاب"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 font-bold text-xs text-gray-900 bg-white outline-hidden"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-gray-700 mb-1">
+                            العنوان الفرعي الإقناعي
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={creationContent.hero_subheadline || ""}
+                            onChange={(e) =>
+                              setCreationContent({
+                                ...creationContent,
+                                hero_subheadline: e.target.value,
+                              })
+                            }
+                            placeholder="شرح سريع لمشكلة العميل وكيف يحلها المنتج"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="block font-bold text-gray-700 mb-1">
+                              رابط صورة الهيرو الأساسية
+                            </label>
+                            <input
+                              type="text"
+                              value={creationContent.hero_image || ""}
+                              onChange={(e) =>
+                                setCreationContent({
+                                  ...creationContent,
+                                  hero_image: e.target.value,
+                                })
+                              }
+                              placeholder="/landing-pages/... أو https://..."
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-hidden"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block font-bold text-gray-700 mb-1">
+                              شارة التقييم والمصداقية
+                            </label>
+                            <input
+                              type="text"
+                              value={creationContent.hero_badge || ""}
+                              onChange={(e) =>
+                                setCreationContent({
+                                  ...creationContent,
+                                  hero_badge: e.target.value,
+                                })
+                              }
+                              placeholder="4.9 / 5.0 (أكثر من 400 تقييم)"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-gray-700 mb-1">
+                            نقاط الهيرو البارزة (4 مميزات رئيسية)
+                          </label>
+                          <div className="space-y-1.5">
+                            {[0, 1, 2, 3].map((idx) => (
+                              <input
+                                key={idx}
+                                type="text"
+                                value={creationContent.hero_bullets?.[idx] || ""}
+                                onChange={(e) => {
+                                  const bullets = [
+                                    ...(creationContent.hero_bullets || ["", "", "", ""]),
+                                  ];
+                                  bullets[idx] = e.target.value;
+                                  setCreationContent({
+                                    ...creationContent,
+                                    hero_bullets: bullets,
+                                  });
+                                }}
+                                placeholder={`الميزة رقم ${idx + 1}`}
+                                className="w-full px-3 py-1 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white outline-hidden"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab 2: Comparison */}
+                    {activeCreateTab === "comparison" && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block font-bold text-gray-700 mb-1">
+                              عنوان المقارنة
+                            </label>
+                            <input
+                              type="text"
+                              value={creationContent.comparison_title || ""}
+                              onChange={(e) =>
+                                setCreationContent({
+                                  ...creationContent,
+                                  comparison_title: e.target.value,
+                                })
+                              }
+                              placeholder="الفرق بين المنتجات التقليدية وجهازنا"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-gray-700 mb-1">
+                              رابط صورة المقارنة
+                            </label>
+                            <input
+                              type="text"
+                              value={creationContent.comparison_image || ""}
+                              onChange={(e) =>
+                                setCreationContent({
+                                  ...creationContent,
+                                  comparison_image: e.target.value,
+                                })
+                              }
+                              placeholder="/landing-pages/..."
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="p-2.5 rounded-xl bg-rose-50/70 border border-rose-200 space-y-1.5">
+                            <span className="block font-bold text-rose-800">3 عيوب للمنتجات التقليدية:</span>
+                            {[0, 1, 2].map((idx) => (
+                              <input
+                                key={idx}
+                                type="text"
+                                value={creationContent.comparison_old_points?.[idx] || ""}
+                                onChange={(e) => {
+                                  const pts = [
+                                    ...(creationContent.comparison_old_points || ["", "", ""]),
+                                  ];
+                                  pts[idx] = e.target.value;
+                                  setCreationContent({
+                                    ...creationContent,
+                                    comparison_old_points: pts,
+                                  });
+                                }}
+                                placeholder={`عيب رقم ${idx + 1}`}
+                                className="w-full px-2.5 py-1 rounded-md border border-rose-200 text-rose-900 text-xs bg-white outline-hidden"
+                              />
+                            ))}
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-1.5">
+                            <span className="block font-bold text-emerald-800">3 مميزات لمنتجنا:</span>
+                            {[0, 1, 2].map((idx) => (
+                              <input
+                                key={idx}
+                                type="text"
+                                value={creationContent.comparison_new_points?.[idx] || ""}
+                                onChange={(e) => {
+                                  const pts = [
+                                    ...(creationContent.comparison_new_points || ["", "", ""]),
+                                  ];
+                                  pts[idx] = e.target.value;
+                                  setCreationContent({
+                                    ...creationContent,
+                                    comparison_new_points: pts,
+                                  });
+                                }}
+                                placeholder={`ميزة رقم ${idx + 1}`}
+                                className="w-full px-2.5 py-1 rounded-md border border-emerald-200 text-emerald-900 text-xs bg-white outline-hidden"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab 3: Box Contents */}
+                    {activeCreateTab === "box" && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block font-bold text-gray-700 mb-1">
+                              عنوان محتويات العلبة
+                            </label>
+                            <input
+                              type="text"
+                              value={creationContent.box_title || ""}
+                              onChange={(e) =>
+                                setCreationContent({
+                                  ...creationContent,
+                                  box_title: e.target.value,
+                                })
+                              }
+                              placeholder="محتويات العلبة الأصلية:"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-gray-700 mb-1">
+                              رابط صورة العلبة والملحقات
+                            </label>
+                            <input
+                              type="text"
+                              value={creationContent.box_image || ""}
+                              onChange={(e) =>
+                                setCreationContent({
+                                  ...creationContent,
+                                  box_image: e.target.value,
+                                })
+                              }
+                              placeholder="/landing-pages/..."
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-gray-700 mb-1">
+                            محتويات العلبة (كل عنصر في سطر)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={creationContent.box_items?.join("\n") || ""}
+                            onChange={(e) =>
+                              setCreationContent({
+                                ...creationContent,
+                                box_items: e.target.value
+                                  .split("\n")
+                                  .filter((l) => l.trim().length > 0),
+                              })
+                            }
+                            placeholder="1× الجهاز الأصلي...&#10;1× الملحقات...&#10;1× كارت الضمان..."
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab 4: Steps */}
+                    {activeCreateTab === "steps" && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block font-bold text-gray-700 mb-1">
+                              عنوان طريقة الاستخدام
+                            </label>
+                            <input
+                              type="text"
+                              value={creationContent.how_to_use_title || ""}
+                              onChange={(e) =>
+                                setCreationContent({
+                                  ...creationContent,
+                                  how_to_use_title: e.target.value,
+                                })
+                              }
+                              placeholder="طريقة الاستخدام السريعة:"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                            />
+                          </div>
+                          <div>
+                            <label className="block font-bold text-gray-700 mb-1">
+                              رابط صورة المواصفات
+                            </label>
+                            <input
+                              type="text"
+                              value={creationContent.how_to_use_image || ""}
+                              onChange={(e) =>
+                                setCreationContent({
+                                  ...creationContent,
+                                  how_to_use_image: e.target.value,
+                                })
+                              }
+                              placeholder="/landing-pages/..."
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          {[0, 1, 2].map((idx) => {
+                            const curStep = creationContent.how_to_use_steps?.[idx] || {
+                              step_num: idx + 1,
+                              title: `الخطوة ${idx + 1}:`,
+                              desc: "",
+                            };
+                            return (
+                              <div key={idx} className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={curStep.title}
+                                  onChange={(e) => {
+                                    const steps = [
+                                      ...(creationContent.how_to_use_steps || []),
+                                    ];
+                                    steps[idx] = { ...curStep, title: e.target.value };
+                                    setCreationContent({
+                                      ...creationContent,
+                                      how_to_use_steps: steps,
+                                    });
+                                  }}
+                                  placeholder={`عنوان الخطوة ${idx + 1}`}
+                                  className="w-1/3 px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 font-bold bg-white outline-hidden"
+                                />
+                                <input
+                                  type="text"
+                                  value={curStep.desc}
+                                  onChange={(e) => {
+                                    const steps = [
+                                      ...(creationContent.how_to_use_steps || []),
+                                    ];
+                                    steps[idx] = { ...curStep, desc: e.target.value };
+                                    setCreationContent({
+                                      ...creationContent,
+                                      how_to_use_steps: steps,
+                                    });
+                                  }}
+                                  placeholder={`شرح الخطوة ${idx + 1}`}
+                                  className="w-2/3 px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab 5: Reviews */}
+                    {activeCreateTab === "reviews" && (
+                      <div className="space-y-3">
+                        <label className="block font-bold text-gray-700">3 تقييمات واقعية:</label>
+                        {[0, 1, 2].map((idx) => {
+                          const curRev = creationContent.reviews?.[idx] || {
+                            name: `عميل ${idx + 1}`,
+                            location: "القاهرة",
+                            comment: "",
+                            rating: 5,
+                          };
+                          return (
+                            <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                              <div className="grid grid-cols-2 gap-2">
+                                <input
+                                  type="text"
+                                  value={curRev.name}
+                                  onChange={(e) => {
+                                    const revs = [...(creationContent.reviews || [])];
+                                    revs[idx] = { ...curRev, name: e.target.value };
+                                    setCreationContent({
+                                      ...creationContent,
+                                      reviews: revs,
+                                    });
+                                  }}
+                                  placeholder="اسم العميل"
+                                  className="px-2.5 py-1 rounded-md border border-gray-300 text-xs font-bold text-gray-900 bg-white outline-hidden"
+                                />
+                                <input
+                                  type="text"
+                                  value={curRev.location}
+                                  onChange={(e) => {
+                                    const revs = [...(creationContent.reviews || [])];
+                                    revs[idx] = { ...curRev, location: e.target.value };
+                                    setCreationContent({
+                                      ...creationContent,
+                                      reviews: revs,
+                                    });
+                                  }}
+                                  placeholder="المحافظة أو المنطقة"
+                                  className="px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-800 bg-white outline-hidden"
+                                />
+                              </div>
+                              <input
+                                type="text"
+                                value={curRev.comment}
+                                onChange={(e) => {
+                                  const revs = [...(creationContent.reviews || [])];
+                                  revs[idx] = { ...curRev, comment: e.target.value };
+                                  setCreationContent({
+                                    ...creationContent,
+                                    reviews: revs,
+                                  });
+                                }}
+                                placeholder="نص رأي وتجربة العميل..."
+                                className="w-full px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Collapsible Section 2: Custom Head Scripts / Pixels */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
+                <div className="p-3.5 space-y-3">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-gray-800">
+                    <Code className="w-4 h-4 text-indigo-600" />
+                    <span>أكواد وتتبع إضافي (بيكسل فيسبوك / تيك توك / Custom Scripts)</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2.5 text-xs">
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1">
+                        معرف بيكسل فيسبوك مخصص للحملة (اختياري)
+                      </label>
+                      <input
+                        type="text"
+                        dir="ltr"
+                        value={newPixelId}
+                        onChange={(e) => setNewPixelId(e.target.value)}
+                        placeholder="اتركه فارغاً لاستخدام البيكسل الافتراضي للمتجر"
+                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden font-mono text-right"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1">
+                        أكواد تتبع في الـ Head (تيك توك، سناب شات، جوجل، أو CSS مخصص)
+                      </label>
+                      <textarea
+                        rows={2}
+                        dir="ltr"
+                        value={customHeadScripts}
+                        onChange={(e) => setCustomHeadScripts(e.target.value)}
+                        placeholder="<script>...أكواد بيكسل تيك توك أو جوجل تاج...</script>"
+                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden font-mono text-left leading-relaxed"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Action Buttons */}

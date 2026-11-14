@@ -828,6 +828,7 @@ export const dbStore = {
       deployment_url: data.deployment_url || `/p/${data.slug}`,
       deployment_status: data.deployment_status || "published",
       sections_config: data.sections_config || DEFAULT_LANDING_PAGE_SECTIONS,
+      content_config: data.content_config,
       last_published_at: new Date().toISOString(),
       created_at: data.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
