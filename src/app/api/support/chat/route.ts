@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 interface ChatMessage {

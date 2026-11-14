@@ -4,6 +4,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { VisitorTracker } from "@/components/tracking/VisitorTracker";
 
+export const runtime = "edge";
+
 export const metadata: Metadata = {
   title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
   description: "المنصة المركزية لإدارة وتتبع صفحات الهبوط ومبيعات الدفع عند الاستلام وبوابة صفقة في مصر",

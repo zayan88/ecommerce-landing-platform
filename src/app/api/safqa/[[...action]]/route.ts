@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { SafkaClient } from "@/lib/safqa/safka-client";
 
+export const runtime = "edge";
+
 interface RouteProps {
   params: {
     action?: string[];

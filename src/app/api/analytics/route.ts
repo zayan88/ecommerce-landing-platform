@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { generateEventId } from "@/lib/tracking/utm";
 
+export const runtime = "edge";
+
 export async function GET() {
   try {
     const summary = await dbStore.getAnalyticsSummary();

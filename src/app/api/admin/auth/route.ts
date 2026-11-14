@@ -6,6 +6,8 @@ import {
   AUTH_COOKIE_NAME,
 } from "@/lib/auth/admin-auth";
 
+export const runtime = "edge";
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

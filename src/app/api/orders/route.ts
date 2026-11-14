@@ -7,6 +7,8 @@ import { MetaCapiClient } from "@/lib/tracking/meta-capi";
 import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
 
+export const runtime = "edge";
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

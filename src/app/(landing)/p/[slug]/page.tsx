@@ -8,15 +8,13 @@ import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: {
     slug: string;
   };
-}
-
-export async function generateStaticParams() {
-  const landingPages = await dbStore.getLandingPages();
-  return landingPages.map((lp) => ({ slug: lp.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

@@ -1,10 +1,6 @@
-import crypto from "crypto";
+import { sha256 } from "@/lib/crypto/sha256";
 import { Order } from "@/types";
 import { dbStore } from "../db/store";
-
-function sha256(str: string): string {
-  return crypto.createHash("sha256").update(str.trim().toLowerCase()).digest("hex");
-}
 
 function normalizeEgyptianPhone(phone: string): string {
   // Format to standard E.164: +201xxxxxxxxx

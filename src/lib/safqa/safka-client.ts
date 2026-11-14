@@ -487,20 +487,6 @@ export class SafkaClient {
   static async fetchSafkaMcpOrders(limit = 30): Promise<any[]> {
     try {
       let accessToken = process.env.SAFKA_ACCESS_TOKEN || "";
-      const tokensPath = "d:/AI Project/safka-mcp/tokens.json";
-      if (typeof window === "undefined") {
-        try {
-          const fs = await import("fs");
-          if (fs.existsSync(tokensPath)) {
-            const raw = fs.readFileSync(tokensPath, "utf-8");
-            const parsed = JSON.parse(raw);
-            if (parsed.access_token) {
-              accessToken = parsed.access_token;
-            }
-          }
-        } catch {}
-      }
-
       if (!accessToken) return [];
 
       const res = await fetch("https://api.safka-eg.com/api/v1/mcp", {

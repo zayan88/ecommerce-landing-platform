@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { Product, ProductOffer, LandingPage, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 
@@ -566,13 +564,7 @@ let memorySettings = { ...initialSettings };
 let memoryAnalytics: AnalyticsEvent[] = [];
 let memoryDeletedOrderIds = new Set<string>();
 
-const getStoreFilePath = () => {
-  if (process.env.VERCEL) {
-    return "/tmp/rexrack-store.json";
-  }
-  // Store directly in project root for reliable persistence across builds
-  return path.join(process.cwd(), "rexrack-store.json");
-};
+const getStoreFilePath = () => "";
 
 const DUMMY_IDS = new Set([
   "a1000000-0000-0000-0000-000000000001",
@@ -594,81 +586,11 @@ const DUMMY_IDS = new Set([
 ]);
 
 function loadFromFile() {
-  try {
-    if (typeof fs === "undefined" || !fs.existsSync || !fs.readFileSync) return;
-    const filePath = getStoreFilePath();
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf-8");
-      const data = JSON.parse(raw);
-      if (Array.isArray(data.deletedOrderIds)) {
-        memoryDeletedOrderIds = new Set(data.deletedOrderIds);
-      }
-      if (Array.isArray(data.analytics)) {
-        memoryAnalytics = data.analytics;
-      }
-      if (Array.isArray(data.products) && data.products.length > 0) {
-        const existingIds = new Set(memoryProducts.map((p) => p.id));
-        for (const p of data.products) {
-          if (!existingIds.has(p.id) && !DUMMY_IDS.has(p.id) && !DUMMY_IDS.has(p.slug)) {
-            memoryProducts.push(p);
-            existingIds.add(p.id);
-          }
-        }
-      }
-      if (Array.isArray(data.landingPages) && data.landingPages.length > 0) {
-        const existingIds = new Set(memoryLandingPages.map((lp) => lp.id));
-        for (const lp of data.landingPages) {
-          if (!existingIds.has(lp.id) && !DUMMY_IDS.has(lp.id) && !DUMMY_IDS.has(lp.product_id) && !DUMMY_IDS.has(lp.slug)) {
-            memoryLandingPages.push(lp);
-            existingIds.add(lp.id);
-          }
-        }
-      }
-      if (Array.isArray(data.orders)) {
-        memoryOrders = data.orders.filter(
-          (o: any) =>
-            !DUMMY_IDS.has(o.product_id) &&
-            !memoryDeletedOrderIds.has(o.id) &&
-            !memoryDeletedOrderIds.has(o.order_number)
-        );
-      }
-      if (data.settings) {
-        memorySettings = { ...initialSettings, ...data.settings };
-      }
-    }
-  } catch (e) {
-    // ignore
-  }
-
-  // Ensure memory state is never polluted with dummy products or deleted orders
-  memoryProducts = memoryProducts.filter((p) => !DUMMY_IDS.has(p.id) && !DUMMY_IDS.has(p.slug));
-  memoryLandingPages = memoryLandingPages.filter((lp) => !DUMMY_IDS.has(lp.id) && !DUMMY_IDS.has(lp.product_id) && !DUMMY_IDS.has(lp.slug));
-  memoryOrders = memoryOrders.filter(
-    (o) =>
-      !DUMMY_IDS.has(o.product_id) &&
-      !memoryDeletedOrderIds.has(o.id) &&
-      !memoryDeletedOrderIds.has(o.order_number)
-  );
-  // Sort orders descending by created_at so newest always appear on top
-  memoryOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // Edge runtime safe - in-memory and Supabase store
 }
 
 function saveToFile() {
-  try {
-    if (typeof fs === "undefined" || !fs.writeFileSync) return;
-    const filePath = getStoreFilePath();
-    const data = {
-      products: memoryProducts,
-      landingPages: memoryLandingPages,
-      orders: memoryOrders,
-      settings: memorySettings,
-      deletedOrderIds: Array.from(memoryDeletedOrderIds),
-      analytics: memoryAnalytics.slice(-1000),
-    };
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
-  } catch (e) {
-    // ignore
-  }
+  // Edge runtime safe - in-memory and Supabase store
 }
 
 loadFromFile();

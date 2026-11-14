@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import crypto from "crypto";
+import { hmacSha256 } from "@/lib/crypto/sha256";
 
 const ADMIN_PIN = process.env.ADMIN_PIN || process.env.ADMIN_PASSWORD || "8826";
 const AUTH_COOKIE_NAME = "rexrack_admin_auth";
@@ -10,7 +10,7 @@ const AUTH_SECRET = process.env.AUTH_SECRET || "rexrack_secret_key_production_20
  */
 export function createAdminAuthToken(): string {
   const payload = `admin_${Date.now()}`;
-  const signature = crypto.createHmac("sha256", AUTH_SECRET).update(payload).digest("hex");
+  const signature = hmacSha256(AUTH_SECRET, payload);
   return `${payload}.${signature}`;
 }
 
@@ -20,7 +20,7 @@ export function createAdminAuthToken(): string {
 export function verifyAdminAuthToken(token?: string): boolean {
   if (!token || !token.includes(".")) return false;
   const [payload, signature] = token.split(".");
-  const expectedSig = crypto.createHmac("sha256", AUTH_SECRET).update(payload).digest("hex");
+  const expectedSig = hmacSha256(AUTH_SECRET, payload);
   return signature === expectedSig;
 }
 
