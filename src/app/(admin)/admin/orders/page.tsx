@@ -23,6 +23,9 @@ import {
   Trash2,
   Pencil,
   Package,
+  Volume2,
+  VolumeX,
+  Bell,
 } from "lucide-react";
 
 export default function AdminOrdersPage() {
@@ -40,10 +43,45 @@ export default function AdminOrdersPage() {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
 
   const [syncingSafka, setSyncingSafka] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [lastOrdersCount, setLastOrdersCount] = useState<number | null>(null);
 
-  const fetchOrders = async (sync = false) => {
+  // Play satisfying cash-register sound when a new order drops
+  const playChaChing = () => {
+    if (!soundEnabled || typeof window === "undefined") return;
     try {
-      setLoading(true);
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(987.77, ctx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(1318.51, ctx.currentTime + 0.15);
+
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(1318.51, ctx.currentTime + 0.08);
+      osc2.frequency.exponentialRampToValueAtTime(1975.53, ctx.currentTime + 0.28);
+
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start();
+      osc2.start();
+      osc1.stop(ctx.currentTime + 0.35);
+      osc2.stop(ctx.currentTime + 0.35);
+    } catch {}
+  };
+
+  const fetchOrders = async (sync = false, isBackground = false) => {
+    try {
+      if (!isBackground) setLoading(true);
       if (sync) setSyncingSafka(true);
       let url = "/api/orders";
       const params = new URLSearchParams();
@@ -54,13 +92,19 @@ export default function AdminOrdersPage() {
 
       const res = await fetch(url);
       const json = await res.json();
-      if (json.success) {
+      if (json.success && Array.isArray(json.orders)) {
+        if (lastOrdersCount !== null && json.orders.length > lastOrdersCount) {
+          playChaChing();
+          setActionMessage("🎉 وصل أوردر جديد حالاً في المتجر!");
+          setTimeout(() => setActionMessage(null), 5000);
+        }
+        setLastOrdersCount(json.orders.length);
         setOrders(json.orders);
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
       setSyncingSafka(false);
     }
   };
@@ -84,6 +128,14 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // Background polling every 15s to trigger cash-register sound when new orders drop
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetchOrders(false, true);
+    }, 15000);
+    return () => clearInterval(timer);
+  }, [lastOrdersCount, soundEnabled]);
 
   const handleOrderUpdated = (updatedOrder: Order) => {
     setOrders((prev) =>
@@ -244,6 +296,32 @@ export default function AdminOrdersPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Sound Alert Toggle Button */}
+          <button
+            onClick={() => {
+              setSoundEnabled(!soundEnabled);
+              if (!soundEnabled) playChaChing();
+            }}
+            title={soundEnabled ? "كتم صوت إشعارات البيع" : "تشغيل صوت إشعارات البيع (Cha-Ching)"}
+            className={`py-2 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer border ${
+              soundEnabled
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-600 hover:bg-amber-500/20"
+                : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200"
+            }`}
+          >
+            {soundEnabled ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-amber-500" />
+                <span>صوت البيع (Cha-Ching) 💰</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-gray-400" />
+                <span>الصوت مكتوم</span>
+              </>
+            )}
+          </button>
+
           <button
             onClick={() => fetchOrders(true)}
             disabled={syncingSafka}

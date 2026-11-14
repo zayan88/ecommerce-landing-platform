@@ -553,6 +553,9 @@ const initialSettings: SystemSettings = {
   store_name: "RexRack",
   support_phone: "01000000000",
   support_whatsapp: "201000000000",
+  telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN || "",
+  telegram_chat_id: process.env.TELEGRAM_CHAT_ID || "",
+  telegram_notifications_enabled: true,
 };
 
 // In-Memory cache singleton for development & fast fallback

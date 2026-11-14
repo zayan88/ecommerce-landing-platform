@@ -5,6 +5,7 @@ import { getGovernorateDeliveryFee } from "@/lib/constants/governorates";
 import { SafkaClient } from "@/lib/safqa/safka-client";
 import { MetaCapiClient } from "@/lib/tracking/meta-capi";
 import { generateEventId } from "@/lib/tracking/utm";
+import { TelegramNotifier } from "@/lib/notifications/telegram";
 
 export async function POST(req: NextRequest) {
   try {
@@ -136,6 +137,13 @@ export async function POST(req: NextRequest) {
       user_agent: userAgent,
       metadata: { order_number: createdOrder.order_number, total: finalAmount },
     });
+
+    // 9. Dispatch Instant Mobile & Telegram Sales Alert
+    try {
+      await TelegramNotifier.sendOrderNotification(createdOrder, product);
+    } catch (telegramErr) {
+      console.error("[Background Telegram Notification error]", telegramErr);
+    }
 
     return NextResponse.json({
       success: true,

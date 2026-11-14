@@ -159,6 +159,10 @@ export interface SystemSettings {
   store_name: string;
   support_phone: string;
   support_whatsapp: string;
+  // Mobile / Telegram Sales Notifications
+  telegram_bot_token?: string;
+  telegram_chat_id?: string;
+  telegram_notifications_enabled?: boolean;
 }
 
 export interface GovernorateInfo {

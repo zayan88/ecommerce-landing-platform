@@ -19,11 +19,13 @@ import {
   LogOut,
   Lock,
   Activity,
+  Bell,
 } from "lucide-react";
 
 const navigationItems = [
   { name: "الإحصائيات والأداء", href: "/admin", icon: LayoutDashboard },
   { name: "إدارة الطلبات", href: "/admin/orders", icon: ShoppingBag },
+  { name: "إشعارات المبيعات (تليجرام)", href: "/admin/notifications", icon: Bell },
   { name: "صفحات الهبوط", href: "/admin/landing-pages", icon: Layers },
   { name: "المنتجات والعروض", href: "/admin/products", icon: Tag },
   { name: "تتبع الزوار والنشاط", href: "/admin/tracking", icon: Activity },
