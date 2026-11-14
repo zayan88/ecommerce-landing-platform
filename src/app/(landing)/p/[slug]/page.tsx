@@ -5,7 +5,8 @@ import { dbStore } from "@/lib/db/store";
 import { getLandingPageComponent } from "@/landing-pages/registry";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { Metadata } from "next";
-import { PauseCircle, PackageX, Bot } from "lucide-react";
+import { PauseCircle, PackageX } from "lucide-react";
+import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 
 interface PageProps {
   params: {
@@ -91,16 +92,8 @@ export default async function DynamicLandingPage({ params }: PageProps) {
       <MetaPixel pixelId={pixelId} />
       <Component product={landingPage.product} landingPage={landingPage} />
 
-      {/* Floating AI Customer Service Badge */}
-      <Link
-        href="/support"
-        aria-label="اسأل خدمة العملاء"
-        className="fixed bottom-20 left-4 z-40 bg-slate-900/90 hover:bg-slate-900 text-white px-3 py-2 rounded-full shadow-xl border border-slate-700/60 backdrop-blur-md flex items-center gap-2 text-xs font-bold transition hover:scale-105 active:scale-95"
-      >
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        <Bot className="w-4 h-4 text-orange-400" />
-        <span className="hidden sm:inline">خدمة العملاء الذكية</span>
-      </Link>
+      {/* Floating AI Sales Closer Chat Widget */}
+      <FloatingSalesAgent currentProduct={landingPage.product} />
     </>
   );
 }

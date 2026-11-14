@@ -26,6 +26,8 @@ import {
   Bot,
 } from "lucide-react";
 import { Metadata } from "next";
+import { SalesChatBox } from "@/components/chat/SalesChatBox";
+import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 
 export const metadata: Metadata = {
   title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
@@ -125,94 +127,109 @@ export default async function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-orange-50/20 py-16 md:py-24 border-b border-gray-200">
+      {/* Hero Section: Conversational Commerce & Direct Catalog */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-orange-50/20 py-10 md:py-16 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto space-y-6">
-            {/* Tag badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-orange-200 shadow-xs">
-              <Sparkles className="w-4 h-4 text-orange-600" />
-              <span>المتجر المصري المعتمد للمنتجات العصرية الذكية</span>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+            {/* Right Column (Text, Value Proposition & Trust) */}
+            <div className="lg:col-span-5 space-y-5 text-right">
+              {/* Tag badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-emerald-200 shadow-xs">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <span>المتجر المصري المعتمد للمنتجات الذكية والعصرية</span>
+              </div>
+
+              {/* Main Headline */}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-heading text-slate-900 leading-tight tracking-tight">
+                تسوق بذكاء وأمان{" "}
+                <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-slate-900 bg-clip-text text-transparent">
+                  مع مستشارك البيعي المباشر
+                </span>
+              </h1>
+
+              {/* Description */}
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed font-normal">
+                في <strong className="text-slate-900">RexRack</strong>، تسوقك بقى تجربة بيعية تفاعلية ممتعة:{" "}
+                <span className="font-bold text-slate-900 underline decoration-orange-500 decoration-2">
+                  افحص وعاين شحنتك بنفسك مع المندوب قبل دفع أي مليم
+                </span>
+                ، والدفع عند الاستلام 100% مع شحن مجاني وضمان استبدال 14 يوماً.
+              </p>
+
+              {/* Direct Value Props List */}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">معاينة قبل الدفع</h4>
+                    <p className="text-[10px] text-gray-500">افحص طلبك براحتك</p>
+                  </div>
+                </div>
+
+                <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <Truck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">شحن مجاني</h4>
+                    <p className="text-[10px] text-gray-500">لجميع محافظات مصر</p>
+                  </div>
+                </div>
+
+                <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+                    <RotateCcw className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">استبدال 14 يوماً</h4>
+                    <p className="text-[10px] text-gray-500">ضمان ذهبي معتمد</p>
+                  </div>
+                </div>
+
+                <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
+                    <Headphones className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">رد بيعي لحظي</h4>
+                    <p className="text-[10px] text-gray-500">تأكيد فوري للطلبات</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Jump Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <a
+                  href="#products"
+                  className="py-3 px-5 rounded-2xl bg-white hover:bg-gray-100 text-slate-800 font-bold text-xs md:text-sm border border-gray-300 shadow-xs transition flex items-center gap-2"
+                >
+                  <ShoppingBag className="w-4 h-4 text-orange-600" />
+                  <span>تصفح الكتالوج بالصور والأسعار ↓</span>
+                </a>
+
+                <a
+                  href="https://wa.me/201000000000?text=مرحباً%20RexRack،%20أود%20الاستفسار%20عن%20العروض"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3 px-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs md:text-sm border border-emerald-200 transition flex items-center gap-2"
+                >
+                  <PhoneCall className="w-4 h-4 text-emerald-600" />
+                  <span>واتساب المبيعات</span>
+                </a>
+              </div>
             </div>
 
-            {/* Main Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-black font-heading text-slate-900 leading-tight tracking-tight">
-              تسوق أرقى المنتجات الذكية{" "}
-              <span className="bg-gradient-to-r from-slate-950 via-indigo-950 to-orange-600 bg-clip-text text-transparent">
-                بأعلى جودة وأفضل سعر
-              </span>
-            </h1>
-
-            {/* Description */}
-            <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
-              في RexRack، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
-              <span className="font-bold text-slate-900 underline decoration-orange-500 decoration-2">
-                معاينة وفحص المنتج بنفسك أمام مندوب الشحن قبل دفع أي مليم
-              </span>
-              ، مع الدفع عند الاستلام وضمان استبدال مجاني 14 يوماً.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <a
-                href="#products"
-                className="w-full sm:w-auto py-4 px-8 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-extrabold text-base shadow-xl shadow-orange-500/25 hover:shadow-orange-500/35 active:scale-98 transition flex items-center justify-center gap-2"
-              >
-                <ShoppingBag className="w-5 h-5" />
-                <span>شاهد المنتجات الحصرية (خصومات حتى 50%)</span>
-              </a>
-
-              <a
-                href="https://wa.me/201000000000?text=مرحباً%20RexRack،%20أود%20الاستفسار%20عن%20العروض"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto py-4 px-6 rounded-2xl bg-white hover:bg-gray-100 text-slate-800 font-bold text-base border border-gray-300 shadow-sm transition flex items-center justify-center gap-2"
-              >
-                <PhoneCall className="w-5 h-5 text-orange-600" />
-                <span>تواصل معنا على واتساب</span>
-              </a>
-            </div>
-
-            {/* 4 Pillars Trust Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 text-right">
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">معاينة قبل الدفع</h4>
-                  <p className="text-[11px] text-gray-500">افحص طلبك براحتك</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                  <Truck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">شحن لجميع المحافظات (5-7 أيام)</h4>
-                  <p className="text-[11px] text-gray-500">لكافة المحافظات المصرية</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
-                  <RotateCcw className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">استبدال 14 يوماً</h4>
-                  <p className="text-[11px] text-gray-500">ضمان ذهبي بدون تعقيد</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
-                  <Headphones className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">خدمة عملاء 24/7</h4>
-                  <p className="text-[11px] text-gray-500">متابعة هاتفية وتأكيد فوري</p>
-                </div>
+            {/* Left Column (Interactive Conversational AI Sales Closer) */}
+            <div className="lg:col-span-7 w-full">
+              <div className="relative">
+                {/* Glow Backdrop */}
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-orange-500/25 to-amber-500/25 rounded-[34px] blur-xl opacity-60 -z-10" />
+                <SalesChatBox
+                  initialProducts={products}
+                  className="w-full shadow-2xl"
+                />
               </div>
             </div>
           </div>
@@ -702,20 +719,8 @@ export default async function HomePage() {
         </div>
       </footer>
 
-      {/* Floating AI Customer Service Chat Button */}
-      <Link
-        href="/support"
-        aria-label="خدمة العملاء الذكية"
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white px-4 py-3 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 font-bold text-xs sm:text-sm border-2 border-white/40 group"
-      >
-        <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
-        </span>
-        <Bot className="w-5 h-5" />
-        <span className="hidden sm:inline">خدمة العملاء الذكية (رد فوري)</span>
-        <span className="sm:hidden">المساعد الذكي</span>
-      </Link>
+      {/* Floating Interactive AI Sales Closer Drawer */}
+      <FloatingSalesAgent />
 
       {/* Floating WhatsApp Quick Action Button */}
       <a
