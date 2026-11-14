@@ -533,83 +533,7 @@ const initialLandingPages: LandingPage[] = [
   },
 ];
 
-const initialOrders: Order[] = [
-  {
-    id: "ord-1001",
-    order_number: "EG-261101-4412",
-    landing_page_id: "c1000000-0000-0000-0000-000000000010",
-    landing_page_slug: "safka-b5fb3b6b",
-    product_id: "prod-1793739856444",
-    offer_id: "off-6ad092978e0e888bb5fb3b6b-2",
-    customer_name: "محمد عبد الرحمن",
-    customer_phone: "01012345678",
-    customer_phone2: "01187654321",
-    governorate: "القاهرة",
-    city: "مدينة نصر",
-    address: "شارع مصطفى النحاس، عمارة 14",
-    notes: "يرجى الاتصال قبل الوصول",
-    quantity: 2,
-    unit_price: 486,
-    total_amount: 972,
-    shipping_fee: 0,
-    discount_amount: 594,
-    final_amount: 972,
-    currency: "EGP",
-    status: "confirmed",
-    payment_method: "cod",
-    safqa_invoice_id: "INV-SFQ-99120",
-    safqa_invoice_url: "https://pay.safqapay.com/inv/INV-SFQ-99120",
-    safqa_status: "pending",
-    safqa_synced_at: new Date(Date.now() - 48 * 3600000).toISOString(),
-    created_at: new Date(Date.now() - 48 * 3600000).toISOString(),
-    updated_at: new Date(Date.now() - 24 * 3600000).toISOString(),
-    product: initialProducts[0],
-    landing_page: initialLandingPages[0],
-    tracking: {
-      order_id: "ord-1001",
-      utm_source: "facebook",
-      utm_medium: "cpc",
-      utm_campaign: "campaign_v1",
-      event_id: "evt_1001",
-    },
-  },
-  {
-    id: "ord-1002",
-    order_number: "EG-261102-8874",
-    landing_page_id: "c1000000-0000-0000-0000-000000000010",
-    landing_page_slug: "safka-b5fb3b6b",
-    product_id: "prod-1793739856444",
-    offer_id: "off-6ad092978e0e888bb5fb3b6b-1",
-    customer_name: "أحمد حسني فاروق",
-    customer_phone: "01234567890",
-    governorate: "الإسكندرية",
-    city: "سموحة",
-    address: "شارع فوزي معاذ بجوار المسجد",
-    quantity: 1,
-    unit_price: 540,
-    total_amount: 540,
-    shipping_fee: 50,
-    discount_amount: 243,
-    final_amount: 590,
-    currency: "EGP",
-    status: "shipped",
-    payment_method: "cod",
-    safqa_invoice_id: "INV-SFQ-99145",
-    safqa_status: "pending",
-    safqa_synced_at: new Date(Date.now() - 20 * 3600000).toISOString(),
-    created_at: new Date(Date.now() - 20 * 3600000).toISOString(),
-    updated_at: new Date(Date.now() - 10 * 3600000).toISOString(),
-    product: initialProducts[0],
-    landing_page: initialLandingPages[0],
-    tracking: {
-      order_id: "ord-1002",
-      utm_source: "instagram",
-      utm_medium: "reel_ad",
-      utm_campaign: "campaign_v2",
-      event_id: "evt_1002",
-    },
-  },
-];
+const initialOrders: Order[] = [];
 
 const initialSettings: SystemSettings = {
   safqa_api_base_url: process.env.SAFQA_API_BASE_URL || "https://api.safqapay.com/v1",
@@ -1065,7 +989,14 @@ export const dbStore = {
       if (!error && data) return data;
     }
 
-    let results = [...memoryOrders];
+    const kvOrders = (await kvStore.get<Order[]>("orders_all")) || [];
+    let results = [...kvOrders];
+    for (const mo of memoryOrders) {
+      if (!results.some((r) => r.id === mo.id || r.order_number === mo.order_number)) {
+        results.push(mo);
+      }
+    }
+
     if (filters?.landing_page_slug) {
       results = results.filter((o) => o.landing_page_slug === filters.landing_page_slug);
     }
@@ -1231,6 +1162,11 @@ export const dbStore = {
 
     memoryOrders.unshift(newOrder);
     saveToFile();
+    try {
+      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
+      currentOrders.unshift(newOrder);
+      await kvStore.put("orders_all", currentOrders.slice(0, 200));
+    } catch {}
     return newOrder;
   },
 
@@ -1294,6 +1230,11 @@ export const dbStore = {
     }
     memoryOrders = memoryOrders.filter((o) => o.id !== id && o.order_number !== id);
     saveToFile();
+    try {
+      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
+      const filtered = currentOrders.filter((o) => o.id !== id && o.order_number !== id);
+      await kvStore.put("orders_all", filtered);
+    } catch {}
     return true;
   },
 
@@ -1321,6 +1262,11 @@ export const dbStore = {
     memoryOrders = memoryOrders.filter((o) => !idSet.has(o.id) && !idSet.has(o.order_number));
     const deletedCount = beforeCount - memoryOrders.length;
     saveToFile();
+    try {
+      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
+      const filtered = currentOrders.filter((o) => !idSet.has(o.id) && !idSet.has(o.order_number));
+      await kvStore.put("orders_all", filtered);
+    } catch {}
     return { count: deletedCount || ids.length };
   },
 
