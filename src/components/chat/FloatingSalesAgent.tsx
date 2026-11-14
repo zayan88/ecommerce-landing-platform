@@ -13,6 +13,16 @@ export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) 
   const [isOpen, setIsOpen] = useState(false);
   const [showTeaser, setShowTeaser] = useState(true);
 
+  // Listen for programmatic open events from hero CTA or elsewhere
+  useEffect(() => {
+    const handleOpen = () => {
+      setIsOpen(true);
+      setShowTeaser(false);
+    };
+    window.addEventListener("open-sales-agent", handleOpen);
+    return () => window.removeEventListener("open-sales-agent", handleOpen);
+  }, []);
+
   return (
     <div
       className="fixed bottom-24 md:bottom-20 right-4 sm:right-6 md:right-8 z-[9999] font-sans pointer-events-auto"
@@ -39,7 +49,7 @@ export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) 
         </div>
       )}
 
-      {/* Proactive Sales Teaser Bubble (Visible on Desktop & Mobile above circle) */}
+      {/* Proactive Sales & Support Teaser Bubble */}
       {showTeaser && !isOpen && (
         <div
           onClick={() => setIsOpen(true)}
@@ -49,7 +59,7 @@ export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) 
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-[11px] font-black text-orange-400 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> مستشارك البيعي AI
+                <Sparkles className="w-3 h-3" /> خدمة العملاء الذكية AI
               </span>
             </div>
             <button
@@ -64,11 +74,11 @@ export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) 
           </div>
           <p className="text-xs text-slate-200 mt-1 leading-relaxed font-bold">
             {currentProduct
-              ? `بتفكر في ${currentProduct.title_ar.slice(0, 24)}...؟ كلمني أعرفك عروض الشحن المجاني والمعاينة!`
-              : "👋 محتار بين العروض؟ كلمني لايف أساعدك تختار الأنسب والشحن مجاني! 🚚"}
+              ? `بتفكر في ${currentProduct.title_ar.slice(0, 24)}...؟ كلم خدمة العملاء الذكية فوراً لعروض الشحن والمعاينة!`
+              : "👋 عندك استفسار أو محتار بين العروض؟ خدمة العملاء الذكية معاك لايف 24 ساعة للرد الفوري! 💬"}
           </p>
           <span className="inline-block mt-1.5 text-[10px] text-orange-300 font-bold underline">
-            اضغط هنا للتحدث الآن 💬
+            اضغط هنا للتحدث الآن (رد فوري) 💬
           </span>
         </div>
       )}
@@ -76,9 +86,9 @@ export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) 
       {/* Pure Circular AI Floating Button (No Text - AI Shape Only) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="افتح شات المبيعات الذكي"
+        aria-label="افتح خدمة العملاء الذكية"
         className="group relative w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950 border-2 border-orange-500 hover:border-amber-400 text-orange-400 hover:text-white shadow-[0_8px_30px_rgba(249,115,22,0.45)] hover:shadow-[0_12px_40px_rgba(249,115,22,0.7)] flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer z-[9999]"
-        title="شات المبيعات الذكي AI"
+        title="خدمة العملاء والمبيعات الذكية AI (متواجد 24/7)"
       >
         {/* Glowing pulse ring */}
         <span className="absolute -inset-1 rounded-full bg-orange-500/25 blur-xs group-hover:bg-orange-500/40 animate-pulse transition" />

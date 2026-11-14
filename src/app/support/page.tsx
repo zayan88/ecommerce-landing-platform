@@ -24,19 +24,14 @@ export default function CustomerSupportPage() {
               <Bot className="w-4 h-4" />
             </div>
             <span className="font-heading font-black text-sm text-white">
-              RexRack AI Sales Closer
+              خدمة العملاء الذكية | RexRack
             </span>
           </div>
 
-          <a
-            href="https://wa.me/201000000000?text=مرحباً،%20أود%20الاستفسار%20عن%20العروض"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-3 py-1.5 rounded-xl hover:bg-emerald-900/40 transition"
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            <span>واتساب المبيعات</span>
-          </a>
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-3 py-1.5 rounded-xl">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>خدمة عملاء فورية 24/7</span>
+          </div>
         </div>
       </header>
 
@@ -44,13 +39,13 @@ export default function CustomerSupportPage() {
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-center">
         <div className="text-center mb-6 space-y-2">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-400 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">
-            <Sparkles className="w-3.5 h-3.5" /> شات المبيعات التفاعلي المباشر
+            <Sparkles className="w-3.5 h-3.5" /> خدمة العملاء والمبيعات التفاعلية الفورية
           </div>
           <h1 className="text-2xl sm:text-3xl font-black font-heading text-white">
-            تحدث مباشرة مع مستشارك البيعي في RexRack
+            تحدث مباشرة مع خدمة العملاء الذكية في RexRack
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
-            احصل على إجابات فورية عن المنتجات، كود الشحن المجاني، تفاصيل المعاينة قبل الدفع، وأكمل طلبك نقدياً عند الاستلام من داخل الشات مباشرة!
+            متواجدون 24 ساعة للإجابة عن مواصفات المنتجات، متابعة وتتبع الشحنات، تفاصيل المعاينة قبل الدفع، وتسجيل الطلبات نقدياً عند الاستلام!
           </p>
         </div>
 

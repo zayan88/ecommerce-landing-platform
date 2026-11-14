@@ -146,7 +146,7 @@ export function SalesChatBox({
       {
         id: "msg-1",
         role: "assistant",
-        content: "أهلاً بحضرتك يا فندم في **RexRack**! 🌸 أنا مستشارك البيعي الذكي، وسعيد جداً بوجودك معانا.",
+        content: "أهلاً بحضرتك يا فندم في **RexRack**! 🌸 أنا خدمة العملاء والمستشار الذكي، ومسؤول عن مساعدتك فورياً وسعيد جداً بوجودك معانا.",
         timestamp: timeNow,
       },
       {
@@ -288,7 +288,7 @@ export function SalesChatBox({
           quickReplies: [
             "💨 عروض جهاز استنشاق البخار",
             "💆‍♂️ عروض جهاز المساج",
-            "التحدث مع المبيعات على واتساب",
+            "تتبع طلبي برقم التليفون",
           ],
         },
       ]);
@@ -394,7 +394,7 @@ export function SalesChatBox({
         },
         quickReplies: [
           "📦 تتبع هذا الطلب",
-          "التواصل مع خدمة العملاء على واتساب",
+          "استفسار عن موعد التوصيل",
           "تصفح عروض أخرى",
         ],
       };
@@ -431,10 +431,10 @@ export function SalesChatBox({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-heading font-black text-sm md:text-base text-white tracking-wide">
-                المستشار البيعي الذكي | RexRack
+                خدمة العملاء والمستشار الذكي | RexRack
               </h3>
               <span className="bg-orange-500/20 text-orange-400 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-orange-500/30 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> AI Sales Closer
+                <Sparkles className="w-3 h-3" /> AI Customer Care 24/7
               </span>
             </div>
             <p className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
@@ -823,22 +823,17 @@ export function SalesChatBox({
           </button>
         </form>
 
-        {/* WhatsApp & Human Closer fallback */}
+        {/* 24/7 AI Customer Service Status Footer */}
         <div className="flex items-center justify-between pt-2 px-1 text-[11px] text-slate-400">
           <span className="flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-orange-400" />
-            شات بيعي ذكي متصل بقاعدة بيانات RexRack
+            خدمة عملاء ذكية متصلة بقاعدة بيانات RexRack
           </span>
 
-          <a
-            href="https://wa.me/201000000000?text=مرحباً،%20أود%20الاستفسار%20عن%20عروض%20RexRack"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-emerald-400 text-slate-400 flex items-center gap-1 font-bold transition"
-          >
-            <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-            <span>تحدث على واتساب</span>
-          </a>
+          <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>خدمة عملاء فورية 24 ساعة</span>
+          </div>
         </div>
       </div>
     </div>
