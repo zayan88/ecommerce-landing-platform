@@ -38,25 +38,28 @@ export function StickyBuyBar({
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 shadow-[0_-4px_25px_rgba(0,0,0,0.12)] md:hidden transition-all"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 shadow-[0_-4px_25px_rgba(0,0,0,0.12)] transition-all"
       dir="rtl"
     >
-      <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
-        <div className="flex flex-col">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl font-black text-orange-600 font-heading">{price} ج.م</span>
+      <div className="flex items-center justify-between gap-4 max-w-3xl mx-auto">
+        <div className="flex items-center gap-3">
+          <div className="flex items-baseline gap-1.5 sm:gap-2">
+            <span className="text-xl sm:text-2xl font-black text-orange-600 font-heading">{price} ج.م</span>
             {compareAtPrice && (
-              <span className="text-xs text-slate-400 line-through">{compareAtPrice} ج.م</span>
+              <span className="text-xs sm:text-sm text-slate-400 line-through">{compareAtPrice} ج.م</span>
             )}
           </div>
-          <span className="text-[10px] text-emerald-700 font-bold">✓ معاينة قبل الدفع</span>
+          <span className="hidden sm:inline-block text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            ✓ معاينة وفحص قبل الدفع + شحن مجاني
+          </span>
+          <span className="sm:hidden text-[10px] text-emerald-700 font-bold">✓ معاينة قبل الدفع</span>
         </div>
 
         <button
           onClick={scrollToForm}
-          className="flex-1 max-w-[210px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/25 flex items-center justify-center gap-1.5 active:scale-95 transition cursor-pointer"
+          className="flex-1 max-w-[210px] sm:max-w-[260px] py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/25 flex items-center justify-center gap-1.5 sm:gap-2 active:scale-95 transition cursor-pointer"
         >
-          <ShoppingBagIcon className="w-4 h-4" />
+          <ShoppingBagIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           <span>{ctaText}</span>
         </button>
       </div>
