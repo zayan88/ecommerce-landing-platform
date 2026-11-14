@@ -270,19 +270,20 @@ export default function MeshNebulizerLandingPage({
         </div>
 
         {/* Visual Real-Life Image (5 cols on desktop) */}
-        <div className="md:col-span-5">
-          <div className="relative aspect-4/3 md:aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm group">
+        <div className="md:col-span-5 w-full">
+          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm group">
             <Image
               src="/landing-pages/mesh-nebulizer/images/use_case_baby.webp"
               alt="جلسة بخار هادئة أثناء نوم الطفل"
               fill
+              sizes="(max-width: 768px) 100vw, 400px"
               className="object-cover group-hover:scale-105 transition duration-500"
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent p-3 text-white text-right">
-              <span className="inline-block text-[10px] font-bold bg-cyan-600/90 text-white px-2 py-0.5 rounded-full mb-1">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-transparent p-3.5 text-white text-right">
+              <span className="inline-block text-[11px] font-bold bg-cyan-600 text-white px-2.5 py-0.5 rounded-full mb-1">
                 صوت معدوم &lt; 25dB
               </span>
-              <p className="text-xs font-bold leading-tight">
+              <p className="text-xs sm:text-sm font-bold leading-tight">
                 جلسة بخار هادية لطفلك وهو نايم في سريره بدون أي صوت يزعجه
               </p>
             </div>
@@ -307,16 +308,17 @@ export default function MeshNebulizerLandingPage({
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center pt-1">
         {/* Image of real box contents (5 cols) */}
-        <div className="md:col-span-5 order-2 md:order-1">
-          <div className="relative aspect-4/3 md:aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
+        <div className="md:col-span-5 order-2 md:order-1 w-full">
+          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
             <Image
               src="/landing-pages/mesh-nebulizer/images/features_3.webp"
               alt="محتويات علبة جهاز استنشاق البخار"
               fill
+              sizes="(max-width: 768px) 100vw, 400px"
               className="object-contain p-2"
             />
-            <span className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
-              صورة حقيقية للمحتويات
+            <span className="absolute top-2.5 right-2.5 bg-slate-900/85 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-1 rounded-lg">
+              📦 صورة حقيقية للمحتويات الأصلية
             </span>
           </div>
         </div>
@@ -400,16 +402,17 @@ export default function MeshNebulizerLandingPage({
         </div>
 
         {/* Feature / Anatomy Graphic (5 cols) */}
-        <div className="md:col-span-5">
-          <div className="relative aspect-4/3 md:aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
+        <div className="md:col-span-5 w-full">
+          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
             <Image
               src="/landing-pages/mesh-nebulizer/images/features_1.webp"
               alt="تشريح ومواصفات جهاز النيبولايزر"
               fill
+              sizes="(max-width: 768px) 100vw, 400px"
               className="object-contain p-2"
             />
-            <span className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
-              تشريح ومواصفات الجهاز
+            <span className="absolute top-2.5 right-2.5 bg-slate-900/85 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-1 rounded-lg">
+              🔍 تشريح ومواصفات الجهاز
             </span>
           </div>
         </div>

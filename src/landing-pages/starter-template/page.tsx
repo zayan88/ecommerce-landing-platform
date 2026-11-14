@@ -269,12 +269,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           </div>
 
           {comparisonImage && (
-            <div className="md:col-span-5">
-              <div className="relative aspect-4/3 md:aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
+            <div className="md:col-span-5 w-full">
+              <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
                 <Image
                   src={comparisonImage}
                   alt={product.title_ar}
                   fill
+                  sizes="(max-width: 768px) 100vw, 400px"
                   className="object-contain p-2"
                 />
               </div>
@@ -298,12 +299,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
         <div className={`grid grid-cols-1 ${boxImage ? "md:grid-cols-12" : ""} gap-4 items-center pt-1`}>
           {boxImage && (
-            <div className="md:col-span-5 order-2 md:order-1">
-              <div className="relative aspect-4/3 md:aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
+            <div className="md:col-span-5 order-2 md:order-1 w-full">
+              <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
                 <Image
                   src={boxImage}
                   alt="محتويات الشحنة"
                   fill
+                  sizes="(max-width: 768px) 100vw, 400px"
                   className="object-contain p-2"
                 />
               </div>
