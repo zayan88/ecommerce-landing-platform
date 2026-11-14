@@ -12,13 +12,6 @@ interface FloatingSalesAgentProps {
 export function FloatingSalesAgent({ currentProduct }: FloatingSalesAgentProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showTeaser, setShowTeaser] = useState(true);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
 
   return (
     <div
