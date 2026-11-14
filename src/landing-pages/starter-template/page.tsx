@@ -85,8 +85,24 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     .filter((s) => s.length > 8)
     .slice(0, 4);
 
+  const c = landingPage.content_config;
+
+  const announcementText =
+    c?.announcement_bar ||
+    "شحن مجاني 100% لجميع محافظات مصر + حق المعاينة والتجربة قبل الدفع 💵";
+  const heroTitle = c?.hero_headline || product.title_ar;
+  const heroSubtitle =
+    c?.hero_subheadline ||
+    (descriptionLines[0]
+      ? `💡 ${descriptionLines[0]}`
+      : "💡 احصل على أفضل تجربة مع المنتج الأصلي المعتمد وبأعلى معايير الجودة.");
+  const heroBadge = c?.hero_badge || "4.9 / 5.0 (أكثر من 350 تقييم إيجابي)";
+  const heroImageSrc = c?.hero_image || images[activeImageIndex] || images[0];
+
   const features =
-    descriptionLines.length > 0
+    c?.hero_bullets && c.hero_bullets.length > 0
+      ? c.hero_bullets
+      : descriptionLines.length > 0
       ? descriptionLines
       : [
           "خامات أصلية عالية الجودة تضمن المتانة والتحمل طويل الأمد.",
@@ -113,8 +129,8 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         <div className="space-y-3">
           <div className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
             <Image
-              src={images[activeImageIndex] || images[0]}
-              alt={product.title_ar}
+              src={heroImageSrc}
+              alt={heroTitle}
               fill
               priority
               className="object-contain p-2"
@@ -160,16 +176,21 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
               <Star className="w-3.5 h-3.5 fill-amber-500" />
-              <span className="text-slate-800">4.9 / 5.0 (أكثر من 350 تقييم إيجابي)</span>
+              <span className="text-slate-800">{heroBadge}</span>
             </div>
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
               ✓ متوفر في المخزن (شحن فوري)
             </span>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-black font-heading text-slate-950 leading-snug">
-            {product.title_ar}
-          </h1>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black font-heading text-slate-950 leading-snug">
+              {heroTitle}
+            </h1>
+            <p className="text-xs sm:text-sm text-indigo-950 font-semibold mt-1.5 leading-relaxed bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-100">
+              {heroSubtitle}
+            </p>
+          </div>
 
           {/* Core Features List */}
           <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-2.5 text-xs sm:text-sm">
@@ -228,16 +249,31 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 2. COMPARISON SECTION
   const renderComparison = () => {
-    const comparisonImage = product.images && product.images.length > 1 ? product.images[1] : null;
+    const comparisonImage =
+      c?.comparison_image ||
+      (product.images && product.images.length > 1 ? product.images[1] : null);
+    const comparisonTitle = c?.comparison_title || "الفرق بين المنتج التقليدي والمنتج الأصلي";
+    const oldTitle = c?.comparison_old_title || "المنتجات والبدائل التقليدية";
+    const oldPoints = c?.comparison_old_points || [
+      "خامات رديئة وضعيفة تتلف بسرعة بعد فترة قصيرة.",
+      "بدون ضمان أو معاينة حقيقية قبل الدفع.",
+      "صعوبة في الاستخدام ولا تلبي النتيجة المتوقعة.",
+    ];
+    const newTitle = c?.comparison_new_title || "المنتج الأصلي من متجرنا";
+    const newPoints = c?.comparison_new_points || [
+      "خامات أصلية 100% مختبرة ومضمونة الجودة.",
+      "حق فتح الشحنة والفحص والتجربة قبل الدفع للمندوب.",
+      "استبدال واسترجاع مجاني خلال 14 يوماً وخدمة عملاء مستمرة.",
+    ];
 
     return (
       <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-center">
         <div>
           <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
-            ليه ده أفضل اختيار؟
+            {c?.comparison_badge || "ليه ده أفضل اختيار؟"}
           </span>
           <h2 className="text-lg sm:text-xl font-black text-slate-950 mt-2 font-heading">
-            الفرق بين المنتج التقليدي والمنتج الأصلي
+            {comparisonTitle}
           </h2>
         </div>
 
@@ -246,24 +282,24 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/80 space-y-2">
               <div className="flex items-center gap-2 text-rose-700 font-bold text-sm">
                 <XCircle className="w-5 h-5 shrink-0" />
-                <span>المنتجات والبدائل التقليدية</span>
+                <span>{oldTitle}</span>
               </div>
               <ul className="text-xs text-rose-900 space-y-1.5 pr-2">
-                <li>• خامات رديئة وضعيفة تتلف بسرعة بعد فترة قصيرة.</li>
-                <li>• بدون ضمان أو معاينة حقيقية قبل الدفع.</li>
-                <li>• صعوبة في الاستخدام ولا تلبي النتيجة المتوقعة.</li>
+                {oldPoints.map((pt, i) => (
+                  <li key={i}>• {pt}</li>
+                ))}
               </ul>
             </div>
 
             <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
               <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 shrink-0" />
-                <span>المنتج الأصلي من متجرنا</span>
+                <span>{newTitle}</span>
               </div>
               <ul className="text-xs text-emerald-900 space-y-1.5 pr-2">
-                <li>• خامات أصلية 100% مختبرة ومضمونة الجودة.</li>
-                <li>• حق فتح الشحنة والفحص والتجربة قبل الدفع للمندوب.</li>
-                <li>• استبدال واسترجاع مجاني خلال 14 يوماً وخدمة عملاء مستمرة.</li>
+                {newPoints.map((pt, i) => (
+                  <li key={i}>• {pt}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -288,13 +324,21 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 3. BOX CONTENTS
   const renderBoxContents = () => {
-    const boxImage = product.images && product.images.length > 2 ? product.images[2] : null;
+    const boxImage =
+      c?.box_image ||
+      (product.images && product.images.length > 2 ? product.images[2] : null);
+    const boxTitle = c?.box_title || "محتويات الشحنة الأصلية:";
+    const boxItems = c?.box_items || [
+      "المنتج الأصلي بكافة ملحقاته المعتمدة ومغلف بعناية.",
+      "كتالوج ودليل الاستخدام السريع باللغة العربية.",
+      "كارت الضمان الرسمي وحق الاستبدال والمعاينة.",
+    ];
 
     return (
       <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-right">
         <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
           <Package className="w-5 h-5 text-indigo-700" />
-          <span>محتويات الشحنة الأصلية:</span>
+          <span>{boxTitle}</span>
         </div>
 
         <div className={`grid grid-cols-1 ${boxImage ? "md:grid-cols-12" : ""} gap-4 items-center pt-1`}>
@@ -314,18 +358,12 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
           <div className={`${boxImage ? "md:col-span-7 order-1 md:order-2" : ""} space-y-2`}>
             <ul className="text-xs sm:text-sm text-slate-700 space-y-2.5 pr-1">
-              <li className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
-                <span><strong>المنتج الأصلي</strong> بكافة ملحقاته المعتمدة ومغلف بعناية.</span>
-              </li>
-              <li className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
-                <span><strong>كتالوج ودليل الاستخدام السريع</strong> باللغة العربية.</span>
-              </li>
-              <li className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
-                <span><strong>كارت الضمان الرسمي</strong> وحق الاستبدال والمعاينة.</span>
-              </li>
+              {boxItems.map((item, idx) => (
+                <li key={idx} className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+                  <span className="text-slate-800 leading-relaxed">{item}</span>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -471,7 +509,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       {/* 1. Announcement Bar */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2 border-b border-indigo-500/20">
         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
-        <span>شحن مجاني 100% لجميع محافظات مصر + حق المعاينة والتجربة قبل الدفع 💵</span>
+        <span>{announcementText}</span>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">

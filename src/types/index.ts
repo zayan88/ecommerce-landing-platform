@@ -55,6 +55,40 @@ export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
   { id: "guarantees", name_ar: "شريط الضمانات والتطمين", enabled: true },
 ];
 
+export interface LandingPageContentConfig {
+  // 1. Hero & Header
+  announcement_bar?: string;
+  hero_headline?: string;
+  hero_subheadline?: string;
+  hero_badge?: string;
+  hero_image?: string;
+  hero_bullets?: string[];
+
+  // 2. Comparison Section
+  comparison_badge?: string;
+  comparison_title?: string;
+  comparison_old_title?: string;
+  comparison_old_points?: string[];
+  comparison_new_title?: string;
+  comparison_new_points?: string[];
+  comparison_image?: string;
+  comparison_image_badge?: string;
+
+  // 3. Box Contents Section
+  box_title?: string;
+  box_items?: string[];
+  box_image?: string;
+
+  // 4. How to Use & Specs Section
+  how_to_use_title?: string;
+  how_to_use_steps?: { step_num: number; title: string; desc: string }[];
+  how_to_use_image?: string;
+
+  // 5. Customer Reviews
+  reviews_title?: string;
+  reviews?: { name: string; location: string; comment: string; rating: number }[];
+}
+
 export interface LandingPage {
   id: string;
   product_id: string;
@@ -74,6 +108,7 @@ export interface LandingPage {
   updated_at: string;
   product?: Product;
   sections_config?: LandingPageSectionConfig[];
+  content_config?: LandingPageContentConfig;
 }
 
 export interface Order {

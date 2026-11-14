@@ -25,9 +25,13 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, status, sections_config } = body;
+    const { id, status, sections_config, content_config } = body;
     if (!id) {
       return NextResponse.json({ success: false, error: "معرف الصفحة مطلوب" }, { status: 400 });
+    }
+    if (content_config) {
+      const updated = await dbStore.updateLandingPageContent(id, content_config);
+      return NextResponse.json({ success: true, landingPage: updated });
     }
     if (sections_config) {
       const updated = await dbStore.updateLandingPageSections(id, sections_config);

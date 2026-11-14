@@ -1,4 +1,4 @@
-import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, DEFAULT_LANDING_PAGE_SECTIONS, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
+import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
 
@@ -913,6 +913,48 @@ export const dbStore = {
       }
     } catch (e) {
       console.warn("[KV updateLandingPageSections Error]", e);
+    }
+
+    saveToFile();
+    return lp || null;
+  },
+
+  async updateLandingPageContent(id: string, content_config: LandingPageContentConfig): Promise<LandingPage | null> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      try {
+        await admin.from("landing_pages").update({ updated_at: new Date().toISOString() }).eq("id", id);
+      } catch {}
+    }
+
+    let lp = memoryLandingPages.find((p) => p.id === id || p.slug === id);
+    if (lp) {
+      lp.content_config = content_config;
+      lp.updated_at = new Date().toISOString();
+    }
+
+    try {
+      const fromKv = (await kvStore.get<LandingPage>(`lp:${id}`)) || (lp ? await kvStore.get<LandingPage>(`lp:${lp.slug}`) : null);
+      if (fromKv) {
+        fromKv.content_config = content_config;
+        fromKv.updated_at = new Date().toISOString();
+        await kvStore.put(`lp:${fromKv.slug}`, fromKv);
+        await kvStore.put(`lp:${fromKv.id}`, fromKv);
+        lp = fromKv;
+      } else if (lp) {
+        await kvStore.put(`lp:${lp.slug}`, lp);
+        await kvStore.put(`lp:${lp.id}`, lp);
+      }
+
+      const currentCustomLps = (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
+      const idx = currentCustomLps.findIndex((l) => l.id === id || l.slug === id);
+      if (idx >= 0) {
+        currentCustomLps[idx].content_config = content_config;
+        currentCustomLps[idx].updated_at = new Date().toISOString();
+        await kvStore.put("custom_lps_all", currentCustomLps);
+      }
+    } catch (e) {
+      console.warn("[KV updateLandingPageContent Error]", e);
     }
 
     saveToFile();
