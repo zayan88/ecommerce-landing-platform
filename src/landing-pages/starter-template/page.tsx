@@ -183,6 +183,16 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             ))}
           </div>
 
+          {/* Offer Selector Directly in the Hero */}
+          <div className="pt-1">
+            <HeroOfferSelector
+              offers={availableOffers}
+              selectedOffer={selectedOffer}
+              onSelectOffer={(offer) => setSelectedOffer(offer)}
+              accentColor="emerald"
+            />
+          </div>
+
           {/* Price Display */}
           <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-2xl p-4 flex items-center justify-between">
             <div>

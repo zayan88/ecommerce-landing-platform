@@ -186,6 +186,16 @@ export default function MeshNebulizerLandingPage({
             </div>
           </div>
 
+          {/* Offer Selector Directly in the Hero */}
+          <div className="pt-1">
+            <HeroOfferSelector
+              offers={product.offers || []}
+              selectedOffer={selectedOffer}
+              onSelectOffer={(offer) => setSelectedOffer(offer)}
+              accentColor="cyan"
+            />
+          </div>
+
           {/* Price Banner */}
           <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 flex items-center justify-between">
             <div>
