@@ -592,6 +592,7 @@ const DUMMY_IDS = new Set([
 
 function loadFromFile() {
   try {
+    if (typeof fs === "undefined" || !fs.existsSync || !fs.readFileSync) return;
     const filePath = getStoreFilePath();
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
@@ -651,6 +652,7 @@ function loadFromFile() {
 
 function saveToFile() {
   try {
+    if (typeof fs === "undefined" || !fs.writeFileSync) return;
     const filePath = getStoreFilePath();
     const data = {
       products: memoryProducts,

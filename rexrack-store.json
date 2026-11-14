@@ -22,8 +22,8 @@
       "safka_product_id": "69615044356433dea16f0bd8",
       "safka_property_id": "69615044356433dea16f0bd9",
       "safka_commission": 344,
-      "created_at": "2026-11-11T00:22:36.492Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "offers": [
         {
           "id": "off-nebulizer-1",
@@ -88,8 +88,8 @@
       "safka_product_id": "68c0caddc79e01ee5439126b",
       "safka_property_id": "68c0caddc79e01ee5439126c",
       "safka_commission": 359,
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "offers": [
         {
           "id": "off-massager-1",
@@ -99,7 +99,7 @@
           "price": 799,
           "original_price": 1200,
           "discount_label": "خصم 33%",
-          "is_popular": true,
+          "is_popular": false,
           "free_shipping": true,
           "sort_order": 1
         },
@@ -111,7 +111,7 @@
           "price": 1390,
           "original_price": 2400,
           "discount_label": "وفر 1010 ج.م + شحن مجاني",
-          "is_popular": false,
+          "is_popular": true,
           "free_shipping": true,
           "sort_order": 2
         },
@@ -150,8 +150,8 @@
       "safka_product_id": "6a29f09bf6c8815f8d0500df",
       "safka_property_id": "6a29f09bf6c8815f8d0500e0",
       "safka_commission": 319,
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "offers": [
         {
           "id": "off-organizer-1",
@@ -212,8 +212,8 @@
       "safka_product_id": "6ab19443ca38d5013c7cb9fb",
       "safka_property_id": "6ab19443ca38d5013c7cb9fc",
       "safka_commission": 200,
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "offers": [
         {
           "id": "off-astrobeam-1",
@@ -266,9 +266,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/mesh-nebulizer",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-mesh-nebulizer-8ftidwr",
         "title_ar": "جهاز استنشاق البخار المحمول ميني (Mesh Nebulizer) الصامت للأطفال والكبار",
@@ -291,8 +291,8 @@
         "safka_product_id": "69615044356433dea16f0bd8",
         "safka_property_id": "69615044356433dea16f0bd9",
         "safka_commission": 344,
-        "created_at": "2026-11-11T00:22:36.492Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-nebulizer-1",
@@ -344,9 +344,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/safka-8ftidwr",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-mesh-nebulizer-8ftidwr",
         "title_ar": "جهاز استنشاق البخار المحمول ميني (Mesh Nebulizer) الصامت للأطفال والكبار",
@@ -369,8 +369,8 @@
         "safka_product_id": "69615044356433dea16f0bd8",
         "safka_property_id": "69615044356433dea16f0bd9",
         "safka_commission": 344,
-        "created_at": "2026-11-11T00:22:36.492Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-nebulizer-1",
@@ -422,9 +422,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/body-massager",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-body-massager-7mebpwu",
         "title_ar": "جهاز التدليك والمساج الشامل 5×1 اللاسلكي بالحرارة والاهتزاز (للكتف، الظهر، البطن، والرجل)",
@@ -450,8 +450,8 @@
         "safka_product_id": "68c0caddc79e01ee5439126b",
         "safka_property_id": "68c0caddc79e01ee5439126c",
         "safka_commission": 359,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-massager-1",
@@ -503,9 +503,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/safka-7mebpwu",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-body-massager-7mebpwu",
         "title_ar": "جهاز التدليك والمساج الشامل 5×1 اللاسلكي بالحرارة والاهتزاز (للكتف، الظهر، البطن، والرجل)",
@@ -531,8 +531,8 @@
         "safka_product_id": "68c0caddc79e01ee5439126b",
         "safka_property_id": "68c0caddc79e01ee5439126c",
         "safka_commission": 359,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-massager-1",
@@ -584,9 +584,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/safka-b5fb3b6b",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-body-massager-7mebpwu",
         "title_ar": "جهاز التدليك والمساج الشامل 5×1 اللاسلكي بالحرارة والاهتزاز (للكتف، الظهر، البطن، والرجل)",
@@ -612,8 +612,8 @@
         "safka_product_id": "68c0caddc79e01ee5439126b",
         "safka_property_id": "68c0caddc79e01ee5439126c",
         "safka_commission": 359,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-massager-1",
@@ -665,9 +665,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/starter-template",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-body-massager-7mebpwu",
         "title_ar": "جهاز التدليك والمساج الشامل 5×1 اللاسلكي بالحرارة والاهتزاز (للكتف، الظهر، البطن، والرجل)",
@@ -693,8 +693,8 @@
         "safka_product_id": "68c0caddc79e01ee5439126b",
         "safka_property_id": "68c0caddc79e01ee5439126c",
         "safka_commission": 359,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-massager-1",
@@ -746,9 +746,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/car-organizer",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-car-organizer-9pkjp8q",
         "title_ar": "منظم ظهر مقعد السيارة الذكي متعدد الجيوب مع حامل تابلت مدمج",
@@ -770,8 +770,8 @@
         "safka_product_id": "6a29f09bf6c8815f8d0500df",
         "safka_property_id": "6a29f09bf6c8815f8d0500e0",
         "safka_commission": 319,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-organizer-1",
@@ -823,9 +823,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/safka-9pkjp8q",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-car-organizer-9pkjp8q",
         "title_ar": "منظم ظهر مقعد السيارة الذكي متعدد الجيوب مع حامل تابلت مدمج",
@@ -847,8 +847,8 @@
         "safka_product_id": "6a29f09bf6c8815f8d0500df",
         "safka_property_id": "6a29f09bf6c8815f8d0500e0",
         "safka_commission": 319,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-organizer-1",
@@ -900,9 +900,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/body-massager",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-body-massager-7mebpwu",
         "title_ar": "جهاز التدليك والمساج الشامل 5×1 اللاسلكي بالحرارة والاهتزاز (للكتف، الظهر، البطن، والرجل)",
@@ -928,8 +928,8 @@
         "safka_product_id": "68c0caddc79e01ee5439126b",
         "safka_property_id": "68c0caddc79e01ee5439126c",
         "safka_commission": 359,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-massager-1",
@@ -981,9 +981,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/safka-rxuirx2",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-car-organizer-9pkjp8q",
         "title_ar": "منظم ظهر مقعد السيارة الذكي متعدد الجيوب مع حامل تابلت مدمج",
@@ -1005,8 +1005,8 @@
         "safka_product_id": "6a29f09bf6c8815f8d0500df",
         "safka_property_id": "6a29f09bf6c8815f8d0500e0",
         "safka_commission": 319,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-organizer-1",
@@ -1058,9 +1058,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/astrobeam",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-astrobeam-6ab19443",
         "title_ar": "بروجكتور الفضاء المصغر AstroBeam مع 6 غيارات لعرض القمر والمجرات",
@@ -1082,8 +1082,8 @@
         "safka_product_id": "6ab19443ca38d5013c7cb9fb",
         "safka_property_id": "6ab19443ca38d5013c7cb9fc",
         "safka_commission": 200,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-astrobeam-1",
@@ -1135,9 +1135,9 @@
       "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
       "deployment_url": "/p/safka-6ab19443",
       "deployment_status": "published",
-      "last_published_at": "2026-11-11T00:22:36.494Z",
-      "created_at": "2026-11-11T00:22:36.494Z",
-      "updated_at": "2026-11-11T00:22:36.494Z",
+      "last_published_at": "2026-11-14T02:10:18.122Z",
+      "created_at": "2026-11-14T02:10:18.122Z",
+      "updated_at": "2026-11-14T02:10:18.122Z",
       "product": {
         "id": "prod-astrobeam-6ab19443",
         "title_ar": "بروجكتور الفضاء المصغر AstroBeam مع 6 غيارات لعرض القمر والمجرات",
@@ -1159,8 +1159,8 @@
         "safka_product_id": "6ab19443ca38d5013c7cb9fb",
         "safka_property_id": "6ab19443ca38d5013c7cb9fc",
         "safka_commission": 200,
-        "created_at": "2026-11-11T00:22:36.494Z",
-        "updated_at": "2026-11-11T00:22:36.494Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
         "offers": [
           {
             "id": "off-astrobeam-1",
@@ -1203,6 +1203,194 @@
     }
   ],
   "orders": [
+    {
+      "id": "ord-1794622218128",
+      "order_number": "EG-261114-4858",
+      "landing_page_slug": "mesh-nebulizer",
+      "product_id": "prod-mesh-nebulizer-8ftidwr",
+      "offer_id": "off-nebulizer-2",
+      "customer_name": "أحمد محمود تيست",
+      "customer_phone": "01099887766",
+      "governorate": "الجيزة",
+      "city": "الجيزة",
+      "address": "شارع الهرم - محطة العريش",
+      "notes": "طلب عبر شات المبيعات التفاعلي",
+      "quantity": 2,
+      "unit_price": 495,
+      "total_amount": 990,
+      "shipping_fee": 0,
+      "discount_amount": 710,
+      "final_amount": 990,
+      "currency": "EGP",
+      "status": "pending",
+      "payment_method": "cod",
+      "safqa_status": "paid",
+      "created_at": "2026-11-14T02:10:18.128Z",
+      "updated_at": "2026-11-14T02:10:18.638Z",
+      "tracking": {
+        "ip_address": "::1",
+        "user_agent": "node",
+        "event_id": "order_1794622218128_q085x15"
+      },
+      "product": {
+        "id": "prod-mesh-nebulizer-8ftidwr",
+        "title_ar": "جهاز استنشاق البخار المحمول ميني (Mesh Nebulizer) الصامت للأطفال والكبار",
+        "title_en": "Portable Mini Mesh Nebulizer",
+        "slug": "mesh-nebulizer",
+        "sku": "8fTldWR",
+        "base_price": 599,
+        "compare_at_price": 850,
+        "cost_price": 255,
+        "images": [
+          "/landing-pages/mesh-nebulizer/images/hero.webp",
+          "/landing-pages/mesh-nebulizer/images/features_1.webp",
+          "/landing-pages/mesh-nebulizer/images/features_2.webp",
+          "/landing-pages/mesh-nebulizer/images/features_3.webp",
+          "https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1771233682858-IMG_6569.webp"
+        ],
+        "description_ar": "ودّع رعب جلسات البخار الفجرية في الشتاء! جهاز النيبولايزر المحمول الذكي فائق الهدوء للأطفال والكبار مع ماسك للكبار وماسك للأطفال وقطعة استنشاق للفم، يعمل بالبطاريات وUSB.",
+        "stock_quantity": 100,
+        "status": "active",
+        "safka_product_id": "69615044356433dea16f0bd8",
+        "safka_property_id": "69615044356433dea16f0bd9",
+        "safka_commission": 344,
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
+        "offers": [
+          {
+            "id": "off-nebulizer-1",
+            "product_id": "prod-mesh-nebulizer-8ftidwr",
+            "title_ar": "قطعة واحدة (تجربة)",
+            "quantity": 1,
+            "price": 599,
+            "original_price": 850,
+            "discount_label": "خصم 30%",
+            "is_popular": false,
+            "free_shipping": true,
+            "sort_order": 1
+          },
+          {
+            "id": "off-nebulizer-2",
+            "product_id": "prod-mesh-nebulizer-8ftidwr",
+            "title_ar": "قطعتان (الأكثر طلباً - جهاز للبيت وجهاز للشنطة/الحضانة)",
+            "quantity": 2,
+            "price": 990,
+            "original_price": 1700,
+            "discount_label": "وفر 710 ج.م + شحن مجاني",
+            "is_popular": true,
+            "free_shipping": true,
+            "sort_order": 2
+          },
+          {
+            "id": "off-nebulizer-3",
+            "product_id": "prod-mesh-nebulizer-8ftidwr",
+            "title_ar": "3 قطع (عرض التوفير العائلي الشامل)",
+            "quantity": 3,
+            "price": 1390,
+            "original_price": 2550,
+            "discount_label": "وفر 1160 ج.م + شحن مجاني",
+            "is_popular": false,
+            "free_shipping": true,
+            "sort_order": 3
+          }
+        ]
+      },
+      "landing_page": {
+        "id": "c1000000-0000-0000-0000-000000000020",
+        "product_id": "prod-mesh-nebulizer-8ftidwr",
+        "title": "جهاز استنشاق البخار المحمول ميني (Mesh Nebulizer) الصامت للأطفال والكبار",
+        "slug": "mesh-nebulizer",
+        "component_key": "mesh-nebulizer",
+        "status": "active",
+        "meta_pixel_id": "1636283807582751",
+        "meta_capi_token": "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+        "deployment_url": "/p/mesh-nebulizer",
+        "deployment_status": "published",
+        "last_published_at": "2026-11-14T02:10:18.122Z",
+        "created_at": "2026-11-14T02:10:18.122Z",
+        "updated_at": "2026-11-14T02:10:18.122Z",
+        "product": {
+          "id": "prod-mesh-nebulizer-8ftidwr",
+          "title_ar": "جهاز استنشاق البخار المحمول ميني (Mesh Nebulizer) الصامت للأطفال والكبار",
+          "title_en": "Portable Mini Mesh Nebulizer",
+          "slug": "mesh-nebulizer",
+          "sku": "8fTldWR",
+          "base_price": 599,
+          "compare_at_price": 850,
+          "cost_price": 255,
+          "images": [
+            "/landing-pages/mesh-nebulizer/images/hero.webp",
+            "/landing-pages/mesh-nebulizer/images/features_1.webp",
+            "/landing-pages/mesh-nebulizer/images/features_2.webp",
+            "/landing-pages/mesh-nebulizer/images/features_3.webp",
+            "https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1771233682858-IMG_6569.webp"
+          ],
+          "description_ar": "ودّع رعب جلسات البخار الفجرية في الشتاء! جهاز النيبولايزر المحمول الذكي فائق الهدوء للأطفال والكبار مع ماسك للكبار وماسك للأطفال وقطعة استنشاق للفم، يعمل بالبطاريات وUSB.",
+          "stock_quantity": 100,
+          "status": "active",
+          "safka_product_id": "69615044356433dea16f0bd8",
+          "safka_property_id": "69615044356433dea16f0bd9",
+          "safka_commission": 344,
+          "created_at": "2026-11-14T02:10:18.122Z",
+          "updated_at": "2026-11-14T02:10:18.122Z",
+          "offers": [
+            {
+              "id": "off-nebulizer-1",
+              "product_id": "prod-mesh-nebulizer-8ftidwr",
+              "title_ar": "قطعة واحدة (تجربة)",
+              "quantity": 1,
+              "price": 599,
+              "original_price": 850,
+              "discount_label": "خصم 30%",
+              "is_popular": false,
+              "free_shipping": true,
+              "sort_order": 1
+            },
+            {
+              "id": "off-nebulizer-2",
+              "product_id": "prod-mesh-nebulizer-8ftidwr",
+              "title_ar": "قطعتان (الأكثر طلباً - جهاز للبيت وجهاز للشنطة/الحضانة)",
+              "quantity": 2,
+              "price": 990,
+              "original_price": 1700,
+              "discount_label": "وفر 710 ج.م + شحن مجاني",
+              "is_popular": true,
+              "free_shipping": true,
+              "sort_order": 2
+            },
+            {
+              "id": "off-nebulizer-3",
+              "product_id": "prod-mesh-nebulizer-8ftidwr",
+              "title_ar": "3 قطع (عرض التوفير العائلي الشامل)",
+              "quantity": 3,
+              "price": 1390,
+              "original_price": 2550,
+              "discount_label": "وفر 1160 ج.م + شحن مجاني",
+              "is_popular": false,
+              "free_shipping": true,
+              "sort_order": 3
+            }
+          ]
+        }
+      },
+      "safqa_invoice_id": "6af7c30beba2187ec4b8ac6a",
+      "safqa_response": {
+        "safka_order_id": "6af7c30beba2187ec4b8ac6a",
+        "commission": 480,
+        "forwarded_at": "2026-11-14T02:10:18.637Z",
+        "raw": {
+          "success": true,
+          "data": {
+            "_id": "6af7c30beba2187ec4b8ac6a",
+            "status": "pending",
+            "holding_to": null,
+            "serial_number": "sk-ukcPzOYzYt",
+            "marketer": "691662909f30377c91713954"
+          }
+        }
+      },
+      "safqa_synced_at": "2026-11-14T02:10:18.638Z"
+    },
     {
       "id": "ord-1794356600412",
       "order_number": "EG-261111-5725",
@@ -1755,5 +1943,22 @@
     "store_name": "RexRack",
     "support_phone": "01000000000",
     "support_whatsapp": "201000000000"
-  }
+  },
+  "deletedOrderIds": [],
+  "analytics": [
+    {
+      "event_name": "Purchase",
+      "event_id": "order_1794622218128_q085x15",
+      "product_id": "prod-mesh-nebulizer-8ftidwr",
+      "page_url": "/p/mesh-nebulizer",
+      "ip_address": "::1",
+      "user_agent": "node",
+      "metadata": {
+        "order_number": "EG-261114-4858",
+        "total": 990
+      },
+      "id": "ev-1794622218646-6934",
+      "created_at": "2026-11-14T02:10:18.646Z"
+    }
+  ]
 }
