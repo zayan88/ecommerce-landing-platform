@@ -25,12 +25,19 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, status } = body;
-    if (!id || !status) {
-      return NextResponse.json({ success: false, error: "معرف الصفحة والحالة مطلوبان" }, { status: 400 });
+    const { id, status, sections_config } = body;
+    if (!id) {
+      return NextResponse.json({ success: false, error: "معرف الصفحة مطلوب" }, { status: 400 });
     }
-    const success = await dbStore.toggleLandingPageStatus(id, status);
-    return NextResponse.json({ success });
+    if (sections_config) {
+      const updated = await dbStore.updateLandingPageSections(id, sections_config);
+      return NextResponse.json({ success: true, landingPage: updated });
+    }
+    if (status) {
+      const success = await dbStore.toggleLandingPageStatus(id, status);
+      return NextResponse.json({ success });
+    }
+    return NextResponse.json({ success: false, error: "بيانات غير صالحة للتحديث" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

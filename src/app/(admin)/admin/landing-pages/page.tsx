@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { LandingPage, Product } from "@/types";
+import { LandingPage, Product, LandingPageSectionConfig, DEFAULT_LANDING_PAGE_SECTIONS } from "@/types";
 import {
   Layers,
   Plus,
@@ -22,6 +22,12 @@ import {
   Zap,
   Wand2,
   Package,
+  Sliders,
+  Eye,
+  EyeOff,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw,
 } from "lucide-react";
 
 export default function AdminLandingPagesPage() {
@@ -31,6 +37,12 @@ export default function AdminLandingPagesPage() {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Section Customizer State
+  const [customizingLp, setCustomizingLp] = useState<LandingPage | null>(null);
+  const [customSections, setCustomSections] = useState<LandingPageSectionConfig[]>([]);
+  const [isSavingSections, setIsSavingSections] = useState(false);
+  const [sectionSaveSuccess, setSectionSaveSuccess] = useState(false);
+
   // Creation Mode: "quick" | "ai_prompt" | "safka"
   const [createMode, setCreateMode] = useState<"quick" | "ai_prompt" | "safka">("quick");
 
@@ -39,7 +51,6 @@ export default function AdminLandingPagesPage() {
   const [newSlug, setNewSlug] = useState("");
   const [newProductId, setNewProductId] = useState("");
   const [newPixelId, setNewPixelId] = useState("");
-  const [customFeatures, setCustomFeatures] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
@@ -116,6 +127,7 @@ export default function AdminLandingPagesPage() {
         status: "active",
         deployment_url: `/p/${cleanSlug}`,
         deployment_status: "published",
+        sections_config: DEFAULT_LANDING_PAGE_SECTIONS,
       };
 
       const res = await fetch("/api/landing-pages", {
@@ -161,6 +173,71 @@ export default function AdminLandingPagesPage() {
     }
   };
 
+  // Section Customizer Methods
+  const openSectionCustomizer = (lp: LandingPage) => {
+    setCustomizingLp(lp);
+    const existing =
+      lp.sections_config && lp.sections_config.length > 0
+        ? JSON.parse(JSON.stringify(lp.sections_config))
+        : JSON.parse(JSON.stringify(DEFAULT_LANDING_PAGE_SECTIONS));
+    setCustomSections(existing);
+    setSectionSaveSuccess(false);
+  };
+
+  const handleToggleSection = (id: string) => {
+    setCustomSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+    );
+  };
+
+  const handleMoveSection = (index: number, direction: "up" | "down") => {
+    setCustomSections((prev) => {
+      const copy = [...prev];
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= copy.length) return prev;
+      const temp = copy[index];
+      copy[index] = copy[targetIndex];
+      copy[targetIndex] = temp;
+      return copy;
+    });
+  };
+
+  const handleResetSections = () => {
+    setCustomSections(JSON.parse(JSON.stringify(DEFAULT_LANDING_PAGE_SECTIONS)));
+  };
+
+  const handleSaveSections = async () => {
+    if (!customizingLp) return;
+    setIsSavingSections(true);
+    try {
+      const res = await fetch("/api/landing-pages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: customizingLp.id,
+          sections_config: customSections,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSectionSaveSuccess(true);
+        setLandingPages((prev) =>
+          prev.map((lp) =>
+            lp.id === customizingLp.id ? { ...lp, sections_config: customSections } : lp
+          )
+        );
+        setTimeout(() => {
+          setCustomizingLp(null);
+          setSectionSaveSuccess(false);
+        }, 1200);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingSections(false);
+    }
+  };
+
   return (
     <div className="space-y-6 text-right font-sans" dir="rtl">
       {/* Top Header */}
@@ -170,7 +247,7 @@ export default function AdminLandingPagesPage() {
             إدارة صفحات الهبوط المستقلة (COD Funnels)
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            أنشئ صفحات هبوط احترافية ومستقلة لإعلانات فيسبوك وتيك توك بدون كتابة كود وبشحن ودفع عند الاستلام فوري
+            أنشئ صفحات هبوط احترافية ومستقلة لإعلانات فيسبوك وتيك توك مع التحكم الكامل في إظهار وإخفاء وترتيب الأقسام
           </p>
         </div>
 
@@ -188,6 +265,12 @@ export default function AdminLandingPagesPage() {
         {landingPages.map((lp) => {
           const fullUrl = `/p/${lp.slug}`;
           const isCopied = copiedSlug === lp.slug;
+          const activeSectionsCount = lp.sections_config
+            ? lp.sections_config.filter((s) => s.enabled).length
+            : DEFAULT_LANDING_PAGE_SECTIONS.length;
+          const totalSectionsCount = lp.sections_config
+            ? lp.sections_config.length
+            : DEFAULT_LANDING_PAGE_SECTIONS.length;
 
           return (
             <div
@@ -200,7 +283,7 @@ export default function AdminLandingPagesPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1">
                     <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      قالب COD رشيق وسريع
+                      قالب COD رشيق ومعدّل
                     </span>
                     <h3 className="text-base font-bold text-gray-900 leading-snug pt-1">
                       {lp.title}
@@ -232,30 +315,42 @@ export default function AdminLandingPagesPage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => handleCopyUrl(lp.slug)}
-                  className="py-2 px-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-2xs transition"
-                >
-                  {isCopied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-700">تم النسخ</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-gray-500" />
-                      <span>نسخ الرابط للإعلان</span>
-                    </>
-                  )}
-                </button>
+              {/* Action Buttons */}
+              <div className="p-4 bg-gray-50/80 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    onClick={() => handleCopyUrl(lp.slug)}
+                    className="py-1.5 px-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1 shadow-2xs transition"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">تم النسخ</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-gray-500" />
+                        <span>نسخ الرابط</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => openSectionCustomizer(lp)}
+                    className="py-1.5 px-2.5 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-xs font-bold text-indigo-700 flex items-center gap-1 shadow-2xs transition cursor-pointer"
+                    title="تخصيص وترتيب أقسام الصفحة"
+                  >
+                    <Sliders className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>تخصيص الأقسام ({activeSectionsCount}/{totalSectionsCount})</span>
+                  </button>
+                </div>
 
                 <a
                   href={fullUrl}
                   target="_blank"
-                  className="py-2 px-3.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1 shadow-xs transition"
+                  className="py-1.5 px-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1 shadow-xs transition"
                 >
-                  <span>معاينة فورية</span>
+                  <span>معاينة</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -263,6 +358,152 @@ export default function AdminLandingPagesPage() {
           );
         })}
       </div>
+
+      {/* SECTION CUSTOMIZER MODAL */}
+      {customizingLp && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-gray-100 space-y-5 max-h-[90vh] flex flex-col justify-between overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-black text-gray-900 font-heading flex items-center gap-2">
+                  <Sliders className="w-5 h-5 text-indigo-600" />
+                  <span>تخصيص وترتيب أقسام صفحة الهبوط</span>
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  تحكّم في إظهار أو إخفاء أي قسم، واستخدم الأسهم لتغيير مكان وترتيب كل قسم
+                </p>
+              </div>
+              <button
+                onClick={() => setCustomizingLp(null)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* List of Sections */}
+            <div className="overflow-y-auto pr-1 space-y-2 py-1 max-h-[50vh]">
+              {customSections.map((sec, index) => {
+                const isFirst = index === 0;
+                const isLast = index === customSections.length - 1;
+
+                return (
+                  <div
+                    key={sec.id}
+                    className={`p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+                      sec.enabled
+                        ? "bg-slate-50 border-slate-200"
+                        : "bg-gray-100/60 border-gray-200 opacity-60"
+                    }`}
+                  >
+                    {/* Index & Title */}
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-lg bg-white border border-slate-200 text-xs font-bold font-mono text-slate-700 flex items-center justify-center shrink-0">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <span className={`text-xs sm:text-sm font-bold block ${sec.enabled ? "text-slate-900" : "text-gray-500 line-through"}`}>
+                          {sec.name_ar}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-mono">
+                          ID: {sec.id}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Controls (Move Up/Down & Toggle) */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Move Up */}
+                      <button
+                        type="button"
+                        disabled={isFirst}
+                        onClick={() => handleMoveSection(index, "up")}
+                        className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        title="تحريك لأعلى"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Move Down */}
+                      <button
+                        type="button"
+                        disabled={isLast}
+                        onClick={() => handleMoveSection(index, "down")}
+                        className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        title="تحريك لأسفل"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Toggle Visibility */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSection(sec.id)}
+                        className={`py-1.5 px-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                          sec.enabled
+                            ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300"
+                            : "bg-gray-200 text-gray-600 hover:bg-gray-300 border border-gray-300"
+                        }`}
+                      >
+                        {sec.enabled ? (
+                          <>
+                            <Eye className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>ظاهر</span>
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="w-3.5 h-3.5 text-gray-500" />
+                            <span>مخفي</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={handleResetSections}
+                className="py-2 px-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
+                <span>الترتيب الافتراضي</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCustomizingLp(null)}
+                  className="py-2.5 px-4 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  disabled={isSavingSections}
+                  onClick={handleSaveSections}
+                  className="py-2.5 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                >
+                  {sectionSaveSuccess ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-300" />
+                      <span>تم الحفظ والتطبيق!</span>
+                    </>
+                  ) : isSavingSections ? (
+                    <span>جاري الحفظ...</span>
+                  ) : (
+                    <span>حفظ وتطبيق التغييرات</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Multi-Mode Create Modal */}
       {isModalOpen && (

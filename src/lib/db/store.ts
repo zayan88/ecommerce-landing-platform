@@ -1,5 +1,6 @@
-import { Product, ProductOffer, LandingPage, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
+import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, DEFAULT_LANDING_PAGE_SECTIONS, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
+import { kvStore } from "./kv";
 
 // Initial seed data
 const initialProducts: (Product & { offers: ProductOffer[] })[] = [
@@ -256,6 +257,62 @@ const initialProducts: (Product & { offers: ProductOffer[] })[] = [
       },
     ],
   },
+  {
+    id: "prod-smart-book-e91b",
+    title_ar: "الكتاب التعليمي الذكي الناطق بالصوت التفاعلي للأطفال (عربي وإنجليزي)",
+    title_en: "Smart Interactive Audio Learning E-Book for Kids",
+    slug: "book",
+    sku: "BOOK-EDU-01",
+    base_price: 399,
+    compare_at_price: 650,
+    cost_price: 170,
+    images: [
+      "https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1771233682858-IMG_6569.webp",
+    ],
+    description_ar: "الكتاب الذكي الناطق بالصوت لتعليم الأطفال الحروف والأرقام والكلمات والأذكار والقرآن بأسلوب ترفيهي تفاعلي جذاب باللغتين العربية والإنجليزية، بديل آمن ومسلي لشاشات الموبايل.",
+    stock_quantity: 100,
+    status: "active",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    offers: [
+      {
+        id: "off-book-1",
+        product_id: "prod-smart-book-e91b",
+        title_ar: "نسخة واحدة (تجربة)",
+        quantity: 1,
+        price: 399,
+        original_price: 650,
+        discount_label: "خصم 38%",
+        is_popular: false,
+        free_shipping: true,
+        sort_order: 1,
+      },
+      {
+        id: "off-book-2",
+        product_id: "prod-smart-book-e91b",
+        title_ar: "نسختان (الأكثر طلباً - لطفلين أو هدية مميزة)",
+        quantity: 2,
+        price: 690,
+        original_price: 1300,
+        discount_label: "وفر 610 ج.م + شحن مجاني",
+        is_popular: true,
+        free_shipping: true,
+        sort_order: 2,
+      },
+      {
+        id: "off-book-3",
+        product_id: "prod-smart-book-e91b",
+        title_ar: "3 نسخ (عرض التوفير العائلي الشامل)",
+        quantity: 3,
+        price: 990,
+        original_price: 1950,
+        discount_label: "وفر 960 ج.م + شحن مجاني",
+        is_popular: false,
+        free_shipping: true,
+        sort_order: 3,
+      },
+    ],
+  },
 ];
 
 const initialLandingPages: LandingPage[] = [
@@ -458,6 +515,22 @@ const initialLandingPages: LandingPage[] = [
     updated_at: new Date().toISOString(),
     product: initialProducts[3],
   },
+  {
+    id: "c1000000-0000-0000-0000-000000000050",
+    product_id: "prod-smart-book-e91b",
+    title: "الكتاب التعليمي الذكي الناطق بالصوت التفاعلي للأطفال",
+    slug: "book",
+    component_key: "starter-template",
+    status: "active",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    deployment_url: "/p/book",
+    deployment_status: "published",
+    last_published_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    product: initialProducts[4],
+  },
 ];
 
 const initialOrders: Order[] = [
@@ -607,7 +680,14 @@ export const dbStore = {
         .order("created_at", { ascending: false });
       if (!error && data) return data;
     }
-    return memoryProducts;
+    const custom = (await kvStore.get<Product[]>("custom_products_all")) || [];
+    const merged = [...custom];
+    for (const p of memoryProducts) {
+      if (!merged.some((m) => m.id === p.id || m.slug === p.slug)) {
+        merged.push(p);
+      }
+    }
+    return merged;
   },
 
   async getProduct(idOrSlug: string): Promise<Product | null> {
@@ -621,6 +701,9 @@ export const dbStore = {
         .single();
       if (!error && data) return data;
     }
+    const fromKv = await kvStore.get<Product>(`prod:${idOrSlug}`);
+    if (fromKv) return fromKv;
+
     const found = memoryProducts.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
     return found || null;
   },
@@ -661,7 +744,6 @@ export const dbStore = {
         stock_quantity: newProduct.stock_quantity,
         status: newProduct.status,
       });
-      // offers insert
       if (newProduct.offers && newProduct.offers.length > 0) {
         await admin.from("product_offers").delete().eq("product_id", newProduct.id);
         await admin.from("product_offers").insert(
@@ -680,6 +762,22 @@ export const dbStore = {
       memoryProducts.unshift(newProduct);
     }
     saveToFile();
+
+    try {
+      await kvStore.put(`prod:${newProduct.id}`, newProduct);
+      await kvStore.put(`prod:${newProduct.slug}`, newProduct);
+      const currentCustom = (await kvStore.get<Product[]>("custom_products_all")) || [];
+      const existIdx = currentCustom.findIndex((p) => p.id === newProduct.id || p.slug === newProduct.slug);
+      if (existIdx >= 0) {
+        currentCustom[existIdx] = newProduct;
+      } else {
+        currentCustom.unshift(newProduct);
+      }
+      await kvStore.put("custom_products_all", currentCustom);
+    } catch (e) {
+      console.warn("[KV saveProduct Error]", e);
+    }
+
     return newProduct;
   },
 
@@ -693,7 +791,6 @@ export const dbStore = {
     const idx = memoryProducts.findIndex((p) => p.id === id || p.slug === id);
     if (idx >= 0) {
       const removed = memoryProducts.splice(idx, 1)[0];
-      // Also remove any associated landing page
       const lpIdx = memoryLandingPages.findIndex(
         (lp) => lp.product_id === removed.id || lp.slug === removed.slug
       );
@@ -701,9 +798,16 @@ export const dbStore = {
         memoryLandingPages.splice(lpIdx, 1);
       }
       saveToFile();
-      return true;
     }
-    return false;
+
+    try {
+      await kvStore.delete(`prod:${id}`);
+      const currentCustom = (await kvStore.get<Product[]>("custom_products_all")) || [];
+      const filtered = currentCustom.filter((p) => p.id !== id && p.slug !== id);
+      await kvStore.put("custom_products_all", filtered);
+    } catch {}
+
+    return true;
   },
 
   // LANDING PAGES
@@ -716,10 +820,18 @@ export const dbStore = {
         .order("created_at", { ascending: false });
       if (!error && data) return data;
     }
-    // link products
-    return memoryLandingPages.map((lp) => ({
+    const customLps = (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
+    const allLps = [...customLps];
+    for (const mlp of memoryLandingPages) {
+      if (!allLps.some((l) => l.id === mlp.id || l.slug === mlp.slug)) {
+        allLps.push(mlp);
+      }
+    }
+    const allProducts = await this.getProducts();
+    return allLps.map((lp) => ({
       ...lp,
-      product: memoryProducts.find((p) => p.id === lp.product_id),
+      sections_config: lp.sections_config || DEFAULT_LANDING_PAGE_SECTIONS,
+      product: lp.product || allProducts.find((p) => p.id === lp.product_id),
     }));
   },
 
@@ -734,16 +846,24 @@ export const dbStore = {
         .single();
       if (!error && data) return data;
     }
-    const lp = memoryLandingPages.find((p) => p.slug === slug || p.id === slug);
+
+    let lp = await kvStore.get<LandingPage>(`lp:${slug}`);
+    if (!lp) {
+      lp = memoryLandingPages.find((p) => p.slug === slug || p.id === slug) || null;
+    }
+
     if (lp) {
+      let prod = await this.getProduct(lp.product_id);
+      if (!prod && lp.slug) prod = await this.getProduct(lp.slug);
       return {
         ...lp,
-        product: memoryProducts.find((p) => p.id === lp.product_id),
+        sections_config: lp.sections_config || DEFAULT_LANDING_PAGE_SECTIONS,
+        product: prod || undefined,
       };
     }
 
     // Auto-synthesize landing page if a product exists with this slug or id
-    const prod = memoryProducts.find((p) => p.slug === slug || p.id === slug);
+    const prod = await this.getProduct(slug);
     if (prod) {
       return {
         id: `lp-auto-${prod.id}`,
@@ -758,6 +878,7 @@ export const dbStore = {
         deployment_url: `/p/${prod.slug}`,
         created_at: prod.created_at,
         updated_at: prod.updated_at,
+        sections_config: DEFAULT_LANDING_PAGE_SECTIONS,
         product: prod,
       };
     }
@@ -773,7 +894,7 @@ export const dbStore = {
       product_id: data.product_id || memoryProducts[0]?.id || "",
       title: data.title || "صفحة هبوط جديدة",
       slug: data.slug || `page-${Date.now()}`,
-      component_key: data.component_key || data.slug || "portable-urinal",
+      component_key: data.component_key || data.slug || "starter-template",
       custom_domain: data.custom_domain,
       status: data.status || "active",
       meta_pixel_id: data.meta_pixel_id || memorySettings.default_meta_pixel_id,
@@ -782,6 +903,7 @@ export const dbStore = {
       custom_css: data.custom_css,
       deployment_url: data.deployment_url || `/p/${data.slug}`,
       deployment_status: data.deployment_status || "published",
+      sections_config: data.sections_config || DEFAULT_LANDING_PAGE_SECTIONS,
       last_published_at: new Date().toISOString(),
       created_at: data.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -812,7 +934,65 @@ export const dbStore = {
       memoryLandingPages.unshift(newLp);
     }
     saveToFile();
+
+    try {
+      await kvStore.put(`lp:${newLp.slug}`, newLp);
+      await kvStore.put(`lp:${newLp.id}`, newLp);
+      const currentCustomLps = (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
+      const existIdx = currentCustomLps.findIndex((l) => l.id === newLp.id || l.slug === newLp.slug);
+      if (existIdx >= 0) {
+        currentCustomLps[existIdx] = newLp;
+      } else {
+        currentCustomLps.unshift(newLp);
+      }
+      await kvStore.put("custom_lps_all", currentCustomLps);
+    } catch (e) {
+      console.warn("[KV saveLandingPage Error]", e);
+    }
+
     return newLp;
+  },
+
+  async updateLandingPageSections(id: string, sections_config: LandingPageSectionConfig[]): Promise<LandingPage | null> {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      try {
+        await admin.from("landing_pages").update({ updated_at: new Date().toISOString() }).eq("id", id);
+      } catch {}
+    }
+
+    let lp = memoryLandingPages.find((p) => p.id === id || p.slug === id);
+    if (lp) {
+      lp.sections_config = sections_config;
+      lp.updated_at = new Date().toISOString();
+    }
+
+    try {
+      const fromKv = await kvStore.get<LandingPage>(`lp:${id}`) || (lp ? await kvStore.get<LandingPage>(`lp:${lp.slug}`) : null);
+      if (fromKv) {
+        fromKv.sections_config = sections_config;
+        fromKv.updated_at = new Date().toISOString();
+        await kvStore.put(`lp:${fromKv.slug}`, fromKv);
+        await kvStore.put(`lp:${fromKv.id}`, fromKv);
+        lp = fromKv;
+      } else if (lp) {
+        await kvStore.put(`lp:${lp.slug}`, lp);
+        await kvStore.put(`lp:${lp.id}`, lp);
+      }
+
+      const currentCustomLps = (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
+      const idx = currentCustomLps.findIndex((l) => l.id === id || l.slug === id);
+      if (idx >= 0) {
+        currentCustomLps[idx].sections_config = sections_config;
+        currentCustomLps[idx].updated_at = new Date().toISOString();
+        await kvStore.put("custom_lps_all", currentCustomLps);
+      }
+    } catch (e) {
+      console.warn("[KV updateLandingPageSections Error]", e);
+    }
+
+    saveToFile();
+    return lp || null;
   },
 
   async toggleLandingPageStatus(id: string, status: "active" | "paused"): Promise<boolean> {
@@ -820,13 +1000,19 @@ export const dbStore = {
     if (admin) {
       await admin.from("landing_pages").update({ status }).eq("id", id);
     }
-    const found = memoryLandingPages.find((p) => p.id === id);
+    const found = memoryLandingPages.find((p) => p.id === id || p.slug === id);
     if (found) {
       found.status = status;
       found.updated_at = new Date().toISOString();
-      return true;
+      saveToFile();
     }
-    return false;
+    try {
+      if (found) {
+        await kvStore.put(`lp:${found.slug}`, found);
+        await kvStore.put(`lp:${found.id}`, found);
+      }
+    } catch {}
+    return true;
   },
 
   async deleteLandingPage(id: string): Promise<boolean> {
@@ -836,11 +1022,21 @@ export const dbStore = {
     }
     const idx = memoryLandingPages.findIndex((p) => p.id === id || p.slug === id);
     if (idx >= 0) {
-      memoryLandingPages.splice(idx, 1);
+      const removed = memoryLandingPages.splice(idx, 1)[0];
       saveToFile();
-      return true;
+      try {
+        await kvStore.delete(`lp:${removed.slug}`);
+        await kvStore.delete(`lp:${removed.id}`);
+      } catch {}
     }
-    return false;
+
+    try {
+      const currentCustomLps = (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
+      const filtered = currentCustomLps.filter((l) => l.id !== id && l.slug !== id);
+      await kvStore.put("custom_lps_all", filtered);
+    } catch {}
+
+    return true;
   },
 
   // ORDERS

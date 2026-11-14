@@ -27,7 +27,6 @@ export const landingPageRegistry: Record<string, React.ComponentType<LandingPage
   "body-massager": BodyMassagerLandingPage,
   "body-massager-5in1": BodyMassagerLandingPage,
   "safka-7mebpwu": BodyMassagerLandingPage,
-  "starter-template": BodyMassagerLandingPage,
   "safka-b5fb3b6b": BodyMassagerLandingPage,
   "rexrack-massage-gun": BodyMassagerLandingPage,
   "massage-cushion": BodyMassagerLandingPage,
@@ -47,6 +46,10 @@ export const landingPageRegistry: Record<string, React.ComponentType<LandingPage
   "astrobeam-projector": AstroBeamLandingPage,
   "safka-6ab19443": AstroBeamLandingPage,
   "safka-6ab19443ca38d5013c7cb9fb": AstroBeamLandingPage,
+
+  // Universal Dynamic Starter Template (Balanced 7-stage layout for ANY product)
+  "starter-template": StarterLandingPage,
+  "default": StarterLandingPage,
 };
 
 /**

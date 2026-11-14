@@ -39,6 +39,23 @@ export interface Product {
   updated_at: string;
 }
 
+export interface LandingPageSectionConfig {
+  id: string; // 'hero' | 'comparison' | 'box_contents' | 'how_to_use' | 'reviews' | 'offers' | 'order_form' | 'guarantees'
+  name_ar: string;
+  enabled: boolean;
+}
+
+export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
+  { id: "hero", name_ar: "المعرض الرئيسي والسعر والزر السريع", enabled: true },
+  { id: "comparison", name_ar: "المقارنة البصرية (القديم vs الجديد)", enabled: true },
+  { id: "box_contents", name_ar: "محتويات العلبة الأصلية", enabled: true },
+  { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: true },
+  { id: "reviews", name_ar: "آراء وتجارب العملاء الواقعية (Social Proof)", enabled: true },
+  { id: "offers", name_ar: "باقات وعروض التوفير (عروض الكميات)", enabled: true },
+  { id: "order_form", name_ar: "فورم الطلب السريع والدفع عند الاستلام", enabled: true },
+  { id: "guarantees", name_ar: "شريط الضمانات والتطمين", enabled: true },
+];
+
 export interface LandingPage {
   id: string;
   product_id: string;
@@ -57,6 +74,7 @@ export interface LandingPage {
   created_at: string;
   updated_at: string;
   product?: Product;
+  sections_config?: LandingPageSectionConfig[];
 }
 
 export interface Order {
