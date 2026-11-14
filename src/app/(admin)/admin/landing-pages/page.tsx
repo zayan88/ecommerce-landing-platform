@@ -19,6 +19,9 @@ import {
   AlertCircle,
   ShieldCheck,
   Trash2,
+  Zap,
+  Wand2,
+  Package,
 } from "lucide-react";
 
 export default function AdminLandingPagesPage() {
@@ -28,13 +31,17 @@ export default function AdminLandingPagesPage() {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Creation Mode: "quick" | "ai_prompt" | "safka"
+  const [createMode, setCreateMode] = useState<"quick" | "ai_prompt" | "safka">("quick");
+
   // New Landing Page Form
   const [newTitle, setNewTitle] = useState("");
   const [newSlug, setNewSlug] = useState("");
-  const [newComponentKey, setNewComponentKey] = useState("");
   const [newProductId, setNewProductId] = useState("");
   const [newPixelId, setNewPixelId] = useState("");
+  const [customFeatures, setCustomFeatures] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -48,8 +55,10 @@ export default function AdminLandingPagesPage() {
       if (lpJson.success) setLandingPages(lpJson.landingPages);
       if (prodJson.success) {
         setProducts(prodJson.products);
-        if (prodJson.products.length > 0) {
+        if (prodJson.products.length > 0 && !newProductId) {
           setNewProductId(prodJson.products[0].id);
+          setNewTitle(`صفحة ${prodJson.products[0].title_ar}`);
+          setNewSlug(prodJson.products[0].slug || "new-product");
         }
       }
     } catch (err) {
@@ -63,49 +72,32 @@ export default function AdminLandingPagesPage() {
     fetchData();
   }, []);
 
-  const handleToggleStatus = async (lp: LandingPage) => {
-    const newStatus = lp.status === "active" ? "paused" : "active";
-    try {
-      const res = await fetch("/api/landing-pages", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lp.id, status: newStatus }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchData();
-      }
-    } catch (err) {
-      console.error(err);
+  const handleProductChange = (prodId: string) => {
+    setNewProductId(prodId);
+    const prod = products.find((p) => p.id === prodId);
+    if (prod) {
+      setNewTitle(`صفحة ${prod.title_ar}`);
+      setNewSlug(prod.slug || `offer-${Date.now().toString().slice(-4)}`);
     }
   };
 
-  const handleCopyUrl = (slug: string) => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const fullUrl = `${origin}/p/${slug}`;
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedSlug(slug);
-    setTimeout(() => setCopiedSlug(null), 2500);
-  };
+  const handleCopyPrompt = () => {
+    const selectedProd = products.find((p) => p.id === newProductId);
+    const prodName = selectedProd?.title_ar || "المنتج";
+    const promptText = `أنت خبير كتابة صفحات هبوط (Direct Response Copywriter) للتجارة الإلكترونية في مصر بنظام الدفع عند الاستلام.
+المنتج هو: "${prodName}".
+المطلوب استخراج وكتابة الآتي باللهجة المصرية المقنعة والمختصرة جداً بدون رغي أو حشو:
+1. عنوان جذاب مباشر في سطر واحد يوضح الفائدة الأساسية.
+2. 4 مميزات أساسية للمنتج (كل ميزة في جملة واحدة واضحة).
+3. محتويات العلبة (بتستلم إيه لما تفتح الشحنة).
+4. باقات العروض:
+   - قطعة واحدة
+   - قطعتان (وفر أكثر + شحن مجاني)
+   - 3 قطع (العرض العائلي الشامل)`;
 
-  const handleDeleteLandingPage = async (id: string, title: string) => {
-    if (!window.confirm(`هل أنت متأكد من رغبتك في حذف صفحة الهبوط "${title}" نهائياً؟`)) {
-      return;
-    }
-    try {
-      const res = await fetch(`/api/landing-pages?id=${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchData();
-      } else {
-        alert(data.error || "تعذر حذف الصفحة");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("حدث خطأ أثناء محاولة الحذف");
-    }
+    navigator.clipboard.writeText(promptText);
+    setCopiedPrompt(true);
+    setTimeout(() => setCopiedPrompt(false), 3000);
   };
 
   const handleCreateLandingPage = async (e: React.FormEvent) => {
@@ -114,14 +106,15 @@ export default function AdminLandingPagesPage() {
 
     setIsSubmitting(true);
     try {
+      const cleanSlug = newSlug.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "-");
       const payload = {
         title: newTitle.trim(),
-        slug: newSlug.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "-"),
-        component_key: (newComponentKey.trim() || newSlug.trim()).toLowerCase(),
+        slug: cleanSlug,
+        component_key: "starter-template", // Automatically uses the Universal High-Converting COD Template
         product_id: newProductId,
         meta_pixel_id: newPixelId.trim() || undefined,
         status: "active",
-        deployment_url: `/p/${newSlug.trim()}`,
+        deployment_url: `/p/${cleanSlug}`,
         deployment_status: "published",
       };
 
@@ -134,9 +127,6 @@ export default function AdminLandingPagesPage() {
       const data = await res.json();
       if (data.success) {
         setIsModalOpen(false);
-        setNewTitle("");
-        setNewSlug("");
-        setNewComponentKey("");
         fetchData();
       }
     } catch (err) {
@@ -146,16 +136,41 @@ export default function AdminLandingPagesPage() {
     }
   };
 
+  const handleCopyUrl = (slug: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const fullUrl = `${origin}/p/${slug}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedSlug(slug);
+    setTimeout(() => setCopiedSlug(null), 2500);
+  };
+
+  const handleDeleteLandingPage = async (id: string, title: string) => {
+    if (!window.confirm(`هل أنت متأكد من رغبتك في حذف صفحة الهبوط "${title}"؟`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/landing-pages?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="space-y-6 text-right font-sans" dir="rtl">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-gray-950 font-heading">
-            إدارة صفحات الهبوط المستقلة
+            إدارة صفحات الهبوط المستقلة (COD Funnels)
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            سجل وتوجيه صفحات الهبوط المتصلة بالنظام المركزي وتتبع روابط النشر
+            أنشئ صفحات هبوط احترافية ومستقلة لإعلانات فيسبوك وتيك توك بدون كتابة كود وبشحن ودفع عند الاستلام فوري
           </p>
         </div>
 
@@ -164,7 +179,7 @@ export default function AdminLandingPagesPage() {
           className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center gap-2 shadow-md shadow-emerald-600/25 transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>تسجيل صفحة هبوط جديدة</span>
+          <span>إنشاء صفحة هبوط جديدة</span>
         </button>
       </div>
 
@@ -178,260 +193,231 @@ export default function AdminLandingPagesPage() {
             <div
               key={lp.id}
               className={`bg-white rounded-3xl border transition-all shadow-xs flex flex-col justify-between overflow-hidden ${
-                lp.status === "active" ? "border-gray-200/90" : "border-amber-200 bg-amber-50/20"
+                lp.status === "active" ? "border-gray-200 hover:border-emerald-300" : "border-amber-200 bg-amber-50/20"
               }`}
             >
-              <div className="p-6 space-y-4">
-                {/* Status Badges */}
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                      lp.status === "active"
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-amber-100 text-amber-800 border border-amber-300"
-                    }`}
+              <div className="p-5 sm:p-6 space-y-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      قالب COD رشيق وسريع
+                    </span>
+                    <h3 className="text-base font-bold text-gray-900 leading-snug pt-1">
+                      {lp.title}
+                    </h3>
+                  </div>
+
+                  <button
+                    onClick={() => handleDeleteLandingPage(lp.id, lp.title)}
+                    className="p-1.5 text-gray-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
+                    title="حذف صفحة الهبوط"
                   >
-                    {lp.status === "active" ? (
-                      <>
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span>نشط (يستقبل طلبات)</span>
-                      </>
-                    ) : (
-                      <>
-                        <PauseCircle className="w-3.5 h-3.5 text-amber-600" />
-                        <span>متوقف مؤقتاً</span>
-                      </>
-                    )}
-                  </span>
-
-                  <span className="text-[11px] font-semibold text-gray-400 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    <span>
-                      {lp.last_published_at
-                        ? new Date(lp.last_published_at).toLocaleDateString("ar-EG")
-                        : "منشور"}
-                    </span>
-                  </span>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Title & Product */}
-                <div>
-                  <h3 className="text-lg font-black text-gray-900 font-heading leading-tight mb-1">
-                    {lp.title}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <Tag className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>المنتج:</span>
-                    <span className="font-bold text-gray-800">
-                      {lp.product?.title_ar || "منتج غير محدد"}
-                    </span>
+                <div className="p-3 bg-slate-50 rounded-2xl border border-gray-100 space-y-1 text-xs">
+                  <div className="flex items-center justify-between text-gray-500">
+                    <span>الرابط المباشر:</span>
+                    <span className="font-mono text-slate-800 font-bold dir-ltr">/p/{lp.slug}</span>
                   </div>
-                </div>
-
-                {/* URL and Deployment Info */}
-                <div className="bg-slate-50 rounded-xl p-3 border border-gray-200 space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 font-semibold">مسار الصفحة:</span>
-                    <span className="font-mono font-bold text-emerald-700" dir="ltr">
-                      {fullUrl}
-                    </span>
+                  <div className="flex items-center justify-between text-gray-500">
+                    <span>المنتج المرتبط:</span>
+                    <span className="font-bold text-slate-900 truncate max-w-[170px]">{lp.product?.title_ar || "منتج"}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">المكون البرمجي:</span>
-                    <span className="font-mono text-gray-700 bg-gray-200/60 px-1.5 py-0.5 rounded">
-                      {lp.component_key}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">بيكسل ميتا (Pixel):</span>
-                    <span className="font-mono text-gray-700">
-                      {lp.meta_pixel_id ? `ID: ${lp.meta_pixel_id}` : "الافتراضي"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">حالة النشر:</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                      منشور على Vercel
-                    </span>
+                  <div className="flex items-center justify-between text-gray-500">
+                    <span>السعر:</span>
+                    <span className="font-bold text-emerald-600 font-mono">{lp.product?.base_price || 0} ج.م</span>
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Actions */}
-              <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => handleToggleStatus(lp)}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
-                      lp.status === "active"
-                        ? "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-                        : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-                    }`}
-                  >
-                    {lp.status === "active" ? (
-                      <>
-                        <PauseCircle className="w-3.5 h-3.5" />
-                        <span>إيقاف مؤقت</span>
-                      </>
-                    ) : (
-                      <>
-                        <PlayCircle className="w-3.5 h-3.5" />
-                        <span>تفعيل الصفحة</span>
-                      </>
-                    )}
-                  </button>
+              <div className="p-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => handleCopyUrl(lp.slug)}
+                  className="py-2 px-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-2xs transition"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700">تم النسخ</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-gray-500" />
+                      <span>نسخ الرابط للإعلان</span>
+                    </>
+                  )}
+                </button>
 
-                  <button
-                    onClick={() => handleDeleteLandingPage(lp.id, lp.title)}
-                    className="py-2 px-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
-                    title="حذف صفحة الهبوط"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">حذف</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => handleCopyUrl(lp.slug)}
-                    className="py-2 px-3 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-bold flex items-center gap-1 shadow-2xs transition cursor-pointer"
-                  >
-                    {isCopied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-emerald-700">تم النسخ</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-gray-500" />
-                        <span>نسخ الرابط</span>
-                      </>
-                    )}
-                  </button>
-
-                  <a
-                    href={fullUrl}
-                    target="_blank"
-                    className="py-2 px-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1 shadow-xs transition"
-                  >
-                    <span>معاينة</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
+                <a
+                  href={fullUrl}
+                  target="_blank"
+                  className="py-2 px-3.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1 shadow-xs transition"
+                >
+                  <span>معاينة فورية</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Register New Landing Page Modal */}
+      {/* Multi-Mode Create Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-gray-100 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 className="text-lg font-black text-gray-900 font-heading">
-                تسجيل صفحة هبوط جديدة
-              </h3>
+              <div>
+                <h3 className="text-lg font-black text-gray-900 font-heading">
+                  إنشاء صفحة هبوط جديدة
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">اختر الطريقة الأسهل والأنسب لك</p>
+              </div>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {/* Mode Switcher Tabs */}
+            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setCreateMode("quick")}
+                className={`py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  createMode === "quick" ? "bg-white text-emerald-700 shadow-xs" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Zap className="w-4 h-4 text-emerald-600" />
+                <span>الوضع السريع التلقائي (1-Click)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCreateMode("ai_prompt")}
+                className={`py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  createMode === "ai_prompt" ? "bg-white text-indigo-700 shadow-xs" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Wand2 className="w-4 h-4 text-indigo-600" />
+                <span>برومبت الـ AI المجاني</span>
+              </button>
+            </div>
+
             <form onSubmit={handleCreateLandingPage} className="space-y-4">
+              {/* Product Selector */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  عنوان صفحة الهبوط
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="مثال: صفحة وعاء التبول المحمول - حملة رمضان"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  المسار الفرعي (Slug)
-                </label>
-                <input
-                  type="text"
-                  required
-                  dir="ltr"
-                  value={newSlug}
-                  onChange={(e) => setNewSlug(e.target.value)}
-                  placeholder="portable-urinal-v2"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden text-right font-mono"
-                />
-                <span className="text-[11px] text-gray-400 mt-1 block">
-                  الرابط سيكون: /p/{newSlug || "your-slug"}
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  المنتج المرتبط بالصفحة
+                  اختر المنتج المراد إنشاء صفحة هبوط له
                 </label>
                 <select
                   value={newProductId}
-                  onChange={(e) => setNewProductId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  onChange={(e) => handleProductChange(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-hidden font-medium"
                 >
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.title_ar} ({p.base_price} ج.م)
+                      {p.title_ar} — ({p.base_price} ج.م)
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  مفتاح المكون البرمجي (Component Key)
-                </label>
-                <input
-                  type="text"
-                  dir="ltr"
-                  value={newComponentKey}
-                  onChange={(e) => setNewComponentKey(e.target.value)}
-                  placeholder="portable-urinal"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden text-right font-mono"
-                />
-                <span className="text-[11px] text-gray-400 mt-1 block">
-                  اسم المجلد في `src/landing-pages/[key]`
-                </span>
+              {/* Title & Slug */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    عنوان الصفحة
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    رابط الصفحة (Slug)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    dir="ltr"
+                    value={newSlug}
+                    onChange={(e) => setNewSlug(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden font-mono text-right"
+                  />
+                  <span className="text-[10px] text-gray-400 mt-0.5 block">/p/{newSlug || "slug"}</span>
+                </div>
               </div>
 
+              {/* Mode Specific Helpers */}
+              {createMode === "quick" ? (
+                <div className="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 text-xs text-emerald-900 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span>توليد تلقائي فوري 100%</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-emerald-700">
+                    السيستم هيسحب صور المنتج وأسعاره ومواصفاته أوتوماتيك ويولّد صفحة هبوط رشيقة متطابقة مع معايير الـ COD (سلايدر صور + باقات عروض + فورم طلب مباشر + إشعار تليجرام).
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 bg-indigo-50/70 rounded-2xl border border-indigo-200/80 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                      <Wand2 className="w-4 h-4 text-indigo-600" />
+                      <span>برومبت الذكاء الاصطناعي المجاني:</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyPrompt}
+                      className="py-1 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-xs transition"
+                    >
+                      {copiedPrompt ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedPrompt ? "تم النسخ!" : "نسخ البرومبت لـ ChatGPT"}</span>
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-indigo-800 leading-relaxed">
+                    انسخ البرومبت وافتحه في حسابك المجاني في ChatGPT، وانسخ النتيجة هنا لو عايز تعدل وصف المنتج.
+                  </p>
+                </div>
+              )}
+
+              {/* Meta Pixel Override (Optional) */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  معرف بيكسل فيسبوك مخصص (اختياري)
+                  معرف بيكسل فيسبوك مخصص للحملة (اختياري)
                 </label>
                 <input
                   type="text"
                   dir="ltr"
                   value={newPixelId}
                   onChange={(e) => setNewPixelId(e.target.value)}
-                  placeholder="اتركه فارغاً لاستخدام البيكسل الافتراضي"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden text-right font-mono"
+                  placeholder="اتركه فارغاً لاستخدام البيكسل الافتراضي للمتجر"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden font-mono text-right"
                 />
               </div>
 
-              <div className="pt-3 flex justify-end gap-2">
+              {/* Action Buttons */}
+              <div className="pt-2 flex justify-end gap-2 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="py-2.5 px-4 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                  className="py-2.5 px-4 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition disabled:opacity-50"
+                  className="py-2.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "جاري الحفظ..." : "حفظ ونشر الصفحة"}
+                  {isSubmitting ? "جاري النشر..." : "🚀 إنشاء ونشر صفحة الهبوط فوراً"}
                 </button>
               </div>
             </form>

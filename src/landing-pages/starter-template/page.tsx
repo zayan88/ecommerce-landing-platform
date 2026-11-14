@@ -1,27 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState } from "react";
+import Image from "next/image";
 import { Product, LandingPage, ProductOffer } from "@/types";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
+import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import {
-  StarIcon,
-  ShieldCheckIcon,
-  TruckIcon,
-  ArrowPathIcon,
-  ChevronDownIcon,
-  SparklesIcon,
-  ClockIcon,
-  CheckIcon,
-  XMarkIcon,
-  FireIcon,
-  PhoneIcon,
-  ShoppingBagIcon,
-  CheckCircleIcon,
-  HeartIcon,
-  ArrowDownIcon,
-} from "@heroicons/react/24/solid";
+  Star,
+  ShieldCheck,
+  Truck,
+  Check,
+  ArrowDown,
+  Package,
+  Clock,
+  Sparkles,
+  PhoneCall,
+  Zap,
+} from "lucide-react";
 
 interface StarterLandingPageProps {
   product: Product;
@@ -29,719 +25,260 @@ interface StarterLandingPageProps {
 }
 
 export default function StarterLandingPage({ product, landingPage }: StarterLandingPageProps) {
-  const defaultOffer: ProductOffer = {
-    id: `offer-default-${product.id}`,
-    product_id: product.id,
-    title_ar: "قطعة واحدة (عرض العينات)",
-    quantity: 1,
-    price: product.base_price || 299,
-    original_price: product.compare_at_price || 450,
-    discount_label: "خصم خاص",
-    is_popular: true,
-    free_shipping: false,
-    sort_order: 1,
-  };
+  // Built-in Dynamic Offers
+  const defaultOffers: ProductOffer[] = [
+    {
+      id: `offer-1-${product.id}`,
+      product_id: product.id,
+      title_ar: "قطعة واحدة (تجربة)",
+      quantity: 1,
+      price: product.base_price,
+      original_price: product.compare_at_price || Math.round(product.base_price * 1.35),
+      discount_label: "خصم خاص",
+      is_popular: false,
+      free_shipping: true,
+      sort_order: 1,
+    },
+    {
+      id: `offer-2-${product.id}`,
+      product_id: product.id,
+      title_ar: "قطعتان (الأكثر طلباً - توفير إضافي)",
+      quantity: 2,
+      price: Math.round(product.base_price * 1.75),
+      original_price: Math.round((product.compare_at_price || product.base_price * 1.35) * 2),
+      discount_label: "وفر أكثر + شحن مجاني",
+      is_popular: true,
+      free_shipping: true,
+      sort_order: 2,
+    },
+    {
+      id: `offer-3-${product.id}`,
+      product_id: product.id,
+      title_ar: "3 قطع (عرض التوفير العائلي الشامل)",
+      quantity: 3,
+      price: Math.round(product.base_price * 2.45),
+      original_price: Math.round((product.compare_at_price || product.base_price * 1.35) * 3),
+      discount_label: "أعلى توفير + شحن مجاني",
+      is_popular: false,
+      free_shipping: true,
+      sort_order: 3,
+    },
+  ];
 
-  const initialOffer =
-    product.offers && product.offers.length > 0
-      ? product.offers.find((o) => o.is_popular) || product.offers[0]
-      : defaultOffer;
+  const availableOffers =
+    product.offers && product.offers.length > 0 ? product.offers : defaultOffers;
 
-  const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(initialOffer);
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(
+    availableOffers.find((o) => o.quantity === 1) || availableOffers[0]
+  );
 
-  // Live Countdown Timer (Simulated Urgency)
-  const [timeLeft, setTimeLeft] = useState({ hours: 3, minutes: 42, seconds: 18 });
+  const images = product.images && product.images.length > 0 ? product.images : ["/images/hero-organizer.jpg"];
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: 59, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return { hours: 4, minutes: 30, seconds: 0 };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // Extract clean bullet points from product description
+  const descriptionLines = (product.description_ar || "")
+    .split(/[\n.!؟]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 8)
+    .slice(0, 4);
+
+  const features =
+    descriptionLines.length > 0
+      ? descriptionLines
+      : [
+          "خامات أصلية عالية الجودة تضمن المتانة والتحمل طويل الأمد.",
+          "تصميم عملي وعصري يلبي احتياجات الاستخدام اليومي بكل سهولة.",
+          "آمن وسهل الاستخدام مع ضمان كامل وحق الفحص والمعاينة قبل الدفع.",
+          "شحن سريع ومجاني لجميع محافظات مصر وتأكيد فوري للطلب.",
+        ];
 
   const scrollToCheckout = () => {
     const el = document.getElementById("order-form-section");
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
-  const discountAmount = product.compare_at_price
-    ? product.compare_at_price - product.base_price
-    : 200;
-  const discountPercent = product.compare_at_price
-    ? Math.round((discountAmount / product.compare_at_price) * 100)
-    : 36;
-
-  const isMassageGun =
-    product.title_ar?.includes("مساج") ||
-    product.slug?.includes("massage") ||
-    product.slug?.includes("b5fb3b6b");
-
-  // Local, bulletproof, high-speed images
-  const heroImageSrc = product.images?.[0] || "/images/hero-organizer.jpg";
-  const problemImageSrc = isMassageGun ? "/images/problem-backpain.jpg" : "/images/problem-clutter.jpg";
-  const solutionImageSrc = product.images?.[2] || product.images?.[1] || "/images/solution-organized.jpg";
-  const detailImageSrc = product.images?.[1] || product.images?.[3] || "/images/materials-quality.jpg";
-  const unboxingImageSrc = "/images/unboxing-inspection.jpg";
-
   return (
-    <div
-      className="min-h-screen bg-slate-100 text-slate-900 font-sans selection:bg-orange-500 selection:text-white"
-      dir="rtl"
-    >
-      {/* 1. TOP STICKY URGENCY BAR */}
-      <div className="bg-slate-950 text-white text-xs md:text-sm py-2.5 px-4 sticky top-0 z-50 shadow-md border-b border-orange-500/30">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 px-2.5 py-0.5 rounded-full text-xs font-black flex items-center gap-1 shadow-xs animate-pulse">
-              <FireIcon className="w-3.5 h-3.5 fill-slate-950" /> عرض خاص وحصري اليوم
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white pb-24 md:pb-16" dir="rtl">
+      {/* 1. Announcement Bar */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2 border-b border-indigo-500/20">
+        <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
+        <span>شحن مجاني 100% لجميع محافظات مصر + حق المعاينة والتجربة قبل الدفع 💵</span>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* 2. Main Product Hero Card */}
+        <div className="bg-white rounded-3xl p-4 sm:p-7 border border-slate-200/90 shadow-sm space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            
+            {/* Gallery Column */}
+            <div className="space-y-3">
+              <div className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
+                <Image
+                  src={images[activeImageIndex] || images[0]}
+                  alt={product.title_ar}
+                  fill
+                  priority
+                  className="object-contain p-2"
+                />
+              </div>
+
+              {/* Thumbnails */}
+              {images.length > 1 && (
+                <div className="grid grid-cols-4 gap-2">
+                  {images.slice(0, 4).map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveImageIndex(idx)}
+                      className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer bg-slate-50 ${
+                        activeImageIndex === idx ? "border-indigo-600 ring-2 ring-indigo-600/20" : "border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <Image src={img} alt={`صورة ${idx + 1}`} fill className="object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Trust Badges */}
+              <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
+                  <span className="font-bold text-[11px] text-slate-700 block">معاينة قبل الدفع</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <Truck className="w-4 h-4 text-indigo-600 mx-auto mb-0.5" />
+                  <span className="font-bold text-[11px] text-slate-700 block">شحن مجاني 100%</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <Clock className="w-4 h-4 text-amber-600 mx-auto mb-0.5" />
+                  <span className="font-bold text-[11px] text-slate-700 block">توصيل 5-7 أيام</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Info & Core Specs */}
+            <div className="space-y-4 text-right">
+              {/* Reviews & Stock */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                  <Star className="w-3.5 h-3.5 fill-amber-500" />
+                  <span className="text-slate-800">4.9 / 5.0 (أكثر من 350 تقييم إيجابي)</span>
+                </div>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  ✓ متوفر في المخزن (شحن فوري)
+                </span>
+              </div>
+
+              {/* Product Title */}
+              <h1 className="text-xl sm:text-2xl font-black font-heading text-slate-950 leading-snug">
+                {product.title_ar}
+              </h1>
+
+              {/* Core Features List */}
+              <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-2.5 text-xs sm:text-sm">
+                {features.map((feat, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5">
+                    <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                    <span className="text-slate-700 font-medium leading-relaxed">{feat}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Price Display */}
+              <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-indigo-950 block font-medium">السعر في العرض الحالي:</span>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className="text-2xl sm:text-3xl font-black text-indigo-900 font-mono">{selectedOffer.price} ج.م</span>
+                    {selectedOffer.original_price && (
+                      <span className="text-sm text-slate-400 line-through font-mono">{selectedOffer.original_price} ج.م</span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-left">
+                  <span className="inline-block text-xs font-bold text-emerald-800 bg-emerald-100/90 px-3 py-1 rounded-full border border-emerald-300">
+                    🚚 شحن مجاني
+                  </span>
+                  <span className="block text-[11px] text-indigo-800 mt-1 font-semibold">الدفع عند الاستلام</span>
+                </div>
+              </div>
+
+              {/* CTA Button */}
+              <button
+                type="button"
+                onClick={scrollToCheckout}
+                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-base sm:text-lg shadow-lg shadow-emerald-600/25 active:scale-98 transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>اطلب الآن - الدفع بعد الفحص والمعاينة</span>
+                <ArrowDown className="w-5 h-5 animate-bounce" />
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        {/* 3. Offer Tiers Selector Card */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4">
+          <div className="text-right">
+            <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+              عروض التوفير الخاصة
             </span>
-            <span className="hidden sm:inline text-slate-200 font-bold">
-              معاينة مجانية قبل الدفع + خصم يصل لـ 50%
-            </span>
+            <h2 className="text-lg sm:text-xl font-black text-slate-950 mt-2 font-heading">
+              اختر الكمية والعرض المناسب لك (شحن مجاني لجميع العروض)
+            </h2>
           </div>
 
-          <div className="flex items-center gap-1.5 font-mono text-xs font-black bg-white/10 px-3 py-1 rounded-xl backdrop-blur-xs border border-white/10">
-            <ClockIcon className="w-3.5 h-3.5 text-amber-300" />
-            <span className="text-slate-300">ينتهي العرض خلال:</span>
-            <span className="bg-black/70 px-1.5 py-0.5 rounded text-amber-300 font-bold">
-              {String(timeLeft.hours).padStart(2, "0")}
-            </span>
-            :
-            <span className="bg-black/70 px-1.5 py-0.5 rounded text-amber-300 font-bold">
-              {String(timeLeft.minutes).padStart(2, "0")}
-            </span>
-            :
-            <span className="bg-black/70 px-1.5 py-0.5 rounded text-amber-300 font-bold">
-              {String(timeLeft.seconds).padStart(2, "0")}
-            </span>
+          <HeroOfferSelector
+            offers={availableOffers}
+            selectedOffer={selectedOffer}
+            onSelectOffer={(offer) => setSelectedOffer(offer)}
+            accentColor="emerald"
+          />
+        </div>
+
+        {/* 4. The Prominent Checkout Form Section */}
+        <div id="order-form-section" className="scroll-mt-6">
+          <EgyptianCheckoutForm
+            product={product}
+            selectedOffer={selectedOffer}
+            landingPageSlug={landingPage.slug}
+          />
+        </div>
+
+        {/* 5. Guarantees Footer */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs text-slate-600 pt-2">
+          <div className="p-3 rounded-2xl bg-white border border-slate-200">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+            <span className="font-bold block text-slate-800">معاينة قبل الدفع</span>
+            <span className="text-[10px] text-slate-500">افحص طلبك مع المندوب</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-white border border-slate-200">
+            <Truck className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+            <span className="font-bold block text-slate-800">شحن مجاني</span>
+            <span className="text-[10px] text-slate-500">لكل محافظات مصر</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-white border border-slate-200">
+            <Clock className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+            <span className="font-bold block text-slate-800">توصيل سريع</span>
+            <span className="text-[10px] text-slate-500">من 5 إلى 7 أيام</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-white border border-slate-200">
+            <PhoneCall className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+            <span className="font-bold block text-slate-800">تأكيد فوري</span>
+            <span className="text-[10px] text-slate-500">اتصال لتأكيد الميعاد</span>
           </div>
         </div>
       </div>
 
-      {/* 2. HEADER */}
-      <header className="bg-white border-b border-slate-200 py-3.5 px-4 sticky top-10 md:top-11 z-40 shadow-xs">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-950 to-indigo-900 text-white flex items-center justify-center font-black text-xl shadow-md group-hover:scale-105 transition">
-              R
-            </div>
-            <div>
-              <span className="font-heading font-black text-xl text-slate-950 block leading-tight">
-                RexRack
-              </span>
-              <span className="text-[11px] text-orange-600 font-black">
-                المتجر المعتمد - معاينة قبل الدفع 🇪🇬
-              </span>
-            </div>
-          </Link>
-
-          <button
-            onClick={scrollToCheckout}
-            className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white text-xs md:text-sm font-black shadow-md shadow-orange-500/30 active:scale-95 transition cursor-pointer flex items-center gap-1.5"
-          >
-            <ShoppingBagIcon className="w-4 h-4" />
-            <span>اطلب الآن</span>
-          </button>
-        </div>
-      </header>
-
-      {/* 3. HERO SECTION (With Solid-Height Guaranteed Image #1) */}
-      <section className="py-8 md:py-12 px-4 max-w-4xl mx-auto text-center space-y-6">
-        {/* Rating and Trust Pill */}
-        <div className="flex items-center justify-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 bg-amber-50 px-3.5 py-1.5 rounded-full border border-amber-300">
-            <div className="flex text-amber-400">
-              {[...Array(5)].map((_, i) => (
-                <StarIcon key={i} className="w-4 h-4 text-amber-400" />
-              ))}
-            </div>
-            <span className="text-xs font-black text-amber-950">4.9 / 5</span>
-            <span className="text-[11px] text-amber-800 font-bold">(1,280+ تقييم حقيقي في مصر)</span>
-          </div>
-
-          <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-300">
-            ✓ فحص ومعاينة مجانية أمام المندوب قبل الدفع
-          </span>
-        </div>
-
-        {/* Main Product Headline */}
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-950 font-heading leading-tight tracking-tight">
-          {product.title_ar || "حامل ومنظم RexRack الذكي متعدد الوظائف"}
-        </h1>
-
-        {/* Subtitle */}
-        <p className="text-base sm:text-lg text-slate-700 max-w-2xl mx-auto leading-relaxed font-medium">
-          {isMassageGun
-            ? "ودّع إجهاد العضلات واستمتع بمساج مريح في أي وقت! تصميم مبتكر بذراع ممتدة تصل لمناطق الظهر الصعبة بنفسك مع 4 رؤوس تدليك وموتور قوي 20 وات."
-            : product.description_ar
-            ? product.description_ar.replace(/<[^>]*>/g, " ").trim().slice(0, 160)
-            : "وداعاً للفوضى وتكدس الأغراض.. نظّم بيتك ومكتبك ووفر 80% من المساحة بخامات فولاذية فاخرة تدوم طويلاً وتتحمل أثقل الأوزان بثبات فائق."}
-        </p>
-
-        {/* Big Hero Image #1: 1:1 Aspect Ratio (Square) */}
-        <div
-          className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-2xl group"
-          style={{ aspectRatio: "1 / 1" }}
-        >
-          <img
-            src={heroImageSrc}
-            alt="صورة RexRack الرئيسية"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 block"
-            loading="eager"
-          />
-          {/* Floating badges */}
-          <div className="absolute top-4 right-4 bg-slate-950/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-full flex items-center gap-1.5 shadow-xl border border-white/20">
-            <SparklesIcon className="w-4 h-4 text-amber-400" />
-            <span>منتج أصلي 100% معتمد</span>
-          </div>
-
-          <div className="absolute bottom-4 right-4 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black px-4 py-2 rounded-2xl flex items-center gap-1.5 shadow-xl">
-            <FireIcon className="w-4 h-4 fill-white" />
-            <span>متبقي 6 قطع فقط بسعر العرض</span>
-          </div>
-        </div>
-
-        {/* Price & Current Savings Box */}
-        <div className="p-5 rounded-3xl bg-white border-2 border-slate-300 shadow-lg flex items-center justify-between max-w-xl mx-auto flex-wrap gap-4">
-          <div className="text-right">
-            <span className="text-xs text-slate-500 font-bold block">السعر الحالي للقطعة:</span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-3xl font-black font-heading text-slate-950">
-                {product.base_price} ج.م
-              </span>
-              {product.compare_at_price && (
-                <span className="text-base text-slate-400 line-through font-bold">
-                  {product.compare_at_price} ج.م
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="text-left">
-            <span className="bg-red-600 text-white font-black text-xs px-3.5 py-1.5 rounded-xl shadow-xs block text-center">
-              خصم {discountPercent}% فوري
-            </span>
-            <span className="text-xs font-black text-emerald-700 block mt-1 text-center">
-              وفر {discountAmount} ج.م اليوم
-            </span>
-          </div>
-        </div>
-
-        {/* Tiered Offer Selector */}
-        <div className="space-y-3 max-w-xl mx-auto text-right">
-          <label className="block text-sm font-black text-slate-950">
-            👇 اختر باقة العرض المناسبة لك:
-          </label>
-
-          <div className="space-y-2.5">
-            {product.offers?.map((offer) => {
-              const isSelected = selectedOffer.id === offer.id;
-              return (
-                <div
-                  key={offer.id}
-                  onClick={() => setSelectedOffer(offer)}
-                  className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                    isSelected
-                      ? "border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/20 shadow-md"
-                      : "border-slate-300 bg-white hover:border-orange-300"
-                  }`}
-                >
-                  {offer.is_popular && (
-                    <span className="absolute -top-3 left-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-black px-3 py-0.5 rounded-full shadow-xs">
-                      🔥 الأكثر طلباً وتوفيراً
-                    </span>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        isSelected ? "border-orange-600 bg-orange-600 text-white" : "border-slate-400"
-                      }`}
-                    >
-                      {isSelected && <CheckIcon className="w-3.5 h-3.5 text-white stroke-[3]" />}
-                    </div>
-                    <div>
-                      <span className="font-heading font-black text-sm text-slate-950 block">
-                        {offer.title_ar}
-                      </span>
-                      <span className="text-xs text-slate-600 block font-bold">
-                        {offer.discount_label || (offer.free_shipping ? "شحن مجاني" : "دفع عند الاستلام")}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-left">
-                    <span className="text-lg font-black font-heading text-slate-950 block">
-                      {offer.price} ج.م
-                    </span>
-                    {offer.original_price && (
-                      <span className="text-xs text-slate-400 line-through block">
-                        {offer.original_price} ج.م
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Big Orange CTA Button */}
-        <div className="pt-2 max-w-xl mx-auto space-y-3">
-          <button
-            onClick={scrollToCheckout}
-            className="w-full py-4 px-8 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-lg md:text-xl shadow-xl shadow-orange-500/35 active:scale-98 transition flex items-center justify-center gap-3 cursor-pointer"
-          >
-            <ArrowDownIcon className="w-6 h-6 animate-bounce" />
-            <span>اضغط هنا واطلب الآن (الدفع عند الاستلام بعد المعاينة)</span>
-          </button>
-
-          <div className="flex items-center justify-center gap-4 text-xs font-bold text-slate-600 pt-1">
-            <span className="flex items-center gap-1 text-emerald-700">
-              <CheckCircleIcon className="w-4 h-4 text-emerald-600" /> فحص مجاني قبل الدفع
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1 text-slate-800">
-              <TruckIcon className="w-4 h-4 text-orange-600" /> شحن لجميع المحافظات
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. SECTION 2: THE PROBLEM (Solid-Height Guaranteed Image #2) */}
-      <section className="py-14 bg-white border-y border-slate-200 px-4">
-        <div className="max-w-4xl mx-auto space-y-8 text-right">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-black text-rose-700 bg-rose-50 px-3.5 py-1 rounded-full border border-rose-200">
-              المشكلة اليومية
-            </span>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-950 font-heading">
-              {isMassageGun
-                ? "هل تعاني من آلام الظهر، تشنج الرقبة، وإجهاد العضلات؟"
-                : "هل تعاني من فوضى الأغراض وضيق المساحة كل يوم؟"}
-            </h2>
-            <p className="text-sm text-slate-600">
-              {isMassageGun
-                ? "ساعات الجلوس الطويلة في العمل أو التمارين المجهدة تسبب شد عضلي مستمر وألم في الظهر يصعب الوصول إليه بنفسك"
-                : "تراكم الأجهزة، الأسلاك، والمستلزمات في كل مكان يسبب مظهراً غير مريح وضياع مستمر للوقت"}
-            </p>
-          </div>
-
-          {/* 1:1 Aspect Ratio Guaranteed Image #2 (Problem) */}
-          <div
-            className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl"
-            style={{ aspectRatio: "1 / 1" }}
-          >
-            <img
-              src={problemImageSrc}
-              alt="مشكلة المنتج"
-              className="w-full h-full object-cover block"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent flex items-end p-6 md:p-8">
-              <div className="text-white space-y-1">
-                <span className="bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full inline-block">
-                  {isMassageGun ? "المعاناة اليومية" : "قبل RexRack"}
-                </span>
-                <p className="text-sm md:text-base font-bold text-slate-100">
-                  {isMassageGun
-                    ? "آلام وشد مستمر في عضلات الظهر والرقبة، وصعوبة الوصول لمناطق الألم دون مساعدة خارجية"
-                    : "فوضى مستمرة على المكتب والمنزل، صعوبة إيجاد أشيائك، ومنتجات بلاستيكية رديئة تنكسر سريعاً"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Pain Points Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            <div className="p-5 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-2">
-              <div className="flex items-center gap-2 text-rose-600 font-black text-sm">
-                <XMarkIcon className="w-5 h-5 text-rose-600" />
-                <span>{isMassageGun ? "ألم وإجهاد مزمن" : "ضياع الوقت والجهد"}</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {isMassageGun
-                  ? "تشنجات عضلية في الرقبة والأكتاف بعد يوم عمل شاق تحرمك من الاسترخاء والنوم المريح."
-                  : "البحث المتكرر عن الهاتف أو المتعلقات وسط كركبة المكتب وتشتت التركيز."}
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-2">
-              <div className="flex items-center gap-2 text-rose-600 font-black text-sm">
-                <XMarkIcon className="w-5 h-5 text-rose-600" />
-                <span>{isMassageGun ? "صعوبة تدليك الظهر" : "حوامل هشة تنكسر"}</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {isMassageGun
-                  ? "الأجهزة العادية قصيرة وتتطلب شخصاً آخر ليساعدك في عمل المساج لمناطق الظهر الصعبة."
-                  : "معظم المنتجات الرخيصة مصنوعة من بلاستيك ضعيف يسقط أجهزتك ويتلف في أيام."}
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-2">
-              <div className="flex items-center gap-2 text-rose-600 font-black text-sm">
-                <XMarkIcon className="w-5 h-5 text-rose-600" />
-                <span>{isMassageGun ? "تكاليف جلسات باهظة" : "شراء مجهول المصدر"}</span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {isMassageGun
-                  ? "جلسات المساج والسبا مكلفة جداً وتتطلب وقتاً وحجزاً ومصاريف إضافية مستمرة."
-                  : "الخوف من الشراء أونلاين واستلام منتج غير مطابق بدون أي ضمان أو معاينة."}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. SECTION 3: THE SOLUTION (Solid-Height Guaranteed Image #3) */}
-      <section className="py-14 px-4 max-w-4xl mx-auto text-right space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-300">
-            الحل السحري والنهائي
-          </span>
-          <h2 className="text-2xl md:text-4xl font-black text-slate-950 font-heading">
-            {isMassageGun
-              ? "الحل النهائي مع RexRack: مسدس مساج 5×1 بذراع تطويل ممتدة"
-              : "إليك الحل مع RexRack: تنظيم فوري وتوفير 80% من المساحة"}
-          </h2>
-          <p className="text-sm text-slate-600">
-            {isMassageGun
-              ? "تصميم مريح بذراع ممتدة و4 رؤوس متخصصة يمنحك راحة فورية لكامل الظهر والكتفين بنفسك"
-              : "تصميم هندسي متطور يستغل المساحات الرأسية ويمنحك شكلاً ديكورياً فائق الرقي"}
-          </p>
-        </div>
-
-        {/* 1:1 Aspect Ratio Guaranteed Image #3 (Solution) */}
-        <div
-          className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl group"
-          style={{ aspectRatio: "1 / 1" }}
-        >
-          <img
-            src={solutionImageSrc}
-            alt="حل RexRack الفعلي"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 block"
-            loading="lazy"
-          />
-          <div className="absolute top-4 right-4 bg-emerald-600 text-white text-xs font-black px-4 py-1.5 rounded-full shadow-lg">
-            بعد استخدام RexRack ✓
-          </div>
-        </div>
-
-        {/* The Solution Advantages Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-sm flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-              <CheckIcon className="w-6 h-6 stroke-[3]" />
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-950 text-sm">
-                {isMassageGun ? "ذراع ممتدة لتدليك الظهر" : "استغلال مثالي للمساحات"}
-              </h4>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                {isMassageGun
-                  ? "تصل لأصعب نقاط الظهر والعمود الفقري بنفسك وبكل راحة بدون أن تطلب مساعدة أحد."
-                  : "يوفر أكثر من 80% من مساحة مكتبك وغرفتك بتصميم رأسي ذكي يجمع كل أغراضك في مكان واحد."}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-sm flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
-              <SparklesIcon className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-950 text-sm">
-                {isMassageGun ? "4 رؤوس تدليك متخصصة" : "مظهر عصري ديكوري فاخر"}
-              </h4>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                {isMassageGun
-                  ? "رؤوس مختلفة لتدليك العضلات الكبيرة، المفاصل، الرقبة، والأوتار بدقة وكفاءة عالية."
-                  : "يضيف لمسة فخامة وأناقة تليق بمنزلك أو مكتبك بدلاً من الفوضى المزعجة."}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. SECTION 4: MATERIALS & QUALITY (Solid-Height Guaranteed Image #4) */}
-      <section className="py-14 bg-slate-950 text-white border-y border-slate-800 px-4">
-        <div className="max-w-4xl mx-auto space-y-8 text-right">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-black text-amber-300 bg-white/10 px-3.5 py-1 rounded-full border border-amber-300/30">
-              جودة لا تضاهى
-            </span>
-            <h2 className="text-2xl md:text-4xl font-black text-white font-heading">
-              {isMassageGun
-                ? "موتور قوي 20 وات وبطارية ليثيوم قابلة لإعادة الشحن"
-                : "مصنوع من الفولاذ المقاوم للصدأ ومصمم ليدوم طويلاً"}
-            </h2>
-            <p className="text-sm text-slate-300">
-              {isMassageGun
-                ? "شحن Type-C سريع، صوت هادئ، وخامات معالجة ضد الصدمات لجلسات استرخاء يومية تدوم طويلاً"
-                : "هيكل صلب معزز بقواعد سيليكون مانعة للانزلاق لتحمل الاستخدام الشاق والأوزان الثقيلة"}
-            </p>
-          </div>
-
-          {/* 1:1 Aspect Ratio Guaranteed Image #4 (Quality) */}
-          <div
-            className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-700 shadow-2xl group"
-            style={{ aspectRatio: "1 / 1" }}
-          >
-            <img
-              src={detailImageSrc}
-              alt="تفاصيل خامات وجودة تصنيع RexRack"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 block"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-6 md:p-8">
-              <div className="text-white space-y-1">
-                <span className="bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-full inline-block">
-                  {isMassageGun ? "تقنية التدليك العميق" : "طلاء حراري معالج"}
-                </span>
-                <p className="text-sm md:text-base font-bold text-slate-200">
-                  {isMassageGun
-                    ? "تدليك فعال يفك العقد العضلية ويزيد تدفق الدورة الدموية لتخفيف الإجهاد والتوتر فوراً."
-                    : "مقاوم للصدأ، الخدوش، والرطوبة، مع ثبات تام يمنع أي اهتزاز أو سقوط للأجهزة."}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Spec Highlights */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-              <ShieldCheckIcon className="w-6 h-6 text-orange-400 mx-auto" />
-              <h4 className="font-black text-sm text-white">
-                {isMassageGun ? "4 رؤوس تدليك" : "فولاذ مقاوم للصدأ"}
-              </h4>
-              <p className="text-[11px] text-slate-400">
-                {isMassageGun ? "لكافة عضلات الجسم" : "يدوم لسنوات"}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-              <CheckCircleIcon className="w-6 h-6 text-emerald-400 mx-auto" />
-              <h4 className="font-black text-sm text-white">
-                {isMassageGun ? "ذراع تطويل للظهر" : "ثبات 100%"}
-              </h4>
-              <p className="text-[11px] text-slate-400">
-                {isMassageGun ? "بدون مساعدة أحد" : "قواعد سيليكونية مانعة"}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-              <TruckIcon className="w-6 h-6 text-blue-400 mx-auto" />
-              <h4 className="font-black text-sm text-white">شحن 5-7 أيام</h4>
-              <p className="text-[11px] text-slate-400">لكافة أنحاء مصر</p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-              <ArrowPathIcon className="w-6 h-6 text-amber-400 mx-auto" />
-              <h4 className="font-black text-sm text-white">استبدال 14 يوم</h4>
-              <p className="text-[11px] text-slate-400">ضمان ذهبي معتمد</p>
-            </div>
-          </div>
-
-          {/* Mid-Page Call to Action */}
-          <div className="text-center pt-4">
-            <button
-              onClick={scrollToCheckout}
-              className="py-4 px-8 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 text-white font-black text-base md:text-lg shadow-xl shadow-orange-500/30 active:scale-95 transition cursor-pointer inline-flex items-center gap-2"
-            >
-              <ShoppingBagIcon className="w-5 h-5" />
-              <span>احجز قطعتك الآن بسعر العرض قبل نفاذ الكمية</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. SECTION 5: UNBOXING & LAWFUL INSPECTION (Solid-Height Guaranteed Image #5) */}
-      <section className="py-14 bg-white border-b border-slate-200 px-4">
-        <div className="max-w-4xl mx-auto space-y-8 text-right">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-300">
-              حقك الكامل 100%
-            </span>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-950 font-heading">
-              افتح الطرد وعاين المنتج بنفسك أمام المندوب قبل دفع مليم واحد
-            </h2>
-            <p className="text-sm text-slate-600">
-              سياسة RexRack تضمن لك راحة البال الكاملة: لن تدفع جنيهاً واحداً إلا بعد أن تتأكد من مطابقة وجودة المنتج بنفسك.
-            </p>
-          </div>
-
-          {/* 1:1 Aspect Ratio Guaranteed Image #5 (Unboxing) */}
-          <div
-            className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto aspect-square rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl"
-            style={{ aspectRatio: "1 / 1" }}
-          >
-            <img
-              src={unboxingImageSrc}
-              alt="معاينة وفتح الطرد أمام مندوب الشحن"
-              className="w-full h-full object-cover block"
-              loading="lazy"
-            />
-            <div className="absolute bottom-4 right-4 bg-slate-950/90 text-white text-xs font-black px-4 py-2 rounded-2xl flex items-center gap-2 border border-white/20">
-              <ShieldCheckIcon className="w-5 h-5 text-emerald-400" />
-              <span>معاينة حقيقية مجانية عند باب بيتك</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. SECTION 6: COD DIRECT CHECKOUT FORM */}
-      <section id="order-form-section" className="py-16 bg-slate-200 border-t border-slate-300 px-4">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="text-center max-w-xl mx-auto space-y-2">
-            <span className="text-xs font-black text-orange-700 bg-orange-100 px-3.5 py-1 rounded-full border border-orange-300">
-              استمارة الطلب المباشر
-            </span>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-950 font-heading">
-              أدخل بياناتك وسيصلك الطلب خلال 5 إلى 7 أيام
-            </h2>
-            <p className="text-xs text-slate-700 font-bold">
-              الدفع عند الاستلام بعد المعاينة والفحص. شحن سريع لكافة محافظات مصر.
-            </p>
-          </div>
-
-          <EgyptianCheckoutForm
-            product={product}
-            landingPageSlug={landingPage.slug}
-            selectedOffer={selectedOffer}
-            onOfferSelect={(offer) => setSelectedOffer(offer)}
-          />
-        </div>
-      </section>
-
-      {/* 9. SECTION 7: 14-DAY GOLDEN GUARANTEE */}
-      <section className="py-14 px-4 max-w-4xl mx-auto">
-        <div className="p-8 md:p-10 rounded-3xl bg-gradient-to-br from-amber-500/15 via-white to-orange-500/10 border-2 border-amber-400 shadow-xl text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center mx-auto shadow-md">
-            <HeartIcon className="w-8 h-8" />
-          </div>
-
-          <h3 className="text-2xl md:text-3xl font-black font-heading text-slate-950">
-            شهادة ضمان RexRack الذهبية 100%
-          </h3>
-
-          <p className="text-sm md:text-base text-slate-700 max-w-2xl mx-auto leading-relaxed">
-            نحن واثقون تماماً من جودة منتجاتنا. لذلك نمنحك ضماناً حقيقياً لمدة 14 يوماً كاملاً: إذا وجدت أي عيب صناعة أو لم يكن المنتج مطابقاً تماماً لما رأيته، سنقوم باستبداله فوراً مجاناً أو استرداد كامل المبلغ دون أي تعقيد.
-          </p>
-
-          <div className="pt-2 flex items-center justify-center gap-6 text-xs md:text-sm font-black text-amber-950 flex-wrap">
-            <span className="flex items-center gap-1">
-              <CheckCircleIcon className="w-5 h-5 text-emerald-600" /> ضمان استبدال 14 يوم
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <CheckCircleIcon className="w-5 h-5 text-emerald-600" /> معاينة كاملة قبل الدفع
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <CheckCircleIcon className="w-5 h-5 text-emerald-600" /> خدمة عملاء ومتابعة مستمرة
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* 10. SECTION 8: FAQ ACCORDION */}
-      <section className="py-14 bg-white border-t border-slate-200 px-4">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="text-center mb-8 space-y-2">
-            <span className="text-xs font-black text-slate-800 bg-slate-100 px-3.5 py-1 rounded-full border border-slate-300">
-              إجابات واضحة
-            </span>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-950 font-heading">
-              الأسئلة الأكثر شيوعاً
-            </h2>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              {
-                q: "هل يمكنني فتح الشحنة ومعاينة المنتج قبل دفع أي أموال؟",
-                a: "نعم بكل تأكيد! يحق لك بالكامل فتح الطرد، فحص المنتج والتأكد من خامته وجودته أمام مندوب التوصيل قبل دفع ثمن الطلب أو مصاريف الشحن.",
-              },
-              {
-                q: "كم يستغرق وصول الطلب إلى باب منزلي؟",
-                a: "يتم تجهيز وشحن الطلب فورياً؛ يستغرق التوصيل من 5 إلى 7 أيام لجميع محافظات الجمهورية.",
-              },
-              {
-                q: "ما هو ضمان RexRack في حالة وجود أي عيب أو تلف؟",
-                a: "نمنحك شهادة ضمان ذهبية لمدة 14 يوماً كاملة. في حالة وجود أي ملاحظة أو عيب صناعة، يتم استبدال المنتج بقطعة جديدة فوراً لباب منزلك بدون أي مصاريف شحن.",
-              },
-              {
-                q: "كيف أستفيد من عرض الشحن المجاني؟",
-                a: "عند اختيارك عرض القطعتين أو أكثر، يتم تطبيق خصم فوري إضافي ويصبح الشحن مجانياً 100% إلى جميع محافظات مصر.",
-              },
-            ].map((faq, idx) => {
-              const isOpen = openFaqIndex === idx;
-              return (
-                <div
-                  key={idx}
-                  className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition"
-                >
-                  <button
-                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="w-full p-4 md:p-5 text-right font-black text-slate-900 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-100"
-                  >
-                    <span className="text-sm md:text-base">{faq.q}</span>
-                    <ChevronDownIcon
-                      className={`w-5 h-5 text-slate-500 transition-transform ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="p-4 md:p-5 pt-0 text-xs md:text-sm text-slate-600 leading-relaxed border-t border-slate-200 bg-white">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 11. FOOTER */}
-      <footer className="bg-slate-950 text-white py-12 px-4 text-center text-xs pb-28 md:pb-12 border-t border-slate-800">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex justify-center items-center gap-6 text-slate-400 flex-wrap">
-            <span className="flex items-center gap-1.5 font-bold">
-              <TruckIcon className="w-4 h-4 text-orange-400" /> شحن لجميع محافظات مصر
-            </span>
-            <span className="flex items-center gap-1.5 font-bold">
-              <ShieldCheckIcon className="w-4 h-4 text-emerald-400" /> معاينة مجانية قبل الدفع
-            </span>
-            <span className="flex items-center gap-1.5 font-bold">
-              <ArrowPathIcon className="w-4 h-4 text-amber-400" /> استبدال واسترجاع 14 يوم
-            </span>
-          </div>
-
-          <p className="text-slate-500">
-            جميع الحقوق محفوظة © {new Date().getFullYear()} - RexRack (RexRack.com).
-          </p>
-        </div>
-      </footer>
-
-      {/* 12. MOBILE STICKY CTA */}
+      {/* Sticky Buy Bar */}
       <StickyBuyBar
-        productTitle={product.title_ar}
-        price={selectedOffer.price || product.base_price}
-        compareAtPrice={selectedOffer.original_price || product.compare_at_price}
-        onCtaClick={scrollToCheckout}
+        product={product}
+        selectedOffer={selectedOffer}
+        onBuyClick={scrollToCheckout}
       />
-    </div>
+    </main>
   );
 }
