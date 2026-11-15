@@ -14,11 +14,11 @@ id = "c051d16cb4f44bc196304ef9f6709fb2"
 #
 # !!! PLACEHOLDER — the database does NOT exist yet. Before this file reaches a deployed branch:
 #   1. npx wrangler d1 create growix-orders          (prints the real database_id)
-#   2. replace REPLACE_WITH_REAL_D1_DATABASE_ID below
+#   2. replace 7c3cea96-28b7-4c79-8128-87e89ea3ed7a below
 #   3. npx wrangler d1 migrations apply DB --remote  (applies migrations/*.sql)
 # A Pages deployment with the placeholder id will fail to bind. See docs/architecture-kv-d1.md.
 [[d1_databases]]
 binding = "DB"
-database_name = "growix-orders"
-database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+database_name = "store-orders"
+database_id = "7c3cea96-28b7-4c79-8128-87e89ea3ed7a"
 migrations_dir = "migrations"
