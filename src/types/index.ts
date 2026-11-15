@@ -250,6 +250,19 @@ export interface SystemSettings {
   store_name: string;
   support_phone: string;
   support_whatsapp: string;
+  // White-label brand (all optional: empty = neutral defaults, see lib/brand.ts)
+  store_tagline?: string;
+  logo_url?: string;
+  brand_primary?: string; // PaletteKey: trust color (emerald-*)
+  brand_accent?: string; // PaletteKey: buy-button color (orange-*)
+  site_domain?: string; // https://shop.example.com
+  currency_symbol?: string;
+  store_mode?: "landing" | "catalog"; // landing = one landing page per product; catalog = regular store home with all products
+  onboarding_done?: boolean;
+  // Optional Safka (Egyptian dropshipping) module
+  safka_enabled?: boolean;
+  safka_page_id?: string;
+  safka_page_name?: string;
   // Mobile / Telegram Sales Notifications
   telegram_bot_token?: string;
   telegram_chat_id?: string;

@@ -3,6 +3,16 @@
 @tailwind utilities;
 
 :root {
+  /* Default brand theme (emerald trust color, orange CTA). The layout overrides these from the
+     merchant's brand settings (inline on <html>), so the page never renders unthemed. */
+  --c-primary-50: 236 253 245; --c-primary-100: 209 250 229; --c-primary-200: 167 243 208;
+  --c-primary-300: 110 231 183; --c-primary-400: 52 211 153; --c-primary-500: 16 185 129;
+  --c-primary-600: 5 150 105; --c-primary-700: 4 120 87; --c-primary-800: 6 95 70;
+  --c-primary-900: 6 78 59; --c-primary-950: 2 44 34;
+  --c-accent-50: 255 247 237; --c-accent-100: 255 237 213; --c-accent-200: 254 215 170;
+  --c-accent-300: 253 186 116; --c-accent-400: 251 146 60; --c-accent-500: 249 115 22;
+  --c-accent-600: 234 88 12; --c-accent-700: 194 65 12; --c-accent-800: 154 52 18;
+  --c-accent-900: 124 45 18; --c-accent-950: 67 20 7;
   --background: #f8fafc;
   --foreground: #0f172a;
 }

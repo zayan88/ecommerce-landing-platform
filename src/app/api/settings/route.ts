@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
+import { isPaletteKey } from "@/lib/palettes";
 
 export const runtime = "edge";
 
@@ -41,6 +42,31 @@ export async function POST(req: NextRequest) {
 
     // Do not overwrite a secret if the client sent back its masked value
     const toUpdate: any = { ...body };
+
+    // Brand fields: whitelist + sanitize (never trust the client)
+    if ("brand_primary" in toUpdate && !isPaletteKey(toUpdate.brand_primary)) delete toUpdate.brand_primary;
+    if ("brand_accent" in toUpdate && !isPaletteKey(toUpdate.brand_accent)) delete toUpdate.brand_accent;
+    if ("store_mode" in toUpdate && toUpdate.store_mode !== "landing" && toUpdate.store_mode !== "catalog") {
+      delete toUpdate.store_mode;
+    }
+    for (const f of ["logo_url", "site_domain"] as const) {
+      if (f in toUpdate) {
+        const v = typeof toUpdate[f] === "string" ? toUpdate[f].trim() : "";
+        // empty clears the field; otherwise http(s) URL (logo may also be a site-relative path)
+        const okUrl = /^https?:\/\/[^\s]+$/i.test(v) || (f === "logo_url" && /^\/[^\s]*$/.test(v));
+        if (v === "" || okUrl) toUpdate[f] = v;
+        else delete toUpdate[f];
+      }
+    }
+    for (const f of ["support_phone", "support_whatsapp"] as const) {
+      if (f in toUpdate) {
+        const v = typeof toUpdate[f] === "string" ? toUpdate[f].replace(/[^\d+]/g, "") : "";
+        toUpdate[f] = v.slice(0, 20);
+      }
+    }
+    for (const f of ["store_name", "store_tagline", "currency_symbol"] as const) {
+      if (f in toUpdate) toUpdate[f] = typeof toUpdate[f] === "string" ? toUpdate[f].trim().slice(0, 80) : "";
+    }
     for (const f of SECRET_FIELDS) {
       if (typeof toUpdate[f] === "string" && toUpdate[f].includes("...")) {
         delete toUpdate[f];

@@ -20,9 +20,11 @@ import {
   Lock,
   Activity,
   Bell,
+  Palette,
 } from "lucide-react";
 
 const navigationItems = [
+  { name: "هوية المتجر وشكله", href: "/admin/brand", icon: Palette },
   { name: "الإحصائيات والأداء", href: "/admin", icon: LayoutDashboard },
   { name: "إدارة الطلبات", href: "/admin/orders", icon: ShoppingBag },
   { name: "إشعارات المبيعات (تليجرام)", href: "/admin/notifications", icon: Bell },

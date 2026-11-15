@@ -44,7 +44,7 @@ export default async function HomePage() {
   const products = await dbStore.getProducts();
   const landingPages = await dbStore.getLandingPages();
   const settings = await dbStore.getSettings();
-  const pixelId = settings.default_meta_pixel_id || "1636283807582751";
+  const pixelId = settings.default_meta_pixel_id || "";
 
   // Map each product to its landing page slug
   const productCards = products
