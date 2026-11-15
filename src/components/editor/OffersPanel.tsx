@@ -9,6 +9,8 @@ interface Props {
   currency: string;
   onChange: (offers: ProductOffer[]) => void;
   onReset: () => void;
+  /** Footer note (differs between the page editor and the product form). */
+  hint?: string;
 }
 
 const MAX_OFFERS = 5;
@@ -16,7 +18,7 @@ const input =
   "w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-orange-500";
 
 /** Edit the page's quantity tiers (the upsell ladder: 1 piece / 2 pieces / family pack...). */
-export default function OffersPanel({ offers, currency, onChange, onReset }: Props) {
+export default function OffersPanel({ offers, currency, onChange, onReset, hint }: Props) {
   const update = (i: number, patch: Partial<ProductOffer>) =>
     onChange(offers.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
 
@@ -175,7 +177,9 @@ export default function OffersPanel({ offers, currency, onChange, onReset }: Pro
           الافتراضي
         </button>
       </div>
-      <p className="text-[11px] text-slate-500 leading-relaxed">بتتحفظ مع زرار "حفظ الصفحة". السعر بيتحسب على السيرفر وقت الطلب من العروض دي.</p>
+      <p className="text-[11px] text-slate-500 leading-relaxed">
+        {hint || 'بتتحفظ مع زرار "حفظ الصفحة".'} السعر بيتحسب على السيرفر وقت الطلب من العروض دي.
+      </p>
     </div>
   );
 }

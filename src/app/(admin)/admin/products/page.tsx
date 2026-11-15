@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
+import OffersPanel from "@/components/editor/OffersPanel";
+import { buildDefaultOffers, sanitizeOffers } from "@/lib/offers";
 import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
 import TablePagination from "@/components/admin/TablePagination";
 import { Product, ProductOffer } from "@/types";
@@ -48,6 +50,16 @@ export default function AdminProductsPage() {
   const [stock, setStock] = useState<number | string>(100);
   const [images, setImages] = useState<string[]>([]);
   const [descriptionAr, setDescriptionAr] = useState("");
+  // Quantity tiers. Until the merchant touches them they follow the price (defaults).
+  const [offers, setOffers] = useState<ProductOffer[]>([]);
+  const [offersTouched, setOffersTouched] = useState(false);
+  const effectiveOffers: ProductOffer[] = offersTouched
+    ? offers
+    : buildDefaultOffers({
+        id: editingProduct?.id || "",
+        base_price: Number(basePrice) || 0,
+        compare_at_price: Number(comparePrice) || 0,
+      });
 
   // UI status
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,6 +96,8 @@ export default function AdminProductsPage() {
     setStock(100);
     setImages([]);
     setDescriptionAr("");
+    setOffers([]);
+    setOffersTouched(false);
     setIsModalOpen(true);
   };
 
@@ -98,6 +112,9 @@ export default function AdminProductsPage() {
     setStock(prod.stock_quantity || 100);
     setImages(prod.images || []);
     setDescriptionAr(prod.description_ar || "");
+    const saved = prod.offers && prod.offers.length > 0;
+    setOffers(saved ? JSON.parse(JSON.stringify(prod.offers)) : []);
+    setOffersTouched(!!saved);
     setIsModalOpen(true);
   };
 
@@ -141,45 +158,13 @@ export default function AdminProductsPage() {
       const numCost = Number(costPrice) || 0;
       const numStock = Number(stock) || 50;
 
-      // Generate offers automatically based on base price
-      const offers: ProductOffer[] = [
-        {
-          id: `off-${Date.now()}-1`,
-          product_id: editingProduct?.id || "",
-          title_ar: "قطعة واحدة (تجربة)",
-          quantity: 1,
-          price: numBase,
-          original_price: numCompare,
-          discount_label: "خصم خاص",
-          is_popular: false,
-          free_shipping: false,
-          sort_order: 1,
-        },
-        {
-          id: `off-${Date.now()}-2`,
-          product_id: editingProduct?.id || "",
-          title_ar: "قطعتان (الأكثر طلباً)",
-          quantity: 2,
-          price: Math.round(numBase * 1.8),
-          original_price: numCompare * 2,
-          discount_label: "وفر أكثر + شحن مجاني",
-          is_popular: true,
-          free_shipping: true,
-          sort_order: 2,
-        },
-        {
-          id: `off-${Date.now()}-3`,
-          product_id: editingProduct?.id || "",
-          title_ar: "3 قطع (عرض التوفير العائلي)",
-          quantity: 3,
-          price: Math.round(numBase * 2.4),
-          original_price: numCompare * 3,
-          discount_label: "أقصى توفير + شحن مجاني",
-          is_popular: false,
-          free_shipping: true,
-          sort_order: 3,
-        },
-      ];
+      // Offers: what the merchant edited, or defaults derived from the price (see lib/offers.ts)
+      const finalOffers = sanitizeOffers(editingProduct?.id || "", effectiveOffers);
+      if (finalOffers.some((o) => !(o.price > 0))) {
+        alert("سعر كل عرض لازم يكون أكبر من صفر");
+        setIsSubmitting(false);
+        return;
+      }
 
       const cleanSlug = (slug || titleAr)
         .trim()
@@ -202,8 +187,7 @@ export default function AdminProductsPage() {
         description_ar: descriptionAr.trim(),
         status: "active",
         images: imagesArray,
-        // Editing keeps the offers the merchant customized in the page editor
-        offers: editingProduct?.offers && editingProduct.offers.length > 0 ? editingProduct.offers : offers,
+        offers: finalOffers,
       };
 
       const res = await fetch("/api/products", {
@@ -672,6 +656,29 @@ export default function AdminProductsPage() {
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs"
                   />
                 </div>
+              </div>
+
+              {/* Quantity offers (upsell ladder) */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 space-y-2">
+                <p className="font-black text-slate-900 text-sm">عروض الكمية (الـ Upsell)</p>
+                {!offersTouched && (
+                  <p className="text-[11px] text-slate-500">
+                    دي عروض تلقائية بتتبني من سعر البيع. عدّل أي رقم وهتتثبّت على المنتج.
+                  </p>
+                )}
+                <OffersPanel
+                  offers={effectiveOffers}
+                  currency={brand.currency}
+                  hint="بتتحفظ مع المنتج وبتظهر في صفحة الهبوط."
+                  onChange={(next) => {
+                    setOffers(next);
+                    setOffersTouched(true);
+                  }}
+                  onReset={() => {
+                    setOffers([]);
+                    setOffersTouched(false);
+                  }}
+                />
               </div>
 
               {/* Description */}
