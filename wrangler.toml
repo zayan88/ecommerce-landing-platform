@@ -2,3 +2,9 @@ name = "growix-platform"
 compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2024-09-23"
 pages_build_output_dir = ".vercel/output/static"
+
+# Database: Cloudflare KV, bound as STORE_KV (read by src/lib/db/kv.ts).
+# Per merchant: create their own namespace (`wrangler kv namespace create STORE_KV`) and put its id here.
+[[kv_namespaces]]
+binding = "STORE_KV"
+id = "c051d16cb4f44bc196304ef9f6709fb2"

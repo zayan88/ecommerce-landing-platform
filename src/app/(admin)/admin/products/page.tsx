@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useBrand } from "@/components/brand/BrandProvider";
 import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
 import TablePagination from "@/components/admin/TablePagination";
 import { Product, ProductOffer } from "@/types";
@@ -22,6 +24,8 @@ import {
 } from "lucide-react";
 
 export default function AdminProductsPage() {
+  const router = useRouter();
+  const brand = useBrand();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,9 +42,9 @@ export default function AdminProductsPage() {
   const [titleAr, setTitleAr] = useState("");
   const [slug, setSlug] = useState("");
   const [sku, setSku] = useState("");
-  const [basePrice, setBasePrice] = useState<number | string>(540);
-  const [comparePrice, setComparePrice] = useState<number | string>(780);
-  const [costPrice, setCostPrice] = useState<number | string>(100);
+  const [basePrice, setBasePrice] = useState<number | string>("");
+  const [comparePrice, setComparePrice] = useState<number | string>("");
+  const [costPrice, setCostPrice] = useState<number | string>("");
   const [stock, setStock] = useState<number | string>(100);
   const [images, setImages] = useState<string[]>([]);
   const [descriptionAr, setDescriptionAr] = useState("");
@@ -73,10 +77,10 @@ export default function AdminProductsPage() {
     setEditingProduct(null);
     setTitleAr("");
     setSlug("");
-    setSku(`REX-${Math.floor(1000 + Math.random() * 9000)}`);
-    setBasePrice(499);
-    setComparePrice(750);
-    setCostPrice(120);
+    setSku(`SKU-${Math.floor(1000 + Math.random() * 9000)}`);
+    setBasePrice("");
+    setComparePrice("");
+    setCostPrice("");
     setStock(100);
     setImages([]);
     setDescriptionAr("");
@@ -125,6 +129,10 @@ export default function AdminProductsPage() {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(Number(basePrice) > 0)) {
+      alert("اكتب سعر البيع أولاً");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -206,6 +214,11 @@ export default function AdminProductsPage() {
       const data = await res.json();
       if (data.success) {
         setIsModalOpen(false);
+        // New product in landing-page mode: go straight to the live editor of its page.
+        if (!editingProduct && data.landing_page_id && brand.store_mode !== "catalog") {
+          router.push(`/admin/landing-pages/${data.landing_page_id}/edit`);
+          return;
+        }
         setAlertMessage({
           type: "success",
           text: editingProduct
@@ -549,7 +562,7 @@ export default function AdminProductsPage() {
               <div className="flex items-center gap-2">
                 <Tag className="w-5 h-5 text-orange-600" />
                 <h3 className="text-lg font-black text-slate-900 font-heading">
-                  {editingProduct ? "تعديل المنتج والأسعار" : "إضافة منتج جديد لـ RexRack"}
+                  {editingProduct ? "تعديل المنتج والأسعار" : "إضافة منتج جديد"}
                 </h3>
               </div>
               <button
@@ -621,7 +634,7 @@ export default function AdminProductsPage() {
                     dir="ltr"
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
-                    placeholder="rexrack-massage-gun"
+                    placeholder="massage-gun"
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
                   />
                   <span className="text-[10px] text-slate-400 mt-0.5 block">

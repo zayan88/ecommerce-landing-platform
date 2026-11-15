@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const product = await dbStore.saveProduct(body);
 
     // Auto-create or ensure landing page exists for the product
-    await dbStore.saveLandingPage({
+    const lp = await dbStore.saveLandingPage({
       product_id: product.id,
       title: product.title_ar,
       slug: product.slug,
@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: "تم حفظ المنتج وإنشاء صفحة الهبوط بنجاح",
       product,
+      landing_page_id: lp?.id,
       landing_page_url: `/p/${product.slug}`,
     });
   } catch (err: any) {
