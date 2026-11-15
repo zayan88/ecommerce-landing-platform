@@ -2,6 +2,19 @@ import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, LandingPa
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
 import { generateOrderId, generateUniqueOrderNumber } from "@/lib/orders/guard";
+import {
+  findOrderRecord,
+  listDeletedOrderTokens,
+  listOrderEntries,
+  listRecentOrderNumbers,
+  mapLimit,
+  orderFromMeta,
+  orderKey,
+  readOrderRecord,
+  reconcileLegacyOrders,
+  writeOrderRecord,
+  writeOrderTombstone,
+} from "./order-kv";
 
 /** Thrown by dbStore.createOrder when the order could not be written to any durable store. */
 export class OrderPersistenceError extends Error {
@@ -594,6 +607,93 @@ let memorySettings = { ...initialSettings };
 let memoryAnalytics: AnalyticsEvent[] = [];
 let memoryDeletedOrderIds = new Set<string>();
 
+// ── Orders: per-isolate helpers ─────────────────────────────────────────────
+// KV (one key per order, see ./order-kv) is the durable store. `memoryOrders` is only this
+// isolate's cache of orders it wrote: it bridges KV's eventual consistency (a list/read right
+// after a write) and is the whole store in local dev without KV.
+
+/** How long a memory-only order (not in the KV listing yet) is still shown. */
+const MEMORY_ORDER_FRESH_MS = 2 * 60 * 1000;
+const MEMORY_ORDERS_MAX = 500;
+const ORDER_STORE_UNAVAILABLE = "تعذر الوصول إلى مخزن الطلبات مؤقتاً، برجاء المحاولة مرة أخرى";
+
+const orderTime = (value?: string) => (value ? Date.parse(value) || 0 : 0);
+
+function rememberOrder(order: Order): void {
+  memoryOrders = [order, ...memoryOrders.filter((o) => o.id !== order.id)];
+  if (memoryOrders.length > MEMORY_ORDERS_MAX && kvStore.isAvailable()) {
+    memoryOrders = memoryOrders.slice(0, MEMORY_ORDERS_MAX);
+  }
+}
+
+function findMemoryOrder(idOrNumber: string): Order | null {
+  return memoryOrders.find((o) => o.id === idOrNumber || o.order_number === idOrNumber) || null;
+}
+
+/** Landing page relation for an order — never carries the CAPI token (or a nested product copy). */
+function publicLandingPageFor(slug?: string): LandingPage | undefined {
+  const lp = slug ? memoryLandingPages.find((l) => l.slug === slug) : undefined;
+  if (!lp) return undefined;
+  const { meta_capi_token: _token, product: _product, ...safe } = lp;
+  return safe as LandingPage;
+}
+
+/** Relations are not persisted with the order; re-attach them for display. */
+function attachOrderRelations(orders: Order[], products: Product[]): void {
+  for (const ord of orders) {
+    if (ord.product_id) {
+      ord.product = products.find((p) => p.id === ord.product_id) || ord.product;
+    }
+    if (!ord.product && ord.landing_page_slug) {
+      const lp = memoryLandingPages.find((l) => l.slug === ord.landing_page_slug);
+      if (lp?.product) ord.product = lp.product;
+    }
+    const lp = publicLandingPageFor(ord.landing_page_slug);
+    if (lp) ord.landing_page = lp;
+    else delete ord.landing_page;
+  }
+}
+
+/**
+ * Loads the current version of an order for a read-modify-write.
+ * `kvError: true` = KV could not be read: the caller must NOT write to KV (it could clobber data).
+ */
+async function loadOrderForWrite(idOrNumber: string): Promise<{ order: Order | null; kvError: boolean }> {
+  const mem = findMemoryOrder(idOrNumber);
+  const direct = await readOrderRecord(idOrNumber);
+  if (direct.status === "found") {
+    // Same isolate may hold a newer copy than a lagging KV read.
+    const newer = mem && orderTime(mem.updated_at) > orderTime(direct.value.updated_at) ? mem : direct.value;
+    return { order: newer, kvError: false };
+  }
+  if (direct.status === "error") return { order: mem, kvError: true };
+  if (mem) return { order: mem, kvError: false }; // created here moments ago / dev without KV
+  if (direct.status === "unconfigured") return { order: null, kvError: false };
+
+  const found = await findOrderRecord(idOrNumber); // by order number, or still in the legacy array
+  if (found.status === "found") return { order: found.value, kvError: false };
+  return { order: null, kvError: found.status === "error" };
+}
+
+/**
+ * Merges `patch` into the stored order and writes it back to its own KV key (value + metadata).
+ * Returns null when the order does not exist. Throws when KV could not be read or written and
+ * no other durable store took the change — the update must not be reported as saved.
+ */
+async function applyOrderPatch(id: string, patch: Partial<Order>, savedElsewhere: boolean): Promise<Order | null> {
+  const { order: base, kvError } = await loadOrderForWrite(id);
+  if (kvError && !savedElsewhere) throw new Error(ORDER_STORE_UNAVAILABLE);
+  if (!base) return null;
+
+  const next: Order = { ...base, ...patch, id: base.id };
+  if (!kvError && kvStore.isAvailable()) {
+    const ok = await writeOrderRecord(next);
+    if (!ok && !savedElsewhere) throw new Error(ORDER_STORE_UNAVAILABLE);
+  }
+  rememberOrder(next);
+  return next;
+}
+
 const getStoreFilePath = () => "";
 
 const DUMMY_IDS = new Set([
@@ -1065,13 +1165,67 @@ export const dbStore = {
       if (!error && data) return data;
     }
 
-    const kvOrders = (await kvStore.get<Order[]>("orders_all")) || [];
-    let results = [...kvOrders];
-    for (const mo of memoryOrders) {
-      if (!results.some((r) => r.id === mo.id || r.order_number === mo.order_number)) {
-        results.push(mo);
+    // KV: one list call per 1000 orders. Each key's metadata is the order's list view; only orders
+    // whose list view did not fit in the metadata are read individually.
+    const byId = new Map<string, Order>();
+    const listedAt = new Map<string, number>(); // id → updated_at of the KV version
+    const listing = await listOrderEntries();
+
+    if (!listing.ok) {
+      if (kvStore.isAvailable()) {
+        console.error("[getOrders] KV order listing failed — serving this isolate's memory only");
+      }
+      for (const mo of memoryOrders) byId.set(mo.id, mo);
+    } else {
+      const needsRecord: string[] = [];
+      for (const entry of listing.entries) {
+        const meta = entry.meta;
+        if (meta) listedAt.set(entry.id, orderTime(meta.u));
+        // Cheap pre-filter on exact-match fields (skipped when the metadata was truncated).
+        if (meta && !meta.t) {
+          if (filters?.status && meta.st !== filters.status) continue;
+          if (filters?.landing_page_slug && meta.lp !== filters.landing_page_slug) continue;
+          if (filters?.product_id && meta.p !== filters.product_id) continue;
+        }
+        const fromMeta = orderFromMeta(entry.id, meta);
+        if (fromMeta) byId.set(entry.id, fromMeta);
+        else needsRecord.push(entry.id);
+      }
+
+      const records = await mapLimit(needsRecord, 8, async (id) => {
+        let res = await readOrderRecord(id);
+        if (res.status === "error") res = await readOrderRecord(id); // one retry
+        if (res.status === "found") return res.value;
+        if (res.status === "error") console.error(`[getOrders] could not read order ${id}`);
+        return memoryOrders.find((o) => o.id === id) || null;
+      });
+      for (const rec of records) if (rec) byId.set(rec.id, rec);
+
+      // Legacy single-key store: include what is not migrated yet, and migrate a batch.
+      try {
+        const legacy = await reconcileLegacyOrders(new Set(listing.entries.map((e) => e.id)));
+        for (const lo of legacy) {
+          if (!listedAt.has(lo.id) && !byId.has(lo.id) && !memoryDeletedOrderIds.has(lo.id)) byId.set(lo.id, lo);
+        }
+      } catch (e) {
+        console.error("[getOrders] legacy order reconciliation failed", e);
+      }
+
+      // This isolate's own recent writes win over a listing that has not caught up yet.
+      const now = Date.now();
+      for (const mo of memoryOrders) {
+        if (memoryDeletedOrderIds.has(mo.id)) continue;
+        const moTime = orderTime(mo.updated_at);
+        const kvTime = listedAt.get(mo.id);
+        if (kvTime !== undefined) {
+          if (moTime > kvTime) byId.set(mo.id, mo);
+        } else if (!byId.has(mo.id) && now - moTime < MEMORY_ORDER_FRESH_MS) {
+          byId.set(mo.id, mo);
+        }
       }
     }
+
+    let results = Array.from(byId.values());
 
     if (filters?.landing_page_slug) {
       results = results.filter((o) => o.landing_page_slug === filters.landing_page_slug);
@@ -1086,24 +1240,23 @@ export const dbStore = {
       const q = filters.search.toLowerCase();
       results = results.filter(
         (o) =>
-          o.customer_name.toLowerCase().includes(q) ||
-          o.customer_phone.includes(q) ||
-          o.order_number.toLowerCase().includes(q) ||
-          o.governorate.toLowerCase().includes(q)
+          String(o.customer_name || "").toLowerCase().includes(q) ||
+          String(o.customer_phone || "").includes(q) ||
+          String(o.order_number || "").toLowerCase().includes(q) ||
+          String(o.governorate || "").toLowerCase().includes(q)
       );
     }
 
-    // Always ensure product is attached for display
-    results.forEach((ord) => {
-      if (!ord.product && ord.product_id) {
-        ord.product = memoryProducts.find((p) => p.id === ord.product_id);
-      }
-      if (!ord.product && ord.landing_page_slug) {
-        const lp = memoryLandingPages.find((l) => l.slug === ord.landing_page_slug);
-        if (lp?.product) ord.product = lp.product;
-      }
-    });
+    // Always ensure product is attached for display (relations are not persisted with the order)
+    let products: Product[] = memoryProducts;
+    try {
+      products = await this.getProducts();
+    } catch (e) {
+      console.warn("[getOrders] products lookup failed, using built-in catalog", e);
+    }
+    attachOrderRelations(results, products);
 
+    results.sort((a, b) => orderTime(b.created_at) - orderTime(a.created_at));
     return results;
   },
 
@@ -1123,19 +1276,16 @@ export const dbStore = {
       }
     }
 
-    const order = memoryOrders.find((o) => o.id === id || o.order_number === id);
-    if (order) {
-      Object.assign(order, updatePayload);
-      if (updates.product_id) {
-        const p = memoryProducts.find((mp) => mp.id === updates.product_id);
-        if (p) {
-          order.product = p;
-        }
-      }
-      saveToFile();
-      return order;
-    }
-    return null;
+    const order = await applyOrderPatch(id, updatePayload, Boolean(admin));
+    if (!order) return null;
+
+    let products: Product[] = memoryProducts;
+    try {
+      products = await this.getProducts();
+    } catch {}
+    attachOrderRelations([order], products);
+    saveToFile();
+    return order;
   },
 
   async getOrder(id: string): Promise<Order | null> {
@@ -1148,25 +1298,36 @@ export const dbStore = {
         .single();
       if (!error && data) return data;
     }
-    const found = memoryOrders.find((o) => o.id === id || o.order_number === id);
-    return found || null;
+
+    const { order, kvError } = await loadOrderForWrite(id);
+    if (kvError) console.error(`[getOrder] KV read failed for ${id}`);
+    if (!order || memoryDeletedOrderIds.has(order.id)) return null;
+
+    const found: Order = { ...order };
+    let products: Product[] = memoryProducts;
+    try {
+      products = await this.getProducts();
+    } catch {}
+    attachOrderRelations([found], products);
+    return found;
   },
 
   async createOrder(order: Partial<Order> & { tracking?: Partial<OrderTrackingMeta> }): Promise<Order> {
     const admin = getSupabaseAdmin();
     const id = generateOrderId();
 
-    // Cheap collision check against the orders we already hold (KV list + this isolate's memory).
-    let kvOrders: Order[] = [];
+    // Collision check against today's order numbers (KV listing metadata + this isolate's memory).
+    // Read-only and best-effort: if the listing fails we skip the check — the order is written to
+    // its own brand-new key either way, so a failed read can never overwrite or drop other orders.
+    let takenNumbers = new Set<string>();
     try {
-      const fromKv = await kvStore.get<Order[]>("orders_all");
-      if (Array.isArray(fromKv)) kvOrders = fromKv;
+      if (kvStore.isAvailable()) takenNumbers = await listRecentOrderNumbers();
     } catch (e) {
       console.warn("[KV createOrder read error]", e);
     }
     const orderNumber = generateUniqueOrderNumber(
       (candidate) =>
-        kvOrders.some((o) => o.order_number === candidate) ||
+        takenNumbers.has(candidate) ||
         memoryOrders.some((o) => o.order_number === candidate)
     );
 
@@ -1199,11 +1360,11 @@ export const dbStore = {
       tracking: order.tracking as OrderTrackingMeta,
     };
 
-    // Attach relations for memory store
+    // Attach relations for the returned/in-memory order only — they are never persisted,
+    // and the landing page copy never carries the CAPI token.
     const product = memoryProducts.find((p) => p.id === newOrder.product_id);
-    const lp = memoryLandingPages.find((p) => p.slug === newOrder.landing_page_slug);
     newOrder.product = product;
-    newOrder.landing_page = lp;
+    newOrder.landing_page = publicLandingPageFor(newOrder.landing_page_slug);
 
     let savedToSupabase = false;
     if (admin) {
@@ -1259,9 +1420,10 @@ export const dbStore = {
       }
     }
 
+    // One KV key per order: no shared list to read-modify-write, no cap on how many are kept.
     let savedToKv = false;
     try {
-      savedToKv = await kvStore.put("orders_all", [newOrder, ...kvOrders].slice(0, 200));
+      savedToKv = await writeOrderRecord(newOrder);
     } catch (e) {
       console.error("[KV createOrder write error]", e);
     }
@@ -1277,24 +1439,25 @@ export const dbStore = {
       console.warn("[createOrder] order kept in memory only (no durable store reachable)");
     }
 
-    memoryOrders.unshift(newOrder);
+    rememberOrder(newOrder);
     saveToFile();
     return newOrder;
   },
 
   async updateOrderStatus(id: string, status: OrderStatus): Promise<boolean> {
     const admin = getSupabaseAdmin();
+    const updated_at = new Date().toISOString();
     if (admin) {
-      await admin.from("orders").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+      await admin.from("orders").update({ status, updated_at }).eq("id", id);
     }
-    const order = memoryOrders.find((o) => o.id === id);
-    if (order) {
-      order.status = status;
-      order.updated_at = new Date().toISOString();
+    try {
+      const order = await applyOrderPatch(id, { status, updated_at }, Boolean(admin));
       saveToFile();
-      return true;
+      return Boolean(order);
+    } catch (e) {
+      console.error(`[updateOrderStatus] order ${id} was not persisted`, e);
+      return false;
     }
-    return false;
   },
 
   async updateSafqaInfo(id: string, safqaData: {
@@ -1313,13 +1476,14 @@ export const dbStore = {
     if (admin) {
       await admin.from("orders").update(updatePayload).eq("id", id);
     }
-    const order = memoryOrders.find((o) => o.id === id);
-    if (order) {
-      Object.assign(order, updatePayload);
+    try {
+      const order = await applyOrderPatch(id, updatePayload, Boolean(admin));
       saveToFile();
-      return true;
+      return Boolean(order);
+    } catch (e) {
+      console.error(`[updateSafqaInfo] order ${id} was not persisted`, e);
+      return false;
     }
-    return false;
   },
 
   async deleteOrder(id: string): Promise<boolean> {
@@ -1333,21 +1497,38 @@ export const dbStore = {
         console.error("[Supabase deleteOrder error]", e);
       }
     }
-    memoryDeletedOrderIds.add(id);
-    const order = memoryOrders.find((o) => o.id === id || o.order_number === id);
-    if (order) {
-      memoryDeletedOrderIds.add(order.id);
-      memoryDeletedOrderIds.add(order.order_number);
-      if (order.safqa_invoice_id) memoryDeletedOrderIds.add(order.safqa_invoice_id);
-    }
-    memoryOrders = memoryOrders.filter((o) => o.id !== id && o.order_number !== id);
-    saveToFile();
+
+    // Everything that identifies this order, so the Safka sync can never resurrect it.
+    const tokens = new Set<string>([id]);
+    if (id.startsWith("sfk-")) tokens.add(id.slice(4)); // virtual Safka order → its serial number
+    let targetId = id;
     try {
-      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
-      const filtered = currentOrders.filter((o) => o.id !== id && o.order_number !== id);
-      await kvStore.put("orders_all", filtered);
-    } catch {}
-    return true;
+      const { order } = await loadOrderForWrite(id);
+      if (order) {
+        targetId = order.id;
+        tokens.add(order.id);
+        if (order.order_number) tokens.add(order.order_number);
+        if (order.safqa_invoice_id) tokens.add(order.safqa_invoice_id);
+      }
+    } catch (e) {
+      console.warn("[deleteOrder] lookup failed, deleting by id only", e);
+    }
+
+    tokens.forEach((t) => memoryDeletedOrderIds.add(t));
+    memoryOrders = memoryOrders.filter((o) => !tokens.has(o.id) && !tokens.has(o.order_number));
+    saveToFile();
+
+    if (!kvStore.isAvailable()) return true;
+    let ok = false;
+    try {
+      // Tombstone first: if the key delete then fails, the order is at least never re-imported.
+      const tombOk = await writeOrderTombstone(targetId, Array.from(tokens));
+      const delOk = await kvStore.delete(orderKey(targetId));
+      ok = tombOk && delOk;
+    } catch (e) {
+      console.error("[KV deleteOrder error]", e);
+    }
+    return ok || Boolean(admin);
   },
 
   async deleteOrders(ids: string[]): Promise<{ count: number }> {
@@ -1362,28 +1543,67 @@ export const dbStore = {
         console.error("[Supabase deleteOrders error]", e);
       }
     }
-    ids.forEach((id) => memoryDeletedOrderIds.add(id));
-    memoryOrders.forEach((o) => {
-      if (idSet.has(o.id) || idSet.has(o.order_number)) {
-        memoryDeletedOrderIds.add(o.id);
-        memoryDeletedOrderIds.add(o.order_number);
-        if (o.safqa_invoice_id) memoryDeletedOrderIds.add(o.safqa_invoice_id);
+
+    // One listing resolves every order number / Safka serial (no per-order read).
+    const listing = kvStore.isAvailable() ? await listOrderEntries() : { ok: false, entries: [] };
+    const targets = Array.from(idSet).map((id) => {
+      const tokens = new Set<string>([id]);
+      if (id.startsWith("sfk-")) tokens.add(id.slice(4));
+      let targetId = id;
+      const entry = listing.entries.find((e) => e.id === id) || listing.entries.find((e) => e.meta?.n === id);
+      if (entry) {
+        targetId = entry.id;
+        tokens.add(entry.id);
+        if (entry.meta?.n) tokens.add(entry.meta.n);
+        if (entry.meta?.si) tokens.add(entry.meta.si);
+      }
+      const mem = findMemoryOrder(id);
+      if (mem) {
+        targetId = mem.id;
+        tokens.add(mem.id);
+        if (mem.order_number) tokens.add(mem.order_number);
+        if (mem.safqa_invoice_id) tokens.add(mem.safqa_invoice_id);
+      }
+      return { targetId, tokens: Array.from(tokens) };
+    });
+
+    const allTokens = new Set<string>();
+    targets.forEach((t) => t.tokens.forEach((tok) => allTokens.add(tok)));
+    allTokens.forEach((t) => memoryDeletedOrderIds.add(t));
+    const beforeCount = memoryOrders.length;
+    memoryOrders = memoryOrders.filter((o) => !allTokens.has(o.id) && !allTokens.has(o.order_number));
+    const memoryCount = beforeCount - memoryOrders.length;
+    saveToFile();
+
+    if (!kvStore.isAvailable()) return { count: memoryCount || ids.length };
+
+    const outcomes = await mapLimit(targets, 6, async (t) => {
+      try {
+        const tombOk = await writeOrderTombstone(t.targetId, t.tokens);
+        const delOk = await kvStore.delete(orderKey(t.targetId));
+        return tombOk && delOk;
+      } catch (e) {
+        console.error("[KV deleteOrders error]", e);
+        return false;
       }
     });
-    const beforeCount = memoryOrders.length;
-    memoryOrders = memoryOrders.filter((o) => !idSet.has(o.id) && !idSet.has(o.order_number));
-    const deletedCount = beforeCount - memoryOrders.length;
-    saveToFile();
-    try {
-      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
-      const filtered = currentOrders.filter((o) => !idSet.has(o.id) && !idSet.has(o.order_number));
-      await kvStore.put("orders_all", filtered);
-    } catch {}
-    return { count: deletedCount || ids.length };
+    const kvCount = outcomes.filter(Boolean).length;
+    return { count: admin ? ids.length : kvCount };
   },
 
+  /** Sync check against this isolate's set — call refreshDeletedOrderIds() first for the durable list. */
   isOrderDeleted(idOrSerial: string): boolean {
     return memoryDeletedOrderIds.has(idOrSerial);
+  },
+
+  /** Loads the durable deletion tombstones from KV into this isolate (deletions made by other isolates). */
+  async refreshDeletedOrderIds(): Promise<void> {
+    try {
+      const res = await listDeletedOrderTokens();
+      if (res.ok) res.tokens.forEach((t) => memoryDeletedOrderIds.add(t));
+    } catch (e) {
+      console.warn("[refreshDeletedOrderIds] failed", e);
+    }
   },
 
   // ANALYTICS & STATS

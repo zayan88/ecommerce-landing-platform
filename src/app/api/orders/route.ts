@@ -316,6 +316,8 @@ export async function GET(req: NextRequest) {
       try {
         const safkaOrders = await SafkaClient.fetchSafkaMcpOrders(20);
         if (Array.isArray(safkaOrders) && safkaOrders.length > 0) {
+          // Deletions are recorded durably in KV; load them so isOrderDeleted() sees other isolates' deletes.
+          await dbStore.refreshDeletedOrderIds();
           const existingSerials = new Set(
             orders.map((o) => o.safqa_invoice_id || o.order_number)
           );
