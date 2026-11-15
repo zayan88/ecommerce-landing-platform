@@ -525,7 +525,7 @@ export default function MeshNebulizerLandingPage({
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-cyan-500 selection:text-white pb-24 md:pb-16" dir="rtl">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-cyan-500 selection:text-white" dir="rtl">
       {/* 1. Announcement Bar */}
       <div className="bg-gradient-to-r from-cyan-700 via-sky-600 to-cyan-800 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2">
         <Truck className="w-4 h-4 text-cyan-200 shrink-0" />

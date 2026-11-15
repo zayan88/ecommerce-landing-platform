@@ -44,3 +44,7 @@ rexrack-store.json
 
 # agent worktrees
 .claude/worktrees/
+
+# graphify output
+graphify-out/
+src/graphify-out/

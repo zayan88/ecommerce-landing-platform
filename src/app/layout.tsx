@@ -1,10 +1,25 @@
 import type { Metadata } from "next";
+import { Cairo, Tajawal } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
 import { VisitorTracker } from "@/components/tracking/VisitorTracker";
 
 export const runtime = "edge";
+
+// Self-hosted at build time (no render-blocking request to fonts.googleapis.com)
+const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "600", "700", "800", "900"],
+  display: "swap",
+  variable: "--font-cairo",
+});
+const tajawal = Tajawal({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "700", "800", "900"],
+  display: "swap",
+  variable: "--font-tajawal",
+});
 
 export const metadata: Metadata = {
   title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
@@ -17,15 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${tajawal.variable}`}>
       <body className="antialiased bg-slate-50 text-gray-900 font-sans">
         <Suspense fallback={null}>
           <VisitorTracker />

@@ -505,7 +505,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white pb-24 md:pb-16" dir="rtl">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir="rtl">
       {/* 1. Announcement Bar */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-indigo-500/20">
         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />

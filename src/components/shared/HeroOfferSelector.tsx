@@ -103,7 +103,7 @@ export function HeroOfferSelector({
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1" role="radiogroup" aria-label="اختر الباقة">
         {offers.map((offer) => {
           const isSelected = selectedOffer?.id === offer.id || selectedOffer?.quantity === offer.quantity;
           const isSingle = offer.quantity === 1;
@@ -123,10 +123,13 @@ export function HeroOfferSelector({
             : colors.badgeDefault;
 
           return (
-            <div
+            <button
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
               key={offer.id}
               onClick={() => handleSelect(offer)}
-              className={`relative p-2.5 sm:p-3 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between select-none ${
+              className={`relative min-h-[96px] p-3 sm:p-4 rounded-2xl border-2 text-right transition-all cursor-pointer flex flex-col justify-between select-none active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60 ${
                 isSelected
                   ? `${colors.selectedBorder} ${colors.selectedBg} ${colors.ring} shadow-md`
                   : isDarkTheme
@@ -136,7 +139,7 @@ export function HeroOfferSelector({
             >
               {/* Badge */}
               <span
-                className={`absolute -top-2.5 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-2 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap ${badgeClass}`}
+                className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm whitespace-nowrap ${badgeClass}`}
               >
                 {badgeText}
               </span>
@@ -156,7 +159,7 @@ export function HeroOfferSelector({
                 </div>
 
                 <div
-                  className={`font-black text-xs leading-tight truncate ${
+                  className={`font-black text-xs sm:text-sm leading-snug ${
                     isDarkTheme ? "text-white" : "text-slate-900"
                   }`}
                 >
@@ -179,12 +182,12 @@ export function HeroOfferSelector({
                 </div>
 
                 {offer.discount_label && (
-                  <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 block mt-1 truncate">
+                  <span className="text-[10px] sm:text-xs font-bold text-emerald-600 block mt-1 leading-snug">
                     {offer.discount_label}
                   </span>
                 )}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
