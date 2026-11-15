@@ -18,7 +18,9 @@ export interface DayStats {
   checkout_starts: number;
 }
 
-export const FLUSH_INTERVAL_MS = 10 * 60 * 1000;
+// Write budget: free KV = 1,000 writes/day and each order needs 3, so ≥250 orders/day leaves ~250 writes
+// for everything else. One flush per isolate per hour caps this at 24 writes/day/isolate (was 144).
+export const FLUSH_INTERVAL_MS = 60 * 60 * 1000;
 const SESSION_CAP = 5000;
 const KEY_PREFIX = "stats:day:";
 
