@@ -89,6 +89,10 @@ export interface LandingPageContentConfig {
   hero_image?: string;
   hero_bullets?: string[];
 
+  // Per-page theme override (PaletteKey). Empty = use the store brand colors.
+  theme_primary?: string;
+  theme_accent?: string;
+
   // Trust strip (honest: real rating/count only — leave empty to hide the numbers)
   proof_rating?: number;
   proof_reviews_count?: number;

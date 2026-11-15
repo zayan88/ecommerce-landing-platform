@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, LayoutTemplate, Store } from "lucide-react";
-import { PALETTE_KEYS, PALETTES, PALETTE_LABELS_AR, type PaletteKey } from "@/lib/palettes";
+import { PALETTE_KEYS, PALETTES, type PaletteKey } from "@/lib/palettes";
+import { PaletteSwatches } from "@/components/admin/PaletteSwatches";
 
 type Mode = "landing" | "catalog";
 
@@ -35,29 +36,6 @@ const EMPTY: BrandForm = {
 
 const inputCls =
   "w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition bg-white";
-
-function Swatches({ value, onChange }: { value: PaletteKey; onChange: (k: PaletteKey) => void }) {
-  return (
-    <div className="flex flex-wrap gap-2" role="radiogroup">
-      {PALETTE_KEYS.map((k) => (
-        <button
-          key={k}
-          type="button"
-          role="radio"
-          aria-checked={value === k}
-          title={PALETTE_LABELS_AR[k]}
-          onClick={() => onChange(k)}
-          className={`w-11 h-11 rounded-full border-2 flex items-center justify-center transition ${
-            value === k ? "border-slate-900 scale-110" : "border-white shadow-sm"
-          }`}
-          style={{ backgroundColor: `rgb(${PALETTES[k]["500"]})` }}
-        >
-          {value === k && <Check className="w-5 h-5 text-white" />}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 export default function BrandPage() {
   const router = useRouter();
@@ -184,11 +162,11 @@ export default function BrandPage() {
         <h2 className="font-black text-slate-900">الألوان</h2>
         <div>
           <p className="text-sm font-bold text-slate-800 mb-2">لون الثقة (الضمانات والشحن المجاني)</p>
-          <Swatches value={form.brand_primary} onChange={(k) => set("brand_primary", k)} />
+          <PaletteSwatches value={form.brand_primary} onChange={(k) => set("brand_primary", k)} />
         </div>
         <div>
           <p className="text-sm font-bold text-slate-800 mb-2">لون زرار الطلب</p>
-          <Swatches value={form.brand_accent} onChange={(k) => set("brand_accent", k)} />
+          <PaletteSwatches value={form.brand_accent} onChange={(k) => set("brand_accent", k)} />
         </div>
         <div className="flex items-center gap-3 pt-1">
           <span className="text-xs text-slate-500">معاينة:</span>

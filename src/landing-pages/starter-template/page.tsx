@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSections } from "@/types";
+import { cssVarsFor, isPaletteKey } from "@/lib/palettes";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
 import { SocialProofWall } from "@/components/shared/SocialProofWall";
@@ -148,6 +149,15 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // Pages saved before new sections existed still get them (saved order/flags win)
   const sections: LandingPageSectionConfig[] = mergeSections(landingPage.sections_config);
+
+  // Optional per-page colors (only emitted when the merchant picked them; otherwise the store brand applies
+  // and the rendered markup has no style attribute at all).
+  const pageTheme: React.CSSProperties | undefined = (() => {
+    const p = isPaletteKey(c?.theme_primary) ? c?.theme_primary : null;
+    const a = isPaletteKey(c?.theme_accent) ? c?.theme_accent : null;
+    if (!p && !a) return undefined;
+    return { ...(p ? cssVarsFor("primary", p) : {}), ...(a ? cssVarsFor("accent", a) : {}) } as React.CSSProperties;
+  })();
 
   // 1. HERO SECTION
   const renderHero = () => (
@@ -551,7 +561,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir="rtl">
+    <main style={pageTheme} className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir="rtl">
       {/* 1. Announcement Bar */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-indigo-500/20">
         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />

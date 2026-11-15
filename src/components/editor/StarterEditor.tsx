@@ -22,6 +22,7 @@ import {
   PanelRightOpen,
   Layers,
   Type,
+  Palette,
   Copy,
   Check,
   Power,
@@ -33,6 +34,9 @@ import {
 import StarterLandingPage from "@/landing-pages/starter-template/page";
 import SectionsPanel from "@/app/(admin)/admin/landing-pages/_components/SectionsPanel";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { PaletteSwatches } from "@/components/admin/PaletteSwatches";
+import { isPaletteKey } from "@/lib/palettes";
+import { useBrand } from "@/components/brand/BrandProvider";
 import { EditProvider, EditSelection, applyFieldEdit, getByPath } from "./EditContext";
 import { PreviewFrame } from "./PreviewFrame";
 
@@ -100,6 +104,7 @@ export interface StarterEditorProps {
 }
 
 export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, onToggleStatus, onDelete }: StarterEditorProps) {
+  const brand = useBrand();
   const initial = useMemo<Draft>(
     () => ({
       content: lp.content_config || {},
@@ -116,7 +121,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
   const [saveError, setSaveError] = useState("");
   const [device, setDevice] = useState<"mobile" | "desktop">("mobile");
   const [panelOpen, setPanelOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
-  const [tab, setTab] = useState<"sections" | "content">("content");
+  const [tab, setTab] = useState<"sections" | "content" | "colors">("content");
   const [menuOpen, setMenuOpen] = useState(false);
   const [selected, setSelected] = useState<EditSelection | null>(null);
   const lastEdit = useRef<{ key: string; t: number } | null>(null);
@@ -269,6 +274,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
           [
             ["content", "المحتوى", Type],
             ["sections", "الأقسام", Layers],
+            ["colors", "الألوان", Palette],
           ] as const
         ).map(([key, label, Icon]) => (
           <button
@@ -288,7 +294,41 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
-        {tab === "sections" ? (
+        {tab === "colors" ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-2 p-3 rounded-2xl bg-sky-50 border border-sky-200 text-sky-900 text-xs font-bold leading-relaxed">
+              <Palette className="w-4 h-4 shrink-0 mt-0.5 text-sky-600" />
+              <span>ألوان الصفحة دي بس. لو سيبتها فاضية بتاخد ألوان المتجر من "هوية المتجر".</span>
+            </div>
+            {(
+              [
+                ["theme_primary", "لون الثقة (الضمانات والشحن المجاني)", brand.primary],
+                ["theme_accent", "لون زرار الطلب والعروض", brand.accent],
+              ] as const
+            ).map(([field, title, storeDefault]) => {
+              const current = getByPath(draft.content, field);
+              const active = isPaletteKey(current) ? current : "";
+              return (
+                <div key={field} className="bg-white rounded-2xl border border-slate-200 p-3 space-y-2.5">
+                  <p className="text-sm font-black text-slate-900">{title}</p>
+                  <PaletteSwatches value={active || storeDefault} onChange={(k) => setField(field, k)} label={title} />
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-slate-500">{active ? "لون مخصص لهذه الصفحة" : "لون المتجر (افتراضي)"}</span>
+                    {active && (
+                      <button
+                        type="button"
+                        onClick={() => setField(field, "")}
+                        className="min-h-[36px] px-3 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                      >
+                        استخدام لون المتجر
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : tab === "sections" ? (
           <SectionsPanel
             customSections={draft.sections}
             isSavingSections={saving}
