@@ -38,3 +38,6 @@ next-env.d.ts
 # local data dumps (contain secrets)
 rexrack-store.json
 *.store.json
+
+# wrangler
+.wrangler/
