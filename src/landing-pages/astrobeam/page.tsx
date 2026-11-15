@@ -7,8 +7,6 @@ import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import { astrobeamConfig } from "./config";
-import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
-import { SocialProofWall } from "@/components/shared/SocialProofWall";
 import {
   Star,
   ShieldCheck,
@@ -119,15 +117,15 @@ export default function AstroBeamLandingPage({
 
             {/* Quick Micro Badges */}
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-sm">
+              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-xs">
                 <Moon className="w-4 h-4 text-purple-400 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-200">6 غيارات متنوعة</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-sm">
+              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-xs">
                 <Compass className="w-4 h-4 text-indigo-400 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-200">دوران 360 درجة</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-sm">
+              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-xs">
                 <Usb className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-200">تشغيل بـ USB</span>
               </div>
@@ -222,11 +220,6 @@ export default function AstroBeamLandingPage({
         </div>
       </section>
 
-      {/* Trust strip (real rating only when configured) */}
-      <section className="px-4 sm:px-6 max-w-4xl mx-auto pb-8">
-        <SocialProofWall />
-      </section>
-
       {/* 3. Visual Gallery & Highlights */}
       <section className="py-12 bg-slate-900/60 border-y border-purple-500/20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -241,7 +234,7 @@ export default function AstroBeamLandingPage({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-900 rounded-3xl overflow-hidden border border-purple-500/20 shadow-md">
-              <div className="relative w-full h-64 sm:h-80">
+              <div className="relative aspect-4/3">
                 <Image
                   src={astrobeamConfig.images[1].src}
                   alt={astrobeamConfig.images[1].alt}
@@ -258,7 +251,7 @@ export default function AstroBeamLandingPage({
             </div>
 
             <div className="bg-slate-900 rounded-3xl overflow-hidden border border-purple-500/20 shadow-md">
-              <div className="relative w-full h-64 sm:h-80">
+              <div className="relative aspect-4/3">
                 <Image
                   src={astrobeamConfig.images[2].src}
                   alt={astrobeamConfig.images[2].alt}
@@ -275,7 +268,7 @@ export default function AstroBeamLandingPage({
             </div>
 
             <div className="bg-slate-900 rounded-3xl overflow-hidden border border-purple-500/20 shadow-md">
-              <div className="relative w-full h-64 sm:h-80">
+              <div className="relative aspect-4/3">
                 <Image
                   src={astrobeamConfig.images[3].src}
                   alt={astrobeamConfig.images[3].alt}
@@ -364,11 +357,6 @@ export default function AstroBeamLandingPage({
             </div>
           </div>
         </div>
-      </section>
-
-      {/* The 3 golden guarantees, right before the order form */}
-      <section className="px-4 sm:px-6 max-w-3xl mx-auto pt-4">
-        <GuaranteesStrip title="ضماناتنا ليك" />
       </section>
 
       {/* 6. Checkout Form Section */}

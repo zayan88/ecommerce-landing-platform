@@ -3,14 +3,8 @@ import { dbStore } from "@/lib/db/store";
 
 export const runtime = "edge";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    // Single page, read from the same source the public page uses (always the latest saved content)
-    const id = new URL(req.url).searchParams.get("id");
-    if (id) {
-      const landingPage = await dbStore.getLandingPage(id);
-      return NextResponse.json({ success: !!landingPage, landingPage });
-    }
     const landingPages = await dbStore.getLandingPages();
     return NextResponse.json({ success: true, landingPages });
   } catch (err: any) {
@@ -32,11 +26,6 @@ export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
     const { id, status, sections_config, content_config } = body;
-    if (id && (typeof body.title === "string" || typeof body.slug === "string")) {
-      const result = await dbStore.updateLandingPageMeta(id, { title: body.title, slug: body.slug });
-      if (!result.ok) return NextResponse.json({ success: false, error: result.error }, { status: 400 });
-      return NextResponse.json({ success: true, landingPage: result.landingPage });
-    }
     if (!id) {
       return NextResponse.json({ success: false, error: "معرف الصفحة مطلوب" }, { status: 400 });
     }

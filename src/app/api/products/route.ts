@@ -1,30 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
-import { isAdminRequest } from "@/lib/auth/session";
 
 export const runtime = "edge";
 
-// Internal business fields never shown to visitors (cost, supplier ids, commissions)
-const PRIVATE_PRODUCT_FIELDS = [
-  "cost_price",
-  "safka_product_id",
-  "safka_property_id",
-  "safka_commission",
-  "safka_raw",
-] as const;
-
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const products = await dbStore.getProducts();
-    if (isAdminRequest(req)) {
-      return NextResponse.json({ success: true, products });
-    }
-    const publicProducts = products.map((p) => {
-      const copy: any = { ...p };
-      for (const f of PRIVATE_PRODUCT_FIELDS) delete copy[f];
-      return copy;
-    });
-    return NextResponse.json({ success: true, products: publicProducts });
+    return NextResponse.json({ success: true, products });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -40,12 +22,12 @@ export async function POST(req: NextRequest) {
     const product = await dbStore.saveProduct(body);
 
     // Auto-create or ensure landing page exists for the product
-    const lp = await dbStore.saveLandingPage({
+    await dbStore.saveLandingPage({
       product_id: product.id,
       title: product.title_ar,
       slug: product.slug,
       component_key: "starter-template",
-      status: product.status === "active" ? "active" : "paused",
+      status: "active",
       deployment_url: `/p/${product.slug}`,
       deployment_status: "published",
     });
@@ -54,7 +36,6 @@ export async function POST(req: NextRequest) {
       success: true,
       message: "تم حفظ المنتج وإنشاء صفحة الهبوط بنجاح",
       product,
-      landing_page_id: lp?.id,
       landing_page_url: `/p/${product.slug}`,
     });
   } catch (err: any) {
@@ -72,13 +53,13 @@ export async function PUT(req: NextRequest) {
     const product = await dbStore.saveProduct(body);
 
     // Sync landing page title and slug if updated
-    if ((body.title_ar || body.slug) && !body.skip_lp_sync) {
+    if (body.title_ar || body.slug) {
       await dbStore.saveLandingPage({
         product_id: product.id,
         title: product.title_ar,
         slug: product.slug,
         component_key: "starter-template",
-        status: product.status === "active" ? "active" : "paused",
+        status: "active",
         deployment_url: `/p/${product.slug}`,
         deployment_status: "published",
       });

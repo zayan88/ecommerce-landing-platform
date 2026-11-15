@@ -7,8 +7,6 @@ import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import { carOrganizerConfig } from "./config";
-import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
-import { SocialProofWall } from "@/components/shared/SocialProofWall";
 import {
   Star,
   ShieldCheck,
@@ -87,7 +85,7 @@ export default function CarOrganizerLandingPage({
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-500 selection:text-white" dir="rtl">
       {/* 1. Top Urgency Announcement Bar */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white py-2.5 px-4 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2">
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white py-2.5 px-4 text-center text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2">
         <Sparkles className="w-4 h-4 text-blue-200 animate-pulse" />
         <span>عرض خاص اليوم: شحن مجاني 100% لجميع المحافظات + حق المعاينة والتجربة قبل الدفع</span>
         <span className="hidden sm:inline bg-white/20 px-2 py-0.5 rounded-full text-xs font-mono font-black">
@@ -112,15 +110,15 @@ export default function CarOrganizerLandingPage({
 
             {/* Quick Micro Badges */}
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
                 <Car className="w-4 h-4 text-blue-600 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-800">يناسب كل العربيات</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
                 <Baby className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-800">حماية من الأوساخ</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
                 <ShieldCheck className="w-4 h-4 text-indigo-600 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-800">معاينة قبل الدفع</span>
               </div>
@@ -153,7 +151,7 @@ export default function CarOrganizerLandingPage({
             </p>
 
             {/* Checklist of Core Benefits */}
-            <div className="space-y-2 text-xs sm:text-sm text-slate-700 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="space-y-2 text-xs sm:text-sm text-slate-700 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span className="font-semibold">حامل شفاف يدعم شاشات التابلت لمشاهدة الفيديوهات بدون مسك باليد</span>
@@ -215,11 +213,6 @@ export default function CarOrganizerLandingPage({
         </div>
       </section>
 
-      {/* Trust strip (real rating only when configured) */}
-      <section className="px-4 sm:px-6 max-w-4xl mx-auto pb-8">
-        <SocialProofWall />
-      </section>
-
       {/* 3. The Problem Section */}
       <section className="py-12 bg-white border-y border-slate-200 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto space-y-6 text-center">
@@ -257,7 +250,7 @@ export default function CarOrganizerLandingPage({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-right pt-2">
           {carOrganizerConfig.steps.map((st) => (
-            <div key={st.num} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2">
+            <div key={st.num} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
               <div className="w-8 h-8 rounded-full bg-blue-700 text-white font-black text-sm flex items-center justify-center">
                 {st.num}
               </div>
@@ -478,7 +471,7 @@ export default function CarOrganizerLandingPage({
       {/* 5. Before & After Comparison Box (تصميم فريم 4 من الفيديو) */}
       <section className="py-12 bg-slate-100/80 border-y border-slate-200 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto space-y-6 text-center">
-          <span className="text-xs font-bold text-blue-700 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+          <span className="text-xs font-bold text-blue-700 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-2xs">
             الفرق واضح
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
@@ -488,7 +481,7 @@ export default function CarOrganizerLandingPage({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 text-right">
             {/* Without */}
-            <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
               <div className="text-red-600 font-black text-base flex items-center gap-1.5">
                 <span>من غيره</span> <span>😵</span>
               </div>
@@ -539,7 +532,7 @@ export default function CarOrganizerLandingPage({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right pt-2">
           {carOrganizerConfig.reviews.map((rev, idx) => (
-            <div key={idx} className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-3 flex flex-col justify-between">
+            <div key={idx} className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-2xs space-y-3 flex flex-col justify-between">
               <div className="space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -566,11 +559,6 @@ export default function CarOrganizerLandingPage({
             </div>
           ))}
         </div>
-      </section>
-
-      {/* The 3 golden guarantees, right before the order form */}
-      <section className="px-4 max-w-3xl mx-auto pt-6">
-        <GuaranteesStrip title="ضماناتنا ليك" />
       </section>
 
       {/* 7. Embedded Checkout Form Section (بياناتك للتوصيل) */}
@@ -610,7 +598,7 @@ export default function CarOrganizerLandingPage({
           {carOrganizerConfig.faqs.map((faq, idx) => {
             const isOpen = openFaqIndex === idx;
             return (
-              <div key={idx} className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-sm">
+              <div key={idx} className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-2xs">
                 <button
                   onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
                   className="w-full p-4 font-bold text-sm text-slate-900 flex items-center justify-between gap-4 text-right cursor-pointer"

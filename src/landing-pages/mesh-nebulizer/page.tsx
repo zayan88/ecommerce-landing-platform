@@ -2,10 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSections } from "@/types";
-import { FaqAccordion } from "@/components/shared/FaqAccordion";
-import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
-import { SocialProofWall } from "@/components/shared/SocialProofWall";
+import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, DEFAULT_LANDING_PAGE_SECTIONS } from "@/types";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
@@ -19,9 +16,11 @@ import {
   ArrowDown,
   Package,
   CheckCircle2,
+  PhoneCall,
   Zap,
   XCircle,
   ThumbsUp,
+  Clock,
 } from "lucide-react";
 
 interface MeshNebulizerPageProps {
@@ -66,8 +65,10 @@ export default function MeshNebulizerLandingPage({
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Pages saved before new sections existed still get them (saved order/flags win)
-  const sections: LandingPageSectionConfig[] = mergeSections(landingPage.sections_config);
+  const sections: LandingPageSectionConfig[] =
+    landingPage.sections_config && landingPage.sections_config.length > 0
+      ? landingPage.sections_config
+      : DEFAULT_LANDING_PAGE_SECTIONS;
 
   const c = landingPage.content_config;
 
@@ -277,7 +278,7 @@ export default function MeshNebulizerLandingPage({
 
   // 2. COMPARISON SECTION
   const renderComparison = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5 text-center">
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-5 text-center">
       <div>
         <span className="text-xs font-bold text-cyan-800 bg-cyan-50 px-3 py-1 rounded-full border border-cyan-200">
           {c?.comparison_badge || "ليه تغير جهازك القديم؟"}
@@ -341,7 +342,7 @@ export default function MeshNebulizerLandingPage({
 
   // 3. BOX CONTENTS
   const renderBoxContents = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-right">
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-right">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
           <Package className="w-5 h-5 text-cyan-700" />
@@ -388,7 +389,7 @@ export default function MeshNebulizerLandingPage({
 
   // 4. HOW TO USE (3 QUICK STEPS)
   const renderHowToUse = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-right">
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-right">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
           <Zap className="w-5 h-5 text-amber-600" />
@@ -436,7 +437,7 @@ export default function MeshNebulizerLandingPage({
 
   // 5. REVIEWS & SOCIAL PROOF
   const renderReviews = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 text-right">
+    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4 text-right">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-black text-slate-900 font-heading flex items-center gap-2">
           <ThumbsUp className="w-4 h-4 text-cyan-600" />
@@ -478,21 +479,29 @@ export default function MeshNebulizerLandingPage({
 
   // 7. GUARANTEES FOOTER
   const renderGuarantees = () => (
-    <GuaranteesStrip title={c?.guarantees_title || "ضماناتنا ليك"} items={c?.guarantees} />
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs text-slate-600 pt-2">
+      <div className="p-3 rounded-2xl bg-white border border-slate-200">
+        <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+        <span className="font-bold block text-slate-800">معاينة قبل الدفع</span>
+        <span className="text-[10px] text-slate-500">افحص طلبك مع المندوب</span>
+      </div>
+      <div className="p-3 rounded-2xl bg-white border border-slate-200">
+        <Truck className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+        <span className="font-bold block text-slate-800">شحن مجاني</span>
+        <span className="text-[10px] text-slate-500">لكل محافظات مصر</span>
+      </div>
+      <div className="p-3 rounded-2xl bg-white border border-slate-200">
+        <Clock className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+        <span className="font-bold block text-slate-800">توصيل سريع</span>
+        <span className="text-[10px] text-slate-500">من 5 إلى 7 أيام</span>
+      </div>
+      <div className="p-3 rounded-2xl bg-white border border-slate-200">
+        <PhoneCall className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+        <span className="font-bold block text-slate-800">تأكيد فوري</span>
+        <span className="text-[10px] text-slate-500">اتصال لتأكيد الميعاد</span>
+      </div>
+    </div>
   );
-
-  // TRUST STRIP (stage 2) — only real rating/count are shown, never invented
-  const renderSocialProof = () => (
-    <SocialProofWall
-      rating={c?.proof_rating}
-      reviewsCount={c?.proof_reviews_count}
-      statements={c?.proof_statements}
-      governorates={c?.proof_governorates}
-    />
-  );
-
-  // FAQ (stage 9)
-  const renderFaq = () => <FaqAccordion title={c?.faq_title} items={c?.faq_items} />;
 
   const renderSection = (id: string) => {
     switch (id) {
@@ -510,19 +519,15 @@ export default function MeshNebulizerLandingPage({
         return renderOrderForm();
       case "guarantees":
         return renderGuarantees();
-      case "social_proof":
-        return renderSocialProof();
-      case "faq":
-        return renderFaq();
       default:
         return null;
     }
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-cyan-500 selection:text-white" dir="rtl">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-cyan-500 selection:text-white pb-24 md:pb-16" dir="rtl">
       {/* 1. Announcement Bar */}
-      <div className="bg-gradient-to-r from-cyan-700 via-sky-600 to-cyan-800 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2">
+      <div className="bg-gradient-to-r from-cyan-700 via-sky-600 to-cyan-800 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2">
         <Truck className="w-4 h-4 text-cyan-200 shrink-0" />
         <span>{announcementText}</span>
       </div>

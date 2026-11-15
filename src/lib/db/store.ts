@@ -1,28 +1,6 @@
 import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
-import { generateOrderId, generateUniqueOrderNumber } from "@/lib/orders/guard";
-import {
-  findOrderRecord,
-  listDeletedOrderTokens,
-  listOrderEntries,
-  listRecentOrderNumbers,
-  mapLimit,
-  orderFromMeta,
-  orderKey,
-  readOrderRecord,
-  reconcileLegacyOrders,
-  writeOrderRecord,
-  writeOrderTombstone,
-} from "./order-kv";
-
-/** Thrown by dbStore.createOrder when the order could not be written to any durable store. */
-export class OrderPersistenceError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "OrderPersistenceError";
-  }
-}
 
 // Initial seed data
 const initialProducts: (Product & { offers: ProductOffer[] })[] = [
@@ -346,8 +324,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "mesh-nebulizer",
     component_key: "mesh-nebulizer",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/mesh-nebulizer",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -362,8 +340,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "safka-8ftidwr",
     component_key: "mesh-nebulizer",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/safka-8ftidwr",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -380,8 +358,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "body-massager",
     component_key: "body-massager",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/body-massager",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -396,8 +374,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "safka-7mebpwu",
     component_key: "body-massager",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/safka-7mebpwu",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -412,8 +390,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "safka-b5fb3b6b",
     component_key: "body-massager",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/safka-b5fb3b6b",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -428,8 +406,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "starter-template",
     component_key: "body-massager",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/starter-template",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -446,8 +424,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "car-organizer",
     component_key: "car-organizer",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/car-organizer",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -462,8 +440,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "safka-9pkjp8q",
     component_key: "car-organizer",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/safka-9pkjp8q",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -478,8 +456,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "massage-cushion",
     component_key: "body-massager",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/body-massager",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -494,8 +472,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "safka-rxuirx2",
     component_key: "car-organizer",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/safka-rxuirx2",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -512,8 +490,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "astrobeam",
     component_key: "astrobeam",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/astrobeam",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -528,8 +506,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "safka-6ab19443",
     component_key: "astrobeam",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/safka-6ab19443",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -544,8 +522,8 @@ const initialLandingPages: LandingPage[] = [
     slug: "book",
     component_key: "starter-template",
     status: "active",
-    meta_pixel_id: "",
-    meta_capi_token: "",
+    meta_pixel_id: "1636283807582751",
+    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
     deployment_url: "/p/book",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -559,144 +537,29 @@ const initialOrders: Order[] = [];
 
 const initialSettings: SystemSettings = {
   safqa_api_base_url: process.env.SAFQA_API_BASE_URL || "https://api.safqapay.com/v1",
-  safqa_merchant_id: process.env.SAFQA_MERCHANT_ID || "",
-  // Secrets come from env only (filled lazily per request in getSettings) — never hardcode them here.
-  safqa_api_secret_token: "",
-  safqa_webhook_secret: "",
+  safqa_merchant_id: process.env.SAFQA_MERCHANT_ID || "MERCHANT_EG_984",
+  safqa_api_secret_token: process.env.SAFQA_API_SECRET_TOKEN || process.env.SAFKA_API_KEY || "sk_542077e40b44f0837da89f7f542f752270ac78644240cfa46a98b9afe8e312fc",
+  safqa_webhook_secret: process.env.SAFQA_WEBHOOK_SECRET || "WH_SECRET_984",
   safqa_sandbox_mode: false,
   safqa_auto_forward: true,
-  // No default pixel: a merchant copy must never send events to someone else's Meta Pixel.
-  default_meta_pixel_id: process.env.NEXT_PUBLIC_META_PIXEL_ID || "",
-  default_meta_capi_token: "",
+  default_meta_pixel_id: process.env.NEXT_PUBLIC_META_PIXEL_ID || "1636283807582751",
+  default_meta_capi_token: process.env.META_CAPI_ACCESS_TOKEN || "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
   meta_test_event_code: process.env.META_TEST_EVENT_CODE || "",
-  // Brand/contact come from the admin (/admin/brand) or BRAND_* / SUPPORT_* env seeds — see lib/brand.ts
-  store_name: "",
-  support_phone: "",
-  support_whatsapp: "",
-  telegram_bot_token: "",
-  telegram_chat_id: "",
+  store_name: "RexRack",
+  support_phone: "01000000000",
+  support_whatsapp: "201000000000",
+  telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN || "",
+  telegram_chat_id: process.env.TELEGRAM_CHAT_ID || "",
   telegram_notifications_enabled: true,
 };
 
-/** Admin-saved settings overrides persist in KV (memory alone is lost between Edge isolates). */
-const SETTINGS_KV_KEY = "system_settings_overrides";
-
-/** Env values read per request (next-on-pages fills process.env per request). */
-function envSettingDefaults(): Partial<SystemSettings> {
-  return {
-    safqa_api_secret_token: process.env.SAFQA_API_SECRET_TOKEN || process.env.SAFKA_API_KEY || "",
-    safqa_webhook_secret: process.env.SAFQA_WEBHOOK_SECRET || "",
-    default_meta_capi_token: process.env.META_CAPI_ACCESS_TOKEN || "",
-    telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN || "",
-    telegram_chat_id: process.env.TELEGRAM_CHAT_ID || "",
-  };
-}
-
-async function readSettingsOverrides(): Promise<Partial<SystemSettings>> {
-  try {
-    const stored = await kvStore.get<Partial<SystemSettings>>(SETTINGS_KV_KEY);
-    return stored && typeof stored === "object" ? stored : {};
-  } catch {
-    return {};
-  }
-}
-
 // In-Memory cache singleton for development & fast fallback
-// Demo catalog (hand-written sample pages) only on the owner's demo instance; a merchant copy starts empty.
-const DEMO_SEED = (process.env.DEMO_MODE || "").trim() === "1";
-let memoryProducts = DEMO_SEED ? [...initialProducts] : [];
-let memoryLandingPages = DEMO_SEED ? [...initialLandingPages] : [];
+let memoryProducts = [...initialProducts];
+let memoryLandingPages = [...initialLandingPages];
 let memoryOrders = [...initialOrders];
 let memorySettings = { ...initialSettings };
 let memoryAnalytics: AnalyticsEvent[] = [];
 let memoryDeletedOrderIds = new Set<string>();
-
-// ── Orders: per-isolate helpers ─────────────────────────────────────────────
-// KV (one key per order, see ./order-kv) is the durable store. `memoryOrders` is only this
-// isolate's cache of orders it wrote: it bridges KV's eventual consistency (a list/read right
-// after a write) and is the whole store in local dev without KV.
-
-/** How long a memory-only order (not in the KV listing yet) is still shown. */
-const MEMORY_ORDER_FRESH_MS = 2 * 60 * 1000;
-const MEMORY_ORDERS_MAX = 500;
-const ORDER_STORE_UNAVAILABLE = "تعذر الوصول إلى مخزن الطلبات مؤقتاً، برجاء المحاولة مرة أخرى";
-
-const orderTime = (value?: string) => (value ? Date.parse(value) || 0 : 0);
-
-function rememberOrder(order: Order): void {
-  memoryOrders = [order, ...memoryOrders.filter((o) => o.id !== order.id)];
-  if (memoryOrders.length > MEMORY_ORDERS_MAX && kvStore.isAvailable()) {
-    memoryOrders = memoryOrders.slice(0, MEMORY_ORDERS_MAX);
-  }
-}
-
-function findMemoryOrder(idOrNumber: string): Order | null {
-  return memoryOrders.find((o) => o.id === idOrNumber || o.order_number === idOrNumber) || null;
-}
-
-/** Landing page relation for an order — never carries the CAPI token (or a nested product copy). */
-function publicLandingPageFor(slug?: string): LandingPage | undefined {
-  const lp = slug ? memoryLandingPages.find((l) => l.slug === slug) : undefined;
-  if (!lp) return undefined;
-  const { meta_capi_token: _token, product: _product, ...safe } = lp;
-  return safe as LandingPage;
-}
-
-/** Relations are not persisted with the order; re-attach them for display. */
-function attachOrderRelations(orders: Order[], products: Product[]): void {
-  for (const ord of orders) {
-    if (ord.product_id) {
-      ord.product = products.find((p) => p.id === ord.product_id) || ord.product;
-    }
-    if (!ord.product && ord.landing_page_slug) {
-      const lp = memoryLandingPages.find((l) => l.slug === ord.landing_page_slug);
-      if (lp?.product) ord.product = lp.product;
-    }
-    const lp = publicLandingPageFor(ord.landing_page_slug);
-    if (lp) ord.landing_page = lp;
-    else delete ord.landing_page;
-  }
-}
-
-/**
- * Loads the current version of an order for a read-modify-write.
- * `kvError: true` = KV could not be read: the caller must NOT write to KV (it could clobber data).
- */
-async function loadOrderForWrite(idOrNumber: string): Promise<{ order: Order | null; kvError: boolean }> {
-  const mem = findMemoryOrder(idOrNumber);
-  const direct = await readOrderRecord(idOrNumber);
-  if (direct.status === "found") {
-    // Same isolate may hold a newer copy than a lagging KV read.
-    const newer = mem && orderTime(mem.updated_at) > orderTime(direct.value.updated_at) ? mem : direct.value;
-    return { order: newer, kvError: false };
-  }
-  if (direct.status === "error") return { order: mem, kvError: true };
-  if (mem) return { order: mem, kvError: false }; // created here moments ago / dev without KV
-  if (direct.status === "unconfigured") return { order: null, kvError: false };
-
-  const found = await findOrderRecord(idOrNumber); // by order number, or still in the legacy array
-  if (found.status === "found") return { order: found.value, kvError: false };
-  return { order: null, kvError: found.status === "error" };
-}
-
-/**
- * Merges `patch` into the stored order and writes it back to its own KV key (value + metadata).
- * Returns null when the order does not exist. Throws when KV could not be read or written and
- * no other durable store took the change — the update must not be reported as saved.
- */
-async function applyOrderPatch(id: string, patch: Partial<Order>, savedElsewhere: boolean): Promise<Order | null> {
-  const { order: base, kvError } = await loadOrderForWrite(id);
-  if (kvError && !savedElsewhere) throw new Error(ORDER_STORE_UNAVAILABLE);
-  if (!base) return null;
-
-  const next: Order = { ...base, ...patch, id: base.id };
-  if (!kvError && kvStore.isAvailable()) {
-    const ok = await writeOrderRecord(next);
-    if (!ok && !savedElsewhere) throw new Error(ORDER_STORE_UNAVAILABLE);
-  }
-  rememberOrder(next);
-  return next;
-}
 
 const getStoreFilePath = () => "";
 
@@ -1119,70 +982,6 @@ export const dbStore = {
     return true;
   },
 
-  /** Reserved first path segments that a landing page slug must never take. */
-  _RESERVED_SLUGS: new Set(["admin", "api", "p", "policy", "thank-you", "support", "_next"]),
-
-  /** Lowercase, trim, spaces -> hyphens, keep Latin letters/digits/Arabic/hyphen/underscore. */
-  normalizeSlug(raw: string): string {
-    return String(raw || "")
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9\u0600-\u06FF\-_]/g, "")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60);
-  },
-
-  /**
-   * Renames a landing page (title and/or link) safely: validates, checks uniqueness against other
-   * landing pages and products, writes the new keys and removes the stale old-slug key so the old
-   * URL does not keep serving an outdated copy.
-   */
-  async updateLandingPageMeta(
-    id: string,
-    patch: { title?: string; slug?: string }
-  ): Promise<{ ok: true; landingPage: LandingPage } | { ok: false; error: string }> {
-    const current = await this.getLandingPage(id);
-    if (!current) return { ok: false, error: "صفحة الهبوط غير موجودة" };
-
-    const title = patch.title !== undefined ? String(patch.title).trim().slice(0, 120) : current.title;
-    if (!title) return { ok: false, error: "اسم الصفحة مطلوب" };
-
-    let slug = current.slug;
-    if (patch.slug !== undefined) {
-      slug = this.normalizeSlug(patch.slug);
-      if (!slug) return { ok: false, error: "الرابط غير صالح. استخدم حروف أو أرقام أو شرطة فقط" };
-      if (this._RESERVED_SLUGS.has(slug)) return { ok: false, error: "الرابط ده محجوز، اختار رابط تاني" };
-      if (slug !== current.slug) {
-        const [pages, prods] = await Promise.all([this.getLandingPages(), this.getProducts()]);
-        if (pages.some((l) => l.id !== current.id && l.slug === slug)) {
-          return { ok: false, error: "الرابط ده مستخدم في صفحة هبوط تانية" };
-        }
-        if (prods.some((p) => p.slug === slug && p.id !== current.product_id)) {
-          return { ok: false, error: "الرابط ده مستخدم كرابط منتج تاني" };
-        }
-      }
-    }
-
-    const { product: _product, ...rest } = current as any;
-    const updated = await this.saveLandingPage({
-      ...rest,
-      title,
-      slug,
-      deployment_url: `/p/${slug}`,
-    });
-
-    if (slug !== current.slug) {
-      try {
-        await kvStore.delete(`lp:${current.slug}`);
-      } catch {}
-      const mi = memoryLandingPages.findIndex((p) => p.id === current.id);
-      if (mi >= 0) memoryLandingPages[mi] = { ...memoryLandingPages[mi], title, slug };
-    }
-    return { ok: true, landingPage: updated };
-  },
-
   async deleteLandingPage(id: string): Promise<boolean> {
     const admin = getSupabaseAdmin();
     if (admin) {
@@ -1233,67 +1032,13 @@ export const dbStore = {
       if (!error && data) return data;
     }
 
-    // KV: one list call per 1000 orders. Each key's metadata is the order's list view; only orders
-    // whose list view did not fit in the metadata are read individually.
-    const byId = new Map<string, Order>();
-    const listedAt = new Map<string, number>(); // id → updated_at of the KV version
-    const listing = await listOrderEntries();
-
-    if (!listing.ok) {
-      if (kvStore.isAvailable()) {
-        console.error("[getOrders] KV order listing failed — serving this isolate's memory only");
-      }
-      for (const mo of memoryOrders) byId.set(mo.id, mo);
-    } else {
-      const needsRecord: string[] = [];
-      for (const entry of listing.entries) {
-        const meta = entry.meta;
-        if (meta) listedAt.set(entry.id, orderTime(meta.u));
-        // Cheap pre-filter on exact-match fields (skipped when the metadata was truncated).
-        if (meta && !meta.t) {
-          if (filters?.status && meta.st !== filters.status) continue;
-          if (filters?.landing_page_slug && meta.lp !== filters.landing_page_slug) continue;
-          if (filters?.product_id && meta.p !== filters.product_id) continue;
-        }
-        const fromMeta = orderFromMeta(entry.id, meta);
-        if (fromMeta) byId.set(entry.id, fromMeta);
-        else needsRecord.push(entry.id);
-      }
-
-      const records = await mapLimit(needsRecord, 8, async (id) => {
-        let res = await readOrderRecord(id);
-        if (res.status === "error") res = await readOrderRecord(id); // one retry
-        if (res.status === "found") return res.value;
-        if (res.status === "error") console.error(`[getOrders] could not read order ${id}`);
-        return memoryOrders.find((o) => o.id === id) || null;
-      });
-      for (const rec of records) if (rec) byId.set(rec.id, rec);
-
-      // Legacy single-key store: include what is not migrated yet, and migrate a batch.
-      try {
-        const legacy = await reconcileLegacyOrders(new Set(listing.entries.map((e) => e.id)));
-        for (const lo of legacy) {
-          if (!listedAt.has(lo.id) && !byId.has(lo.id) && !memoryDeletedOrderIds.has(lo.id)) byId.set(lo.id, lo);
-        }
-      } catch (e) {
-        console.error("[getOrders] legacy order reconciliation failed", e);
-      }
-
-      // This isolate's own recent writes win over a listing that has not caught up yet.
-      const now = Date.now();
-      for (const mo of memoryOrders) {
-        if (memoryDeletedOrderIds.has(mo.id)) continue;
-        const moTime = orderTime(mo.updated_at);
-        const kvTime = listedAt.get(mo.id);
-        if (kvTime !== undefined) {
-          if (moTime > kvTime) byId.set(mo.id, mo);
-        } else if (!byId.has(mo.id) && now - moTime < MEMORY_ORDER_FRESH_MS) {
-          byId.set(mo.id, mo);
-        }
+    const kvOrders = (await kvStore.get<Order[]>("orders_all")) || [];
+    let results = [...kvOrders];
+    for (const mo of memoryOrders) {
+      if (!results.some((r) => r.id === mo.id || r.order_number === mo.order_number)) {
+        results.push(mo);
       }
     }
-
-    let results = Array.from(byId.values());
 
     if (filters?.landing_page_slug) {
       results = results.filter((o) => o.landing_page_slug === filters.landing_page_slug);
@@ -1308,23 +1053,24 @@ export const dbStore = {
       const q = filters.search.toLowerCase();
       results = results.filter(
         (o) =>
-          String(o.customer_name || "").toLowerCase().includes(q) ||
-          String(o.customer_phone || "").includes(q) ||
-          String(o.order_number || "").toLowerCase().includes(q) ||
-          String(o.governorate || "").toLowerCase().includes(q)
+          o.customer_name.toLowerCase().includes(q) ||
+          o.customer_phone.includes(q) ||
+          o.order_number.toLowerCase().includes(q) ||
+          o.governorate.toLowerCase().includes(q)
       );
     }
 
-    // Always ensure product is attached for display (relations are not persisted with the order)
-    let products: Product[] = memoryProducts;
-    try {
-      products = await this.getProducts();
-    } catch (e) {
-      console.warn("[getOrders] products lookup failed, using built-in catalog", e);
-    }
-    attachOrderRelations(results, products);
+    // Always ensure product is attached for display
+    results.forEach((ord) => {
+      if (!ord.product && ord.product_id) {
+        ord.product = memoryProducts.find((p) => p.id === ord.product_id);
+      }
+      if (!ord.product && ord.landing_page_slug) {
+        const lp = memoryLandingPages.find((l) => l.slug === ord.landing_page_slug);
+        if (lp?.product) ord.product = lp.product;
+      }
+    });
 
-    results.sort((a, b) => orderTime(b.created_at) - orderTime(a.created_at));
     return results;
   },
 
@@ -1344,16 +1090,19 @@ export const dbStore = {
       }
     }
 
-    const order = await applyOrderPatch(id, updatePayload, Boolean(admin));
-    if (!order) return null;
-
-    let products: Product[] = memoryProducts;
-    try {
-      products = await this.getProducts();
-    } catch {}
-    attachOrderRelations([order], products);
-    saveToFile();
-    return order;
+    const order = memoryOrders.find((o) => o.id === id || o.order_number === id);
+    if (order) {
+      Object.assign(order, updatePayload);
+      if (updates.product_id) {
+        const p = memoryProducts.find((mp) => mp.id === updates.product_id);
+        if (p) {
+          order.product = p;
+        }
+      }
+      saveToFile();
+      return order;
+    }
+    return null;
   },
 
   async getOrder(id: string): Promise<Order | null> {
@@ -1366,38 +1115,14 @@ export const dbStore = {
         .single();
       if (!error && data) return data;
     }
-
-    const { order, kvError } = await loadOrderForWrite(id);
-    if (kvError) console.error(`[getOrder] KV read failed for ${id}`);
-    if (!order || memoryDeletedOrderIds.has(order.id)) return null;
-
-    const found: Order = { ...order };
-    let products: Product[] = memoryProducts;
-    try {
-      products = await this.getProducts();
-    } catch {}
-    attachOrderRelations([found], products);
-    return found;
+    const found = memoryOrders.find((o) => o.id === id || o.order_number === id);
+    return found || null;
   },
 
   async createOrder(order: Partial<Order> & { tracking?: Partial<OrderTrackingMeta> }): Promise<Order> {
     const admin = getSupabaseAdmin();
-    const id = generateOrderId();
-
-    // Collision check against today's order numbers (KV listing metadata + this isolate's memory).
-    // Read-only and best-effort: if the listing fails we skip the check — the order is written to
-    // its own brand-new key either way, so a failed read can never overwrite or drop other orders.
-    let takenNumbers = new Set<string>();
-    try {
-      if (kvStore.isAvailable()) takenNumbers = await listRecentOrderNumbers();
-    } catch (e) {
-      console.warn("[KV createOrder read error]", e);
-    }
-    const orderNumber = generateUniqueOrderNumber(
-      (candidate) =>
-        takenNumbers.has(candidate) ||
-        memoryOrders.some((o) => o.order_number === candidate)
-    );
+    const id = `ord-${Date.now()}`;
+    const orderNumber = `EG-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const newOrder: Order = {
       id,
@@ -1428,104 +1153,79 @@ export const dbStore = {
       tracking: order.tracking as OrderTrackingMeta,
     };
 
-    // Attach relations for the returned/in-memory order only — they are never persisted,
-    // and the landing page copy never carries the CAPI token.
+    // Attach relations for memory store
     const product = memoryProducts.find((p) => p.id === newOrder.product_id);
+    const lp = memoryLandingPages.find((p) => p.slug === newOrder.landing_page_slug);
     newOrder.product = product;
-    newOrder.landing_page = publicLandingPageFor(newOrder.landing_page_slug);
+    newOrder.landing_page = lp;
 
-    let savedToSupabase = false;
     if (admin) {
-      try {
-        const { error: insertError } = await admin.from("orders").insert({
-          id: newOrder.id,
-          order_number: newOrder.order_number,
-          landing_page_id: newOrder.landing_page_id,
-          landing_page_slug: newOrder.landing_page_slug,
-          product_id: newOrder.product_id,
-          offer_id: newOrder.offer_id,
-          customer_name: newOrder.customer_name,
-          customer_phone: newOrder.customer_phone,
-          customer_phone2: newOrder.customer_phone2,
-          governorate: newOrder.governorate,
-          city: newOrder.city,
-          address: newOrder.address,
-          notes: newOrder.notes,
-          quantity: newOrder.quantity,
-          unit_price: newOrder.unit_price,
-          total_amount: newOrder.total_amount,
-          shipping_fee: newOrder.shipping_fee,
-          discount_amount: newOrder.discount_amount,
-          final_amount: newOrder.final_amount,
-          currency: newOrder.currency,
-          status: newOrder.status,
-          payment_method: newOrder.payment_method,
+      await admin.from("orders").insert({
+        id: newOrder.id,
+        order_number: newOrder.order_number,
+        landing_page_id: newOrder.landing_page_id,
+        landing_page_slug: newOrder.landing_page_slug,
+        product_id: newOrder.product_id,
+        offer_id: newOrder.offer_id,
+        customer_name: newOrder.customer_name,
+        customer_phone: newOrder.customer_phone,
+        customer_phone2: newOrder.customer_phone2,
+        governorate: newOrder.governorate,
+        city: newOrder.city,
+        address: newOrder.address,
+        notes: newOrder.notes,
+        quantity: newOrder.quantity,
+        unit_price: newOrder.unit_price,
+        total_amount: newOrder.total_amount,
+        shipping_fee: newOrder.shipping_fee,
+        discount_amount: newOrder.discount_amount,
+        final_amount: newOrder.final_amount,
+        currency: newOrder.currency,
+        status: newOrder.status,
+        payment_method: newOrder.payment_method,
+      });
+
+      if (order.tracking) {
+        await admin.from("order_tracking_meta").insert({
+          order_id: newOrder.id,
+          utm_source: order.tracking.utm_source,
+          utm_medium: order.tracking.utm_medium,
+          utm_campaign: order.tracking.utm_campaign,
+          utm_content: order.tracking.utm_content,
+          utm_term: order.tracking.utm_term,
+          referrer: order.tracking.referrer,
+          ip_address: order.tracking.ip_address,
+          user_agent: order.tracking.user_agent,
+          fbp: order.tracking.fbp,
+          fbc: order.tracking.fbc,
+          event_id: order.tracking.event_id,
         });
-        if (insertError) {
-          console.error("[Supabase createOrder insert error]", insertError);
-        } else {
-          savedToSupabase = true;
-        }
-
-        if (savedToSupabase && order.tracking) {
-          await admin.from("order_tracking_meta").insert({
-            order_id: newOrder.id,
-            utm_source: order.tracking.utm_source,
-            utm_medium: order.tracking.utm_medium,
-            utm_campaign: order.tracking.utm_campaign,
-            utm_content: order.tracking.utm_content,
-            utm_term: order.tracking.utm_term,
-            referrer: order.tracking.referrer,
-            ip_address: order.tracking.ip_address,
-            user_agent: order.tracking.user_agent,
-            fbp: order.tracking.fbp,
-            fbc: order.tracking.fbc,
-            event_id: order.tracking.event_id,
-          });
-        }
-      } catch (e) {
-        console.error("[Supabase createOrder error]", e);
       }
     }
 
-    // One KV key per order: no shared list to read-modify-write, no cap on how many are kept.
-    let savedToKv = false;
-    try {
-      savedToKv = await writeOrderRecord(newOrder);
-    } catch (e) {
-      console.error("[KV createOrder write error]", e);
-    }
-
-    // The order must land somewhere durable. Memory only survives this isolate,
-    // so memory-only is accepted solely outside production (local dev without KV/Supabase).
-    if (!savedToSupabase && !savedToKv) {
-      if (process.env.NODE_ENV === "production") {
-        throw new OrderPersistenceError(
-          `Order ${newOrder.order_number} could not be persisted to Supabase or KV`
-        );
-      }
-      console.warn("[createOrder] order kept in memory only (no durable store reachable)");
-    }
-
-    rememberOrder(newOrder);
+    memoryOrders.unshift(newOrder);
     saveToFile();
+    try {
+      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
+      currentOrders.unshift(newOrder);
+      await kvStore.put("orders_all", currentOrders.slice(0, 200));
+    } catch {}
     return newOrder;
   },
 
   async updateOrderStatus(id: string, status: OrderStatus): Promise<boolean> {
     const admin = getSupabaseAdmin();
-    const updated_at = new Date().toISOString();
     if (admin) {
-      await admin.from("orders").update({ status, updated_at }).eq("id", id);
+      await admin.from("orders").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
     }
-    try {
-      const order = await applyOrderPatch(id, { status, updated_at }, Boolean(admin));
+    const order = memoryOrders.find((o) => o.id === id);
+    if (order) {
+      order.status = status;
+      order.updated_at = new Date().toISOString();
       saveToFile();
-      return Boolean(order);
-    } catch (e) {
-      console.error(`[updateOrderStatus] order ${id} was not persisted`, e);
-      return false;
+      return true;
     }
+    return false;
   },
 
   async updateSafqaInfo(id: string, safqaData: {
@@ -1544,14 +1244,13 @@ export const dbStore = {
     if (admin) {
       await admin.from("orders").update(updatePayload).eq("id", id);
     }
-    try {
-      const order = await applyOrderPatch(id, updatePayload, Boolean(admin));
+    const order = memoryOrders.find((o) => o.id === id);
+    if (order) {
+      Object.assign(order, updatePayload);
       saveToFile();
-      return Boolean(order);
-    } catch (e) {
-      console.error(`[updateSafqaInfo] order ${id} was not persisted`, e);
-      return false;
+      return true;
     }
+    return false;
   },
 
   async deleteOrder(id: string): Promise<boolean> {
@@ -1565,38 +1264,21 @@ export const dbStore = {
         console.error("[Supabase deleteOrder error]", e);
       }
     }
-
-    // Everything that identifies this order, so the Safka sync can never resurrect it.
-    const tokens = new Set<string>([id]);
-    if (id.startsWith("sfk-")) tokens.add(id.slice(4)); // virtual Safka order → its serial number
-    let targetId = id;
-    try {
-      const { order } = await loadOrderForWrite(id);
-      if (order) {
-        targetId = order.id;
-        tokens.add(order.id);
-        if (order.order_number) tokens.add(order.order_number);
-        if (order.safqa_invoice_id) tokens.add(order.safqa_invoice_id);
-      }
-    } catch (e) {
-      console.warn("[deleteOrder] lookup failed, deleting by id only", e);
+    memoryDeletedOrderIds.add(id);
+    const order = memoryOrders.find((o) => o.id === id || o.order_number === id);
+    if (order) {
+      memoryDeletedOrderIds.add(order.id);
+      memoryDeletedOrderIds.add(order.order_number);
+      if (order.safqa_invoice_id) memoryDeletedOrderIds.add(order.safqa_invoice_id);
     }
-
-    tokens.forEach((t) => memoryDeletedOrderIds.add(t));
-    memoryOrders = memoryOrders.filter((o) => !tokens.has(o.id) && !tokens.has(o.order_number));
+    memoryOrders = memoryOrders.filter((o) => o.id !== id && o.order_number !== id);
     saveToFile();
-
-    if (!kvStore.isAvailable()) return true;
-    let ok = false;
     try {
-      // Tombstone first: if the key delete then fails, the order is at least never re-imported.
-      const tombOk = await writeOrderTombstone(targetId, Array.from(tokens));
-      const delOk = await kvStore.delete(orderKey(targetId));
-      ok = tombOk && delOk;
-    } catch (e) {
-      console.error("[KV deleteOrder error]", e);
-    }
-    return ok || Boolean(admin);
+      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
+      const filtered = currentOrders.filter((o) => o.id !== id && o.order_number !== id);
+      await kvStore.put("orders_all", filtered);
+    } catch {}
+    return true;
   },
 
   async deleteOrders(ids: string[]): Promise<{ count: number }> {
@@ -1611,67 +1293,28 @@ export const dbStore = {
         console.error("[Supabase deleteOrders error]", e);
       }
     }
-
-    // One listing resolves every order number / Safka serial (no per-order read).
-    const listing = kvStore.isAvailable() ? await listOrderEntries() : { ok: false, entries: [] };
-    const targets = Array.from(idSet).map((id) => {
-      const tokens = new Set<string>([id]);
-      if (id.startsWith("sfk-")) tokens.add(id.slice(4));
-      let targetId = id;
-      const entry = listing.entries.find((e) => e.id === id) || listing.entries.find((e) => e.meta?.n === id);
-      if (entry) {
-        targetId = entry.id;
-        tokens.add(entry.id);
-        if (entry.meta?.n) tokens.add(entry.meta.n);
-        if (entry.meta?.si) tokens.add(entry.meta.si);
+    ids.forEach((id) => memoryDeletedOrderIds.add(id));
+    memoryOrders.forEach((o) => {
+      if (idSet.has(o.id) || idSet.has(o.order_number)) {
+        memoryDeletedOrderIds.add(o.id);
+        memoryDeletedOrderIds.add(o.order_number);
+        if (o.safqa_invoice_id) memoryDeletedOrderIds.add(o.safqa_invoice_id);
       }
-      const mem = findMemoryOrder(id);
-      if (mem) {
-        targetId = mem.id;
-        tokens.add(mem.id);
-        if (mem.order_number) tokens.add(mem.order_number);
-        if (mem.safqa_invoice_id) tokens.add(mem.safqa_invoice_id);
-      }
-      return { targetId, tokens: Array.from(tokens) };
     });
-
-    const allTokens = new Set<string>();
-    targets.forEach((t) => t.tokens.forEach((tok) => allTokens.add(tok)));
-    allTokens.forEach((t) => memoryDeletedOrderIds.add(t));
     const beforeCount = memoryOrders.length;
-    memoryOrders = memoryOrders.filter((o) => !allTokens.has(o.id) && !allTokens.has(o.order_number));
-    const memoryCount = beforeCount - memoryOrders.length;
+    memoryOrders = memoryOrders.filter((o) => !idSet.has(o.id) && !idSet.has(o.order_number));
+    const deletedCount = beforeCount - memoryOrders.length;
     saveToFile();
-
-    if (!kvStore.isAvailable()) return { count: memoryCount || ids.length };
-
-    const outcomes = await mapLimit(targets, 6, async (t) => {
-      try {
-        const tombOk = await writeOrderTombstone(t.targetId, t.tokens);
-        const delOk = await kvStore.delete(orderKey(t.targetId));
-        return tombOk && delOk;
-      } catch (e) {
-        console.error("[KV deleteOrders error]", e);
-        return false;
-      }
-    });
-    const kvCount = outcomes.filter(Boolean).length;
-    return { count: admin ? ids.length : kvCount };
+    try {
+      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
+      const filtered = currentOrders.filter((o) => !idSet.has(o.id) && !idSet.has(o.order_number));
+      await kvStore.put("orders_all", filtered);
+    } catch {}
+    return { count: deletedCount || ids.length };
   },
 
-  /** Sync check against this isolate's set — call refreshDeletedOrderIds() first for the durable list. */
   isOrderDeleted(idOrSerial: string): boolean {
     return memoryDeletedOrderIds.has(idOrSerial);
-  },
-
-  /** Loads the durable deletion tombstones from KV into this isolate (deletions made by other isolates). */
-  async refreshDeletedOrderIds(): Promise<void> {
-    try {
-      const res = await listDeletedOrderTokens();
-      if (res.ok) res.tokens.forEach((t) => memoryDeletedOrderIds.add(t));
-    } catch (e) {
-      console.warn("[refreshDeletedOrderIds] failed", e);
-    }
   },
 
   // ANALYTICS & STATS
@@ -1866,21 +1509,13 @@ export const dbStore = {
 
   // SETTINGS
   async getSettings(): Promise<SystemSettings> {
-    const overrides = await readSettingsOverrides();
-    const merged: any = { ...memorySettings, ...overrides };
-    // Empty secret fields fall back to env (so rotating an env var takes effect without a DB edit)
-    const env: any = envSettingDefaults();
-    for (const k of Object.keys(env)) {
-      if (!merged[k]) merged[k] = env[k];
-    }
-    return merged as SystemSettings;
+    loadFromFile();
+    return memorySettings;
   },
 
   async updateSettings(newSettings: Partial<SystemSettings>): Promise<SystemSettings> {
-    // Persist only the admin overrides (never the env-filled secrets)
-    const overrides = { ...(await readSettingsOverrides()), ...newSettings };
     memorySettings = { ...memorySettings, ...newSettings };
-    await kvStore.put(SETTINGS_KV_KEY, overrides);
-    return this.getSettings();
+    saveToFile();
+    return memorySettings;
   },
 };

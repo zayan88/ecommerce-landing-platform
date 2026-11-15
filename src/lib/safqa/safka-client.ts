@@ -62,7 +62,7 @@ function normalizeArabicText(t?: string): string {
 export class SafkaClient {
   private static async getApiKey(): Promise<string> {
     const settings = await dbStore.getSettings();
-    return settings.safqa_api_secret_token || process.env.SAFKA_API_KEY || "";
+    return settings.safqa_api_secret_token || process.env.SAFKA_API_KEY || "sk_542077e40b44f0837da89f7f542f752270ac78644240cfa46a98b9afe8e312fc";
   }
 
   private static getBaseUrl(): string {
@@ -284,8 +284,6 @@ export class SafkaClient {
       const totalCost = costPerItem * order.quantity;
       const calculatedCommission = Math.max(0, order.total_amount - totalCost);
 
-      const storeName = (await dbStore.getSettings()).store_name || "المتجر";
-      const safkaPageId = (process.env.SAFKA_PAGE_ID || "").trim();
       const payload = {
         items: [
           {
@@ -302,10 +300,9 @@ export class SafkaClient {
         client_address: order.address,
         total: Number(order.final_amount),
         commission: Number(calculatedCommission),
-        page_name: storeName,
-        // Safka marketer page ObjectId of THIS merchant (set SAFKA_PAGE_ID); omitted when not configured.
-        ...(safkaPageId ? { page_id: safkaPageId } : {}),
-        note: order.notes || `طلب من متجر ${storeName} صفحة ${order.landing_page_slug} (رقم الطلب: ${order.order_number})`,
+        page_name: "RexRack",
+        page_id: "6a9c1268c9d99a6b86b85208", // Safka marketer page ObjectId for RexRack
+        note: order.notes || `طلب من متجر RexRack صفحة ${order.landing_page_slug} (رقم الطلب: ${order.order_number})`,
       };
 
       console.log("[SafkaClient] Forwarding order to Safka Egypt:", JSON.stringify(payload));
@@ -380,7 +377,7 @@ export class SafkaClient {
   }
 
   /**
-   * Helper to convert an incoming Safka product into a store Product and Landing Page
+   * Helper to convert an incoming Safka product into a RexRack Product and Landing Page
    */
   static async importSafkaProduct(safkaData: any): Promise<{ product: Product; landingPageUrl: string }> {
     const safkaId = safkaData._id || safkaData.id || `sfk-${Date.now()}`;

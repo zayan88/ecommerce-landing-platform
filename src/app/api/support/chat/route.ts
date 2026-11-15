@@ -1,9 +1,5 @@
-import { CHAT_ENABLED } from "@/lib/features";
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
-import { TelegramNotifier } from "@/lib/notifications/telegram";
-import { allowTelegramForward, clipForwardText } from "@/lib/support-guard";
-import { getOrderClientIp } from "@/lib/orders/guard";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -39,7 +35,6 @@ interface ChatResponseData {
 }
 
 export async function POST(req: NextRequest) {
-  if (!CHAT_ENABLED) return NextResponse.json({ success: false, error: "غير متاح" }, { status: 404 });
   try {
     const body = await req.json();
     const message: string = (body.message || "").trim();
@@ -62,8 +57,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Check for Order Tracking (Phone number or order number in message)
     const phoneMatch = message.match(/(?:01[0125]\d{8})/);
-    // Real order numbers look like EG-251115-1234 (or internal ids ord-123...)
-    const orderNumberMatch = message.match(/(?:EG-\d{6}-\d{4}|ord-[a-zA-Z0-9]+)/i);
+    const orderNumberMatch = message.match(/(?:ord-[a-zA-Z0-9]+|\d{4,8})/i);
 
     if (
       message.includes("تتبع") ||
@@ -75,45 +69,13 @@ export async function POST(req: NextRequest) {
       orderNumberMatch
     ) {
       const searchPhone = phoneMatch ? phoneMatch[0] : null;
-      const searchOrder = orderNumberMatch ? orderNumberMatch[0].toUpperCase() : null;
+      const searchOrder = orderNumberMatch ? orderNumberMatch[0] : null;
 
-      // Exact matching only (no partial phone matches)
-      const phoneEq = (ord: any) =>
-        !!searchPhone && String(ord.customer_phone || "").replace(/\D/g, "").replace(/^(?:20|0020)/, "0") === searchPhone;
-      const orderEq = (ord: any) =>
-        !!searchOrder &&
-        (String(ord.id || "").toUpperCase() === searchOrder ||
-          String(ord.order_number || "").toUpperCase() === searchOrder);
-
-      // Both identifiers given and pointing to the same order -> verified, show full details
-      const verified = Boolean(searchPhone && searchOrder);
-      const matchedOrder = verified
-        ? orders.find((ord) => phoneEq(ord) && orderEq(ord))
-        : orders.find((ord) => phoneEq(ord) || orderEq(ord));
-
-      const firstName = matchedOrder
-        ? String(matchedOrder.customer_name || "").trim().split(/\s+/)[0] || "عميلنا"
-        : "";
-
-      if (matchedOrder && !verified) {
-        const statusMapShort: Record<string, string> = {
-          pending: "قيد المراجعة والتأكيد مع شركة الشحن",
-          confirmed: "تم تأكيد طلبك وجاري التجهيز",
-          shipped: "تم تسليمه للمندوب وهو في الطريق إليك 🚚",
-          delivered: "تم التسليم بنجاح ✅",
-          cancelled: "ملغي ❌",
-          returned: "مرتجع",
-        };
-        const statusShort = statusMapShort[matchedOrder.status] || matchedOrder.status;
-        return NextResponse.json({
-          reply: `أهلاً يا ${firstName}! حالة طلبك (${matchedOrder.order_number || matchedOrder.id}): ${statusShort}.\n\nلعرض تفاصيل أكثر (المبلغ والمحافظة) اكتب رقم الهاتف ورقم الطلب معاً في رسالة واحدة.`,
-          quickReplies: [
-            "متى يصل المندوب بالظبط؟",
-            "هل يمكن تعديل العنوان؟",
-            "عروض إضافية بشحن مجاني",
-          ],
-        } satisfies ChatResponseData);
-      }
+      const matchedOrder = orders.find((ord) => {
+        if (searchPhone && ord.customer_phone.includes(searchPhone)) return true;
+        if (searchOrder && (ord.id === searchOrder || ord.order_number === searchOrder)) return true;
+        return false;
+      });
 
       if (matchedOrder) {
         const statusMap: Record<string, string> = {
@@ -128,10 +90,10 @@ export async function POST(req: NextRequest) {
         const statusAr = statusMap[matchedOrder.status] || matchedOrder.status;
 
         return NextResponse.json({
-          reply: `أهلاً بحضرتك يا فندم! تم العثور على بيانات طلبك برقم (${matchedOrder.order_number || matchedOrder.id}):\n\n📌 **الاسم:** ${firstName}\n📌 **المحافظة:** ${matchedOrder.governorate}\n📌 **الحالة الحالية:** ${statusAr}\n📌 **المبلغ الإجمالي عند الاستلام:** ${matchedOrder.final_amount} ج.م\n\nتذكّر أن بإمكانك فحص ومعاينة المنتج بالكامل مع المندوب قبل دفع أي مبلغ 🇪🇬. لو حابب تستفسر عن تفاصيل إضافية أنا معاك!`,
+          reply: `أهلاً بحضرتك يا فندم! تم العثور على بيانات طلبك برقم (${matchedOrder.order_number || matchedOrder.id}):\n\n📌 **الاسم:** ${matchedOrder.customer_name}\n📌 **المحافظة:** ${matchedOrder.governorate}\n📌 **الحالة الحالية:** ${statusAr}\n📌 **المبلغ الإجمالي عند الاستلام:** ${matchedOrder.final_amount} ج.م\n\nتذكّر أن بإمكانك فحص ومعاينة المنتج بالكامل مع المندوب قبل دفع أي مبلغ 🇪🇬. لو حابب تستفسر عن تفاصيل إضافية أنا معاك!`,
           orderInfo: {
             order_number: matchedOrder.order_number || matchedOrder.id,
-            customer_name: firstName,
+            customer_name: matchedOrder.customer_name,
             status: statusAr,
             final_amount: matchedOrder.final_amount,
             created_at: matchedOrder.created_at,
@@ -145,7 +107,7 @@ export async function POST(req: NextRequest) {
         } satisfies ChatResponseData);
       } else if (phoneMatch || orderNumberMatch) {
         return NextResponse.json({
-          reply: `بحثت لحضرتك بالرقم المدخل لكن لم أجد طلباً مسجلاً بهذا الرقم حتى الآن في النظام. تأكد يا فندم من كتابة رقم الهاتف المصري المسجل به (11 رقم يبدأ بـ 01) أو رقم الطلب (مثال: EG-251115-1234)، وأنا في خدمتك لمساعدتك فوراً!`,
+          reply: `بحثت لحضرتك بالرقم المدخل لكن لم أجد طلباً مسجلاً بهذا الرقم حتى الآن في النظام. تأكد يا فندم من كتابة رقم الهاتف المصري المسجل به (11 رقم يبدأ بـ 01) أو رقم الطلب المكون من 6 أرقام، وأنا في خدمتك لمساعدتك فوراً!`,
           quickReplies: [
             "إعادة كتابة رقم الهاتف",
             "تصفح عروض المنتجات المتاحة",
@@ -182,7 +144,7 @@ ${activeProducts
 
     // 3. Try FreeLLMAPI Desktop (Local Endpoint on Device: 127.0.0.1:31415)
     const localLLMEndpoint = process.env.LOCAL_LLM_URL || "http://127.0.0.1:31415/v1";
-    const localLLMKey = process.env.LOCAL_LLM_KEY || "";
+    const localLLMKey = process.env.LOCAL_LLM_KEY || "freellmapi-5b1dfb896b96b0ebef236da94071dc05d5839bb65a489913";
 
     try {
       const abortCtrl = new AbortController();
@@ -721,21 +683,8 @@ ${activeProducts
 
     // Customer Service query
     if (isHumanAgent) {
-      // Forward to Telegram as high-priority customer service escalation
-      try {
-        if (await allowTelegramForward(getOrderClientIp(req.headers))) {
-          await TelegramNotifier.sendCustomerInquiryNotification({
-            message: `[طلب تحويل بشري / خدمة عملاء]: ${clipForwardText(message)}`,
-            customerPhone: phoneMatch ? phoneMatch[0] : undefined,
-            source: "Customer Requested Human Agent",
-          });
-        }
-      } catch (err) {
-        console.error("Failed to forward human agent request to Telegram:", err);
-      }
-
       return NextResponse.json({
-        reply: `أهلاً بحضرتك يا فندم! 🌸\n\nأنا **خدمة العملاء لمتجر RexRack**، وتم إرسال تنبيه فوري لمسؤول خدمة العملاء والدعم على تليجرام لمتابعة استفسارك في الحال.\n\nوفي نفس الوقت، أقدر أساعدك فوراً وبدون أي انتظار في:\n1. 📦 **تتبع أي أوردر:** اكتب رقم تليفونك المسجل وهجيبلك حالة الشحنة فوراً.\n2. 🛒 **تسجيل وتأكيد طلبك:** تقدر تطلب أي منتج وهسجلهولك بالدفع عند الاستلام مع شحن مجاني.\n3. 🛡️ **الاستبدال والمعاينة:** شرح طريقة فحص المنتج مع المندوب وضمان الـ 14 يوم المجاني.\n\nقولي يا فندم إيه استفسارك أو مشكلتك وأنا هحلّهالك في لحظتها!`,
+        reply: `أهلاً بحضرتك يا فندم! أنا **خدمة العملاء الذكية والرسمية لمتجر RexRack** ومسؤول عن مساعدتك فورياً 24 ساعة بدون أي انتظار 🤖✨.\n\nأنا متصل مباشرة بنظام المتجر وقاعدة البيانات، وأقدر أساعدك حالاً وبأعلى دقة في:\n1. 📦 **تتبع أي أوردر:** اكتب رقم تليفونك المسجل وهجيبلك حالة الشحنة وميعاد وصولها فوراً.\n2. 🛒 **تسجيل وتأكيد طلبك:** تقدر تطلب أي منتج وأسجلهولك بالدفع عند الاستلام مع شحن مجاني.\n3. 🛡️ **الاستبدال والمعاينة:** شرح طريقة فحص المنتج مع المندوب وضمان الـ 14 يوم المجاني.\n4. 💡 **أي استفسار أو مساعدة:** اسألني في أي تفاصيل وهجاوبك عليها في ثواني.\n\nقولي يا فندم إيه استفسارك أو مشكلتك وأنا هحلّهالك في لحظتها!`,
         quickReplies: [
           "تتبع طلبي برقم الهاتف",
           "عروض الشحن المجاني اليوم",
@@ -758,26 +707,14 @@ ${activeProducts
       } satisfies ChatResponseData);
     }
 
-    // Unanswered / Unscripted Question Fallback -> Escalate directly to Telegram
-    try {
-      if (await allowTelegramForward(getOrderClientIp(req.headers))) {
-        await TelegramNotifier.sendCustomerInquiryNotification({
-          message: clipForwardText(message),
-          customerPhone: phoneMatch ? phoneMatch[0] : undefined,
-          source: "Unanswered Support Chat Question",
-        });
-      }
-    } catch (err) {
-      console.error("Failed to forward unanswered inquiry to Telegram:", err);
-    }
-
+    // General conversational response (Chatbot mode)
     return NextResponse.json({
-      reply: `أهلاً بحضرتك يا فندم! 🌸\n\nبخصوص استفسارك: "${message}"\n\n✅ **تم تحويل سؤالك فوراً لمسؤول خدمة العملاء على تليجرام** للمتابعة والرد على حضرتك في أسرع وقت. ⚡\n\nوفي هذه الأثناء تقدر تختار من الخدمات السريعة التلقائية أدناه:`,
+      reply: `أهلاً بحضرتك يا فندم! أنا معاك وسامعك كويس جداً 🤖.\n\nبخصوص رسالتك: "${message}"\nأنا جاهز أساعدك وأتفاعل معاك في أي استفسار أو تجربة حابب تعملها. سواء كنت بتجرب الشات، أو عندك استفسار عن المنتجات الذكية والأسعار وعروض التوفير والشحن في RexRack، قولي وخليني أجاوبك فوراً!`,
       quickReplies: [
-        "📦 تتبع طلبي برقم الهاتف",
-        "🚚 عروض الشحن والتوصيل",
-        "🛡️ معاينة الأوردر قبل الدفع",
-        "تصفح عروض المنتجات المتاحة",
+          "💨 جهاز استنشاق البخار",
+          "💆‍♂️ جهاز تدليك الجسم",
+          "قولي نكتة سريعة",
+          "🚚 تفاصيل الشحن والمعاينة",
       ],
     } satisfies ChatResponseData);
   } catch (error: any) {

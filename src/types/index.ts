@@ -47,38 +47,13 @@ export interface LandingPageSectionConfig {
 
 export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
   { id: "hero", name_ar: "المعرض الرئيسي والسعر وباقات العروض والزر السريع", enabled: true },
-  { id: "social_proof", name_ar: "شريط الثقة والتقييم وتغطية الشحن", enabled: true },
   { id: "comparison", name_ar: "المقارنة البصرية (القديم vs الجديد)", enabled: true },
   { id: "box_contents", name_ar: "محتويات العلبة الأصلية", enabled: true },
   { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: true },
-  { id: "reviews", name_ar: "آراء وتجارب العملاء الواقعية", enabled: true },
-  { id: "guarantees", name_ar: "الضمانات الثلاثة الذهبية", enabled: true },
+  { id: "reviews", name_ar: "آراء وتجارب العملاء الواقعية (Social Proof)", enabled: true },
   { id: "order_form", name_ar: "فورم الطلب السريع وباقات العروض والدفع عند الاستلام", enabled: true },
-  { id: "faq", name_ar: "الأسئلة الشائعة (كسر الاعتراضات)", enabled: true },
+  { id: "guarantees", name_ar: "شريط الضمانات والتطمين", enabled: true },
 ];
-
-/**
- * Pages saved in KV keep their own sections_config, so newly introduced default
- * sections would never appear. Keeps the saved order and enabled flags, and inserts
- * any default section that is missing at its default position.
- */
-export function mergeSections(
-  saved: LandingPageSectionConfig[] | undefined | null,
-  defaults: LandingPageSectionConfig[] = DEFAULT_LANDING_PAGE_SECTIONS
-): LandingPageSectionConfig[] {
-  if (!Array.isArray(saved) || saved.length === 0) return defaults;
-  // Drop invalid entries and duplicate ids (a duplicate would render a section twice)
-  const result = saved.filter((s, i, arr) => s?.id && arr.findIndex((x) => x?.id === s.id) === i);
-  defaults.forEach((def, index) => {
-    if (result.some((s) => s.id === def.id)) return;
-    // Insert right after the default section that precedes it, so it still lands sensibly
-    // when the admin has reordered the saved sections.
-    const prevId = index > 0 ? defaults[index - 1].id : null;
-    const prevPos = prevId ? result.findIndex((s) => s.id === prevId) : -1;
-    result.splice(prevPos >= 0 ? prevPos + 1 : Math.min(index, result.length), 0, def);
-  });
-  return result;
-}
 
 export interface LandingPageContentConfig {
   // 1. Hero & Header
@@ -88,24 +63,6 @@ export interface LandingPageContentConfig {
   hero_badge?: string;
   hero_image?: string;
   hero_bullets?: string[];
-
-  // Per-page theme override (PaletteKey). Empty = use the store brand colors.
-  theme_primary?: string;
-  theme_accent?: string;
-
-  // Trust strip (honest: real rating/count only — leave empty to hide the numbers)
-  proof_rating?: number;
-  proof_reviews_count?: number;
-  proof_statements?: string[];
-  proof_governorates?: string[];
-
-  // Guarantees (always shown as 3 cards)
-  guarantees_title?: string;
-  guarantees?: { icon: "inspect" | "swap" | "shipping"; title: string; desc: string }[];
-
-  // FAQ
-  faq_title?: string;
-  faq_items?: { q: string; a: string }[];
 
   // 2. Comparison Section
   comparison_badge?: string;
@@ -254,28 +211,6 @@ export interface SystemSettings {
   store_name: string;
   support_phone: string;
   support_whatsapp: string;
-  // White-label brand (all optional: empty = neutral defaults, see lib/brand.ts)
-  store_tagline?: string;
-  logo_url?: string;
-  favicon_url?: string;
-  brand_primary?: string; // PaletteKey: trust color (emerald-*)
-  brand_accent?: string; // PaletteKey: buy-button color (orange-*)
-  site_domain?: string; // https://shop.example.com
-  currency_symbol?: string;
-  store_mode?: "landing" | "catalog"; // landing = one landing page per product; catalog = regular store home with all products
-  onboarding_done?: boolean;
-  // Catalog-mode home page content (all optional; defaults in lib/home-config.ts)
-  home_config?: {
-    announcements?: string[];
-    hero_image?: string;
-    hero_title?: string;
-    hero_subtitle?: string;
-    hero_cta?: string;
-  };
-  // Optional Safka (Egyptian dropshipping) module
-  safka_enabled?: boolean;
-  safka_page_id?: string;
-  safka_page_name?: string;
   // Mobile / Telegram Sales Notifications
   telegram_bot_token?: string;
   telegram_chat_id?: string;

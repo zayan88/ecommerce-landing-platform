@@ -7,10 +7,6 @@ import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
-import { getBrand } from "@/lib/brand";
-import { CHAT_ENABLED } from "@/lib/features";
-import { SimpleProductPage } from "@/components/store/SimpleProductPage";
-import { absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -23,38 +19,15 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const lp = await dbStore.getLandingPage(params.slug);
-  if (!lp) return { title: "الصفحة غير موجودة", robots: { index: false, follow: false } };
-
-  const brand = await getBrand();
-  const title = `${lp.title} | عرض خاص والدفع عند الاستلام`;
-  const description =
-    shortText(lp.product?.description_ar, 160) ||
-    "عرض حصري في مصر، شحن مجاني لكل المحافظات، ادفع عند الاستلام بعد المعاينة، وضمان استبدال 14 يوم.";
-  const image = absoluteUrl(lp.product?.images?.[0]);
-  const url = `${getSiteUrl()}/p/${lp.slug || params.slug}`;
-  // Paused/draft pages must not be indexed
-  const indexable = lp.status === "active";
+  if (!lp) return { title: "الصفحة غير موجودة" };
 
   return {
-    metadataBase: new URL(getSiteUrl()),
-    title,
-    description,
-    alternates: { canonical: url },
-    robots: indexable ? { index: true, follow: true } : { index: false, follow: false },
+    title: `${lp.title} | عرض خاص والدفع عند الاستلام`,
+    description: lp.product?.description_ar || "عرض حصري في مصر والدفع عند الاستلام",
     openGraph: {
-      type: "website",
-      locale: "ar_EG",
-      siteName: brand.store_name,
-      url,
       title: lp.title,
-      description,
-      images: image ? [{ url: image, alt: lp.title }] : [],
-    },
-    twitter: {
-      card: image ? "summary_large_image" : "summary",
-      title: lp.title,
-      description,
-      images: image ? [image] : [],
+      description: lp.product?.description_ar,
+      images: lp.product?.images?.[0] ? [{ url: lp.product.images[0] }] : [],
     },
   };
 }
@@ -88,25 +61,6 @@ export default async function DynamicLandingPage({ params }: PageProps) {
     );
   }
 
-  // Regular-store mode: render the simple product page instead of the sales-funnel landing page
-  if ((await getBrand()).store_mode === "catalog") {
-    const settingsC = await dbStore.getSettings();
-    const pixelC = landingPage.meta_pixel_id || settingsC.default_meta_pixel_id;
-    const prodC: any = { ...landingPage.product };
-    for (const f of ["cost_price", "safka_product_id", "safka_property_id", "safka_commission", "safka_raw"]) {
-      delete prodC[f];
-    }
-    const lpC: any = { ...landingPage, product: prodC };
-    delete lpC.meta_capi_token;
-    return (
-      <>
-        <MetaPixel pixelId={pixelC} />
-        <SimpleProductPage product={prodC} landingPage={lpC} />
-        {CHAT_ENABLED && <FloatingSalesAgent currentProduct={prodC} />}
-      </>
-    );
-  }
-
   // Resolve dedicated component from registry
   const Component = getLandingPageComponent(landingPage.component_key || landingPage.slug);
 
@@ -131,21 +85,13 @@ export default async function DynamicLandingPage({ params }: PageProps) {
   const settings = await dbStore.getSettings();
   const pixelId = landingPage.meta_pixel_id || settings.default_meta_pixel_id;
 
-  // Never serialize secrets or internal business data into the public page HTML
-  const publicProduct: any = { ...landingPage.product };
-  for (const f of ["cost_price", "safka_product_id", "safka_property_id", "safka_commission", "safka_raw"]) {
-    delete publicProduct[f];
-  }
-  const publicLandingPage: any = { ...landingPage, product: publicProduct };
-  delete publicLandingPage.meta_capi_token;
-
   return (
     <>
       <MetaPixel pixelId={pixelId} />
-      <Component product={publicProduct} landingPage={publicLandingPage} />
+      <Component product={landingPage.product} landingPage={landingPage} />
 
       {/* Floating AI Sales Closer Chat Widget */}
-      {CHAT_ENABLED && <FloatingSalesAgent currentProduct={publicProduct} />}
+      <FloatingSalesAgent currentProduct={landingPage.product} />
     </>
   );
 }

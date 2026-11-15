@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 // Global tracking helper
 declare global {
   interface Window {
-    storeTrack?: (eventName: string, metadata?: Record<string, any>) => void;
+    rexrackTrack?: (eventName: string, metadata?: Record<string, any>) => void;
   }
 }
 
@@ -21,17 +21,17 @@ export function VisitorTracker() {
     if (typeof window === "undefined") return;
 
     // 1. Resolve or create persistent Visitor ID
-    let visitorId = localStorage.getItem("sf_vid");
+    let visitorId = localStorage.getItem("rexrack_vid");
     if (!visitorId) {
       visitorId = `v_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      localStorage.setItem("sf_vid", visitorId);
+      localStorage.setItem("rexrack_vid", visitorId);
     }
 
     // 2. Resolve or create Session ID
-    let sessionId = sessionStorage.getItem("sf_sid");
+    let sessionId = sessionStorage.getItem("rexrack_sid");
     if (!sessionId) {
       sessionId = `s_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      sessionStorage.setItem("sf_sid", sessionId);
+      sessionStorage.setItem("rexrack_sid", sessionId);
     }
 
     // 3. Resolve Device Type
@@ -94,7 +94,7 @@ export function VisitorTracker() {
     };
 
     // Expose global tracker
-    window.storeTrack = sendEvent;
+    window.rexrackTrack = sendEvent;
 
     // Reset scroll milestones on route change
     scrollMilestones.current = { 50: false, 90: false };

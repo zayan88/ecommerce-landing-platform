@@ -3,51 +3,28 @@ import { orderFormSchema } from "@/lib/validation/order";
 import { dbStore } from "@/lib/db/store";
 import { getGovernorateDeliveryFee } from "@/lib/constants/governorates";
 import { SafkaClient } from "@/lib/safqa/safka-client";
-import { SAFKA_ENABLED } from "@/lib/features";
 import { MetaCapiClient } from "@/lib/tracking/meta-capi";
 import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
-import type { Order } from "@/types";
-import {
-  beginOrder,
-  consumeOrderRateLimit,
-  generateOrderId,
-  generateOrderNumber,
-  getOrderClientIp,
-  orderDedupeKey,
-  type OrderSlot,
-  type PublicOrderSnapshot,
-} from "@/lib/orders/guard";
 
 export const runtime = "edge";
 
-const ORDER_SUCCESS_MESSAGE = "تم تسجيل طلبك بنجاح وسيتواصل معك مندوبنا للتأكيد";
-
 export async function POST(req: NextRequest) {
-  // Reserved duplicate-guard slot; released in `finally` if we bail out before an order exists.
-  let slot: OrderSlot | null = null;
-  let slotSettled = false;
-
   try {
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json(
-        { success: false, error: "بيانات الطلب غير صالحة" },
-        { status: 400 }
-      );
-    }
+    const body = await req.json();
 
-    // 1. Validate payload with Zod (details are logged, never returned to the client)
+    // 1. Validate payload with Zod
     const validation = orderFormSchema.safeParse(body);
     if (!validation.success) {
       const firstErrorMessage = validation.error.issues?.[0]?.message || "بيانات الطلب غير صالحة";
-      console.warn(
-        "[Create Order] validation failed",
-        JSON.stringify(validation.error.issues.map((i) => ({ path: i.path, code: i.code, message: i.message })))
+      return NextResponse.json(
+        {
+          success: false,
+          error: firstErrorMessage,
+          details: validation.error.format(),
+        },
+        { status: 400 }
       );
-      return NextResponse.json({ success: false, error: firstErrorMessage }, { status: 400 });
     }
 
     const data = validation.data;
@@ -60,178 +37,76 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-    if (product.status !== "active") {
-      return NextResponse.json(
-        { success: false, error: "هذا المنتج غير متاح للطلب حالياً" },
-        { status: 400 }
-      );
-    }
 
-    // 3. Resolve pricing & offers server-side only (All shipping is 100% Free)
+    // 3. Resolve pricing & offers (All shipping is 100% Free)
     const finalGov = data.governorate || data.shipping_governorate || "القاهرة";
     const finalAddress = data.address || data.shipping_address || "العنوان بالتفصيل";
     const finalNotes = data.notes || data.customer_notes || "";
 
-    let quantity: number;
-    let unitPrice: number;
-    let totalAmount: number;
+    let unitPrice = product.base_price;
+    let totalAmount = unitPrice * data.quantity;
+    let shippingFee = 0; // الشحن مجاني لجميع الطلبات
     let discountAmount = 0;
 
-    if (data.offer_id) {
-      // An offer id must match one of this product's offers; price AND quantity come from the offer.
-      const selectedOffer = (product.offers || []).find((o) => o.id === data.offer_id);
-      const offerPrice = Number(selectedOffer?.price);
-      const offerQty = Number(selectedOffer?.quantity);
-      if (
-        !selectedOffer ||
-        !Number.isFinite(offerPrice) ||
-        offerPrice <= 0 ||
-        !Number.isInteger(offerQty) ||
-        offerQty < 1
-      ) {
-        return NextResponse.json(
-          { success: false, error: "العرض المختار غير متاح، يرجى تحديث الصفحة" },
-          { status: 400 }
-        );
+    if (data.offer_id && product.offers) {
+      const selectedOffer = product.offers.find((o) => o.id === data.offer_id);
+      if (selectedOffer) {
+        totalAmount = selectedOffer.price;
+        unitPrice = selectedOffer.price / selectedOffer.quantity;
+        if (selectedOffer.original_price) {
+          discountAmount = selectedOffer.original_price - selectedOffer.price;
+        }
       }
-      quantity = offerQty;
-      totalAmount = offerPrice;
-      unitPrice = offerPrice / offerQty;
-      const originalPrice = Number(selectedOffer.original_price);
-      if (Number.isFinite(originalPrice) && originalPrice > offerPrice) {
-        discountAmount = originalPrice - offerPrice;
-      }
-    } else {
-      // No offer: base price × quantity (quantity already limited to 1..5 by the schema).
-      const basePrice = Number(product.base_price);
-      if (!Number.isFinite(basePrice) || basePrice <= 0) {
-        return NextResponse.json(
-          { success: false, error: "تعذر تحديد سعر المنتج، يرجى تحديث الصفحة والمحاولة مرة أخرى" },
-          { status: 400 }
-        );
-      }
-      quantity = data.quantity;
-      unitPrice = basePrice;
-      totalAmount = basePrice * quantity;
     }
 
     const finalAmount = totalAmount; // Zero shipping added
 
-    // 4. Resolve client IP and User-Agent for CAPI / rate limiting
-    const clientIp = getOrderClientIp(req.headers);
-    const ipAddress = clientIp || "127.0.0.1";
+    // 4. Resolve client IP and User-Agent for CAPI
+    const ipAddress =
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-real-ip") ||
+      "127.0.0.1";
     const userAgent = req.headers.get("user-agent") || "";
     const eventId = data.event_id || generateEventId("order");
 
-    // 4a. Honeypot: bots that fill the hidden field get a believable success and nothing else happens.
-    if (data.website) {
-      console.warn("[Create Order] honeypot triggered, order discarded", { ip: ipAddress });
-      return NextResponse.json({
-        success: true,
-        message: ORDER_SUCCESS_MESSAGE,
-        order: {
-          id: generateOrderId(),
-          order_number: generateOrderNumber(),
-          customer_name: data.customer_name,
-          customer_phone: data.customer_phone,
-          final_amount: finalAmount,
-          shipping_fee: 0,
-          governorate: finalGov,
-          address: finalAddress,
-          landing_page_slug: data.landing_page_slug,
-          event_id: eventId,
-        },
-      });
-    }
-
-    // 4b. Duplicate guard: same phone + product inside 15 minutes returns the existing order.
-    slot = await beginOrder(orderDedupeKey(data.customer_phone, product.id));
-    if (slot.existing) {
-      slotSettled = true;
-      return NextResponse.json({
-        success: true,
-        message: ORDER_SUCCESS_MESSAGE,
-        order: slot.existing,
-      });
-    }
-
-    // 4c. Per-IP rate limit (5 new orders / 10 minutes)
-    const rate = await consumeOrderRateLimit(clientIp);
-    if (!rate.allowed) {
-      console.warn("[Create Order] rate limit exceeded", { ip: ipAddress });
-      return NextResponse.json(
-        {
-          success: false,
-          error: "تم استلام طلبات كثيرة من نفس الجهاز، يرجى المحاولة بعد قليل أو التواصل معنا عبر واتساب",
-        },
-        { status: 429, headers: { "Retry-After": String(rate.retryAfterSec) } }
-      );
-    }
-
-    // 5. Store order in DB — if it cannot be persisted, stop here: nothing is forwarded or notified.
-    let createdOrder: Order;
-    try {
-      createdOrder = await dbStore.createOrder({
-        landing_page_slug: data.landing_page_slug,
-        product_id: product.id,
-        offer_id: data.offer_id || undefined,
-        customer_name: data.customer_name,
-        customer_phone: data.customer_phone,
-        customer_phone2: data.customer_phone2 || undefined,
-        governorate: finalGov,
-        city: data.city || data.shipping_city || finalGov,
-        address: finalAddress,
-        notes: finalNotes,
-        quantity,
-        unit_price: unitPrice,
-        total_amount: totalAmount,
-        shipping_fee: 0,
-        discount_amount: discountAmount,
-        final_amount: finalAmount,
-        payment_method: data.payment_method,
-        tracking: {
-          utm_source: data.utm_source || undefined,
-          utm_medium: data.utm_medium || undefined,
-          utm_campaign: data.utm_campaign || undefined,
-          utm_content: data.utm_content || undefined,
-          utm_term: data.utm_term || undefined,
-          referrer: data.referrer || undefined,
-          ip_address: ipAddress,
-          user_agent: userAgent,
-          fbp: data.fbp || undefined,
-          fbc: data.fbc || undefined,
-          event_id: eventId,
-        },
-      });
-    } catch (persistErr) {
-      console.error("[Create Order] order could not be persisted", persistErr);
-      return NextResponse.json(
-        { success: false, error: "تعذر حفظ الطلب، يرجى المحاولة مرة أخرى أو التواصل معنا" },
-        { status: 500 }
-      );
-    }
-
-    const publicOrder: PublicOrderSnapshot = {
-      id: createdOrder.id,
-      order_number: createdOrder.order_number,
-      customer_name: createdOrder.customer_name,
-      customer_phone: createdOrder.customer_phone,
-      final_amount: createdOrder.final_amount,
-      shipping_fee: createdOrder.shipping_fee,
-      governorate: createdOrder.governorate,
-      address: createdOrder.address,
-      landing_page_slug: createdOrder.landing_page_slug,
-      event_id: eventId,
-    };
-
-    // 5a. Remember this order for the duplicate guard (best-effort, never throws)
-    slotSettled = true;
-    await slot.settle(publicOrder);
+    // 5. Store order in DB
+    const createdOrder = await dbStore.createOrder({
+      landing_page_slug: data.landing_page_slug,
+      product_id: product.id,
+      offer_id: data.offer_id || undefined,
+      customer_name: data.customer_name,
+      customer_phone: data.customer_phone,
+      customer_phone2: data.customer_phone2 || undefined,
+      governorate: finalGov,
+      city: data.city || data.shipping_city || finalGov,
+      address: finalAddress,
+      notes: finalNotes,
+      quantity: data.quantity,
+      unit_price: unitPrice,
+      total_amount: totalAmount,
+      shipping_fee: 0,
+      discount_amount: discountAmount,
+      final_amount: finalAmount,
+      payment_method: data.payment_method,
+      tracking: {
+        utm_source: data.utm_source || undefined,
+        utm_medium: data.utm_medium || undefined,
+        utm_campaign: data.utm_campaign || undefined,
+        utm_content: data.utm_content || undefined,
+        utm_term: data.utm_term || undefined,
+        referrer: data.referrer || undefined,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        fbp: data.fbp || undefined,
+        fbc: data.fbc || undefined,
+        event_id: eventId,
+      },
+    });
 
     // 6. Forward order to Safka Egypt Dropshipping API (Awaited to ensure completion on Serverless/Vercel)
     let safkaResult = null;
     try {
-      if (SAFKA_ENABLED) safkaResult = await SafkaClient.createOrder(createdOrder);
+      safkaResult = await SafkaClient.createOrder(createdOrder);
       console.log(`[Order Created] Linked to Safka Egypt:`, safkaResult);
     } catch (err) {
       console.error("[Safka dropshipping forward error]", err);
@@ -274,8 +149,18 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: ORDER_SUCCESS_MESSAGE,
-      order: publicOrder,
+      message: "تم تسجيل طلبك بنجاح وسيتواصل معك مندوبنا للتأكيد",
+      order: {
+        id: createdOrder.id,
+        order_number: createdOrder.order_number,
+        customer_name: createdOrder.customer_name,
+        customer_phone: createdOrder.customer_phone,
+        final_amount: createdOrder.final_amount,
+        shipping_fee: createdOrder.shipping_fee,
+        governorate: createdOrder.governorate,
+        landing_page_slug: createdOrder.landing_page_slug,
+        event_id: eventId,
+      },
     });
   } catch (error: any) {
     console.error("[Create Order Error]", error);
@@ -283,11 +168,6 @@ export async function POST(req: NextRequest) {
       { success: false, error: "حدث خطأ غير متوقع أثناء معالجة الطلب" },
       { status: 500 }
     );
-  } finally {
-    // Release the duplicate-guard reservation if no order came out of this request.
-    if (slot && !slotSettled) {
-      await slot.settle(null).catch(() => {});
-    }
   }
 }
 
@@ -317,8 +197,6 @@ export async function GET(req: NextRequest) {
       try {
         const safkaOrders = await SafkaClient.fetchSafkaMcpOrders(20);
         if (Array.isArray(safkaOrders) && safkaOrders.length > 0) {
-          // Deletions are recorded durably in KV; load them so isOrderDeleted() sees other isolates' deletes.
-          await dbStore.refreshDeletedOrderIds();
           const existingSerials = new Set(
             orders.map((o) => o.safqa_invoice_id || o.order_number)
           );

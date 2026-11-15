@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useBrand } from "@/components/brand/BrandProvider";
-import { SAFKA_ENABLED } from "@/lib/features";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -21,24 +19,21 @@ import {
   LogOut,
   Lock,
   Activity,
-  Settings,
+  Bell,
 } from "lucide-react";
 
-const allNavigationItems = [
+const navigationItems = [
   { name: "الإحصائيات والأداء", href: "/admin", icon: LayoutDashboard },
   { name: "إدارة الطلبات", href: "/admin/orders", icon: ShoppingBag },
+  { name: "إشعارات المبيعات (تليجرام)", href: "/admin/notifications", icon: Bell },
   { name: "صفحات الهبوط", href: "/admin/landing-pages", icon: Layers },
   { name: "المنتجات والعروض", href: "/admin/products", icon: Tag },
   { name: "تتبع الزوار والنشاط", href: "/admin/tracking", icon: Activity },
   { name: "دروبشيبينغ صفقة (Safka)", href: "/admin/safqa", icon: ShoppingBag },
   { name: "دليل وكيل AI (الإنشاء السريع)", href: "/admin/ai-guide", icon: Bot },
-  { name: "الإعدادات", href: "/admin/settings", icon: Settings },
 ];
 
-const navigationItems = allNavigationItems.filter((item) => SAFKA_ENABLED || item.href !== "/admin/safqa");
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const brand = useBrand();
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -69,9 +64,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-emerald-500 text-slate-950 font-black flex items-center justify-center text-base">
-            {(brand.store_name || "M").trim().charAt(0).toUpperCase()}
+            R
           </div>
-          <span className="font-heading font-black text-base">لوحة تحكم {brand.store_name}</span>
+          <span className="font-heading font-black text-base">لوحة تحكم RexRack</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -101,11 +96,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center justify-between pb-4 border-b border-slate-800 px-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-emerald-500/20">
-                {(brand.store_name || "M").trim().charAt(0).toUpperCase()}
+                R
               </div>
               <div>
                 <h2 className="font-heading font-black text-white text-base leading-tight">
-                  {brand.store_name}
+                  RexRack Admin
                 </h2>
                 <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> جلسة مشفرة وآمنة
@@ -123,7 +118,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Navigation Links */}
           <nav className="space-y-1">
             {navigationItems.map((item) => {
-              const isActive = item.href === "/admin/settings" ? pathname.startsWith(item.href) : pathname === item.href;
+              const isActive = pathname === item.href;
               const Icon = item.icon;
               return (
                 <Link
@@ -185,7 +180,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Desktop Bar */}
-        <header className="hidden md:flex bg-white border-b border-gray-200 py-3.5 px-8 items-center justify-between sticky top-0 z-30 shadow-sm">
+        <header className="hidden md:flex bg-white border-b border-gray-200 py-3.5 px-8 items-center justify-between sticky top-0 z-30 shadow-xs">
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-gray-400">السوق المستهدف:</span>
             <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">

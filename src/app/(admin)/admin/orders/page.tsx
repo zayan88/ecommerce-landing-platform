@@ -3,9 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Order, OrderStatus, Product } from "@/types";
 import { EditOrderModal } from "./EditOrderModal";
-import { toCsv, downloadCsv } from "@/lib/csv";
 import {
-  Download,
   Search,
   Filter,
   RefreshCw,
@@ -253,48 +251,6 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const STATUS_AR: Record<string, string> = {
-    pending: "قيد المراجعة",
-    confirmed: "تم التأكيد",
-    shipped: "تم الشحن",
-    delivered: "تم التوصيل",
-    cancelled: "ملغي",
-    returned: "مرتجع",
-  };
-
-  // Excel/CSV export of the orders currently listed (respects the active search/status filter)
-  const exportOrdersCsv = () => {
-    const list = selectedOrderIds.length > 0 ? orders.filter((o) => selectedOrderIds.includes(o.id)) : orders;
-    if (list.length === 0) {
-      alert("لا توجد طلبات للتصدير");
-      return;
-    }
-    const headers = [
-      "رقم الطلب", "التاريخ", "الاسم", "الموبايل", "موبايل آخر", "المحافظة", "المدينة", "العنوان",
-      "الكمية", "الإجمالي", "الشحن", "الصافي", "الحالة", "طريقة الدفع", "ملاحظات", "الصفحة",
-    ];
-    const rows = list.map((o) => [
-      o.order_number,
-      o.created_at ? new Date(o.created_at).toLocaleString("en-GB", { timeZone: "Africa/Cairo" }) : "",
-      o.customer_name,
-      o.customer_phone,
-      o.customer_phone2,
-      o.governorate,
-      o.city,
-      o.address,
-      o.quantity,
-      o.total_amount,
-      o.shipping_fee,
-      o.final_amount,
-      STATUS_AR[o.status] || o.status,
-      o.payment_method === "cod" ? "الدفع عند الاستلام" : o.payment_method,
-      o.notes,
-      o.landing_page_slug,
-    ]);
-    const day = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
-    downloadCsv(`orders-${day}.csv`, toCsv(headers, rows));
-  };
-
   const toggleSelectAll = () => {
     if (selectedOrderIds.length === orders.length && orders.length > 0) {
       setSelectedOrderIds([]);
@@ -347,7 +303,7 @@ export default function AdminOrdersPage() {
               if (!soundEnabled) playChaChing();
             }}
             title={soundEnabled ? "كتم صوت إشعارات البيع" : "تشغيل صوت إشعارات البيع (Cha-Ching)"}
-            className={`py-2 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer border ${
+            className={`py-2 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer border ${
               soundEnabled
                 ? "bg-amber-500/10 border-amber-500/30 text-amber-600 hover:bg-amber-500/20"
                 : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200"
@@ -376,17 +332,8 @@ export default function AdminOrdersPage() {
           </button>
 
           <button
-            onClick={exportOrdersCsv}
-            title="تصدير الطلبات المعروضة (أو المحددة) إلى ملف Excel"
-            className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>تصدير Excel</span>
-          </button>
-
-          <button
             onClick={() => fetchOrders(false)}
-            className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+            className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-xs transition cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading && !syncingSafka ? "animate-spin" : ""}`} />
             <span>تحديث</span>
@@ -396,7 +343,7 @@ export default function AdminOrdersPage() {
 
       {/* Action Notification Alert */}
       {actionMessage && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm transition-all">
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs transition-all">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{actionMessage}</span>
         </div>
@@ -404,7 +351,7 @@ export default function AdminOrdersPage() {
 
       {/* Bulk Delete Floating/Top Bar */}
       {selectedOrderIds.length > 0 && (
-        <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+        <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-2 text-xs font-bold text-red-950">
             <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
             <span>تم تحديد ({selectedOrderIds.length}) طلبات</span>
@@ -414,7 +361,7 @@ export default function AdminOrdersPage() {
             <button
               onClick={handleBulkDelete}
               disabled={isDeleting}
-              className="py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+              className="py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>{isDeleting ? "جاري المسح..." : `مسح (${selectedOrderIds.length}) طلبات نهائياً`}</span>
@@ -430,14 +377,14 @@ export default function AdminOrdersPage() {
       )}
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-96">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="بحث بالاسم، الهاتف، رقم الطلب، أو المحافظة..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden"
           />
           <button type="submit" className="absolute left-3 top-3 text-gray-400 hover:text-gray-600">
             <Search className="w-4 h-4" />
@@ -459,7 +406,7 @@ export default function AdminOrdersPage() {
               onClick={() => setStatusFilter(tab.id)}
               className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
                 statusFilter === tab.id
-                  ? "bg-slate-900 text-white shadow-sm"
+                  ? "bg-slate-900 text-white shadow-xs"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -470,7 +417,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right text-sm">
             <thead className="bg-gray-50/80 text-gray-500 text-xs font-bold border-b border-gray-100">
@@ -551,7 +498,7 @@ export default function AdminOrdersPage() {
                             <img
                               src={ord.product.images[0]}
                               alt={ord.product.title_ar}
-                              className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0 shadow-sm"
+                              className="w-10 h-10 rounded-xl object-cover border border-gray-200 shrink-0 shadow-2xs"
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 border border-gray-200">
@@ -591,7 +538,7 @@ export default function AdminOrdersPage() {
                         <select
                           value={ord.status}
                           onChange={(e) => handleUpdateStatus(ord.id, e.target.value as OrderStatus)}
-                          className="text-xs font-bold rounded-lg border border-gray-200 py-1 px-2 bg-white outline-none cursor-pointer shadow-sm"
+                          className="text-xs font-bold rounded-lg border border-gray-200 py-1 px-2 bg-white outline-hidden cursor-pointer shadow-2xs"
                         >
                           <option value="pending">قيد المراجعة</option>
                           <option value="confirmed">مؤكد</option>
@@ -722,7 +669,7 @@ export default function AdminOrdersPage() {
                   <img
                     src={selectedOrder.product.images[0]}
                     alt={selectedOrder.product.title_ar}
-                    className="w-16 h-16 rounded-2xl object-cover border border-gray-200 shrink-0 shadow-sm"
+                    className="w-16 h-16 rounded-2xl object-cover border border-gray-200 shrink-0 shadow-xs"
                   />
                 ) : (
                   <div className="w-16 h-16 rounded-2xl bg-slate-200 flex items-center justify-center text-slate-400 shrink-0">

@@ -23,8 +23,6 @@ interface EgyptianCheckoutFormProps {
   onOfferSelect?: (offer: ProductOffer) => void;
   onOfferChange?: (offer: ProductOffer) => void;
   accentColor?: string;
-  /** Editor preview: blocks submit/redirect/tracking and shows a small note. Default false. */
-  previewOnly?: boolean;
 }
 
 export function EgyptianCheckoutForm({
@@ -35,7 +33,6 @@ export function EgyptianCheckoutForm({
   onOfferSelect,
   onOfferChange,
   accentColor = "orange",
-  previewOnly = false,
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
 
@@ -45,8 +42,6 @@ export function EgyptianCheckoutForm({
   const [governorate, setGovernorate] = useState("القاهرة");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
-  // Honeypot: hidden from humans; bots that fill it get a fake success server-side
-  const [website, setWebsite] = useState("");
 
   // States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,8 +79,8 @@ export function EgyptianCheckoutForm({
     setActiveOffer(offer);
     if (onOfferSelect) onOfferSelect(offer);
     if (onOfferChange) onOfferChange(offer);
-    if (typeof window !== "undefined" && window.storeTrack) {
-      window.storeTrack("SelectOffer", {
+    if (typeof window !== "undefined" && window.rexrackTrack) {
+      window.rexrackTrack("SelectOffer", {
         offer_id: offer.id,
         title: offer.title_ar,
         quantity: offer.quantity,
@@ -100,7 +95,6 @@ export function EgyptianCheckoutForm({
   // Track InitiateCheckout on initial interaction
   const [hasInteracted, setHasInteracted] = useState(false);
   const handleFirstInteraction = () => {
-    if (previewOnly) return;
     if (!hasInteracted) {
       setHasInteracted(true);
       trackMetaEvent("InitiateCheckout", {
@@ -128,7 +122,6 @@ export function EgyptianCheckoutForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (previewOnly) return;
     setErrorMessage("");
 
     const error = validateForm();
@@ -151,6 +144,19 @@ export function EgyptianCheckoutForm({
         product?.slug ||
         "body-massager";
 
+      // Track Purchase on Client-Side Pixel
+      trackMetaEvent(
+        "Purchase",
+        {
+          content_name: product.title_ar,
+          content_type: "product",
+          currency: "EGP",
+          value: totalAmount,
+          num_items: quantity,
+        },
+        eventId
+      );
+
       const payload = {
         product_id: product.id,
         landing_page_slug: effectiveSlug,
@@ -164,13 +170,8 @@ export function EgyptianCheckoutForm({
         shipping_address: address.trim(),
         notes: notes.trim() || undefined,
         customer_notes: notes.trim() || undefined,
-        // Only send real offers; the synthetic default (no offers configured) is priced server-side from base_price
-        offer_id:
-          activeOffer?.id && product.offers?.some((o) => o.id === activeOffer.id)
-            ? activeOffer.id
-            : undefined,
+        offer_id: activeOffer?.id || undefined,
         quantity,
-        website: website || undefined,
         payment_method: "cod",
         event_id: eventId,
         ...utms,
@@ -188,40 +189,13 @@ export function EgyptianCheckoutForm({
         throw new Error(data.error || "تعذر إرسال الطلب، يرجى التأكد من البيانات");
       }
 
-      // Track Purchase on Client-Side Pixel
-      trackMetaEvent(
-        "Purchase",
-        {
-          content_name: product.title_ar,
-          content_type: "product",
-          currency: "EGP",
-          value: data.order?.final_amount || totalAmount,
-          num_items: quantity,
-        },
-        eventId
-      );
-
-      // Save order summary to sessionStorage for thank-you page
-      try {
-        sessionStorage.setItem(
-          "sf_last_order",
-          JSON.stringify({
-            orderNumber: data.order.order_number,
-            name: data.order.customer_name,
-            phone: data.order.customer_phone,
-            gov: data.order.governorate || governorate,
-            address: data.order.address || address.trim(),
-            total: data.order.final_amount,
-            savedAt: Date.now(),
-          })
-        );
-      } catch {
-        // Private mode or storage quota can throw — failure must not block redirect
-      }
-
       // Redirect to customized Arabic thank-you page
       router.push(
-        `/p/${effectiveSlug}/thank-you?orderNumber=${encodeURIComponent(data.order.order_number)}`
+        `/p/${effectiveSlug}/thank-you?orderId=${data.order.id}&orderNumber=${data.order.order_number}&total=${data.order.final_amount}&name=${encodeURIComponent(
+          data.order.customer_name
+        )}&phone=${encodeURIComponent(data.order.customer_phone)}&gov=${encodeURIComponent(
+          data.order.governorate || governorate
+        )}&address=${encodeURIComponent(data.order.address || address.trim())}`
       );
     } catch (err: any) {
       setErrorMessage(err.message || "حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى");
@@ -267,21 +241,6 @@ export function EgyptianCheckoutForm({
           </div>
         )}
 
-        {/* Honeypot (invisible to humans and screen readers) */}
-        <div aria-hidden="true" className="sr-only">
-          <label>
-            Website
-            <input
-              type="text"
-              name="website"
-              tabIndex={-1}
-              autoComplete="off"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-            />
-          </label>
-        </div>
-
         {/* 1. Name */}
         <div>
           <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
@@ -293,7 +252,7 @@ export function EgyptianCheckoutForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="مثال: محمد السيد"
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition"
           />
         </div>
 
@@ -312,7 +271,7 @@ export function EgyptianCheckoutForm({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="01012345678"
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition text-right font-mono"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition text-right font-mono"
           />
         </div>
 
@@ -324,7 +283,7 @@ export function EgyptianCheckoutForm({
           <select
             value={governorate}
             onChange={(e) => setGovernorate(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 text-sm outline-none transition bg-white"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 text-sm outline-hidden transition bg-white"
           >
             {EGYPTIAN_GOVERNORATES.map((gov) => (
               <option key={gov.id} value={gov.nameAr}>
@@ -345,7 +304,7 @@ export function EgyptianCheckoutForm({
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="المدينة، اسم الشارع، أو أقرب علامة مميزة"
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition"
           />
         </div>
 
@@ -359,7 +318,7 @@ export function EgyptianCheckoutForm({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="رقم العمارة والشقة، أو الوقت الأنسب لك للاستلام..."
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition resize-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition resize-none"
           />
         </div>
 
@@ -385,7 +344,7 @@ export function EgyptianCheckoutForm({
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isSubmitting || previewOnly}
+          disabled={isSubmitting}
           className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-black text-base sm:text-lg shadow-xl shadow-orange-500/25 active:scale-[0.99] transition transform cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
@@ -400,10 +359,6 @@ export function EgyptianCheckoutForm({
             </>
           )}
         </button>
-
-        {previewOnly && (
-          <p className="text-center text-xs font-bold text-sky-700 bg-sky-50 border border-sky-200 rounded-xl p-2">معاينة فقط — الطلب غير مفعّل داخل المحرر</p>
-        )}
 
         {/* Security & Guarantees Strip */}
         <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center text-xs text-slate-600 font-medium">

@@ -1,9 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { dbStore } from "@/lib/db/store";
-import { getBrand } from "@/lib/brand";
-import { CHAT_ENABLED } from "@/lib/features";
-import { CatalogHome } from "@/components/store/CatalogHome";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { UrgencyBar } from "@/components/shared/UrgencyBar";
 import {
@@ -32,44 +29,22 @@ import { Metadata } from "next";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 import { HeroSupportButton } from "@/components/chat/HeroSupportButton";
 
-/** The long marketing home below is the owner's demo/portfolio page: shown only when DEMO_MODE=1 in landing mode. */
-const DEMO_HOME = (process.env.DEMO_MODE || "").trim() === "1";
+export const metadata: Metadata = {
+  title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
+  description:
+    "تسوق أحدث المنتجات الذكية والمنظمات العصرية مع RexRack في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن لجميع محافظات مصر خلال 5 إلى 7 أيام.",
+  openGraph: {
+    title: "RexRack - عروض حصرية في مصر",
+    description: "معاينة مجانية قبل الدفع + دفع عند الاستلام + ضمان 14 يوم",
+    type: "website",
+  },
+};
 
-function demoMetadata(name: string): Metadata {
-  return {
-    title: `${name} - متجرك الأول للمنتجات الذكية والعصرية في مصر`,
-    description: `تسوق أحدث المنتجات مع ${name} في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن لجميع المحافظات.`,
-    openGraph: {
-      title: `${name} - عروض حصرية في مصر`,
-      description: "معاينة مجانية قبل الدفع + دفع عند الاستلام + ضمان 14 يوم",
-      type: "website",
-    },
-  };
-}
-
-export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getBrand();
-  if (brand.store_mode !== "catalog" && DEMO_HOME) return demoMetadata(brand.store_name);
-  const title = brand.tagline ? `${brand.store_name} - ${brand.tagline}` : brand.store_name;
-  const description = "منتجات بشحن مجاني لكل المحافظات، والدفع عند الاستلام بعد المعاينة.";
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: "website", siteName: brand.store_name },
-  };
-}
-
-export default async function HomePage({ searchParams }: { searchParams?: { q?: string | string[] } }) {
-  const brandMode = await getBrand();
-  const brandName = brandMode.store_name;
-  if (brandMode.store_mode === "catalog" || !DEMO_HOME) {
-    const q = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
-    return <CatalogHome q={q} />;
-  }
+export default async function HomePage() {
   const products = await dbStore.getProducts();
   const landingPages = await dbStore.getLandingPages();
   const settings = await dbStore.getSettings();
-  const pixelId = settings.default_meta_pixel_id || "";
+  const pixelId = settings.default_meta_pixel_id || "1636283807582751";
 
   // Map each product to its landing page slug
   const productCards = products
@@ -99,7 +74,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
       <UrgencyBar />
 
       {/* Main Header / Navigation */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
@@ -108,7 +83,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
             </div>
             <div>
               <span className="text-2xl font-black font-heading text-slate-900 tracking-tight block">
-                {brandName}
+                RexRack
               </span>
               <span className="text-[11px] font-bold text-gray-500 block -mt-0.5">
                 الجودة والابتكار في مكان واحد 🇪🇬
@@ -157,7 +132,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             {/* Tag badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-orange-200 shadow-sm">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-orange-200 shadow-xs">
               <Sparkles className="w-4 h-4 text-orange-600" />
               <span>المتجر المصري المعتمد للمنتجات العصرية الذكية</span>
             </div>
@@ -172,7 +147,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
 
             {/* Description */}
             <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
-              في {brandName}، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
+              في RexRack، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
               <span className="font-bold text-slate-900 underline decoration-orange-500 decoration-2">
                 معاينة وفحص المنتج بنفسك أمام مندوب الشحن قبل دفع أي مليم
               </span>
@@ -194,7 +169,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
 
             {/* 4 Pillars Trust Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 text-right">
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
@@ -204,7 +179,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
                   <Truck className="w-5 h-5" />
                 </div>
@@ -214,7 +189,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
                   <RotateCcw className="w-5 h-5" />
                 </div>
@@ -224,7 +199,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
                   <Headphones className="w-5 h-5" />
                 </div>
@@ -279,7 +254,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                   </span>
                 </div>
 
-                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-1 shadow-sm">
+                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-1 shadow-xs">
                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                   <span>4.9 (تقييمات ممتازة)</span>
                 </div>
@@ -336,12 +311,12 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
         </div>
       </section>
 
-      {/* Why {brandName} Section */}
+      {/* Why RexRack Section */}
       <section id="features" className="py-20 bg-white border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <span className="text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
-              ضمانات {brandName} الذهبية
+              ضمانات RexRack الذهبية
             </span>
             <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
               لماذا يثق بنا آلاف العملاء في مصر؟
@@ -391,7 +366,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
         </div>
       </section>
 
-      {/* Problem vs {brandName} Solution Section (Lovable / High-Converting Pattern) */}
+      {/* Problem vs RexRack Solution Section (Lovable / High-Converting Pattern) */}
       <section className="py-16 bg-slate-50 border-b border-gray-200 px-4">
         <div className="max-w-5xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-2">
@@ -399,10 +374,10 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               المقارنة الحقيقية
             </span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
-              لماذا {brandName} أفضل بمراحل من المنتجات التقليدية؟
+              لماذا RexRack أفضل بمراحل من المنتجات التقليدية؟
             </h2>
             <p className="text-sm text-gray-600">
-              شاهد الفرق العملي بين الشراء من السوق التقليدي والشراء من {brandName} المعتمد
+              شاهد الفرق العملي بين الشراء من السوق التقليدي والشراء من RexRack المعتمد
             </p>
           </div>
 
@@ -436,13 +411,13 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               </ul>
             </div>
 
-            {/* The {brandName} Way */}
+            {/* The RexRack Way */}
             <div className="p-6 md:p-8 rounded-3xl bg-orange-50/80 border-2 border-emerald-500 space-y-4 shadow-lg shadow-emerald-500/10">
               <div className="flex items-center gap-2.5 text-orange-700 font-black text-lg font-heading">
                 <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
                   <Check className="w-5 h-5 stroke-[3]" />
                 </div>
-                <span>حلول {brandName} الأصلية المعتمدة</span>
+                <span>حلول RexRack الأصلية المعتمدة</span>
               </div>
 
               <ul className="space-y-3 text-sm text-gray-800">
@@ -476,12 +451,12 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               تجربة تسوق مريحة
             </span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
-              كيف تتسوق من {brandName} في 3 خطوات بسيطة؟
+              كيف تتسوق من RexRack في 3 خطوات بسيطة؟
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-orange-700 font-black text-xl flex items-center justify-center mx-auto">
                 1
               </div>
@@ -491,7 +466,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               </p>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 font-black text-xl flex items-center justify-center mx-auto">
                 2
               </div>
@@ -501,7 +476,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               </p>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 font-black text-xl flex items-center justify-center mx-auto">
                 3
               </div>
@@ -522,7 +497,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
           </div>
 
           <h3 className="text-2xl font-black font-heading text-amber-950">
-            شهادة ضمان {brandName} الذهبية 100%
+            شهادة ضمان RexRack الذهبية 100%
           </h3>
 
           <p className="text-sm text-gray-700 max-w-2xl mx-auto leading-relaxed">
@@ -549,19 +524,19 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
             ماذا يقول عملاؤنا بعد التجربة؟
           </h2>
           <p className="text-sm text-gray-600">
-            آراء عملاء حقيقيين استلموا وعاينوا طلباتهم من {brandName} في مختلف المحافظات.
+            آراء عملاء حقيقيين استلموا وعاينوا طلباتهم من RexRack في مختلف المحافظات.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs space-y-4">
             <div className="flex items-center gap-1 text-amber-400">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-400" />
               ))}
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              "المنتج ممتاز والخامات قوية جداً وتستاهل كل مليم. الأهم إن المندوب استنى لما فتحت الكرتونة واتأكدت بنفسي قبل ما أدفع. شكراً {brandName} على الاحترام والأمانة."
+              "المنتج ممتاز والخامات قوية جداً وتستاهل كل مليم. الأهم إن المندوب استنى لما فتحت الكرتونة واتأكدت بنفسي قبل ما أدفع. شكراً RexRack على الاحترام والأمانة."
             </p>
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
               <div>
@@ -574,7 +549,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs space-y-4">
             <div className="flex items-center gap-1 text-amber-400">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-400" />
@@ -594,7 +569,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs space-y-4">
             <div className="flex items-center gap-1 text-amber-400">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-400" />
@@ -681,7 +656,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                 R
               </div>
               <div>
-                <span className="font-black font-heading text-xl text-white">{brandName}</span>
+                <span className="font-black font-heading text-xl text-white">RexRack</span>
                 <p className="text-xs text-slate-400">منصة التجارة الإلكترونية الموثوقة في مصر</p>
               </div>
             </div>
@@ -696,7 +671,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-            <p>© {new Date().getFullYear()} {brandName} - جميع الحقوق محفوظة.</p>
+            <p>© {new Date().getFullYear()} RexRack (RexRack.com) - جميع الحقوق محفوظة.</p>
 
             <div className="flex items-center gap-4">
               <Link
@@ -722,7 +697,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
       </footer>
 
       {/* Floating Interactive AI Sales & Customer Support Drawer */}
-      {CHAT_ENABLED && <FloatingSalesAgent />}
+      <FloatingSalesAgent />
     </div>
   );
 }

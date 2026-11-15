@@ -2,22 +2,12 @@
 
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useBrand } from "@/components/brand/BrandProvider";
 import { ShieldAlert, Lock, KeyRound, AlertCircle } from "lucide-react";
 
-/** Only allow same-site admin destinations (blocks open redirects like //evil.com). */
-function safeRedirect(raw: string | null | undefined): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return "/admin";
-  if (raw.startsWith("/admin/login")) return "/admin";
-  if (raw.startsWith("/admin") || raw.startsWith("/api/safqa/connect-callback")) return raw;
-  return "/admin";
-}
-
 function LoginForm() {
-  const brand = useBrand();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = safeRedirect(searchParams?.get("redirect"));
+  const redirectPath = searchParams?.get("redirect") || "/admin";
 
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -47,11 +37,7 @@ function LoginForm() {
         throw new Error(data.error || "رمز الدخول غير صحيح");
       }
 
-      // Success, route to destination (API callbacks need a full navigation)
-      if (redirectPath.startsWith("/api/")) {
-        window.location.assign(redirectPath);
-        return;
-      }
+      // Success, route to destination
       router.push(redirectPath);
       router.refresh();
     } catch (err: any) {
@@ -71,7 +57,7 @@ function LoginForm() {
 
         <div>
           <h1 className="text-2xl font-black font-heading text-white tracking-tight">
-            لوحة التحكم | {brand.store_name}
+            لوحة التحكم المركزية | RexRack
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             الوصول مشفر ومحمي. يرجى إدخال الرمز السري الخاص بالمسؤول.
@@ -99,7 +85,7 @@ function LoginForm() {
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               placeholder="أدخل الرمز السري هنا..."
-              className="w-full px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-center text-lg font-mono tracking-widest outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition"
+              className="w-full px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-center text-lg font-mono tracking-widest outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition"
             />
             <button
               type="button"

@@ -1,12 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useBrand } from "@/components/brand/BrandProvider";
-import OffersPanel from "@/components/editor/OffersPanel";
-import { buildDefaultOffers, sanitizeOffers } from "@/lib/offers";
-import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
-import TablePagination from "@/components/admin/TablePagination";
+import Image from "next/image";
+import Link from "next/link";
 import { Product, ProductOffer } from "@/types";
 import {
   Tag,
@@ -18,23 +14,18 @@ import {
   Sparkles,
   X,
   Layers,
+  ExternalLink,
   Search,
-  Copy,
+  DollarSign,
   AlertCircle,
   RefreshCw,
   Eye,
 } from "lucide-react";
 
 export default function AdminProductsPage() {
-  const router = useRouter();
-  const brand = useBrand();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [skuQuery, setSkuQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,22 +35,12 @@ export default function AdminProductsPage() {
   const [titleAr, setTitleAr] = useState("");
   const [slug, setSlug] = useState("");
   const [sku, setSku] = useState("");
-  const [basePrice, setBasePrice] = useState<number | string>("");
-  const [comparePrice, setComparePrice] = useState<number | string>("");
-  const [costPrice, setCostPrice] = useState<number | string>("");
+  const [basePrice, setBasePrice] = useState<number | string>(540);
+  const [comparePrice, setComparePrice] = useState<number | string>(780);
+  const [costPrice, setCostPrice] = useState<number | string>(100);
   const [stock, setStock] = useState<number | string>(100);
-  const [images, setImages] = useState<string[]>([]);
+  const [imageUrl, setImageUrl] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
-  // Quantity tiers. Until the merchant touches them they follow the price (defaults).
-  const [offers, setOffers] = useState<ProductOffer[]>([]);
-  const [offersTouched, setOffersTouched] = useState(false);
-  const effectiveOffers: ProductOffer[] = offersTouched
-    ? offers
-    : buildDefaultOffers({
-        id: editingProduct?.id || "",
-        base_price: Number(basePrice) || 0,
-        compare_at_price: Number(comparePrice) || 0,
-      });
 
   // UI status
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,15 +70,13 @@ export default function AdminProductsPage() {
     setEditingProduct(null);
     setTitleAr("");
     setSlug("");
-    setSku(`SKU-${Math.floor(1000 + Math.random() * 9000)}`);
-    setBasePrice("");
-    setComparePrice("");
-    setCostPrice("");
+    setSku(`REX-${Math.floor(1000 + Math.random() * 9000)}`);
+    setBasePrice(499);
+    setComparePrice(750);
+    setCostPrice(120);
     setStock(100);
-    setImages([]);
+    setImageUrl("https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1792053963744-674BF3D0-017E-4FCC-BE28-3230F5419E5A.webp");
     setDescriptionAr("");
-    setOffers([]);
-    setOffersTouched(false);
     setIsModalOpen(true);
   };
 
@@ -110,11 +89,8 @@ export default function AdminProductsPage() {
     setComparePrice(prod.compare_at_price || 0);
     setCostPrice(prod.cost_price || 0);
     setStock(prod.stock_quantity || 100);
-    setImages(prod.images || []);
+    setImageUrl(prod.images?.[0] || "");
     setDescriptionAr(prod.description_ar || "");
-    const saved = prod.offers && prod.offers.length > 0;
-    setOffers(saved ? JSON.parse(JSON.stringify(prod.offers)) : []);
-    setOffersTouched(!!saved);
     setIsModalOpen(true);
   };
 
@@ -146,10 +122,6 @@ export default function AdminProductsPage() {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!(Number(basePrice) > 0)) {
-      alert("اكتب سعر البيع أولاً");
-      return;
-    }
     setIsSubmitting(true);
 
     try {
@@ -158,13 +130,45 @@ export default function AdminProductsPage() {
       const numCost = Number(costPrice) || 0;
       const numStock = Number(stock) || 50;
 
-      // Offers: what the merchant edited, or defaults derived from the price (see lib/offers.ts)
-      const finalOffers = sanitizeOffers(editingProduct?.id || "", effectiveOffers);
-      if (finalOffers.some((o) => !(o.price > 0))) {
-        alert("سعر كل عرض لازم يكون أكبر من صفر");
-        setIsSubmitting(false);
-        return;
-      }
+      // Generate offers automatically based on base price
+      const offers: ProductOffer[] = [
+        {
+          id: `off-${Date.now()}-1`,
+          product_id: editingProduct?.id || "",
+          title_ar: "قطعة واحدة (تجربة)",
+          quantity: 1,
+          price: numBase,
+          original_price: numCompare,
+          discount_label: "خصم خاص",
+          is_popular: false,
+          free_shipping: false,
+          sort_order: 1,
+        },
+        {
+          id: `off-${Date.now()}-2`,
+          product_id: editingProduct?.id || "",
+          title_ar: "قطعتان (الأكثر طلباً)",
+          quantity: 2,
+          price: Math.round(numBase * 1.8),
+          original_price: numCompare * 2,
+          discount_label: "وفر أكثر + شحن مجاني",
+          is_popular: true,
+          free_shipping: true,
+          sort_order: 2,
+        },
+        {
+          id: `off-${Date.now()}-3`,
+          product_id: editingProduct?.id || "",
+          title_ar: "3 قطع (عرض التوفير العائلي)",
+          quantity: 3,
+          price: Math.round(numBase * 2.4),
+          original_price: numCompare * 3,
+          discount_label: "أقصى توفير + شحن مجاني",
+          is_popular: false,
+          free_shipping: true,
+          sort_order: 3,
+        },
+      ];
 
       const cleanSlug = (slug || titleAr)
         .trim()
@@ -172,7 +176,9 @@ export default function AdminProductsPage() {
         .replace(/[^a-z0-9\u0600-\u06FF\-_]/g, "-")
         .replace(/-+/g, "-");
 
-      const imagesArray = images.length > 0 ? images : ["/images/hero-organizer.jpg"];
+      const imagesArray = imageUrl.trim()
+        ? [imageUrl.trim(), ...(editingProduct?.images?.slice(1) || [])]
+        : editingProduct?.images || ["/images/hero-organizer.jpg"];
 
       const payload = {
         id: editingProduct?.id,
@@ -187,7 +193,7 @@ export default function AdminProductsPage() {
         description_ar: descriptionAr.trim(),
         status: "active",
         images: imagesArray,
-        offers: finalOffers,
+        offers,
       };
 
       const res = await fetch("/api/products", {
@@ -199,11 +205,6 @@ export default function AdminProductsPage() {
       const data = await res.json();
       if (data.success) {
         setIsModalOpen(false);
-        // New product in landing-page mode: go straight to the live editor of its page.
-        if (!editingProduct && data.landing_page_id && brand.store_mode !== "catalog") {
-          router.push(`/admin/landing-pages/${data.landing_page_id}/edit`);
-          return;
-        }
         setAlertMessage({
           type: "success",
           text: editingProduct
@@ -222,205 +223,49 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleDuplicateProduct = async (prod: Product) => {
-    if (duplicatingId) return;
-    setDuplicatingId(prod.id);
-    try {
-      const takenSlugs = new Set(products.map((p) => p.slug));
-      const takenSkus = new Set(products.map((p) => (p.sku || "").toUpperCase()));
-      const baseSlug = `${prod.slug}-copy`;
-      let newSlug = baseSlug;
-      let n = 2;
-      while (takenSlugs.has(newSlug)) newSlug = `${baseSlug}-${n++}`;
-      const baseSku = `${prod.sku || "SKU"}-COPY`.toUpperCase();
-      let newSku = baseSku;
-      let m = 2;
-      while (takenSkus.has(newSku)) newSku = `${baseSku}-${m++}`;
-
-      const stamp = Date.now();
-      const payload = {
-        // no id: the store generates a fresh one
-        title_ar: `${prod.title_ar} (نسخة)`,
-        title_en: prod.title_en || "",
-        slug: newSlug,
-        sku: newSku,
-        base_price: prod.base_price,
-        compare_at_price: prod.compare_at_price,
-        cost_price: prod.cost_price,
-        stock_quantity: prod.stock_quantity,
-        description_ar: prod.description_ar,
-        status: "draft",
-        images: prod.images || [],
-        offers: (prod.offers || []).map((o, i) => ({ ...o, id: `off-${stamp}-${i + 1}`, product_id: "" })),
-      };
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAlertMessage({ type: "success", text: `تم إنشاء نسخة "${payload.title_ar}" (مخفية حتى تفعّلها)` });
-        setTimeout(() => setAlertMessage(null), 4000);
-        await fetchProducts();
-      } else {
-        setAlertMessage({ type: "error", text: data.error || "تعذر استنساخ المنتج" });
-        setTimeout(() => setAlertMessage(null), 4000);
-      }
-    } catch {
-      setAlertMessage({ type: "error", text: "تعذر استنساخ المنتج" });
-      setTimeout(() => setAlertMessage(null), 4000);
-    } finally {
-      setDuplicatingId(null);
-    }
-  };
-
   const filteredProducts = products.filter((p) => {
-    const nameQ = searchQuery.trim().toLowerCase();
-    const skuQ = skuQuery.trim().toLowerCase();
-    if (nameQ && !(p.title_ar?.toLowerCase().includes(nameQ) || p.title_en?.toLowerCase().includes(nameQ))) return false;
-    if (skuQ && !(p.sku?.toLowerCase().includes(skuQ) || p.slug?.toLowerCase().includes(skuQ))) return false;
-    return true;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      p.title_ar?.toLowerCase().includes(q) ||
+      p.slug?.toLowerCase().includes(q) ||
+      p.sku?.toLowerCase().includes(q)
+    );
   });
-
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pagedProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const formatDate = (iso?: string) => {
-    if (!iso) return "—";
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" });
-  };
-
-  const iconBtn =
-    "w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed";
-
-  const thumb = (prod: Product) => (
-    <div className="relative w-11 h-11 shrink-0 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
-      {prod.images?.[0] ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={prod.images[0]}
-          alt=""
-          width={44}
-          height={44}
-          className="w-full h-full object-cover"
-          onError={(e: any) => {
-            e.target.style.display = "none";
-          }}
-        />
-      ) : (
-        <Package className="w-5 h-5 text-slate-400" />
-      )}
-    </div>
-  );
-
-  const statusPill = (prod: Product) => (
-    <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
-        prod.status === "active" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-slate-100 text-slate-600 border border-slate-200"
-      }`}
-    >
-      {prod.status === "active" ? "نشط" : "مخفي"}
-    </span>
-  );
-
-  const priceCell = (prod: Product) => (
-    <span className="inline-flex items-baseline gap-1.5 font-mono">
-      <span className="font-black text-slate-900">{prod.base_price} ج.م</span>
-      {!!prod.compare_at_price && prod.compare_at_price > prod.base_price && (
-        <span className="text-xs text-slate-400 line-through">{prod.compare_at_price}</span>
-      )}
-    </span>
-  );
-
-  const actions = (prod: Product) => (
-    <div className="flex items-center gap-1 justify-end">
-      <button
-        type="button"
-        onClick={() => openEditModal(prod)}
-        className="min-h-[44px] px-3 inline-flex items-center gap-1.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-        title="تعديل"
-        aria-label="تعديل"
-      >
-        <Edit3 className="w-4 h-4" />
-        <span>تعديل</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => handleDuplicateProduct(prod)}
-        disabled={duplicatingId === prod.id}
-        className={iconBtn}
-        title="استنساخ"
-        aria-label="استنساخ"
-      >
-        <Copy className="w-4 h-4 text-emerald-700" />
-      </button>
-      {prod.slug ? (
-        <a href={`/p/${prod.slug}`} target="_blank" rel="noopener noreferrer" className={iconBtn} title="مشاهدة" aria-label="مشاهدة">
-          <Eye className="w-4 h-4" />
-        </a>
-      ) : (
-        <span className={`${iconBtn} opacity-40 cursor-not-allowed`} title="لا توجد صفحة هبوط" aria-disabled="true">
-          <Eye className="w-4 h-4" />
-        </span>
-      )}
-      <button
-        type="button"
-        onClick={() => handleDeleteProduct(prod)}
-        disabled={deletingId === prod.id}
-        className="w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer disabled:opacity-40"
-        title="حذف المنتج"
-        aria-label="حذف المنتج"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-    </div>
-  );
-
-  const searchInput = (value: string, onChange: (v: string) => void, placeholder: string) => (
-    <div className="relative w-full sm:w-72">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setPage(1);
-        }}
-        placeholder={placeholder}
-        className="w-full pr-9 pl-3.5 min-h-[44px] rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-      />
-      <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
-    </div>
-  );
 
   return (
     <div className="space-y-6 text-right font-sans max-w-6xl mx-auto pb-16" dir="rtl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Top Banner / Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-950 font-heading">المنتجات</h1>
-          <p className="text-sm text-slate-500 mt-1">أضف منتجاتك وعدّل أسعارها ومخزونها وصورها.</p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold font-mono mb-1">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>كتالوج متجر RexRack</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-950 font-heading">
+            إدارة المنتجات والأسعار وصفحات الهبوط
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            أضف منتجات جديدة، عدّل الأسعار والأسماء، احذف المنتجات، أو عاين صفحات الهبوط بضغطة زر
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={fetchProducts}
             disabled={loading}
-            className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
+            className="p-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
             title="تحديث القائمة"
-            aria-label="تحديث القائمة"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-orange-600" : ""}`} />
           </button>
 
           <button
             onClick={openAddModal}
-            className="flex-1 sm:flex-initial min-h-[44px] py-2.5 px-5 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-600/25 transition cursor-pointer"
+            className="flex-1 sm:flex-initial py-2.5 px-5 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-600/25 transition transform active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>إضافة منتج</span>
+            <span>إضافة منتج جديد</span>
           </button>
         </div>
       </div>
@@ -428,109 +273,185 @@ export default function AdminProductsPage() {
       {/* Alert Notification */}
       {alertMessage && (
         <div
-          className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-2.5 shadow-sm ${
+          className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-2.5 animate-fade-in shadow-xs ${
             alertMessage.type === "success"
               ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-              : "bg-rose-50 border-rose-200 text-rose-900"
+              : "bg-red-50 border-red-200 text-red-900"
           }`}
         >
           {alertMessage.type === "success" ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
           )}
           <span>{alertMessage.text}</span>
         </div>
       )}
 
-      {/* Search */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {searchInput(searchQuery, setSearchQuery, "بحث باسم المنتج")}
-        {searchInput(skuQuery, setSkuQuery, "بحث بكود المنتج (SKU)")}
+      {/* Search & Stats Filter */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="relative w-full sm:w-80">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="ابحث بالاسم أو الكود (SKU) أو الرابط..."
+            className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-xs outline-hidden focus:ring-2 focus:ring-orange-500 bg-slate-50/50"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        </div>
+
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 w-full sm:w-auto justify-end">
+          <span>إجمالي المنتجات:</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-mono text-slate-900">
+            {products.length}
+          </span>
+        </div>
       </div>
 
+      {/* Products List */}
       {loading ? (
         <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
           <RefreshCw className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
           <p className="text-sm font-bold text-slate-600">جاري تحميل المنتجات...</p>
         </div>
       ) : filteredProducts.length > 0 ? (
-        <>
-          {/* Desktop table */}
-          <div className="hidden lg:block bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-sm text-right">
-              <thead className="bg-slate-50 text-xs font-bold text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="px-5 py-3.5">المنتج</th>
-                  <th className="px-4 py-3.5">الحالة</th>
-                  <th className="px-4 py-3.5">المخزون</th>
-                  <th className="px-4 py-3.5">السعر</th>
-                  <th className="px-4 py-3.5">تاريخ الإنشاء</th>
-                  <th className="px-4 py-3.5"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {pagedProducts.map((prod) => (
-                  <tr key={prod.id} className="h-16 hover:bg-orange-50/30 transition-colors">
-                    <td className="px-5 py-2">
-                      <div className="flex items-center gap-3">
-                        {thumb(prod)}
-                        <div className="min-w-0">
-                          <div className="font-black text-slate-900 leading-snug truncate max-w-[280px]">{prod.title_ar}</div>
-                          <div className="text-[11px] font-mono text-slate-400" dir="ltr">
-                            SKU · {prod.sku || "—"}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2">{statusPill(prod)}</td>
-                    <td className="px-4 py-2 font-mono font-bold text-slate-700">{prod.stock_quantity ?? 0}</td>
-                    <td className="px-4 py-2">{priceCell(prod)}</td>
-                    <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap">{formatDate(prod.created_at)}</td>
-                    <td className="px-3 py-2">{actions(prod)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-5">
+          {filteredProducts.map((prod) => {
+            const profitPerItem = Math.max(0, (prod.base_price || 0) - (prod.cost_price || 0));
+            const lpUrl = `/p/${prod.slug}`;
 
-          {/* Mobile stacked rows */}
-          <div className="lg:hidden space-y-3">
-            {pagedProducts.map((prod) => (
-              <div key={prod.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  {thumb(prod)}
-                  <div className="min-w-0 flex-1">
-                    <div className="font-black text-slate-900 leading-snug">{prod.title_ar}</div>
-                    <div className="text-[11px] font-mono text-slate-400" dir="ltr">
-                      SKU · {prod.sku || "—"}
+            return (
+              <div
+                key={prod.id}
+                className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:border-orange-300 transition-colors space-y-5"
+              >
+                {/* Top Row: Info & Actions */}
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-5 border-b border-slate-100">
+                  <div className="flex items-start sm:items-center gap-4">
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-100 overflow-hidden border border-slate-200 shrink-0">
+                      {prod.images?.[0] ? (
+                        <img
+                          src={prod.images[0]}
+                          alt={prod.title_ar}
+                          className="w-full h-full object-cover"
+                          onError={(e: any) => {
+                            e.target.src = "/images/hero-organizer.jpg";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <Package className="w-8 h-8" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[11px] font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md">
+                          SKU: {prod.sku || "N/A"}
+                        </span>
+                        <span className="text-[11px] font-mono text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md font-bold">
+                          /{prod.slug}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          المخزون: {prod.stock_quantity || 100} قطعة
+                        </span>
+                      </div>
+
+                      <h3 className="text-lg md:text-xl font-black text-slate-950 font-heading leading-tight">
+                        {prod.title_ar}
+                      </h3>
+
+                      <p className="text-xs text-slate-500 line-clamp-1 max-w-xl">
+                        {prod.description_ar?.replace(/<[^>]*>/g, "") || "لا يوجد وصف"}
+                      </p>
                     </div>
                   </div>
-                  {statusPill(prod)}
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  {priceCell(prod)}
-                  <span>
-                    المخزون <span className="font-mono font-bold text-slate-700">{prod.stock_quantity ?? 0}</span>
-                  </span>
-                  <span>{formatDate(prod.created_at)}</span>
-                </div>
-                {actions(prod)}
-              </div>
-            ))}
-          </div>
 
-          <TablePagination
-            total={filteredProducts.length}
-            page={currentPage}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={(s) => {
-              setPageSize(s);
-              setPage(1);
-            }}
-          />
-        </>
+                  {/* Financial Metrics */}
+                  <div className="flex items-center gap-6 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-100">
+                    <div>
+                      <span className="text-[11px] text-slate-400 block">سعر البيع</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-950 font-mono">
+                          {prod.base_price} ج.م
+                        </span>
+                        {prod.compare_at_price && (
+                          <span className="text-xs text-slate-400 line-through font-mono">
+                            {prod.compare_at_price} ج.م
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-r border-slate-200 pr-5">
+                      <span className="text-[11px] text-slate-400 block">سعر التكلفة</span>
+                      <span className="text-base font-bold text-slate-700 font-mono">
+                        {prod.cost_price || 0} ج.م
+                      </span>
+                    </div>
+
+                    <div className="border-r border-slate-200 pr-5">
+                      <span className="text-[11px] text-emerald-700 block font-bold">الربح الصافي للقطعة</span>
+                      <span className="text-base font-black text-emerald-600 font-mono">
+                        +{profitPerItem} ج.م
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Actions & Offers */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-1">
+                  {/* Offers summary */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-slate-400">باقات الهبوط:</span>
+                    {prod.offers?.slice(0, 3).map((off) => (
+                      <span
+                        key={off.id}
+                        className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-xl"
+                      >
+                        {off.quantity}ق = {off.price} ج.م
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Control Buttons */}
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <Link
+                      href={lpUrl}
+                      target="_blank"
+                      className="py-2 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-orange-600" />
+                      <span>معاينة صفحة الهبوط</span>
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(prod)}
+                      className="py-2 px-3.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border border-orange-200/60"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>تعديل الاسم والسعر</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteProduct(prod)}
+                      disabled={deletingId === prod.id}
+                      className="p-2 rounded-xl text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition cursor-pointer disabled:opacity-50"
+                      title="حذف المنتج"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <div className="p-12 text-center bg-white rounded-3xl border border-dashed border-slate-300 space-y-3">
           <Package className="w-12 h-12 text-slate-300 mx-auto" />
@@ -547,7 +468,7 @@ export default function AdminProductsPage() {
               <div className="flex items-center gap-2">
                 <Tag className="w-5 h-5 text-orange-600" />
                 <h3 className="text-lg font-black text-slate-900 font-heading">
-                  {editingProduct ? "تعديل المنتج والأسعار" : "إضافة منتج جديد"}
+                  {editingProduct ? "تعديل المنتج والأسعار" : "إضافة منتج جديد لـ RexRack"}
                 </h3>
               </div>
               <button
@@ -569,7 +490,7 @@ export default function AdminProductsPage() {
                   value={titleAr}
                   onChange={(e) => setTitleAr(e.target.value)}
                   placeholder="مثال: مسدس مساج فليكس برو الكهربائي"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-bold text-slate-900 text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-bold text-slate-900 text-sm"
                 />
               </div>
 
@@ -583,7 +504,7 @@ export default function AdminProductsPage() {
                     min={1}
                     value={basePrice}
                     onChange={(e) => setBasePrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono font-bold text-slate-900 text-sm"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono font-bold text-slate-900 text-sm"
                   />
                 </div>
 
@@ -594,7 +515,7 @@ export default function AdminProductsPage() {
                     min={0}
                     value={comparePrice}
                     onChange={(e) => setComparePrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
                   />
                 </div>
 
@@ -605,7 +526,7 @@ export default function AdminProductsPage() {
                     min={0}
                     value={costPrice}
                     onChange={(e) => setCostPrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
                   />
                 </div>
               </div>
@@ -619,8 +540,8 @@ export default function AdminProductsPage() {
                     dir="ltr"
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
-                    placeholder="massage-gun"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
+                    placeholder="rexrack-massage-gun"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
                   />
                   <span className="text-[10px] text-slate-400 mt-0.5 block">
                     الرابط سيكون: /p/{slug || "example-product"}
@@ -635,16 +556,24 @@ export default function AdminProductsPage() {
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                     placeholder="REX-PROD-01"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
                   />
                 </div>
               </div>
 
-              {/* Product images (uploaded from the merchant device; first = main image) */}
-              <ImageGalleryEditor label="صور المنتج (الأولى هي الصورة الرئيسية)" value={images} onChange={setImages} />
-
-              {/* Stock */}
+              {/* Image URL & Stock */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-slate-700 mb-1">رابط الصورة الرئيسية</label>
+                  <input
+                    type="url"
+                    dir="ltr"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://.../product.jpg"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
+                  />
+                </div>
 
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">الكمية بالمخزن</label>
@@ -653,32 +582,9 @@ export default function AdminProductsPage() {
                     min={0}
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs"
                   />
                 </div>
-              </div>
-
-              {/* Quantity offers (upsell ladder) */}
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 space-y-2">
-                <p className="font-black text-slate-900 text-sm">عروض الكمية (الـ Upsell)</p>
-                {!offersTouched && (
-                  <p className="text-[11px] text-slate-500">
-                    دي عروض تلقائية بتتبني من سعر البيع. عدّل أي رقم وهتتثبّت على المنتج.
-                  </p>
-                )}
-                <OffersPanel
-                  offers={effectiveOffers}
-                  currency={brand.currency}
-                  hint="بتتحفظ مع المنتج وبتظهر في صفحة الهبوط."
-                  onChange={(next) => {
-                    setOffers(next);
-                    setOffersTouched(true);
-                  }}
-                  onReset={() => {
-                    setOffers([]);
-                    setOffersTouched(false);
-                  }}
-                />
               </div>
 
               {/* Description */}
@@ -689,7 +595,7 @@ export default function AdminProductsPage() {
                   value={descriptionAr}
                   onChange={(e) => setDescriptionAr(e.target.value)}
                   placeholder="اكتب نقاط القوة والمميزات الرئيسية التي ستظهر في صفحة الهبوط..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 text-slate-900 text-xs leading-relaxed"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 text-xs leading-relaxed"
                 />
               </div>
 

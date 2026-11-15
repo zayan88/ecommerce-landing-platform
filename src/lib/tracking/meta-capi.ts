@@ -60,7 +60,7 @@ export class MetaCapiClient {
 
       const rawName = payload.order?.customer_name;
       if (rawName) {
-        userData.fn = [sha256(rawName.trim().split(/\s+/)[0].toLowerCase())];
+        userData.fn = [sha256(rawName.split(" ")[0])];
       }
 
       if (payload.fbp) userData.fbp = payload.fbp;

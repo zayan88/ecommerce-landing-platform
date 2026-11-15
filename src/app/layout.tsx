@@ -1,9 +1,4 @@
-import type { Metadata, Viewport } from "next";
-import { getSiteUrl } from "@/lib/seo";
-import { getBrand } from "@/lib/brand";
-import { PALETTES, cssVarsFor } from "@/lib/palettes";
-import { BrandProvider } from "@/components/brand/BrandProvider";
-import { Cairo, Tajawal } from "next/font/google";
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -11,59 +6,31 @@ import { VisitorTracker } from "@/components/tracking/VisitorTracker";
 
 export const runtime = "edge";
 
-// Self-hosted at build time (no render-blocking request to fonts.googleapis.com)
-const cairo = Cairo({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "600", "700", "800", "900"],
-  display: "swap",
-  variable: "--font-cairo",
-});
-const tajawal = Tajawal({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "700", "800", "900"],
-  display: "swap",
-  variable: "--font-tajawal",
-});
+export const metadata: Metadata = {
+  title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
+  description: "المنصة المركزية لإدارة وتتبع صفحات الهبوط ومبيعات الدفع عند الاستلام وبوابة صفقة في مصر",
+};
 
-export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getBrand();
-  const base = brand.site_domain || getSiteUrl();
-  const title = brand.tagline ? `${brand.store_name} - ${brand.tagline}` : brand.store_name;
-  return {
-    metadataBase: new URL(base),
-    title,
-    description: "منتجات بشحن مجاني لكل المحافظات، والدفع عند الاستلام بعد المعاينة.",
-    openGraph: { type: "website", locale: "ar_EG", siteName: brand.store_name },
-    ...(brand.favicon_url || brand.logo_url ? { icons: { icon: brand.favicon_url || brand.logo_url } } : {}),
-  };
-}
-
-export async function generateViewport(): Promise<Viewport> {
-  const brand = await getBrand();
-  // Browser theme color follows the merchant's accent (CTA) color
-  const accent = PALETTES[brand.accent]["600"].split(" ").map(Number);
-  const hex = "#" + accent.map((n) => n.toString(16).padStart(2, "0")).join("");
-  return { width: "device-width", initialScale: 1, themeColor: hex };
-}
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const brand = await getBrand();
-  // Merchant theme: CSS variables consumed by tailwind.config.ts (emerald-* = primary, orange-* = accent)
-  const themeVars = { ...cssVarsFor("primary", brand.primary), ...cssVarsFor("accent", brand.accent) } as React.CSSProperties;
-
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${tajawal.variable}`} style={themeVars}>
+    <html lang="ar" dir="rtl">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="antialiased bg-slate-50 text-gray-900 font-sans">
-        <BrandProvider brand={brand}>
-          <Suspense fallback={null}>
-            <VisitorTracker />
-          </Suspense>
-          <Providers>{children}</Providers>
-        </BrandProvider>
+        <Suspense fallback={null}>
+          <VisitorTracker />
+        </Suspense>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

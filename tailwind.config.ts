@@ -1,14 +1,6 @@
 import type { Config } from "tailwindcss";
 import { heroui } from "@heroui/react";
 
-/** Full 50-950 scale driven by CSS variables (RGB triplets) so opacity modifiers like /30 keep working. */
-function themed(role: "primary" | "accent") {
-  const steps = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
-  const scale: Record<string, string> = { DEFAULT: `rgb(var(--c-${role}-500) / <alpha-value>)` };
-  for (const s of steps) scale[s] = `rgb(var(--c-${role}-${s}) / <alpha-value>)`;
-  return scale;
-}
-
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -22,11 +14,28 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        // White-label theme: the merchant picks the palettes in /admin/brand and the layout writes the
-        // --c-primary-* / --c-accent-* variables (see src/lib/palettes.ts). Defaults = emerald / orange,
-        // so existing class names (emerald-* trust color, orange-* buy button) are themed automatically.
-        emerald: themed("primary"),
-        orange: themed("accent"),
+        brand: {
+          50: "#eff6ff",
+          100: "#dbeafe",
+          200: "#bfdbfe",
+          300: "#93c5fd",
+          400: "#60a5fa",
+          500: "#3b82f6",
+          600: "#2563eb",
+          700: "#1d4ed8",
+          800: "#1e40af",
+          900: "#1e3a8a",
+          950: "#172554",
+        },
+        emerald: {
+          DEFAULT: "#10b981",
+          50: "#ecfdf5",
+          100: "#d1fae5",
+          200: "#a7f3d0",
+          500: "#10b981",
+          600: "#059669",
+          700: "#047857",
+        },
         safqa: {
           primary: "#0ea5e9",
           dark: "#0369a1",
