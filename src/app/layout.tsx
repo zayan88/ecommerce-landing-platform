@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description: "منتجات بشحن مجاني لكل المحافظات، والدفع عند الاستلام بعد المعاينة.",
     openGraph: { type: "website", locale: "ar_EG", siteName: brand.store_name },
-    ...(brand.logo_url ? { icons: { icon: brand.logo_url } } : {}),
+    ...(brand.favicon_url || brand.logo_url ? { icons: { icon: brand.favicon_url || brand.logo_url } } : {}),
   };
 }
 

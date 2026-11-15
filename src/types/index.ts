@@ -257,6 +257,7 @@ export interface SystemSettings {
   // White-label brand (all optional: empty = neutral defaults, see lib/brand.ts)
   store_tagline?: string;
   logo_url?: string;
+  favicon_url?: string;
   brand_primary?: string; // PaletteKey: trust color (emerald-*)
   brand_accent?: string; // PaletteKey: buy-button color (orange-*)
   site_domain?: string; // https://shop.example.com

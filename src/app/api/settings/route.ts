@@ -49,11 +49,11 @@ export async function POST(req: NextRequest) {
     if ("store_mode" in toUpdate && toUpdate.store_mode !== "landing" && toUpdate.store_mode !== "catalog") {
       delete toUpdate.store_mode;
     }
-    for (const f of ["logo_url", "site_domain"] as const) {
+    for (const f of ["logo_url", "favicon_url", "site_domain"] as const) {
       if (f in toUpdate) {
         const v = typeof toUpdate[f] === "string" ? toUpdate[f].trim() : "";
         // empty clears the field; otherwise http(s) URL (logo may also be a site-relative path)
-        const okUrl = /^https?:\/\/[^\s]+$/i.test(v) || (f === "logo_url" && /^\/[^\s]*$/.test(v));
+        const okUrl = /^https?:\/\/[^\s]+$/i.test(v) || ((f === "logo_url" || f === "favicon_url") && /^\/[^\s]*$/.test(v));
         if (v === "" || okUrl) toUpdate[f] = v;
         else delete toUpdate[f];
       }

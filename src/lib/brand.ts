@@ -11,6 +11,7 @@ export interface Brand {
   store_name: string;
   tagline: string;
   logo_url: string;
+  favicon_url: string;
   primary: PaletteKey;
   accent: PaletteKey;
   support_phone: string;
@@ -25,6 +26,7 @@ export const BRAND_DEFAULTS: Brand = {
   store_name: "متجري",
   tagline: "",
   logo_url: "",
+  favicon_url: "",
   primary: "emerald",
   accent: "orange",
   support_phone: "",
@@ -72,6 +74,7 @@ export const getBrand = cache(async (): Promise<Brand> => {
   return {
     store_name: (s.store_name || env.name || BRAND_DEFAULTS.store_name).trim(),
     tagline: (s.store_tagline || env.tagline).trim(),
+    favicon_url: cleanUrl(s.favicon_url) || (typeof s.favicon_url === "string" && s.favicon_url.startsWith("/") ? s.favicon_url : ""),
     logo_url: cleanUrl(logo) || (typeof logo === "string" && logo.startsWith("/") ? logo : ""),
     primary: isPaletteKey(primary) ? primary : BRAND_DEFAULTS.primary,
     accent: isPaletteKey(accent) ? accent : BRAND_DEFAULTS.accent,

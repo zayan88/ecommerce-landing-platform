@@ -3,26 +3,20 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { LandingPage, Product, mergeSections } from "@/types";
+import { LandingPage, Product } from "@/types";
 import {
   ArrowRight,
   ExternalLink,
   Copy,
   Check,
   Trash2,
-  Sliders,
-  Edit3,
+  Sparkles,
   Power,
   RefreshCw,
   FileQuestion,
 } from "lucide-react";
-import SectionsPanel from "../_components/SectionsPanel";
-import ContentPanel from "../_components/ContentPanel";
-import { useLandingPageEditor } from "../_lib/useLandingPageEditor";
 import StarterEditor from "@/components/editor/StarterEditor";
 import { getLandingPageComponent, landingPageRegistry } from "@/landing-pages/registry";
-
-type DetailTab = "sections" | "content";
 
 export default function LandingPageDetailPage() {
   const params = useParams<{ id: string }>();
@@ -31,7 +25,6 @@ export default function LandingPageDetailPage() {
 
   const [lp, setLp] = useState<LandingPage | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<DetailTab>("sections");
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -69,10 +62,6 @@ export default function LandingPageDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
-
-  const editor = useLandingPageEditor(lp, (patch) =>
-    setLp((prev) => (prev ? { ...prev, ...patch } : prev))
-  );
 
   const handleCopyUrl = () => {
     if (!lp) return;
@@ -177,137 +166,71 @@ export default function LandingPageDetailPage() {
     );
   }
 
-  const isActive = lp.status === "active";
-  const merged = mergeSections(lp.sections_config);
-  const activeCount = merged.filter((s) => s.enabled).length;
-
-  const tabBtn = (key: DetailTab, label: string, Icon: typeof Sliders) => {
-    const selected = tab === key;
-    return (
-      <button
-        type="button"
-        role="tab"
-        id={`tab-${key}`}
-        aria-selected={selected}
-        aria-controls={`panel-${key}`}
-        tabIndex={selected ? 0 : -1}
-        onClick={() => setTab(key)}
-        className={`min-h-[48px] px-4 sm:px-6 rounded-xl text-sm font-bold flex items-center gap-2 whitespace-nowrap transition cursor-pointer ${
-          selected ? "bg-orange-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
-        }`}
-      >
-        <Icon className="w-4 h-4" />
-        <span>{label}</span>
-      </button>
-    );
+  // Old hand-written templates cannot be edited live. There is no old editor any more:
+  // the merchant converts the page to the new template, then edits it visually.
+  const handleConvert = async () => {
+    if (!lp) return;
+    if (
+      !window.confirm(
+        "هيتحوّل شكل الصفحة للقالب الجديد القابل للتعديل المباشر، وهتاخد بيانات المنتج (الاسم والوصف والصور والعروض). تكمل؟"
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      const { product: _product, ...rest } = lp as any;
+      const res = await fetch("/api/landing-pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...rest, component_key: "starter-template" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await load();
+      } else {
+        window.alert(data.error || "تعذر التحويل، حاول مرة أخرى");
+      }
+    } catch (err) {
+      console.error(err);
+      window.alert("تعذر التحويل، حاول مرة أخرى");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <div className="space-y-5 text-right font-sans max-w-5xl mx-auto pb-16" dir="rtl">
+    <div className="space-y-5 text-right font-sans max-w-3xl mx-auto pb-16" dir="rtl">
       {backLink}
-
-      {/* Header */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-950 font-heading leading-snug">{lp.title}</h1>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-bold border ${
-              isActive
-                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                : "bg-amber-100 text-amber-900 border-amber-200"
-            }`}
-          >
-            {isActive ? "نشطة" : "متوقفة"}
-          </span>
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-5 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto">
+          <Sparkles className="w-7 h-7" />
         </div>
-        <p className="text-xs text-slate-500 font-mono" dir="ltr">
-          /p/{lp.slug} · {activeCount}/{merged.length}
-        </p>
-
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="space-y-2">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-950 font-heading leading-snug">{lp.title}</h1>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            الصفحة دي مبنية على قالب قديم ما بيدعمش التعديل المباشر. حوّلها للقالب الجديد وتقدر تعدّل أي نص أو صورة
+            أو لون بالضغط عليه مباشرة في الصفحة.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={handleConvert}
+            disabled={busy}
+            className="min-h-[48px] px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm shadow-lg shadow-orange-500/25 disabled:opacity-60 cursor-pointer"
+          >
+            {busy ? "جاري التحويل..." : "تحويل للقالب الجديد وفتح المحرر"}
+          </button>
           <a
             href={`/p/${lp.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="min-h-[44px] px-4 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold flex items-center gap-2 shadow-sm transition"
+            className="min-h-[48px] px-5 rounded-2xl bg-white border border-slate-300 hover:bg-slate-50 text-sm font-bold text-slate-700 flex items-center gap-2"
           >
-            <ExternalLink className="w-4 h-4" />
-            <span>فتح الصفحة</span>
+            <ExternalLink className="w-4 h-4" /> فتح الصفحة الحالية
           </a>
-          <button
-            type="button"
-            onClick={handleCopyUrl}
-            className="min-h-[44px] px-4 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-sm font-bold text-slate-700 flex items-center gap-2 transition cursor-pointer"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span className="text-emerald-700">تم النسخ</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 text-slate-500" />
-                <span>نسخ الرابط</span>
-              </>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={handleToggleStatus}
-            disabled={busy}
-            className="min-h-[44px] px-4 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-sm font-bold text-slate-700 flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
-          >
-            <Power className={`w-4 h-4 ${isActive ? "text-amber-600" : "text-emerald-600"}`} />
-            <span>{isActive ? "إيقاف الصفحة" : "تفعيل الصفحة"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={busy}
-            className="min-h-[44px] px-4 rounded-xl bg-white border border-rose-200 hover:bg-rose-50 text-sm font-bold text-rose-700 flex items-center gap-2 transition cursor-pointer disabled:opacity-50 sm:mr-auto"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>حذف</span>
-          </button>
         </div>
       </div>
-
-      {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="تعديل صفحة الهبوط"
-        className="flex items-center gap-1.5 bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 overflow-x-auto"
-      >
-        {tabBtn("sections", "الأقسام", Sliders)}
-        {tabBtn("content", "النصوص والصور", Edit3)}
-      </div>
-
-      {tab === "sections" ? (
-        <div role="tabpanel" id="panel-sections" aria-labelledby="tab-sections">
-          <SectionsPanel
-            customSections={editor.customSections}
-            isSavingSections={editor.isSavingSections}
-            sectionSaveSuccess={editor.sectionSaveSuccess}
-            handleToggleSection={editor.handleToggleSection}
-            handleMoveSection={editor.handleMoveSection}
-            handleResetSections={editor.handleResetSections}
-            handleSaveSections={editor.handleSaveSections}
-          />
-        </div>
-      ) : (
-        <div role="tabpanel" id="panel-content" aria-labelledby="tab-content">
-          <ContentPanel
-            contentForm={editor.contentForm}
-            setContentForm={editor.setContentForm}
-            activeContentTab={editor.activeContentTab}
-            setActiveContentTab={editor.setActiveContentTab}
-            isSavingContent={editor.isSavingContent}
-            contentSaveSuccess={editor.contentSaveSuccess}
-            handleSaveContent={editor.handleSaveContent}
-          />
-        </div>
-      )}
     </div>
   );
 }
