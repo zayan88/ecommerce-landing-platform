@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
 import Link from "next/link";
 import { Product, ProductOffer } from "@/types";
 import {
@@ -39,7 +40,7 @@ export default function AdminProductsPage() {
   const [comparePrice, setComparePrice] = useState<number | string>(780);
   const [costPrice, setCostPrice] = useState<number | string>(100);
   const [stock, setStock] = useState<number | string>(100);
-  const [imageUrl, setImageUrl] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [descriptionAr, setDescriptionAr] = useState("");
 
   // UI status
@@ -75,7 +76,7 @@ export default function AdminProductsPage() {
     setComparePrice(750);
     setCostPrice(120);
     setStock(100);
-    setImageUrl("https://safka.fra1.cdn.digitaloceanspaces.com/media/products/1792053963744-674BF3D0-017E-4FCC-BE28-3230F5419E5A.webp");
+    setImages([]);
     setDescriptionAr("");
     setIsModalOpen(true);
   };
@@ -89,7 +90,7 @@ export default function AdminProductsPage() {
     setComparePrice(prod.compare_at_price || 0);
     setCostPrice(prod.cost_price || 0);
     setStock(prod.stock_quantity || 100);
-    setImageUrl(prod.images?.[0] || "");
+    setImages(prod.images || []);
     setDescriptionAr(prod.description_ar || "");
     setIsModalOpen(true);
   };
@@ -176,9 +177,7 @@ export default function AdminProductsPage() {
         .replace(/[^a-z0-9\u0600-\u06FF\-_]/g, "-")
         .replace(/-+/g, "-");
 
-      const imagesArray = imageUrl.trim()
-        ? [imageUrl.trim(), ...(editingProduct?.images?.slice(1) || [])]
-        : editingProduct?.images || ["/images/hero-organizer.jpg"];
+      const imagesArray = images.length > 0 ? images : ["/images/hero-organizer.jpg"];
 
       const payload = {
         id: editingProduct?.id,
@@ -561,19 +560,11 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Image URL & Stock */}
+              {/* Product images (uploaded from the merchant device; first = main image) */}
+              <ImageGalleryEditor label="صور المنتج (الأولى هي الصورة الرئيسية)" value={images} onChange={setImages} />
+
+              {/* Stock */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 mb-1">رابط الصورة الرئيسية</label>
-                  <input
-                    type="url"
-                    dir="ltr"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://.../product.jpg"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
-                  />
-                </div>
 
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">الكمية بالمخزن</label>

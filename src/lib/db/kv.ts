@@ -9,6 +9,9 @@ let warnedNoRest = false;
 
 /** Read per call: on next-on-pages process.env is filled per request. */
 function getKvRestConfig(): KvRestConfig | null {
+  // Local development: point at the bundled KV emulator (scripts/dev-kv-server.mjs), never real Cloudflare.
+  const local = (process.env.KV_REST_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (local) return { base: local + "/values/", headers: {} };
   const accountId = (process.env.CF_ACCOUNT_ID || "").trim();
   const namespaceId = (process.env.CF_KV_NAMESPACE_ID || "").trim();
   const token = (process.env.CF_API_TOKEN || "").trim();

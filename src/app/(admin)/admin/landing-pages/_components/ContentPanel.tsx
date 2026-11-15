@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import { LandingPage, LandingPageContentConfig } from "@/types";
-import { Check, X, Edit3 } from "lucide-react";
+import { LandingPageContentConfig } from "@/types";
+import { Check, Edit3 } from "lucide-react";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
-interface ContentEditorModalProps {
-  editingContentLp: LandingPage | null;
-  setEditingContentLp: React.Dispatch<React.SetStateAction<LandingPage | null>>;
+interface ContentPanelProps {
   contentForm: LandingPageContentConfig;
   setContentForm: React.Dispatch<React.SetStateAction<LandingPageContentConfig>>;
   activeContentTab: "hero" | "comparison" | "box" | "steps" | "reviews";
@@ -16,9 +15,7 @@ interface ContentEditorModalProps {
   handleSaveContent: () => void | Promise<void>;
 }
 
-export default function ContentEditorModal({
-  editingContentLp,
-  setEditingContentLp,
+export default function ContentPanel({
   contentForm,
   setContentForm,
   activeContentTab,
@@ -26,29 +23,21 @@ export default function ContentEditorModal({
   isSavingContent,
   contentSaveSuccess,
   handleSaveContent,
-}: ContentEditorModalProps) {
-  if (!editingContentLp) return null;
-
+}: ContentPanelProps) {
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-gray-100 space-y-5 max-h-[90vh] flex flex-col justify-between overflow-hidden">
+    <div>
+      <div className="bg-white rounded-3xl w-full p-5 sm:p-7 shadow-sm border border-gray-200 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
           <div>
             <h3 className="text-lg font-black text-gray-900 font-heading flex items-center gap-2">
               <Edit3 className="w-5 h-5 text-cyan-600" />
-              <span>تعديل نصوص وصور صفحة الهبوط ({editingContentLp.title})</span>
+              <span>تعديل نصوص وصور صفحة الهبوط</span>
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
               غيّر العناوين، النصوص، والميديا بحرية كاملة مع بقاء هيكل وتصميم القالب ثابت بدون أي كسر
             </p>
           </div>
-          <button
-            onClick={() => setEditingContentLp(null)}
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Tab Navigation */}
@@ -56,7 +45,7 @@ export default function ContentEditorModal({
           <button
             type="button"
             onClick={() => setActiveContentTab("hero")}
-            className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
+            className={`min-h-[44px] min-h-[44px] py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
               activeContentTab === "hero"
                 ? "bg-cyan-600 text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-100"
@@ -67,7 +56,7 @@ export default function ContentEditorModal({
           <button
             type="button"
             onClick={() => setActiveContentTab("comparison")}
-            className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
+            className={`min-h-[44px] min-h-[44px] py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
               activeContentTab === "comparison"
                 ? "bg-cyan-600 text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-100"
@@ -78,7 +67,7 @@ export default function ContentEditorModal({
           <button
             type="button"
             onClick={() => setActiveContentTab("box")}
-            className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
+            className={`min-h-[44px] min-h-[44px] py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
               activeContentTab === "box"
                 ? "bg-cyan-600 text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-100"
@@ -89,7 +78,7 @@ export default function ContentEditorModal({
           <button
             type="button"
             onClick={() => setActiveContentTab("steps")}
-            className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
+            className={`min-h-[44px] min-h-[44px] py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
               activeContentTab === "steps"
                 ? "bg-cyan-600 text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-100"
@@ -100,7 +89,7 @@ export default function ContentEditorModal({
           <button
             type="button"
             onClick={() => setActiveContentTab("reviews")}
-            className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
+            className={`min-h-[44px] min-h-[44px] py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
               activeContentTab === "reviews"
                 ? "bg-cyan-600 text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-100"
@@ -111,7 +100,7 @@ export default function ContentEditorModal({
         </div>
 
         {/* Tab Panels */}
-        <div className="overflow-y-auto pr-1 space-y-4 py-2 max-h-[52vh] text-xs">
+        <div className="space-y-4 py-2 text-xs">
           {/* TAB 1: HERO */}
           {activeContentTab === "hero" && (
             <div className="space-y-4">
@@ -176,33 +165,12 @@ export default function ContentEditorModal({
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-gray-800 mb-1">
-                    رابط صورة الهيرو الأساسية
-                  </label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      value={contentForm.hero_image || ""}
-                      onChange={(e) =>
-                        setContentForm({ ...contentForm, hero_image: e.target.value })
-                      }
-                      placeholder="/landing-pages/... أو https://..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-mono"
-                    />
-                    {contentForm.hero_image && (
-                      <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-slate-100 relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={contentForm.hero_image}
-                          alt="Hero thumbnail"
-                          className="w-full h-full object-cover"
-                          onError={(e) => (e.currentTarget.style.display = "none")}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <ImageUploader
+                  label="صورة الهيرو الأساسية"
+                  value={contentForm.hero_image || ""}
+                  onChange={(url) => setContentForm({ ...contentForm, hero_image: url })}
+                  hint="اختار الصورة من جهازك وهتترفع تلقائياً."
+                />
               </div>
 
               <div>
@@ -330,33 +298,12 @@ export default function ContentEditorModal({
 
               {/* Comparison Image */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-gray-800 mb-1">
-                    رابط صورة قسم المقارنة (Visual Demonstration)
-                  </label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      value={contentForm.comparison_image || ""}
-                      onChange={(e) =>
-                        setContentForm({ ...contentForm, comparison_image: e.target.value })
-                      }
-                      placeholder="/landing-pages/... أو رابط صورة"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-mono"
-                    />
-                    {contentForm.comparison_image && (
-                      <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-slate-100 relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={contentForm.comparison_image}
-                          alt="Comparison thumb"
-                          className="w-full h-full object-cover"
-                          onError={(e) => (e.currentTarget.style.display = "none")}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <ImageUploader
+                  label="صورة المقارنة"
+                  value={contentForm.comparison_image || ""}
+                  onChange={(url) => setContentForm({ ...contentForm, comparison_image: url })}
+                  hint="اختار الصورة من جهازك وهتترفع تلقائياً."
+                />
                 <div>
                   <label className="block font-bold text-gray-800 mb-1">
                     شارة الصورة (Image Badge Overlay)
@@ -411,33 +358,12 @@ export default function ContentEditorModal({
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-gray-800 mb-1">
-                  رابط صورة محتويات العلبة والملحقات
-                </label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    value={contentForm.box_image || ""}
-                    onChange={(e) =>
-                      setContentForm({ ...contentForm, box_image: e.target.value })
-                    }
-                    placeholder="/landing-pages/... أو رابط صورة خارجية"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-mono"
-                  />
-                  {contentForm.box_image && (
-                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-slate-100 relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={contentForm.box_image}
-                        alt="Box thumb"
-                        className="w-full h-full object-cover"
-                        onError={(e) => (e.currentTarget.style.display = "none")}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ImageUploader
+                label="صورة محتويات العلبة"
+                value={contentForm.box_image || ""}
+                onChange={(url) => setContentForm({ ...contentForm, box_image: url })}
+                hint="اختار الصورة من جهازك وهتترفع تلقائياً."
+              />
             </div>
           )}
 
@@ -498,33 +424,12 @@ export default function ContentEditorModal({
                 })}
               </div>
 
-              <div>
-                <label className="block font-bold text-gray-800 mb-1">
-                  رابط صورة المواصفات والشرح (Anatomy Graphic)
-                </label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    value={contentForm.how_to_use_image || ""}
-                    onChange={(e) =>
-                      setContentForm({ ...contentForm, how_to_use_image: e.target.value })
-                    }
-                    placeholder="/landing-pages/... أو رابط صورة"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-mono"
-                  />
-                  {contentForm.how_to_use_image && (
-                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-slate-100 relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={contentForm.how_to_use_image}
-                        alt="How to use thumb"
-                        className="w-full h-full object-cover"
-                        onError={(e) => (e.currentTarget.style.display = "none")}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ImageUploader
+                label="صورة طريقة الاستخدام"
+                value={contentForm.how_to_use_image || ""}
+                onChange={(url) => setContentForm({ ...contentForm, how_to_use_image: url })}
+                hint="اختار الصورة من جهازك وهتترفع تلقائياً."
+              />
             </div>
           )}
 
@@ -607,13 +512,6 @@ export default function ContentEditorModal({
           </span>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setEditingContentLp(null)}
-              className="py-2.5 px-4 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer"
-            >
-              إلغاء
-            </button>
             <button
               type="button"
               disabled={isSavingContent}

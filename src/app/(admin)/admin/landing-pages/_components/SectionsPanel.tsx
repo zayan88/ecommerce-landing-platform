@@ -1,12 +1,10 @@
 "use client";
 
 import React from "react";
-import { LandingPage, LandingPageSectionConfig } from "@/types";
-import { Check, X, Sliders, Eye, EyeOff, ArrowUp, ArrowDown, RotateCcw } from "lucide-react";
+import { LandingPageSectionConfig } from "@/types";
+import { Check, Sliders, Eye, EyeOff, ArrowUp, ArrowDown, RotateCcw } from "lucide-react";
 
-interface SectionCustomizerModalProps {
-  customizingLp: LandingPage | null;
-  setCustomizingLp: React.Dispatch<React.SetStateAction<LandingPage | null>>;
+interface SectionsPanelProps {
   customSections: LandingPageSectionConfig[];
   isSavingSections: boolean;
   sectionSaveSuccess: boolean;
@@ -16,9 +14,7 @@ interface SectionCustomizerModalProps {
   handleSaveSections: () => void | Promise<void>;
 }
 
-export default function SectionCustomizerModal({
-  customizingLp,
-  setCustomizingLp,
+export default function SectionsPanel({
   customSections,
   isSavingSections,
   sectionSaveSuccess,
@@ -26,12 +22,10 @@ export default function SectionCustomizerModal({
   handleMoveSection,
   handleResetSections,
   handleSaveSections,
-}: SectionCustomizerModalProps) {
-  if (!customizingLp) return null;
-
+}: SectionsPanelProps) {
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-gray-100 space-y-5 max-h-[90vh] flex flex-col justify-between overflow-hidden">
+    <div>
+      <div className="bg-white rounded-3xl w-full p-5 sm:p-7 shadow-sm border border-gray-200 space-y-5">
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
           <div>
             <h3 className="text-lg font-black text-gray-900 font-heading flex items-center gap-2">
@@ -42,16 +36,10 @@ export default function SectionCustomizerModal({
               تحكّم في إظهار أو إخفاء أي قسم، واستخدم الأسهم لتغيير مكان وترتيب كل قسم
             </p>
           </div>
-          <button
-            onClick={() => setCustomizingLp(null)}
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* List of Sections */}
-        <div className="overflow-y-auto pr-1 space-y-2 py-1 max-h-[50vh]">
+        <div className="space-y-2 py-1">
           {customSections.map((sec, index) => {
             const isFirst = index === 0;
             const isLast = index === customSections.length - 1;
@@ -87,7 +75,7 @@ export default function SectionCustomizerModal({
                     type="button"
                     disabled={isFirst}
                     onClick={() => handleMoveSection(index, "up")}
-                    className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    className="w-11 h-11 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
                     title="تحريك لأعلى"
                   >
                     <ArrowUp className="w-3.5 h-3.5" />
@@ -98,7 +86,7 @@ export default function SectionCustomizerModal({
                     type="button"
                     disabled={isLast}
                     onClick={() => handleMoveSection(index, "down")}
-                    className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    className="w-11 h-11 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
                     title="تحريك لأسفل"
                   >
                     <ArrowDown className="w-3.5 h-3.5" />
@@ -108,7 +96,7 @@ export default function SectionCustomizerModal({
                   <button
                     type="button"
                     onClick={() => handleToggleSection(sec.id)}
-                    className={`py-1.5 px-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    className={`min-h-[44px] py-1.5 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
                       sec.enabled
                         ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300"
                         : "bg-gray-200 text-gray-600 hover:bg-gray-300 border border-gray-300"
@@ -144,13 +132,6 @@ export default function SectionCustomizerModal({
           </button>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setCustomizingLp(null)}
-              className="py-2.5 px-4 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
-            >
-              إلغاء
-            </button>
             <button
               type="button"
               disabled={isSavingSections}

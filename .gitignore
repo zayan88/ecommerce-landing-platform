@@ -48,3 +48,6 @@ rexrack-store.json
 # graphify output
 graphify-out/
 src/graphify-out/
+
+# local dev KV data
+.dev-kv.json

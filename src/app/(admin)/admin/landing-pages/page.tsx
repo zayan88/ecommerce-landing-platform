@@ -1,31 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { LandingPage, Product, LandingPageSectionConfig, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, mergeSections } from "@/types";
-import { Plus, ExternalLink, Copy, Check, Trash2, Sliders, Edit3 } from "lucide-react";
-import SectionCustomizerModal from "./_components/SectionCustomizerModal";
-import ContentEditorModal from "./_components/ContentEditorModal";
+import { useRouter } from "next/navigation";
+import { LandingPage, Product, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, mergeSections } from "@/types";
+import { Plus, Copy, Check, Search, Package, RefreshCw, FileText } from "lucide-react";
 import CreateLandingPageModal from "./_components/CreateLandingPageModal";
 
 export default function AdminLandingPagesPage() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
   const [landingPages, setLandingPages] = useState<LandingPage[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Section Customizer State
-  const [customizingLp, setCustomizingLp] = useState<LandingPage | null>(null);
-  const [customSections, setCustomSections] = useState<LandingPageSectionConfig[]>([]);
-  const [isSavingSections, setIsSavingSections] = useState(false);
-  const [sectionSaveSuccess, setSectionSaveSuccess] = useState(false);
-
-  // Content & Media Editor State
-  const [editingContentLp, setEditingContentLp] = useState<LandingPage | null>(null);
-  const [contentForm, setContentForm] = useState<LandingPageContentConfig>({});
-  const [activeContentTab, setActiveContentTab] = useState<"hero" | "comparison" | "box" | "steps" | "reviews">("hero");
-  const [isSavingContent, setIsSavingContent] = useState(false);
-  const [contentSaveSuccess, setContentSaveSuccess] = useState(false);
 
   // Creation Mode: "quick" | "ai_prompt" | "safka"
   const [createMode, setCreateMode] = useState<"quick" | "ai_prompt" | "safka">("quick");
@@ -311,354 +299,217 @@ export default function AdminLandingPagesPage() {
     setTimeout(() => setCopiedSlug(null), 2500);
   };
 
-  const handleDeleteLandingPage = async (id: string, title: string) => {
-    if (!window.confirm(`هل أنت متأكد من رغبتك في حذف صفحة الهبوط "${title}"؟`)) {
-      return;
-    }
-    try {
-      const res = await fetch(`/api/landing-pages?id=${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchData();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
-  // Section Customizer Methods
-  const openSectionCustomizer = (lp: LandingPage) => {
-    setCustomizingLp(lp);
-    // Merge so sections added after this page was saved (social_proof, faq) show up and can be toggled/moved
-    setCustomSections(JSON.parse(JSON.stringify(mergeSections(lp.sections_config))));
-    setSectionSaveSuccess(false);
-  };
+  const filteredPages = landingPages.filter((lp) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return lp.title?.toLowerCase().includes(q) || lp.slug?.toLowerCase().includes(q);
+  });
 
-  const handleToggleSection = (id: string) => {
-    setCustomSections((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+  const openPage = (id: string) => router.push(`/admin/landing-pages/${id}`);
+
+  const copyButton = (slug: string) => {
+    const isCopied = copiedSlug === slug;
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleCopyUrl(slug);
+        }}
+        onKeyDown={(e) => e.stopPropagation()}
+        className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition cursor-pointer"
+        title="نسخ الرابط"
+        aria-label="نسخ الرابط"
+      >
+        {isCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
+      </button>
     );
   };
 
-  const handleMoveSection = (index: number, direction: "up" | "down") => {
-    setCustomSections((prev) => {
-      const copy = [...prev];
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= copy.length) return prev;
-      const temp = copy[index];
-      copy[index] = copy[targetIndex];
-      copy[targetIndex] = temp;
-      return copy;
-    });
+  const statusBadge = (status: string) => (
+    <span
+      className={`inline-block px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${
+        status === "active"
+          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+          : "bg-amber-100 text-amber-900 border-amber-200"
+      }`}
+    >
+      {status === "active" ? "نشطة" : "متوقفة"}
+    </span>
+  );
+
+  const thumb = (lp: LandingPage) => {
+    const src = lp.content_config?.hero_image || lp.product?.images?.[0];
+    return (
+      <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <Package className="w-5 h-5 text-slate-400" />
+        )}
+      </div>
+    );
   };
 
-  const handleResetSections = () => {
-    setCustomSections(JSON.parse(JSON.stringify(DEFAULT_LANDING_PAGE_SECTIONS)));
+  const sectionsCount = (lp: LandingPage) => {
+    const merged = mergeSections(lp.sections_config);
+    return `${merged.filter((s) => s.enabled).length}/${merged.length}`;
   };
 
-  const handleSaveSections = async () => {
-    if (!customizingLp) return;
-    setIsSavingSections(true);
-    try {
-      const res = await fetch("/api/landing-pages", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: customizingLp.id,
-          sections_config: customSections,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSectionSaveSuccess(true);
-        setLandingPages((prev) =>
-          prev.map((lp) =>
-            lp.id === customizingLp.id ? { ...lp, sections_config: customSections } : lp
-          )
-        );
-        setTimeout(() => {
-          setCustomizingLp(null);
-          setSectionSaveSuccess(false);
-        }, 1200);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSavingSections(false);
-    }
-  };
-
-  // Content & Media Editor Methods
-  const openContentEditor = (lp: LandingPage) => {
-    setEditingContentLp(lp);
-    setContentSaveSuccess(false);
-    setActiveContentTab("hero");
-
-    const existing = lp.content_config || {};
-    const prod = lp.product;
-
-    const initialContent: LandingPageContentConfig = {
-      announcement_bar:
-        existing.announcement_bar ||
-        "عرض خاص: شحن مجاني لجميع المحافظات + حق فتح الشحنة والتجربة قبل الدفع 💵",
-      hero_headline: existing.hero_headline || prod?.title_ar || lp.title,
-      hero_subheadline:
-        existing.hero_subheadline ||
-        (prod?.description_ar?.slice(0, 140) ||
-          "💡 احصل على أفضل تجربة مع المنتج الأصلي المعتمد وبأعلى معايير الجودة."),
-      hero_badge:
-        existing.hero_badge || "4.9 / 5.0 (أكثر من 400 تقييم موثق في مصر)",
-      hero_image: existing.hero_image || prod?.images?.[0] || "",
-      hero_bullets:
-        existing.hero_bullets && existing.hero_bullets.length > 0
-          ? existing.hero_bullets
-          : [
-              "خامات أصلية عالية الجودة تضمن المتانة والتحمل طويل الأمد.",
-              "تصميم عملي وعصري يلبي احتياجات الاستخدام اليومي بكل سهولة.",
-              "آمن وسهل الاستخدام مع ضمان كامل وحق الفحص والمعاينة قبل الدفع.",
-              "شحن سريع ومجاني لجميع محافظات مصر وتأكيد فوري للطلب.",
-            ],
-
-      comparison_badge: existing.comparison_badge || "ليه ده أفضل اختيار؟",
-      comparison_title:
-        existing.comparison_title || "الفرق بين المنتجات التقليدية والمنتج الأصلي",
-      comparison_old_title:
-        existing.comparison_old_title || "المنتجات والبدائل التقليدية",
-      comparison_old_points: existing.comparison_old_points || [
-        "خامات رديئة وضعيفة تتلف بسرعة بعد فترة قصيرة.",
-        "بدون ضمان أو معاينة حقيقية قبل الدفع.",
-        "صعوبة في الاستخدام ولا تلبي النتيجة المتوقعة.",
-      ],
-      comparison_new_title:
-        existing.comparison_new_title || "المنتج الأصلي من متجرنا",
-      comparison_new_points: existing.comparison_new_points || [
-        "خامات أصلية 100% مختبرة ومضمونة الجودة.",
-        "حق فتح الشحنة والفحص والتجربة قبل الدفع للمندوب.",
-        "استبدال واسترجاع مجاني خلال 14 يوماً وخدمة عملاء مستمرة.",
-      ],
-      comparison_image:
-        existing.comparison_image ||
-        (prod?.images && prod.images.length > 1 ? prod.images[1] : ""),
-      comparison_image_badge:
-        existing.comparison_image_badge || "صوت معدوم < 25dB",
-
-      box_title:
-        existing.box_title || "محتويات الشحنة الأصلية (طقم كامل متكامل):",
-      box_items: existing.box_items || [
-        "المنتج الأصلي بكافة ملحقاته المعتمدة ومغلف بعناية.",
-        "كتالوج ودليل الاستخدام السريع باللغة العربية.",
-        "كارت الضمان الرسمي وحق الاستبدال والمعاينة.",
-      ],
-      box_image:
-        existing.box_image ||
-        (prod?.images && prod.images.length > 2 ? prod.images[2] : ""),
-
-      how_to_use_title:
-        existing.how_to_use_title || "طريقة الاستخدام السريعة والمواصفات:",
-      how_to_use_steps: existing.how_to_use_steps || [
-        { step_num: 1, title: "الخطوة الأولى:", desc: "تجهيز المنتج وتركيب الملحق المناسب بسهولة." },
-        { step_num: 2, title: "الخطوة الثانية:", desc: "التشغيل بضغطة زر واحدة واختيار الوضع المطلوب." },
-        { step_num: 3, title: "الخطوة الثالثة:", desc: "الاستمتاع بالنتيجة الفورية وبراحة تامة." },
-      ],
-      how_to_use_image:
-        existing.how_to_use_image ||
-        (prod?.images && prod.images.length > 3 ? prod.images[3] : ""),
-
-      reviews_title: existing.reviews_title || "تجارب حقيقية لعملائنا في مصر:",
-      reviews: existing.reviews || [
-        { name: "أم سليم", location: "التجمع، القاهرة", comment: "المنتج ممتاز ونفس المواصفات المكتوبة بالظبط، والتوصيل كان سريع جداً واستلمت بعد 3 أيام.", rating: 5 },
-        { name: "د. محمود كمال", location: "الجيزة", comment: "الخامات ممتازة وخدمة العملاء محترمة وعاينت وجربت مع المندوب قبل ما أدفع.", rating: 5 },
-        { name: "هدى عبد الرحمن", location: "الإسكندرية", comment: "اشتريت عرض التوفير والتغليف فندقي ومحترم وأنصح أي حد يشتري منهم.", rating: 5 },
-      ],
-    };
-
-    setContentForm(initialContent);
-  };
-
-  const handleSaveContent = async () => {
-    if (!editingContentLp) return;
-    setIsSavingContent(true);
-    try {
-      const res = await fetch("/api/landing-pages", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingContentLp.id,
-          content_config: contentForm,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setContentSaveSuccess(true);
-        setLandingPages((prev) =>
-          prev.map((lp) =>
-            lp.id === editingContentLp.id ? { ...lp, content_config: contentForm } : lp
-          )
-        );
-        setTimeout(() => {
-          setEditingContentLp(null);
-          setContentSaveSuccess(false);
-        }, 1200);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSavingContent(false);
-    }
+  const formatDate = (iso?: string) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" });
   };
 
   return (
-    <div className="space-y-6 text-right font-sans" dir="rtl">
+    <div className="space-y-6 text-right font-sans max-w-6xl mx-auto pb-16" dir="rtl">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-950 font-heading">
-            إدارة صفحات الهبوط المستقلة (COD Funnels)
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            أنشئ صفحات هبوط احترافية ومستقلة لإعلانات فيسبوك وتيك توك مع التحكم الكامل في إظهار وإخفاء وترتيب الأقسام
+          <h1 className="text-2xl md:text-3xl font-black text-slate-950 font-heading">صفحات الهبوط</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            اضغط على أي صفحة لتعديل أقسامها ونصوصها وصورها أو لفتحها وإيقافها
           </p>
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center gap-2 shadow-md shadow-emerald-600/25 transition cursor-pointer"
+          className="w-full sm:w-auto min-h-[44px] py-2.5 px-5 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-600/25 transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>إنشاء صفحة هبوط جديدة</span>
         </button>
       </div>
 
-      {/* Landing Pages Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {landingPages.map((lp) => {
-          const fullUrl = `/p/${lp.slug}`;
-          const isCopied = copiedSlug === lp.slug;
-          const mergedSections = mergeSections(lp.sections_config);
-          const activeSectionsCount = mergedSections.filter((s) => s.enabled).length;
-          const totalSectionsCount = mergedSections.length;
-
-          return (
-            <div
-              key={lp.id}
-              className={`bg-white rounded-3xl border transition-all shadow-sm flex flex-col justify-between overflow-hidden ${
-                lp.status === "active" ? "border-gray-200 hover:border-emerald-300" : "border-amber-200 bg-amber-50/20"
-              }`}
-            >
-              <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      قالب COD رشيق ومعدّل
-                    </span>
-                    <h3 className="text-base font-bold text-gray-900 leading-snug pt-1">
-                      {lp.title}
-                    </h3>
-                  </div>
-
-                  <button
-                    onClick={() => handleDeleteLandingPage(lp.id, lp.title)}
-                    className="p-1.5 text-gray-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
-                    title="حذف صفحة الهبوط"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-2xl border border-gray-100 space-y-1 text-xs">
-                  <div className="flex items-center justify-between text-gray-500">
-                    <span>الرابط المباشر:</span>
-                    <span className="font-mono text-slate-800 font-bold dir-ltr">/p/{lp.slug}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-gray-500">
-                    <span>المنتج المرتبط:</span>
-                    <span className="font-bold text-slate-900 truncate max-w-[170px]">{lp.product?.title_ar || "منتج"}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-gray-500">
-                    <span>السعر:</span>
-                    <span className="font-bold text-emerald-600 font-mono">{lp.product?.base_price || 0} ج.م</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="p-4 bg-gray-50/80 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <button
-                    onClick={() => handleCopyUrl(lp.slug)}
-                    className="py-1.5 px-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1 shadow-sm transition"
-                  >
-                    {isCopied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-emerald-700">تم النسخ</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-gray-500" />
-                        <span>نسخ الرابط</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => openSectionCustomizer(lp)}
-                    className="py-1.5 px-2.5 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-xs font-bold text-indigo-700 flex items-center gap-1 shadow-sm transition cursor-pointer"
-                    title="تخصيص وترتيب أقسام الصفحة"
-                  >
-                    <Sliders className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>تخصيص الأقسام ({activeSectionsCount}/{totalSectionsCount})</span>
-                  </button>
-
-                  <button
-                    onClick={() => openContentEditor(lp)}
-                    className="py-1.5 px-2.5 rounded-xl bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 text-xs font-bold text-cyan-800 flex items-center gap-1 shadow-sm transition cursor-pointer"
-                    title="تعديل نصوص وصور الصفحة مع الحفاظ على القالب"
-                  >
-                    <Edit3 className="w-3.5 h-3.5 text-cyan-600" />
-                    <span>تعديل النصوص والصور</span>
-                  </button>
-                </div>
-
-                <a
-                  href={fullUrl}
-                  target="_blank"
-                  className="py-1.5 px-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1 shadow-sm transition"
-                >
-                  <span>معاينة</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </div>
-          );
-        })}
+      {/* Search */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="relative w-full sm:w-80">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="ابحث بالعنوان أو الرابط..."
+            className="w-full pl-9 pr-3.5 min-h-[44px] rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/50"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        </div>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 w-full sm:w-auto justify-end">
+          <span>إجمالي الصفحات:</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-mono text-slate-900">{landingPages.length}</span>
+        </div>
       </div>
 
-      <SectionCustomizerModal
-        customizingLp={customizingLp}
-        setCustomizingLp={setCustomizingLp}
-        customSections={customSections}
-        isSavingSections={isSavingSections}
-        sectionSaveSuccess={sectionSaveSuccess}
-        handleToggleSection={handleToggleSection}
-        handleMoveSection={handleMoveSection}
-        handleResetSections={handleResetSections}
-        handleSaveSections={handleSaveSections}
-      />
+      {loading ? (
+        <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
+          <RefreshCw className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
+          <p className="text-sm font-bold text-slate-600">جاري تحميل صفحات الهبوط...</p>
+        </div>
+      ) : filteredPages.length > 0 ? (
+        <>
+          {/* Desktop table */}
+          <div className="hidden lg:block bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <table className="w-full text-sm text-right">
+              <thead className="bg-slate-50 text-xs font-bold text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th className="px-5 py-3.5">صفحة الهبوط</th>
+                  <th className="px-4 py-3.5">الرابط</th>
+                  <th className="px-4 py-3.5">المنتج والسعر</th>
+                  <th className="px-4 py-3.5">الحالة</th>
+                  <th className="px-4 py-3.5">الأقسام</th>
+                  <th className="px-4 py-3.5">تاريخ الإنشاء</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredPages.map((lp) => (
+                  <tr
+                    key={lp.id}
+                    tabIndex={0}
+                    role="link"
+                    aria-label={`تعديل ${lp.title}`}
+                    onClick={() => openPage(lp.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") openPage(lp.id);
+                    }}
+                    className="h-16 cursor-pointer hover:bg-orange-50/40 focus:bg-orange-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500 transition-colors"
+                  >
+                    <td className="px-5 py-2">
+                      <div className="flex items-center gap-3">
+                        {thumb(lp)}
+                        <span className="font-black text-slate-900 leading-snug">{lp.title}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-slate-700" dir="ltr">
+                          /p/{lp.slug}
+                        </span>
+                        {copyButton(lp.slug)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="font-bold text-slate-900 truncate max-w-[200px]">{lp.product?.title_ar || "منتج"}</div>
+                      <div className="font-mono text-xs font-bold text-emerald-600">{lp.product?.base_price || 0} ج.م</div>
+                    </td>
+                    <td className="px-4 py-2">{statusBadge(lp.status)}</td>
+                    <td className="px-4 py-2 font-mono font-bold text-slate-700">{sectionsCount(lp)}</td>
+                    <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap">{formatDate(lp.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      <ContentEditorModal
-        editingContentLp={editingContentLp}
-        setEditingContentLp={setEditingContentLp}
-        contentForm={contentForm}
-        setContentForm={setContentForm}
-        activeContentTab={activeContentTab}
-        setActiveContentTab={setActiveContentTab}
-        isSavingContent={isSavingContent}
-        contentSaveSuccess={contentSaveSuccess}
-        handleSaveContent={handleSaveContent}
-      />
+          {/* Mobile stacked rows */}
+          <div className="lg:hidden space-y-3">
+            {filteredPages.map((lp) => (
+              <div
+                key={lp.id}
+                tabIndex={0}
+                role="link"
+                aria-label={`تعديل ${lp.title}`}
+                onClick={() => openPage(lp.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") openPage(lp.id);
+                }}
+                className="min-h-[72px] bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3 cursor-pointer active:bg-orange-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              >
+                <div className="flex items-center gap-3">
+                  {thumb(lp)}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-black text-slate-900 leading-snug truncate">{lp.title}</div>
+                    <div className="text-xs text-slate-500 truncate">
+                      {lp.product?.title_ar || "منتج"} ·{" "}
+                      <span className="font-mono font-bold text-emerald-600">{lp.product?.base_price || 0} ج.م</span>
+                    </div>
+                  </div>
+                  {statusBadge(lp.status)}
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold text-slate-700 truncate" dir="ltr">
+                    /p/{lp.slug}
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0 text-xs text-slate-500">
+                    <span>
+                      الأقسام <span className="font-mono font-bold text-slate-700">{sectionsCount(lp)}</span>
+                    </span>
+                    {copyButton(lp.slug)}
+                  </div>
+                </div>
+                <div className="text-[11px] text-slate-400">{formatDate(lp.created_at)}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="p-12 text-center bg-white rounded-3xl border border-dashed border-slate-300 space-y-3">
+          <FileText className="w-12 h-12 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold text-slate-700">لم يتم العثور على أي صفحات هبوط مطابقة</h3>
+          <p className="text-xs text-slate-400">يمكنك إنشاء صفحة هبوط جديدة أو مسح كلمة البحث</p>
+        </div>
+      )}
 
       <CreateLandingPageModal
         isModalOpen={isModalOpen}
