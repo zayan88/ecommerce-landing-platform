@@ -41,3 +41,6 @@ rexrack-store.json
 
 # wrangler
 .wrangler/
+
+# agent worktrees
+.claude/worktrees/

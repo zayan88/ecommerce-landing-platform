@@ -1,6 +1,15 @@
 import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
+import { generateOrderId, generateUniqueOrderNumber } from "@/lib/orders/guard";
+
+/** Thrown by dbStore.createOrder when the order could not be written to any durable store. */
+export class OrderPersistenceError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "OrderPersistenceError";
+  }
+}
 
 // Initial seed data
 const initialProducts: (Product & { offers: ProductOffer[] })[] = [
@@ -1145,8 +1154,21 @@ export const dbStore = {
 
   async createOrder(order: Partial<Order> & { tracking?: Partial<OrderTrackingMeta> }): Promise<Order> {
     const admin = getSupabaseAdmin();
-    const id = `ord-${Date.now()}`;
-    const orderNumber = `EG-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const id = generateOrderId();
+
+    // Cheap collision check against the orders we already hold (KV list + this isolate's memory).
+    let kvOrders: Order[] = [];
+    try {
+      const fromKv = await kvStore.get<Order[]>("orders_all");
+      if (Array.isArray(fromKv)) kvOrders = fromKv;
+    } catch (e) {
+      console.warn("[KV createOrder read error]", e);
+    }
+    const orderNumber = generateUniqueOrderNumber(
+      (candidate) =>
+        kvOrders.some((o) => o.order_number === candidate) ||
+        memoryOrders.some((o) => o.order_number === candidate)
+    );
 
     const newOrder: Order = {
       id,
@@ -1183,57 +1205,80 @@ export const dbStore = {
     newOrder.product = product;
     newOrder.landing_page = lp;
 
+    let savedToSupabase = false;
     if (admin) {
-      await admin.from("orders").insert({
-        id: newOrder.id,
-        order_number: newOrder.order_number,
-        landing_page_id: newOrder.landing_page_id,
-        landing_page_slug: newOrder.landing_page_slug,
-        product_id: newOrder.product_id,
-        offer_id: newOrder.offer_id,
-        customer_name: newOrder.customer_name,
-        customer_phone: newOrder.customer_phone,
-        customer_phone2: newOrder.customer_phone2,
-        governorate: newOrder.governorate,
-        city: newOrder.city,
-        address: newOrder.address,
-        notes: newOrder.notes,
-        quantity: newOrder.quantity,
-        unit_price: newOrder.unit_price,
-        total_amount: newOrder.total_amount,
-        shipping_fee: newOrder.shipping_fee,
-        discount_amount: newOrder.discount_amount,
-        final_amount: newOrder.final_amount,
-        currency: newOrder.currency,
-        status: newOrder.status,
-        payment_method: newOrder.payment_method,
-      });
-
-      if (order.tracking) {
-        await admin.from("order_tracking_meta").insert({
-          order_id: newOrder.id,
-          utm_source: order.tracking.utm_source,
-          utm_medium: order.tracking.utm_medium,
-          utm_campaign: order.tracking.utm_campaign,
-          utm_content: order.tracking.utm_content,
-          utm_term: order.tracking.utm_term,
-          referrer: order.tracking.referrer,
-          ip_address: order.tracking.ip_address,
-          user_agent: order.tracking.user_agent,
-          fbp: order.tracking.fbp,
-          fbc: order.tracking.fbc,
-          event_id: order.tracking.event_id,
+      try {
+        const { error: insertError } = await admin.from("orders").insert({
+          id: newOrder.id,
+          order_number: newOrder.order_number,
+          landing_page_id: newOrder.landing_page_id,
+          landing_page_slug: newOrder.landing_page_slug,
+          product_id: newOrder.product_id,
+          offer_id: newOrder.offer_id,
+          customer_name: newOrder.customer_name,
+          customer_phone: newOrder.customer_phone,
+          customer_phone2: newOrder.customer_phone2,
+          governorate: newOrder.governorate,
+          city: newOrder.city,
+          address: newOrder.address,
+          notes: newOrder.notes,
+          quantity: newOrder.quantity,
+          unit_price: newOrder.unit_price,
+          total_amount: newOrder.total_amount,
+          shipping_fee: newOrder.shipping_fee,
+          discount_amount: newOrder.discount_amount,
+          final_amount: newOrder.final_amount,
+          currency: newOrder.currency,
+          status: newOrder.status,
+          payment_method: newOrder.payment_method,
         });
+        if (insertError) {
+          console.error("[Supabase createOrder insert error]", insertError);
+        } else {
+          savedToSupabase = true;
+        }
+
+        if (savedToSupabase && order.tracking) {
+          await admin.from("order_tracking_meta").insert({
+            order_id: newOrder.id,
+            utm_source: order.tracking.utm_source,
+            utm_medium: order.tracking.utm_medium,
+            utm_campaign: order.tracking.utm_campaign,
+            utm_content: order.tracking.utm_content,
+            utm_term: order.tracking.utm_term,
+            referrer: order.tracking.referrer,
+            ip_address: order.tracking.ip_address,
+            user_agent: order.tracking.user_agent,
+            fbp: order.tracking.fbp,
+            fbc: order.tracking.fbc,
+            event_id: order.tracking.event_id,
+          });
+        }
+      } catch (e) {
+        console.error("[Supabase createOrder error]", e);
       }
+    }
+
+    let savedToKv = false;
+    try {
+      savedToKv = await kvStore.put("orders_all", [newOrder, ...kvOrders].slice(0, 200));
+    } catch (e) {
+      console.error("[KV createOrder write error]", e);
+    }
+
+    // The order must land somewhere durable. Memory only survives this isolate,
+    // so memory-only is accepted solely outside production (local dev without KV/Supabase).
+    if (!savedToSupabase && !savedToKv) {
+      if (process.env.NODE_ENV === "production") {
+        throw new OrderPersistenceError(
+          `Order ${newOrder.order_number} could not be persisted to Supabase or KV`
+        );
+      }
+      console.warn("[createOrder] order kept in memory only (no durable store reachable)");
     }
 
     memoryOrders.unshift(newOrder);
     saveToFile();
-    try {
-      const currentOrders = (await kvStore.get<Order[]>("orders_all")) || [];
-      currentOrders.unshift(newOrder);
-      await kvStore.put("orders_all", currentOrders.slice(0, 200));
-    } catch {}
     return newOrder;
   },
 

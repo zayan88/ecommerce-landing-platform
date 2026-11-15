@@ -42,6 +42,8 @@ export function EgyptianCheckoutForm({
   const [governorate, setGovernorate] = useState("القاهرة");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+  // Honeypot: hidden from humans; bots that fill it get a fake success server-side
+  const [website, setWebsite] = useState("");
 
   // States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -170,8 +172,13 @@ export function EgyptianCheckoutForm({
         shipping_address: address.trim(),
         notes: notes.trim() || undefined,
         customer_notes: notes.trim() || undefined,
-        offer_id: activeOffer?.id || undefined,
+        // Only send real offers; the synthetic default (no offers configured) is priced server-side from base_price
+        offer_id:
+          activeOffer?.id && product.offers?.some((o) => o.id === activeOffer.id)
+            ? activeOffer.id
+            : undefined,
         quantity,
+        website: website || undefined,
         payment_method: "cod",
         event_id: eventId,
         ...utms,
@@ -240,6 +247,21 @@ export function EgyptianCheckoutForm({
             />
           </div>
         )}
+
+        {/* Honeypot (invisible to humans and screen readers) */}
+        <div aria-hidden="true" className="sr-only">
+          <label>
+            Website
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </label>
+        </div>
 
         {/* 1. Name */}
         <div>
