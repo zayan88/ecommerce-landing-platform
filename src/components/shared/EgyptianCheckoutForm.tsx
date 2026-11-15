@@ -146,19 +146,6 @@ export function EgyptianCheckoutForm({
         product?.slug ||
         "body-massager";
 
-      // Track Purchase on Client-Side Pixel
-      trackMetaEvent(
-        "Purchase",
-        {
-          content_name: product.title_ar,
-          content_type: "product",
-          currency: "EGP",
-          value: totalAmount,
-          num_items: quantity,
-        },
-        eventId
-      );
-
       const payload = {
         product_id: product.id,
         landing_page_slug: effectiveSlug,
@@ -196,13 +183,40 @@ export function EgyptianCheckoutForm({
         throw new Error(data.error || "تعذر إرسال الطلب، يرجى التأكد من البيانات");
       }
 
+      // Track Purchase on Client-Side Pixel
+      trackMetaEvent(
+        "Purchase",
+        {
+          content_name: product.title_ar,
+          content_type: "product",
+          currency: "EGP",
+          value: data.order?.final_amount || totalAmount,
+          num_items: quantity,
+        },
+        eventId
+      );
+
+      // Save order summary to sessionStorage for thank-you page
+      try {
+        sessionStorage.setItem(
+          "rexrack_last_order",
+          JSON.stringify({
+            orderNumber: data.order.order_number,
+            name: data.order.customer_name,
+            phone: data.order.customer_phone,
+            gov: data.order.governorate || governorate,
+            address: data.order.address || address.trim(),
+            total: data.order.final_amount,
+            savedAt: Date.now(),
+          })
+        );
+      } catch {
+        // Private mode or storage quota can throw — failure must not block redirect
+      }
+
       // Redirect to customized Arabic thank-you page
       router.push(
-        `/p/${effectiveSlug}/thank-you?orderId=${data.order.id}&orderNumber=${data.order.order_number}&total=${data.order.final_amount}&name=${encodeURIComponent(
-          data.order.customer_name
-        )}&phone=${encodeURIComponent(data.order.customer_phone)}&gov=${encodeURIComponent(
-          data.order.governorate || governorate
-        )}&address=${encodeURIComponent(data.order.address || address.trim())}`
+        `/p/${effectiveSlug}/thank-you?orderNumber=${encodeURIComponent(data.order.order_number)}`
       );
     } catch (err: any) {
       setErrorMessage(err.message || "حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى");

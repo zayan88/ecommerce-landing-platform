@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import confetti from "canvas-confetti";
 import Link from "next/link";
@@ -9,11 +9,12 @@ import { CheckCircle2, PhoneCall, Clock, ShieldCheck, ArrowRight, Package } from
 function ThankYouContent({ slug }: { slug: string }) {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber") || "EG-ORD-PENDING";
-  const customerName = searchParams.get("name") || "عميلنا العزيز";
-  const customerPhone = searchParams.get("phone") || "";
-  const customerGov = searchParams.get("gov") || "";
-  const customerAddress = searchParams.get("address") || "";
-  const total = searchParams.get("total") || "";
+
+  const [customerName, setCustomerName] = useState("عميلنا العزيز");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerGov, setCustomerGov] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+  const [total, setTotal] = useState("");
 
   useEffect(() => {
     // Fire confetti
@@ -25,6 +26,29 @@ function ThankYouContent({ slug }: { slug: string }) {
       });
     } catch {}
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("rexrack_last_order");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const isFresh =
+        typeof parsed.savedAt === "number" &&
+        Date.now() - parsed.savedAt < 24 * 60 * 60 * 1000;
+
+      if (parsed.orderNumber === orderNumber && isFresh) {
+        if (parsed.name) setCustomerName(parsed.name);
+        if (parsed.phone) setCustomerPhone(parsed.phone);
+        if (parsed.gov) setCustomerGov(parsed.gov);
+        if (parsed.address) setCustomerAddress(parsed.address);
+        if (parsed.total !== undefined && parsed.total !== null && parsed.total !== "") {
+          setTotal(String(parsed.total));
+        }
+      }
+    } catch {
+      // Ignore parse or storage access errors
+    }
+  }, [orderNumber]);
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 text-right flex items-center justify-center font-sans" dir="rtl">
