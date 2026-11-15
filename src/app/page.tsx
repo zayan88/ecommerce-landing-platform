@@ -1,6 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { dbStore } from "@/lib/db/store";
+import { getBrand } from "@/lib/brand";
+import { CatalogHome } from "@/components/store/CatalogHome";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { UrgencyBar } from "@/components/shared/UrgencyBar";
 import {
@@ -29,7 +31,7 @@ import { Metadata } from "next";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 import { HeroSupportButton } from "@/components/chat/HeroSupportButton";
 
-export const metadata: Metadata = {
+const demoMetadata: Metadata = {
   title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
   description:
     "تسوق أحدث المنتجات الذكية والمنظمات العصرية مع RexRack في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن لجميع محافظات مصر خلال 5 إلى 7 أيام.",
@@ -40,7 +42,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function HomePage() {
+/** Catalog mode uses the merchant brand; landing mode keeps the existing home metadata unchanged. */
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await getBrand();
+  if (brand.store_mode !== "catalog") return demoMetadata;
+  const title = brand.tagline ? `${brand.store_name} - ${brand.tagline}` : brand.store_name;
+  const description = "منتجات بشحن مجاني لكل المحافظات، والدفع عند الاستلام بعد المعاينة.";
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website", siteName: brand.store_name },
+  };
+}
+
+export default async function HomePage({ searchParams }: { searchParams?: { q?: string | string[] } }) {
+  const brandMode = await getBrand();
+  if (brandMode.store_mode === "catalog") {
+    const q = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
+    return <CatalogHome q={q} />;
+  }
   const products = await dbStore.getProducts();
   const landingPages = await dbStore.getLandingPages();
   const settings = await dbStore.getSettings();

@@ -263,6 +263,14 @@ export interface SystemSettings {
   currency_symbol?: string;
   store_mode?: "landing" | "catalog"; // landing = one landing page per product; catalog = regular store home with all products
   onboarding_done?: boolean;
+  // Catalog-mode home page content (all optional; defaults in lib/home-config.ts)
+  home_config?: {
+    announcements?: string[];
+    hero_image?: string;
+    hero_title?: string;
+    hero_subtitle?: string;
+    hero_cta?: string;
+  };
   // Optional Safka (Egyptian dropshipping) module
   safka_enabled?: boolean;
   safka_page_id?: string;

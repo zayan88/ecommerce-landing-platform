@@ -67,6 +67,29 @@ export async function POST(req: NextRequest) {
     for (const f of ["store_name", "store_tagline", "currency_symbol"] as const) {
       if (f in toUpdate) toUpdate[f] = typeof toUpdate[f] === "string" ? toUpdate[f].trim().slice(0, 80) : "";
     }
+    if ("home_config" in toUpdate) {
+      const h = toUpdate.home_config;
+      if (!h || typeof h !== "object" || Array.isArray(h)) {
+        delete toUpdate.home_config;
+      } else {
+        const clean: any = {};
+        if (Array.isArray(h.announcements)) {
+          clean.announcements = h.announcements
+            .filter((a: unknown) => typeof a === "string")
+            .map((a: string) => a.trim().slice(0, 120))
+            .filter(Boolean)
+            .slice(0, 8);
+        }
+        for (const [k, max] of [["hero_title", 120], ["hero_subtitle", 240], ["hero_cta", 30]] as const) {
+          if (typeof h[k] === "string") clean[k] = h[k].trim().slice(0, max);
+        }
+        if (typeof h.hero_image === "string") {
+          const v = h.hero_image.trim().slice(0, 500);
+          if (v === "" || /^https?:\/\/[^\s]+$/i.test(v) || /^\/[^\s]*$/.test(v)) clean.hero_image = v;
+        }
+        toUpdate.home_config = clean;
+      }
+    }
     for (const f of SECRET_FIELDS) {
       if (typeof toUpdate[f] === "string" && toUpdate[f].includes("...")) {
         delete toUpdate[f];

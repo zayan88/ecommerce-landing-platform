@@ -72,6 +72,7 @@ export const kvStore = {
     try {
       const res = await fetch(cfg.base + encodeURIComponent(key), {
         headers: { ...cfg.headers },
+        cache: "no-store",
       });
       if (res.ok) {
         const text = await res.text();
@@ -139,7 +140,7 @@ export const kvStore = {
     const cfg = getKvRestConfig();
     if (!cfg) return { status: native ? "error" : "unconfigured", value: null };
     try {
-      const res = await fetch(cfg.base + encodeURIComponent(key), { headers: { ...cfg.headers } });
+      const res = await fetch(cfg.base + encodeURIComponent(key), { headers: { ...cfg.headers }, cache: "no-store" });
       if (res.status === 404) return { status: "missing", value: null };
       if (!res.ok) return { status: "error", value: null };
       return { status: "found", value: JSON.parse(await res.text()) as T };
@@ -227,7 +228,7 @@ export const kvStore = {
         cfg.base.replace(/\/values\/$/, "/keys") +
         `?limit=1000&prefix=${encodeURIComponent(prefix)}` +
         (cursor ? `&cursor=${encodeURIComponent(cursor)}` : "");
-      const res = await fetch(url, { headers: { ...cfg.headers } });
+      const res = await fetch(url, { headers: { ...cfg.headers }, cache: "no-store" });
       if (!res.ok) return failed;
       const body: any = await res.json();
       if (!body || body.success === false || !Array.isArray(body.result)) return failed;

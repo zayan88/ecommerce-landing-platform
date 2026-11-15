@@ -7,6 +7,8 @@ import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
+import { getBrand } from "@/lib/brand";
+import { SimpleProductPage } from "@/components/store/SimpleProductPage";
 import { SITE_NAME, absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
 
 export const runtime = "edge";
@@ -81,6 +83,25 @@ export default async function DynamicLandingPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Regular-store mode: render the simple product page instead of the sales-funnel landing page
+  if ((await getBrand()).store_mode === "catalog") {
+    const settingsC = await dbStore.getSettings();
+    const pixelC = landingPage.meta_pixel_id || settingsC.default_meta_pixel_id;
+    const prodC: any = { ...landingPage.product };
+    for (const f of ["cost_price", "safka_product_id", "safka_property_id", "safka_commission", "safka_raw"]) {
+      delete prodC[f];
+    }
+    const lpC: any = { ...landingPage, product: prodC };
+    delete lpC.meta_capi_token;
+    return (
+      <>
+        <MetaPixel pixelId={pixelC} />
+        <SimpleProductPage product={prodC} landingPage={lpC} />
+        <FloatingSalesAgent currentProduct={prodC} />
+      </>
     );
   }
 
