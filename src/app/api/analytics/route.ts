@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { generateEventId } from "@/lib/tracking/utm";
+import { recordStat } from "@/lib/stats";
 
 export const runtime = "edge";
 
@@ -67,6 +68,10 @@ export async function POST(req: NextRequest) {
       metadata: body.metadata || {},
       created_at: body.created_at || new Date().toISOString(),
     });
+
+    // Durable counters (buffered, flushed to KV at most every 10 minutes)
+    if (body.event_name === "PageView") recordStat("visit", typeof body.session_id === "string" ? body.session_id : undefined);
+    else if (body.event_name === "InitiateCheckout") recordStat("checkout_start");
 
     return NextResponse.json({ success: true, eventId: event.id });
   } catch (err: any) {
