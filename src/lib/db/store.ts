@@ -325,7 +325,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "mesh-nebulizer",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/mesh-nebulizer",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -341,7 +341,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "mesh-nebulizer",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/safka-8ftidwr",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -359,7 +359,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "body-massager",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/body-massager",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -375,7 +375,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "body-massager",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/safka-7mebpwu",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -391,7 +391,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "body-massager",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/safka-b5fb3b6b",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -407,7 +407,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "body-massager",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/starter-template",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -425,7 +425,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "car-organizer",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/car-organizer",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -441,7 +441,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "car-organizer",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/safka-9pkjp8q",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -457,7 +457,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "body-massager",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/body-massager",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -473,7 +473,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "car-organizer",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/safka-rxuirx2",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -491,7 +491,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "astrobeam",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/astrobeam",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -507,7 +507,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "astrobeam",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/safka-6ab19443",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -523,7 +523,7 @@ const initialLandingPages: LandingPage[] = [
     component_key: "starter-template",
     status: "active",
     meta_pixel_id: "1636283807582751",
-    meta_capi_token: "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+    meta_capi_token: "",
     deployment_url: "/p/book",
     deployment_status: "published",
     last_published_at: new Date().toISOString(),
@@ -537,21 +537,45 @@ const initialOrders: Order[] = [];
 
 const initialSettings: SystemSettings = {
   safqa_api_base_url: process.env.SAFQA_API_BASE_URL || "https://api.safqapay.com/v1",
-  safqa_merchant_id: process.env.SAFQA_MERCHANT_ID || "MERCHANT_EG_984",
-  safqa_api_secret_token: process.env.SAFQA_API_SECRET_TOKEN || process.env.SAFKA_API_KEY || "sk_542077e40b44f0837da89f7f542f752270ac78644240cfa46a98b9afe8e312fc",
-  safqa_webhook_secret: process.env.SAFQA_WEBHOOK_SECRET || "WH_SECRET_984",
+  safqa_merchant_id: process.env.SAFQA_MERCHANT_ID || "",
+  // Secrets come from env only (filled lazily per request in getSettings) — never hardcode them here.
+  safqa_api_secret_token: "",
+  safqa_webhook_secret: "",
   safqa_sandbox_mode: false,
   safqa_auto_forward: true,
   default_meta_pixel_id: process.env.NEXT_PUBLIC_META_PIXEL_ID || "1636283807582751",
-  default_meta_capi_token: process.env.META_CAPI_ACCESS_TOKEN || "EAAXuaKCAEB4BS3vKJpFxUZC4jnLSiUgurp2itSFZCheAaCFOG4eiLm5hF7lu0YZC4fUm3UQas9TFe8sLUTZBpBjZC0nYABU7BUfAjSloTPtjR5hC0c9xAoWVL96BHAj4S72BQcB4xrSEN7NxLxghfk7zRY4edCWNehpBZAPk9fejGVR5lVfS3A5fZBd54WjMk5yNgZDZD",
+  default_meta_capi_token: "",
   meta_test_event_code: process.env.META_TEST_EVENT_CODE || "",
   store_name: "RexRack",
   support_phone: "01000000000",
   support_whatsapp: "201000000000",
-  telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN || "",
-  telegram_chat_id: process.env.TELEGRAM_CHAT_ID || "",
+  telegram_bot_token: "",
+  telegram_chat_id: "",
   telegram_notifications_enabled: true,
 };
+
+/** Admin-saved settings overrides persist in KV (memory alone is lost between Edge isolates). */
+const SETTINGS_KV_KEY = "system_settings_overrides";
+
+/** Env values read per request (next-on-pages fills process.env per request). */
+function envSettingDefaults(): Partial<SystemSettings> {
+  return {
+    safqa_api_secret_token: process.env.SAFQA_API_SECRET_TOKEN || process.env.SAFKA_API_KEY || "",
+    safqa_webhook_secret: process.env.SAFQA_WEBHOOK_SECRET || "",
+    default_meta_capi_token: process.env.META_CAPI_ACCESS_TOKEN || "",
+    telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN || "",
+    telegram_chat_id: process.env.TELEGRAM_CHAT_ID || "",
+  };
+}
+
+async function readSettingsOverrides(): Promise<Partial<SystemSettings>> {
+  try {
+    const stored = await kvStore.get<Partial<SystemSettings>>(SETTINGS_KV_KEY);
+    return stored && typeof stored === "object" ? stored : {};
+  } catch {
+    return {};
+  }
+}
 
 // In-Memory cache singleton for development & fast fallback
 let memoryProducts = [...initialProducts];
@@ -1509,13 +1533,21 @@ export const dbStore = {
 
   // SETTINGS
   async getSettings(): Promise<SystemSettings> {
-    loadFromFile();
-    return memorySettings;
+    const overrides = await readSettingsOverrides();
+    const merged: any = { ...memorySettings, ...overrides };
+    // Empty secret fields fall back to env (so rotating an env var takes effect without a DB edit)
+    const env: any = envSettingDefaults();
+    for (const k of Object.keys(env)) {
+      if (!merged[k]) merged[k] = env[k];
+    }
+    return merged as SystemSettings;
   },
 
   async updateSettings(newSettings: Partial<SystemSettings>): Promise<SystemSettings> {
+    // Persist only the admin overrides (never the env-filled secrets)
+    const overrides = { ...(await readSettingsOverrides()), ...newSettings };
     memorySettings = { ...memorySettings, ...newSettings };
-    saveToFile();
-    return memorySettings;
+    await kvStore.put(SETTINGS_KV_KEY, overrides);
+    return this.getSettings();
   },
 };

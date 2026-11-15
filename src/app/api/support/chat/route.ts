@@ -57,7 +57,8 @@ export async function POST(req: NextRequest) {
 
     // 1. Check for Order Tracking (Phone number or order number in message)
     const phoneMatch = message.match(/(?:01[0125]\d{8})/);
-    const orderNumberMatch = message.match(/(?:ord-[a-zA-Z0-9]+|\d{4,8})/i);
+    // Real order numbers look like EG-251115-1234 (or internal ids ord-123...)
+    const orderNumberMatch = message.match(/(?:EG-\d{6}-\d{4}|ord-[a-zA-Z0-9]+)/i);
 
     if (
       message.includes("تتبع") ||
@@ -69,13 +70,45 @@ export async function POST(req: NextRequest) {
       orderNumberMatch
     ) {
       const searchPhone = phoneMatch ? phoneMatch[0] : null;
-      const searchOrder = orderNumberMatch ? orderNumberMatch[0] : null;
+      const searchOrder = orderNumberMatch ? orderNumberMatch[0].toUpperCase() : null;
 
-      const matchedOrder = orders.find((ord) => {
-        if (searchPhone && ord.customer_phone.includes(searchPhone)) return true;
-        if (searchOrder && (ord.id === searchOrder || ord.order_number === searchOrder)) return true;
-        return false;
-      });
+      // Exact matching only (no partial phone matches)
+      const phoneEq = (ord: any) =>
+        !!searchPhone && String(ord.customer_phone || "").replace(/\D/g, "").replace(/^(?:20|0020)/, "0") === searchPhone;
+      const orderEq = (ord: any) =>
+        !!searchOrder &&
+        (String(ord.id || "").toUpperCase() === searchOrder ||
+          String(ord.order_number || "").toUpperCase() === searchOrder);
+
+      // Both identifiers given and pointing to the same order -> verified, show full details
+      const verified = Boolean(searchPhone && searchOrder);
+      const matchedOrder = verified
+        ? orders.find((ord) => phoneEq(ord) && orderEq(ord))
+        : orders.find((ord) => phoneEq(ord) || orderEq(ord));
+
+      const firstName = matchedOrder
+        ? String(matchedOrder.customer_name || "").trim().split(/\s+/)[0] || "عميلنا"
+        : "";
+
+      if (matchedOrder && !verified) {
+        const statusMapShort: Record<string, string> = {
+          pending: "قيد المراجعة والتأكيد مع شركة الشحن",
+          confirmed: "تم تأكيد طلبك وجاري التجهيز",
+          shipped: "تم تسليمه للمندوب وهو في الطريق إليك 🚚",
+          delivered: "تم التسليم بنجاح ✅",
+          cancelled: "ملغي ❌",
+          returned: "مرتجع",
+        };
+        const statusShort = statusMapShort[matchedOrder.status] || matchedOrder.status;
+        return NextResponse.json({
+          reply: `أهلاً يا ${firstName}! حالة طلبك (${matchedOrder.order_number || matchedOrder.id}): ${statusShort}.\n\nلعرض تفاصيل أكثر (المبلغ والمحافظة) اكتب رقم الهاتف ورقم الطلب معاً في رسالة واحدة.`,
+          quickReplies: [
+            "متى يصل المندوب بالظبط؟",
+            "هل يمكن تعديل العنوان؟",
+            "عروض إضافية بشحن مجاني",
+          ],
+        } satisfies ChatResponseData);
+      }
 
       if (matchedOrder) {
         const statusMap: Record<string, string> = {
@@ -90,10 +123,10 @@ export async function POST(req: NextRequest) {
         const statusAr = statusMap[matchedOrder.status] || matchedOrder.status;
 
         return NextResponse.json({
-          reply: `أهلاً بحضرتك يا فندم! تم العثور على بيانات طلبك برقم (${matchedOrder.order_number || matchedOrder.id}):\n\n📌 **الاسم:** ${matchedOrder.customer_name}\n📌 **المحافظة:** ${matchedOrder.governorate}\n📌 **الحالة الحالية:** ${statusAr}\n📌 **المبلغ الإجمالي عند الاستلام:** ${matchedOrder.final_amount} ج.م\n\nتذكّر أن بإمكانك فحص ومعاينة المنتج بالكامل مع المندوب قبل دفع أي مبلغ 🇪🇬. لو حابب تستفسر عن تفاصيل إضافية أنا معاك!`,
+          reply: `أهلاً بحضرتك يا فندم! تم العثور على بيانات طلبك برقم (${matchedOrder.order_number || matchedOrder.id}):\n\n📌 **الاسم:** ${firstName}\n📌 **المحافظة:** ${matchedOrder.governorate}\n📌 **الحالة الحالية:** ${statusAr}\n📌 **المبلغ الإجمالي عند الاستلام:** ${matchedOrder.final_amount} ج.م\n\nتذكّر أن بإمكانك فحص ومعاينة المنتج بالكامل مع المندوب قبل دفع أي مبلغ 🇪🇬. لو حابب تستفسر عن تفاصيل إضافية أنا معاك!`,
           orderInfo: {
             order_number: matchedOrder.order_number || matchedOrder.id,
-            customer_name: matchedOrder.customer_name,
+            customer_name: firstName,
             status: statusAr,
             final_amount: matchedOrder.final_amount,
             created_at: matchedOrder.created_at,
@@ -107,7 +140,7 @@ export async function POST(req: NextRequest) {
         } satisfies ChatResponseData);
       } else if (phoneMatch || orderNumberMatch) {
         return NextResponse.json({
-          reply: `بحثت لحضرتك بالرقم المدخل لكن لم أجد طلباً مسجلاً بهذا الرقم حتى الآن في النظام. تأكد يا فندم من كتابة رقم الهاتف المصري المسجل به (11 رقم يبدأ بـ 01) أو رقم الطلب المكون من 6 أرقام، وأنا في خدمتك لمساعدتك فوراً!`,
+          reply: `بحثت لحضرتك بالرقم المدخل لكن لم أجد طلباً مسجلاً بهذا الرقم حتى الآن في النظام. تأكد يا فندم من كتابة رقم الهاتف المصري المسجل به (11 رقم يبدأ بـ 01) أو رقم الطلب (مثال: EG-251115-1234)، وأنا في خدمتك لمساعدتك فوراً!`,
           quickReplies: [
             "إعادة كتابة رقم الهاتف",
             "تصفح عروض المنتجات المتاحة",
@@ -144,7 +177,7 @@ ${activeProducts
 
     // 3. Try FreeLLMAPI Desktop (Local Endpoint on Device: 127.0.0.1:31415)
     const localLLMEndpoint = process.env.LOCAL_LLM_URL || "http://127.0.0.1:31415/v1";
-    const localLLMKey = process.env.LOCAL_LLM_KEY || "freellmapi-5b1dfb896b96b0ebef236da94071dc05d5839bb65a489913";
+    const localLLMKey = process.env.LOCAL_LLM_KEY || "";
 
     try {
       const abortCtrl = new AbortController();

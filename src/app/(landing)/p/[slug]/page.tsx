@@ -85,13 +85,21 @@ export default async function DynamicLandingPage({ params }: PageProps) {
   const settings = await dbStore.getSettings();
   const pixelId = landingPage.meta_pixel_id || settings.default_meta_pixel_id;
 
+  // Never serialize secrets or internal business data into the public page HTML
+  const publicProduct: any = { ...landingPage.product };
+  for (const f of ["cost_price", "safka_product_id", "safka_property_id", "safka_commission", "safka_raw"]) {
+    delete publicProduct[f];
+  }
+  const publicLandingPage: any = { ...landingPage, product: publicProduct };
+  delete publicLandingPage.meta_capi_token;
+
   return (
     <>
       <MetaPixel pixelId={pixelId} />
-      <Component product={landingPage.product} landingPage={landingPage} />
+      <Component product={publicProduct} landingPage={publicLandingPage} />
 
       {/* Floating AI Sales Closer Chat Widget */}
-      <FloatingSalesAgent currentProduct={landingPage.product} />
+      <FloatingSalesAgent currentProduct={publicProduct} />
     </>
   );
 }

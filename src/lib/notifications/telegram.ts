@@ -1,6 +1,17 @@
 import { Order, Product } from "@/types";
 import { dbStore } from "@/lib/db/store";
 
+/** Escape user-controlled text for Telegram parse_mode=HTML (prevents broken/injected messages). */
+export function escapeTelegramHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+const truncate = (v: unknown, max: number) => String(v ?? "").slice(0, max);
+
 interface TelegramSendResult {
   success: boolean;
   messageId?: number;
@@ -51,25 +62,27 @@ export class TelegramNotifier {
       });
 
       // Traffic source detection
-      const utmSource = order.tracking?.utm_source || "مباشر / Organic";
-      const utmCampaign = order.tracking?.utm_campaign ? ` (${order.tracking.utm_campaign})` : "";
+      const esc = escapeTelegramHtml;
+      const storeName = esc(settings.store_name || "RexRack");
+      const utmSource = esc(order.tracking?.utm_source || "مباشر / Organic");
+      const utmCampaign = order.tracking?.utm_campaign ? ` (${esc(order.tracking.utm_campaign)})` : "";
       const sourceDisplay = `${utmSource}${utmCampaign}`;
 
-      // Beautiful Telegram HTML Message
+      // Beautiful Telegram HTML Message (every dynamic value is escaped)
       const messageText = `
-🔔 <b>أوردر جديد نزل حالاً في ${settings.store_name || "RexRack"}! 🛒</b>
+🔔 <b>أوردر جديد نزل حالاً في ${storeName}! 🛒</b>
 ━━━━━━━━━━━━━━━━━━━━
-📌 <b>رقم الطلب:</b> <code>#${order.order_number}</code>
-👤 <b>العميل:</b> ${order.customer_name}
-📞 <b>التليفون:</b> <code>${order.customer_phone}</code>
-📍 <b>المحافظة:</b> ${order.governorate}
-🏠 <b>العنوان:</b> ${order.address}
+📌 <b>رقم الطلب:</b> <code>#${esc(order.order_number)}</code>
+👤 <b>العميل:</b> ${esc(order.customer_name)}
+📞 <b>التليفون:</b> <code>${esc(order.customer_phone)}</code>
+📍 <b>المحافظة:</b> ${esc(order.governorate)}
+🏠 <b>العنوان:</b> ${esc(truncate(order.address, 500))}
 ━━━━━━━━━━━━━━━━━━━━
-📦 <b>المنتج:</b> ${productTitle}
-🔢 <b>الكمية:</b> ${order.quantity} قطعة
-💰 <b>المبلغ عند الاستلام:</b> <b>${order.final_amount} ج.م</b> (شحن مجاني 🚚)
+📦 <b>المنتج:</b> ${esc(productTitle)}
+🔢 <b>الكمية:</b> ${esc(order.quantity)} قطعة
+💰 <b>المبلغ عند الاستلام:</b> <b>${esc(order.final_amount)} ج.م</b> (شحن مجاني 🚚)
 💵 <b>طريقة الدفع:</b> الدفع نقدياً عند الاستلام (COD)
-${order.notes ? `📝 <b>ملاحظات:</b> <i>${order.notes}</i>\n` : ""}━━━━━━━━━━━━━━━━━━━━
+${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500))}</i>\n` : ""}━━━━━━━━━━━━━━━━━━━━
 🎯 <b>مصدر الإعلان:</b> ${sourceDisplay}
 ⏰ <b>التوقيت:</b> ${orderDate}
 
@@ -132,7 +145,9 @@ ${order.notes ? `📝 <b>ملاحظات:</b> <i>${order.notes}</i>\n` : ""}━�
    */
   static async sendTestNotification(customToken?: string, customChatId?: string): Promise<{ success: boolean; message: string }> {
     const settings = await dbStore.getSettings();
-    const token = customToken || settings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
+    // The admin form holds a masked token ("1234...abcd"); ignore it and use the stored one.
+    const usableToken = customToken && !customToken.includes("...") ? customToken : undefined;
+    const token = usableToken || settings.telegram_bot_token || process.env.TELEGRAM_BOT_TOKEN;
     const chatId = customChatId || settings.telegram_chat_id || process.env.TELEGRAM_CHAT_ID;
 
     if (!token || !chatId) {
@@ -149,7 +164,7 @@ ${order.notes ? `📝 <b>ملاحظات:</b> <i>${order.notes}</i>\n` : ""}━�
 ━━━━━━━━━━━━━━━━━━━━
 🤖 البوت يعمل بكفاءة وجاهز لإرسال إشعارات الأوردرات فورياً.
 ⏰ <b>التوقيت:</b> ${timeNow}
-📱 <b>المتجر:</b> ${settings.store_name || "RexRack"}
+📱 <b>المتجر:</b> ${escapeTelegramHtml(settings.store_name || "RexRack")}
 
 كل ما عميل يسجل طلب، هيوصلك إشعار لحظي هنا بصوت الكاشير 💰!
 `.trim();

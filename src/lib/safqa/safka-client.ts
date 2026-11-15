@@ -62,7 +62,7 @@ function normalizeArabicText(t?: string): string {
 export class SafkaClient {
   private static async getApiKey(): Promise<string> {
     const settings = await dbStore.getSettings();
-    return settings.safqa_api_secret_token || process.env.SAFKA_API_KEY || "sk_542077e40b44f0837da89f7f542f752270ac78644240cfa46a98b9afe8e312fc";
+    return settings.safqa_api_secret_token || process.env.SAFKA_API_KEY || "";
   }
 
   private static getBaseUrl(): string {

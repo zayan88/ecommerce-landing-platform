@@ -1,12 +1,38 @@
 /**
  * Cloudflare KV Persistent Store Client
- * Supports both native Edge getRequestContext binding and REST API fallback.
+ * Supports both native Edge binding (STORE_KV) and REST API fallback.
+ * All account/credential config comes from env vars — nothing is hardcoded.
  */
 
-const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || "29840259dea50eb6e54fc804e1d3f11b";
-const CF_KV_NAMESPACE_ID = process.env.CF_KV_NAMESPACE_ID || "c051d16cb4f44bc196304ef9f6709fb2";
-const CF_API_KEY = process.env.CF_API_KEY || "";
-const CF_EMAIL = process.env.CF_EMAIL || "Zayanuiux@gmail.com";
+type KvRestConfig = { base: string; headers: Record<string, string> };
+let warnedNoRest = false;
+
+/** Read per call: on next-on-pages process.env is filled per request. */
+function getKvRestConfig(): KvRestConfig | null {
+  const accountId = (process.env.CF_ACCOUNT_ID || "").trim();
+  const namespaceId = (process.env.CF_KV_NAMESPACE_ID || "").trim();
+  const token = (process.env.CF_API_TOKEN || "").trim();
+  const key = (process.env.CF_API_KEY || "").trim();
+  const email = (process.env.CF_EMAIL || "").trim();
+
+  let headers: Record<string, string> | null = null;
+  if (token) headers = { Authorization: `Bearer ${token}` }; // preferred: scoped API token
+  else if (key && email) headers = { "X-Auth-Key": key, "X-Auth-Email": email }; // legacy global key
+
+  if (!accountId || !namespaceId || !headers) {
+    if (!warnedNoRest) {
+      warnedNoRest = true;
+      console.warn(
+        "[KV] REST fallback not configured (CF_ACCOUNT_ID, CF_KV_NAMESPACE_ID, CF_API_TOKEN or CF_API_KEY+CF_EMAIL)."
+      );
+    }
+    return null;
+  }
+  return {
+    base: `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/storage/kv/namespaces/${encodeURIComponent(namespaceId)}/values/`,
+    headers,
+  };
+}
 
 function getNativeKV(): any {
   try {
@@ -31,13 +57,11 @@ export const kvStore = {
     }
 
     // 2. Fallback to Cloudflare KV REST API
+    const cfg = getKvRestConfig();
+    if (!cfg) return null;
     try {
-      const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${CF_KV_NAMESPACE_ID}/values/${encodeURIComponent(key)}`;
-      const res = await fetch(url, {
-        headers: {
-          "X-Auth-Key": CF_API_KEY,
-          "X-Auth-Email": CF_EMAIL,
-        },
+      const res = await fetch(cfg.base + encodeURIComponent(key), {
+        headers: { ...cfg.headers },
       });
       if (res.ok) {
         const text = await res.text();
@@ -65,15 +89,12 @@ export const kvStore = {
     }
 
     // 2. Fallback to Cloudflare KV REST API
+    const cfg = getKvRestConfig();
+    if (!cfg) return false;
     try {
-      const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${CF_KV_NAMESPACE_ID}/values/${encodeURIComponent(key)}`;
-      const res = await fetch(url, {
+      const res = await fetch(cfg.base + encodeURIComponent(key), {
         method: "PUT",
-        headers: {
-          "X-Auth-Key": CF_API_KEY,
-          "X-Auth-Email": CF_EMAIL,
-          "Content-Type": "text/plain",
-        },
+        headers: { ...cfg.headers, "Content-Type": "text/plain" },
         body: serialized,
       });
       return res.ok;
@@ -92,14 +113,12 @@ export const kvStore = {
       } catch {}
     }
 
+    const cfg = getKvRestConfig();
+    if (!cfg) return false;
     try {
-      const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${CF_KV_NAMESPACE_ID}/values/${encodeURIComponent(key)}`;
-      const res = await fetch(url, {
+      const res = await fetch(cfg.base + encodeURIComponent(key), {
         method: "DELETE",
-        headers: {
-          "X-Auth-Key": CF_API_KEY,
-          "X-Auth-Email": CF_EMAIL,
-        },
+        headers: { ...cfg.headers },
       });
       return res.ok;
     } catch {

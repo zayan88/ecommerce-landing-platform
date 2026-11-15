@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
+import { isAdminRequest } from "@/lib/auth/session";
 
 export const runtime = "edge";
 
-export async function GET() {
+// Internal business fields never shown to visitors (cost, supplier ids, commissions)
+const PRIVATE_PRODUCT_FIELDS = [
+  "cost_price",
+  "safka_product_id",
+  "safka_property_id",
+  "safka_commission",
+  "safka_raw",
+] as const;
+
+export async function GET(req: NextRequest) {
   try {
     const products = await dbStore.getProducts();
-    return NextResponse.json({ success: true, products });
+    if (isAdminRequest(req)) {
+      return NextResponse.json({ success: true, products });
+    }
+    const publicProducts = products.map((p) => {
+      const copy: any = { ...p };
+      for (const f of PRIVATE_PRODUCT_FIELDS) delete copy[f];
+      return copy;
+    });
+    return NextResponse.json({ success: true, products: publicProducts });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

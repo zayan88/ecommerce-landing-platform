@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { SafkaClient } from "@/lib/safqa/safka-client";
+import { isAdminRequest } from "@/lib/auth/session";
+import { checkSafqaWebhookSecret } from "@/lib/auth/webhook";
 
 export const runtime = "edge";
+
+const WEBHOOK_ACTIONS = new Set(["webhook", "orders", "order-webhook", "products", "product-webhook"]);
 
 interface RouteProps {
   params: {
@@ -22,12 +26,19 @@ export async function GET(req: NextRequest, { params }: RouteProps) {
 
   // 1. Connect Callback GET (Safka browser redirect)
   if (subAction === "connect-callback") {
-    const { searchParams } = new URL(req.url);
+    const url = new URL(req.url);
+    if (!isAdminRequest(req)) {
+      const loginUrl = new URL("/admin/login", req.url);
+      loginUrl.searchParams.set("redirect", url.pathname + url.search);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    const { searchParams } = url;
     const key = searchParams.get("api-safka-key") || searchParams.get("key") || searchParams.get("token");
 
-    if (key) {
+    if (typeof key === "string" && key.trim().length >= 8 && key.trim().length <= 512) {
       await dbStore.updateSettings({
-        safqa_api_secret_token: key,
+        safqa_api_secret_token: key.trim(),
       });
     }
 
@@ -66,6 +77,27 @@ export async function GET(req: NextRequest, { params }: RouteProps) {
 // ======================== POST HANDLERS ========================
 export async function POST(req: NextRequest, { params }: RouteProps) {
   const subAction = (params.action?.[0] || "webhook").toLowerCase();
+
+  // Access control (defense in depth on top of middleware)
+  if (subAction === "sync") {
+    if (!isAdminRequest(req)) {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 401 });
+    }
+  } else if (subAction === "connect-callback") {
+    if (!isAdminRequest(req) && checkSafqaWebhookSecret(req) !== "ok") {
+      return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 401 });
+    }
+  } else if (WEBHOOK_ACTIONS.has(subAction)) {
+    const wh = checkSafqaWebhookSecret(req);
+    if (wh === "invalid") {
+      return NextResponse.json({ success: false, error: "Invalid webhook secret" }, { status: 401 });
+    }
+    if (wh === "unconfigured") {
+      console.warn(`[Safka Webhook] SAFQA_WEBHOOK_SECRET not set; accepting unsigned '${subAction}' webhook`);
+    }
+  } else {
+    return NextResponse.json({ success: false, error: "Unknown action" }, { status: 404 });
+  }
 
   try {
     // ----------------- A. SYNC ACTIONS (Admin Dashboard) -----------------
@@ -145,7 +177,6 @@ export async function POST(req: NextRequest, { params }: RouteProps) {
       return NextResponse.json({
         success: true,
         message: "Callback received without API key",
-        payload,
       });
     }
 

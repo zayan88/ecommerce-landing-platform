@@ -4,10 +4,18 @@ import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldAlert, Lock, KeyRound, AlertCircle } from "lucide-react";
 
+/** Only allow same-site admin destinations (blocks open redirects like //evil.com). */
+function safeRedirect(raw: string | null | undefined): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return "/admin";
+  if (raw.startsWith("/admin/login")) return "/admin";
+  if (raw.startsWith("/admin") || raw.startsWith("/api/safqa/connect-callback")) return raw;
+  return "/admin";
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams?.get("redirect") || "/admin";
+  const redirectPath = safeRedirect(searchParams?.get("redirect"));
 
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -37,7 +45,11 @@ function LoginForm() {
         throw new Error(data.error || "رمز الدخول غير صحيح");
       }
 
-      // Success, route to destination
+      // Success, route to destination (API callbacks need a full navigation)
+      if (redirectPath.startsWith("/api/")) {
+        window.location.assign(redirectPath);
+        return;
+      }
       router.push(redirectPath);
       router.refresh();
     } catch (err: any) {
