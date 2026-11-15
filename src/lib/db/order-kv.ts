@@ -310,7 +310,7 @@ export async function listDeletedOrderTokens(): Promise<{ ok: boolean; tokens: S
   return { ok: true, tokens };
 }
 
-function isTombstoned(order: Order, tokens: Set<string>): boolean {
+export function isTombstoned(order: Order, tokens: Set<string>): boolean {
   return (
     tokens.has(order.id) ||
     (!!order.order_number && tokens.has(order.order_number)) ||
@@ -323,7 +323,7 @@ function isTombstoned(order: Order, tokens: Set<string>): boolean {
 /** Per isolate: true once the marker is known to be older than the grace period. */
 let legacyDone = false;
 
-function normalizeLegacy(raw: unknown): Order | null {
+export function normalizeLegacy(raw: unknown): Order | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, any>;
   const id = String(r.id || r.order_number || "");
