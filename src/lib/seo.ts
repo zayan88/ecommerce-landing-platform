@@ -1,7 +1,7 @@
 /** Shared SEO helpers (edge-safe, no Node APIs). */
 
 export const SITE_NAME = "RexRack";
-export const DEFAULT_SITE_URL = "https://ecommerce-landing-platform.pages.dev";
+export const DEFAULT_SITE_URL = "https://rexrack.com";
 
 export function getSiteUrl(): string {
   const raw = (process.env.NEXT_PUBLIC_APP_URL || "").trim().replace(/\/+$/, "");
