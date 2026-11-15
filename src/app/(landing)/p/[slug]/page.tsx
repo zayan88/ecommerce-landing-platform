@@ -7,6 +7,7 @@ import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
+import { SITE_NAME, absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -19,15 +20,37 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const lp = await dbStore.getLandingPage(params.slug);
-  if (!lp) return { title: "الصفحة غير موجودة" };
+  if (!lp) return { title: "الصفحة غير موجودة", robots: { index: false, follow: false } };
+
+  const title = `${lp.title} | عرض خاص والدفع عند الاستلام`;
+  const description =
+    shortText(lp.product?.description_ar, 160) ||
+    "عرض حصري في مصر، شحن مجاني لكل المحافظات، ادفع عند الاستلام بعد المعاينة، وضمان استبدال 14 يوم.";
+  const image = absoluteUrl(lp.product?.images?.[0]);
+  const url = `${getSiteUrl()}/p/${lp.slug || params.slug}`;
+  // Paused/draft pages must not be indexed
+  const indexable = lp.status === "active";
 
   return {
-    title: `${lp.title} | عرض خاص والدفع عند الاستلام`,
-    description: lp.product?.description_ar || "عرض حصري في مصر والدفع عند الاستلام",
+    metadataBase: new URL(getSiteUrl()),
+    title,
+    description,
+    alternates: { canonical: url },
+    robots: indexable ? { index: true, follow: true } : { index: false, follow: false },
     openGraph: {
+      type: "website",
+      locale: "ar_EG",
+      siteName: SITE_NAME,
+      url,
       title: lp.title,
-      description: lp.product?.description_ar,
-      images: lp.product?.images?.[0] ? [{ url: lp.product.images[0] }] : [],
+      description,
+      images: image ? [{ url: image, alt: lp.title }] : [],
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title: lp.title,
+      description,
+      images: image ? [image] : [],
     },
   };
 }

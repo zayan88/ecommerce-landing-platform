@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { SITE_NAME, getSiteUrl } from "@/lib/seo";
 import { Cairo, Tajawal } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
@@ -22,8 +23,16 @@ const tajawal = Tajawal({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
-  description: "المنصة المركزية لإدارة وتتبع صفحات الهبوط ومبيعات الدفع عند الاستلام وبوابة صفقة في مصر",
+  description: "منتجات ذكية وعصرية بشحن مجاني لكل محافظات مصر، والدفع عند الاستلام بعد المعاينة.",
+  openGraph: { type: "website", locale: "ar_EG", siteName: SITE_NAME },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ea580c",
 };
 
 export default function RootLayout({
