@@ -29,7 +29,7 @@ function ThankYouContent({ slug }: { slug: string }) {
 
   useEffect(() => {
     try {
-      const raw = sessionStorage.getItem("rexrack_last_order");
+      const raw = sessionStorage.getItem("sf_last_order");
       if (!raw) return;
       const parsed = JSON.parse(raw);
       const isFresh =

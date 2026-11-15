@@ -1,7 +1,7 @@
 /** Shared SEO helpers (edge-safe, no Node APIs). */
 
-export const SITE_NAME = "RexRack";
-export const DEFAULT_SITE_URL = "https://rexrack.com";
+// Neutral fallback; every deployment sets NEXT_PUBLIC_APP_URL (or SITE_URL) to its own domain.
+export const DEFAULT_SITE_URL = (process.env.SITE_URL || "").trim() || "http://localhost:3000";
 
 export function getSiteUrl(): string {
   const raw = (process.env.NEXT_PUBLIC_APP_URL || "").trim().replace(/\/+$/, "");

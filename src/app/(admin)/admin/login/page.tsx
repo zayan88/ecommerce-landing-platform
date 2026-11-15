@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useBrand } from "@/components/brand/BrandProvider";
 import { ShieldAlert, Lock, KeyRound, AlertCircle } from "lucide-react";
 
 /** Only allow same-site admin destinations (blocks open redirects like //evil.com). */
@@ -13,6 +14,7 @@ function safeRedirect(raw: string | null | undefined): string {
 }
 
 function LoginForm() {
+  const brand = useBrand();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = safeRedirect(searchParams?.get("redirect"));
@@ -69,7 +71,7 @@ function LoginForm() {
 
         <div>
           <h1 className="text-2xl font-black font-heading text-white tracking-tight">
-            لوحة التحكم المركزية | RexRack
+            لوحة التحكم | {brand.store_name}
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             الوصول مشفر ومحمي. يرجى إدخال الرمز السري الخاص بالمسؤول.

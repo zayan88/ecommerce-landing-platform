@@ -63,7 +63,7 @@ export class TelegramNotifier {
 
       // Traffic source detection
       const esc = escapeTelegramHtml;
-      const storeName = esc(settings.store_name || "RexRack");
+      const storeName = esc(settings.store_name || "المتجر");
       const utmSource = esc(order.tracking?.utm_source || "مباشر / Organic");
       const utmCampaign = order.tracking?.utm_campaign ? ` (${esc(order.tracking.utm_campaign)})` : "";
       const sourceDisplay = `${utmSource}${utmCampaign}`;
@@ -106,7 +106,7 @@ ${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500)
                     {
                       text: "💬 واتساب العميل",
                       url: `https://wa.me/${intlPhone}?text=${encodeURIComponent(
-                        `أهلاً بحضرتك يا فندم! بخصوص طلبك #${order.order_number} من ${settings.store_name || "RexRack"}`
+                        `أهلاً بحضرتك يا فندم! بخصوص طلبك #${order.order_number} من ${settings.store_name || "المتجر"}`
                       )}`,
                     },
                     {
@@ -170,7 +170,7 @@ ${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500)
       }
 
       const esc = escapeTelegramHtml;
-      const storeName = esc(settings.store_name || "RexRack");
+      const storeName = esc(settings.store_name || "المتجر");
       const timeNow = new Date().toLocaleString("ar-EG", {
         timeZone: "Africa/Cairo",
         hour: "2-digit",
@@ -199,7 +199,7 @@ ${inquiry.customerPhone ? `📱 <b>هاتف العميل:</b> <code>${esc(inquir
           {
             text: "💬 فتح واتساب العميل",
             url: `https://wa.me/${intlPhone}?text=${encodeURIComponent(
-              `أهلاً بحضرتك يا فندم! بخصوص استفسارك على متجر ${settings.store_name || "RexRack"}: "${inquiry.message.slice(0, 50)}"`
+              `أهلاً بحضرتك يا فندم! بخصوص استفسارك على متجر ${settings.store_name || "المتجر"}: "${inquiry.message.slice(0, 50)}"`
             )}`,
           },
           {
@@ -265,7 +265,7 @@ ${inquiry.customerPhone ? `📱 <b>هاتف العميل:</b> <code>${esc(inquir
 ━━━━━━━━━━━━━━━━━━━━
 🤖 البوت يعمل بكفاءة وجاهز لإرسال إشعارات الأوردرات فورياً.
 ⏰ <b>التوقيت:</b> ${timeNow}
-📱 <b>المتجر:</b> ${escapeTelegramHtml(settings.store_name || "RexRack")}
+📱 <b>المتجر:</b> ${escapeTelegramHtml(settings.store_name || "المتجر")}
 
 كل ما عميل يسجل طلب، هيوصلك إشعار لحظي هنا بصوت الكاشير 💰!
 `.trim();

@@ -602,8 +602,10 @@ async function readSettingsOverrides(): Promise<Partial<SystemSettings>> {
 }
 
 // In-Memory cache singleton for development & fast fallback
-let memoryProducts = [...initialProducts];
-let memoryLandingPages = [...initialLandingPages];
+// Demo catalog (hand-written sample pages) only on the owner's demo instance; a merchant copy starts empty.
+const DEMO_SEED = (process.env.DEMO_MODE || "").trim() === "1";
+let memoryProducts = DEMO_SEED ? [...initialProducts] : [];
+let memoryLandingPages = DEMO_SEED ? [...initialLandingPages] : [];
 let memoryOrders = [...initialOrders];
 let memorySettings = { ...initialSettings };
 let memoryAnalytics: AnalyticsEvent[] = [];

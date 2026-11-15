@@ -8,8 +8,9 @@ import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 import { getBrand } from "@/lib/brand";
+import { CHAT_ENABLED } from "@/lib/features";
 import { SimpleProductPage } from "@/components/store/SimpleProductPage";
-import { SITE_NAME, absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
+import { absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const lp = await dbStore.getLandingPage(params.slug);
   if (!lp) return { title: "الصفحة غير موجودة", robots: { index: false, follow: false } };
 
+  const brand = await getBrand();
   const title = `${lp.title} | عرض خاص والدفع عند الاستلام`;
   const description =
     shortText(lp.product?.description_ar, 160) ||
@@ -42,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       type: "website",
       locale: "ar_EG",
-      siteName: SITE_NAME,
+      siteName: brand.store_name,
       url,
       title: lp.title,
       description,
@@ -100,7 +102,7 @@ export default async function DynamicLandingPage({ params }: PageProps) {
       <>
         <MetaPixel pixelId={pixelC} />
         <SimpleProductPage product={prodC} landingPage={lpC} />
-        <FloatingSalesAgent currentProduct={prodC} />
+        {CHAT_ENABLED && <FloatingSalesAgent currentProduct={prodC} />}
       </>
     );
   }
@@ -143,7 +145,7 @@ export default async function DynamicLandingPage({ params }: PageProps) {
       <Component product={publicProduct} landingPage={publicLandingPage} />
 
       {/* Floating AI Sales Closer Chat Widget */}
-      <FloatingSalesAgent currentProduct={publicProduct} />
+      {CHAT_ENABLED && <FloatingSalesAgent currentProduct={publicProduct} />}
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { CHAT_ENABLED } from "@/lib/features";
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
@@ -38,6 +39,7 @@ interface ChatResponseData {
 }
 
 export async function POST(req: NextRequest) {
+  if (!CHAT_ENABLED) return NextResponse.json({ success: false, error: "غير متاح" }, { status: 404 });
   try {
     const body = await req.json();
     const message: string = (body.message || "").trim();

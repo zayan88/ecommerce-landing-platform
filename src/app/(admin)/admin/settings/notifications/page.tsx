@@ -1,5 +1,6 @@
 "use client";
 
+import { useBrand } from "@/components/brand/BrandProvider";
 import React, { useState, useEffect } from "react";
 import {
   Bell,
@@ -17,11 +18,12 @@ import {
 } from "lucide-react";
 
 export default function AdminNotificationsPage() {
+  const brand = useBrand();
   const [settings, setSettings] = useState<any>({
     telegram_bot_token: "",
     telegram_chat_id: "",
     telegram_notifications_enabled: true,
-    store_name: "RexRack",
+    store_name: brand.store_name,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,7 +47,7 @@ export default function AdminNotificationsPage() {
           telegram_bot_token: json.settings.telegram_bot_token || "",
           telegram_chat_id: json.settings.telegram_chat_id || "",
           telegram_notifications_enabled: json.settings.telegram_notifications_enabled ?? true,
-          store_name: json.settings.store_name || "RexRack",
+          store_name: json.settings.store_name || brand.store_name,
         });
       }
     } catch (e) {
@@ -313,7 +315,7 @@ export default function AdminNotificationsPage() {
             {/* Telegram Message Bubble Mock */}
             <div className="bg-[#182533] p-4 rounded-2xl border border-slate-700 text-xs font-sans space-y-2 text-right shadow-inner">
               <div className="flex items-center justify-between text-[11px] text-sky-400 font-black border-b border-slate-700/80 pb-1.5">
-                <span>🔔 أوردر جديد نزل حالاً في RexRack! 🛒</span>
+                <span>🔔 أوردر جديد نزل حالاً في {settings.store_name || brand.store_name}! 🛒</span>
                 <span className="text-[10px] text-slate-400">04:30 م</span>
               </div>
 

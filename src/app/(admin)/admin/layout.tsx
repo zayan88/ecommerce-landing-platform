@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useBrand } from "@/components/brand/BrandProvider";
+import { SAFKA_ENABLED } from "@/lib/features";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -22,7 +24,7 @@ import {
   Settings,
 } from "lucide-react";
 
-const navigationItems = [
+const allNavigationItems = [
   { name: "الإحصائيات والأداء", href: "/admin", icon: LayoutDashboard },
   { name: "إدارة الطلبات", href: "/admin/orders", icon: ShoppingBag },
   { name: "صفحات الهبوط", href: "/admin/landing-pages", icon: Layers },
@@ -33,7 +35,10 @@ const navigationItems = [
   { name: "الإعدادات", href: "/admin/settings", icon: Settings },
 ];
 
+const navigationItems = allNavigationItems.filter((item) => SAFKA_ENABLED || item.href !== "/admin/safqa");
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const brand = useBrand();
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -64,9 +69,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-emerald-500 text-slate-950 font-black flex items-center justify-center text-base">
-            R
+            {(brand.store_name || "M").trim().charAt(0).toUpperCase()}
           </div>
-          <span className="font-heading font-black text-base">لوحة تحكم RexRack</span>
+          <span className="font-heading font-black text-base">لوحة تحكم {brand.store_name}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -96,11 +101,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center justify-between pb-4 border-b border-slate-800 px-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-emerald-500/20">
-                R
+                {(brand.store_name || "M").trim().charAt(0).toUpperCase()}
               </div>
               <div>
                 <h2 className="font-heading font-black text-white text-base leading-tight">
-                  RexRack Admin
+                  {brand.store_name}
                 </h2>
                 <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> جلسة مشفرة وآمنة

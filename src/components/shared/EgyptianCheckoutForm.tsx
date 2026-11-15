@@ -84,8 +84,8 @@ export function EgyptianCheckoutForm({
     setActiveOffer(offer);
     if (onOfferSelect) onOfferSelect(offer);
     if (onOfferChange) onOfferChange(offer);
-    if (typeof window !== "undefined" && window.rexrackTrack) {
-      window.rexrackTrack("SelectOffer", {
+    if (typeof window !== "undefined" && window.storeTrack) {
+      window.storeTrack("SelectOffer", {
         offer_id: offer.id,
         title: offer.title_ar,
         quantity: offer.quantity,
@@ -204,7 +204,7 @@ export function EgyptianCheckoutForm({
       // Save order summary to sessionStorage for thank-you page
       try {
         sessionStorage.setItem(
-          "rexrack_last_order",
+          "sf_last_order",
           JSON.stringify({
             orderNumber: data.order.order_number,
             name: data.order.customer_name,

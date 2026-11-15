@@ -1,5 +1,6 @@
 "use client";
 
+import { useBrand } from "@/components/brand/BrandProvider";
 import React, { useEffect, useState } from "react";
 import {
   Package,
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 
 export default function AdminSafqaPage() {
+  const brand = useBrand();
   const [settings, setSettings] = useState<any>({
     safqa_api_secret_token: "",
     safqa_auto_forward: true,
@@ -222,7 +224,7 @@ export default function AdminSafqaPage() {
   const redirectAdminUrl = `${effectiveOrigin}/admin/safqa`;
 
   // Safka Direct Connect Link
-  const safkaDirectConnectUrl = `https://aff.safka-eg.com/intergations/apiSafkaKeys/connect?name=RexRack&redirectUrl=${encodeURIComponent(
+  const safkaDirectConnectUrl = `https://aff.safka-eg.com/intergations/apiSafkaKeys/connect?name=${encodeURIComponent(brand.store_name)}&redirectUrl=${encodeURIComponent(
     redirectAdminUrl
   )}&productHook=${encodeURIComponent(productWebhookUrl)}&orderHook=${encodeURIComponent(
     orderWebhookUrl
@@ -243,7 +245,7 @@ export default function AdminSafqaPage() {
               الربط المباشر مع منصة صفقة (Safka Egypt)
             </h1>
             <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-              عند إضافة أي منتج من حسابك في صفقة، يستقبله متجر <strong className="text-white">RexRack</strong> تلقائياً
+              عند إضافة أي منتج من حسابك في صفقة، يستقبله متجر <strong className="text-white">{brand.store_name}</strong> تلقائياً
               ويولد له صفحة هبوط تسويقية فورية. وعندما يطلب العميل بنظام الدفع عند الاستلام (COD)، يتم ترحيل الطلب
               لحسابك في صفقة تلقائياً لشحنه وحساب عمولتك.
             </p>
@@ -597,7 +599,7 @@ export default function AdminSafqaPage() {
               <span>مستكشف منتجات صفقة (Safka Catalog)</span>
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              استعرض المنتجات المتاحة في حسابك على صفقة واستورد أي منتج بضغطة زر لإنشاء صفحة هبوط له في RexRack
+              استعرض المنتجات المتاحة في حسابك على صفقة واستورد أي منتج بضغطة زر لإنشاء صفحة هبوط له في المتجر
             </p>
           </div>
 

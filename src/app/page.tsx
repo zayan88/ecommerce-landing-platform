@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { dbStore } from "@/lib/db/store";
 import { getBrand } from "@/lib/brand";
+import { CHAT_ENABLED } from "@/lib/features";
 import { CatalogHome } from "@/components/store/CatalogHome";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { UrgencyBar } from "@/components/shared/UrgencyBar";
@@ -31,21 +32,24 @@ import { Metadata } from "next";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 import { HeroSupportButton } from "@/components/chat/HeroSupportButton";
 
-const demoMetadata: Metadata = {
-  title: "RexRack - متجرك الأول للمنتجات الذكية والعصرية في مصر",
-  description:
-    "تسوق أحدث المنتجات الذكية والمنظمات العصرية مع RexRack في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن لجميع محافظات مصر خلال 5 إلى 7 أيام.",
-  openGraph: {
-    title: "RexRack - عروض حصرية في مصر",
-    description: "معاينة مجانية قبل الدفع + دفع عند الاستلام + ضمان 14 يوم",
-    type: "website",
-  },
-};
+/** The long marketing home below is the owner's demo/portfolio page: shown only when DEMO_MODE=1 in landing mode. */
+const DEMO_HOME = (process.env.DEMO_MODE || "").trim() === "1";
 
-/** Catalog mode uses the merchant brand; landing mode keeps the existing home metadata unchanged. */
+function demoMetadata(name: string): Metadata {
+  return {
+    title: `${name} - متجرك الأول للمنتجات الذكية والعصرية في مصر`,
+    description: `تسوق أحدث المنتجات مع ${name} في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن لجميع المحافظات.`,
+    openGraph: {
+      title: `${name} - عروض حصرية في مصر`,
+      description: "معاينة مجانية قبل الدفع + دفع عند الاستلام + ضمان 14 يوم",
+      type: "website",
+    },
+  };
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrand();
-  if (brand.store_mode !== "catalog") return demoMetadata;
+  if (brand.store_mode !== "catalog" && DEMO_HOME) return demoMetadata(brand.store_name);
   const title = brand.tagline ? `${brand.store_name} - ${brand.tagline}` : brand.store_name;
   const description = "منتجات بشحن مجاني لكل المحافظات، والدفع عند الاستلام بعد المعاينة.";
   return {
@@ -57,7 +61,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage({ searchParams }: { searchParams?: { q?: string | string[] } }) {
   const brandMode = await getBrand();
-  if (brandMode.store_mode === "catalog") {
+  const brandName = brandMode.store_name;
+  if (brandMode.store_mode === "catalog" || !DEMO_HOME) {
     const q = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
     return <CatalogHome q={q} />;
   }
@@ -103,7 +108,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
             </div>
             <div>
               <span className="text-2xl font-black font-heading text-slate-900 tracking-tight block">
-                RexRack
+                {brandName}
               </span>
               <span className="text-[11px] font-bold text-gray-500 block -mt-0.5">
                 الجودة والابتكار في مكان واحد 🇪🇬
@@ -167,7 +172,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
 
             {/* Description */}
             <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
-              في RexRack، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
+              في {brandName}، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
               <span className="font-bold text-slate-900 underline decoration-orange-500 decoration-2">
                 معاينة وفحص المنتج بنفسك أمام مندوب الشحن قبل دفع أي مليم
               </span>
@@ -331,12 +336,12 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
         </div>
       </section>
 
-      {/* Why RexRack Section */}
+      {/* Why {brandName} Section */}
       <section id="features" className="py-20 bg-white border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <span className="text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
-              ضمانات RexRack الذهبية
+              ضمانات {brandName} الذهبية
             </span>
             <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
               لماذا يثق بنا آلاف العملاء في مصر؟
@@ -386,7 +391,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
         </div>
       </section>
 
-      {/* Problem vs RexRack Solution Section (Lovable / High-Converting Pattern) */}
+      {/* Problem vs {brandName} Solution Section (Lovable / High-Converting Pattern) */}
       <section className="py-16 bg-slate-50 border-b border-gray-200 px-4">
         <div className="max-w-5xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-2">
@@ -394,10 +399,10 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               المقارنة الحقيقية
             </span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
-              لماذا RexRack أفضل بمراحل من المنتجات التقليدية؟
+              لماذا {brandName} أفضل بمراحل من المنتجات التقليدية؟
             </h2>
             <p className="text-sm text-gray-600">
-              شاهد الفرق العملي بين الشراء من السوق التقليدي والشراء من RexRack المعتمد
+              شاهد الفرق العملي بين الشراء من السوق التقليدي والشراء من {brandName} المعتمد
             </p>
           </div>
 
@@ -431,13 +436,13 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               </ul>
             </div>
 
-            {/* The RexRack Way */}
+            {/* The {brandName} Way */}
             <div className="p-6 md:p-8 rounded-3xl bg-orange-50/80 border-2 border-emerald-500 space-y-4 shadow-lg shadow-emerald-500/10">
               <div className="flex items-center gap-2.5 text-orange-700 font-black text-lg font-heading">
                 <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
                   <Check className="w-5 h-5 stroke-[3]" />
                 </div>
-                <span>حلول RexRack الأصلية المعتمدة</span>
+                <span>حلول {brandName} الأصلية المعتمدة</span>
               </div>
 
               <ul className="space-y-3 text-sm text-gray-800">
@@ -471,7 +476,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               تجربة تسوق مريحة
             </span>
             <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
-              كيف تتسوق من RexRack في 3 خطوات بسيطة؟
+              كيف تتسوق من {brandName} في 3 خطوات بسيطة؟
             </h2>
           </div>
 
@@ -517,7 +522,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
           </div>
 
           <h3 className="text-2xl font-black font-heading text-amber-950">
-            شهادة ضمان RexRack الذهبية 100%
+            شهادة ضمان {brandName} الذهبية 100%
           </h3>
 
           <p className="text-sm text-gray-700 max-w-2xl mx-auto leading-relaxed">
@@ -544,7 +549,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
             ماذا يقول عملاؤنا بعد التجربة؟
           </h2>
           <p className="text-sm text-gray-600">
-            آراء عملاء حقيقيين استلموا وعاينوا طلباتهم من RexRack في مختلف المحافظات.
+            آراء عملاء حقيقيين استلموا وعاينوا طلباتهم من {brandName} في مختلف المحافظات.
           </p>
         </div>
 
@@ -556,7 +561,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               ))}
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              "المنتج ممتاز والخامات قوية جداً وتستاهل كل مليم. الأهم إن المندوب استنى لما فتحت الكرتونة واتأكدت بنفسي قبل ما أدفع. شكراً RexRack على الاحترام والأمانة."
+              "المنتج ممتاز والخامات قوية جداً وتستاهل كل مليم. الأهم إن المندوب استنى لما فتحت الكرتونة واتأكدت بنفسي قبل ما أدفع. شكراً {brandName} على الاحترام والأمانة."
             </p>
             <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
               <div>
@@ -676,7 +681,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                 R
               </div>
               <div>
-                <span className="font-black font-heading text-xl text-white">RexRack</span>
+                <span className="font-black font-heading text-xl text-white">{brandName}</span>
                 <p className="text-xs text-slate-400">منصة التجارة الإلكترونية الموثوقة في مصر</p>
               </div>
             </div>
@@ -691,7 +696,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-            <p>© {new Date().getFullYear()} RexRack (RexRack.com) - جميع الحقوق محفوظة.</p>
+            <p>© {new Date().getFullYear()} {brandName} - جميع الحقوق محفوظة.</p>
 
             <div className="flex items-center gap-4">
               <Link
@@ -717,7 +722,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
       </footer>
 
       {/* Floating Interactive AI Sales & Customer Support Drawer */}
-      <FloatingSalesAgent />
+      {CHAT_ENABLED && <FloatingSalesAgent />}
     </div>
   );
 }

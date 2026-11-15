@@ -77,8 +77,8 @@ export function HeroOfferSelector({
 
   const handleSelect = (offer: ProductOffer) => {
     onSelectOffer(offer);
-    if (typeof window !== "undefined" && window.rexrackTrack) {
-      window.rexrackTrack("SelectOffer", {
+    if (typeof window !== "undefined" && window.storeTrack) {
+      window.storeTrack("SelectOffer", {
         offer_id: offer.id,
         quantity: offer.quantity,
         price: offer.price,

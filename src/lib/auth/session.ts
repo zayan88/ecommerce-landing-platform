@@ -6,7 +6,7 @@ import { hmacSha256, sha256, timingSafeEqual, toHex } from "@/lib/crypto/sha256"
  * Env is read inside functions only: on next-on-pages process.env is filled per request.
  */
 
-export const AUTH_COOKIE_NAME = "rexrack_admin_auth";
+export const AUTH_COOKIE_NAME = "sf_admin_auth";
 export const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 const TOKEN_VERSION = "v1";
 const MIN_SECRET_LEN = 16;
@@ -46,7 +46,7 @@ export function getSigningKey(): string | null {
     }
   }
   if (!base) return null;
-  return hmacSha256(base, `rexrack-admin-session|${TOKEN_VERSION}|${pin}`);
+  return hmacSha256(base, `store-admin-session|${TOKEN_VERSION}|${pin}`);
 }
 
 export function isAuthEnabled(): boolean {

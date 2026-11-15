@@ -3,6 +3,7 @@ import { orderFormSchema } from "@/lib/validation/order";
 import { dbStore } from "@/lib/db/store";
 import { getGovernorateDeliveryFee } from "@/lib/constants/governorates";
 import { SafkaClient } from "@/lib/safqa/safka-client";
+import { SAFKA_ENABLED } from "@/lib/features";
 import { MetaCapiClient } from "@/lib/tracking/meta-capi";
 import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
@@ -230,7 +231,7 @@ export async function POST(req: NextRequest) {
     // 6. Forward order to Safka Egypt Dropshipping API (Awaited to ensure completion on Serverless/Vercel)
     let safkaResult = null;
     try {
-      safkaResult = await SafkaClient.createOrder(createdOrder);
+      if (SAFKA_ENABLED) safkaResult = await SafkaClient.createOrder(createdOrder);
       console.log(`[Order Created] Linked to Safka Egypt:`, safkaResult);
     } catch (err) {
       console.error("[Safka dropshipping forward error]", err);
