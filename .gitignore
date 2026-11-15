@@ -51,3 +51,6 @@ src/graphify-out/
 
 # local dev KV data
 .dev-kv.json
+
+# local dev D1 data (scripts/dev-d1-server.mjs)
+.dev-d1.sqlite*

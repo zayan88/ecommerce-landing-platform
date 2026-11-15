@@ -8,3 +8,17 @@ pages_build_output_dir = ".vercel/output/static"
 [[kv_namespaces]]
 binding = "STORE_KV"
 id = "c051d16cb4f44bc196304ef9f6709fb2"
+
+# Orders / transactional data: Cloudflare D1, bound as DB (read by src/lib/db/d1.ts).
+# Only used when the env var ORDERS_BACKEND=d1 is set; the default (kv) ignores this binding.
+#
+# !!! PLACEHOLDER — the database does NOT exist yet. Before this file reaches a deployed branch:
+#   1. npx wrangler d1 create growix-orders          (prints the real database_id)
+#   2. replace REPLACE_WITH_REAL_D1_DATABASE_ID below
+#   3. npx wrangler d1 migrations apply DB --remote  (applies migrations/*.sql)
+# A Pages deployment with the placeholder id will fail to bind. See docs/architecture-kv-d1.md.
+[[d1_databases]]
+binding = "DB"
+database_name = "growix-orders"
+database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+migrations_dir = "migrations"
