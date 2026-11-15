@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { Order, OrderStatus, Product } from "@/types";
 import { EditOrderModal } from "./EditOrderModal";
+import { toCsv, downloadCsv } from "@/lib/csv";
 import {
+  Download,
   Search,
   Filter,
   RefreshCw,
@@ -251,6 +253,48 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const STATUS_AR: Record<string, string> = {
+    pending: "قيد المراجعة",
+    confirmed: "تم التأكيد",
+    shipped: "تم الشحن",
+    delivered: "تم التوصيل",
+    cancelled: "ملغي",
+    returned: "مرتجع",
+  };
+
+  // Excel/CSV export of the orders currently listed (respects the active search/status filter)
+  const exportOrdersCsv = () => {
+    const list = selectedOrderIds.length > 0 ? orders.filter((o) => selectedOrderIds.includes(o.id)) : orders;
+    if (list.length === 0) {
+      alert("لا توجد طلبات للتصدير");
+      return;
+    }
+    const headers = [
+      "رقم الطلب", "التاريخ", "الاسم", "الموبايل", "موبايل آخر", "المحافظة", "المدينة", "العنوان",
+      "الكمية", "الإجمالي", "الشحن", "الصافي", "الحالة", "طريقة الدفع", "ملاحظات", "الصفحة",
+    ];
+    const rows = list.map((o) => [
+      o.order_number,
+      o.created_at ? new Date(o.created_at).toLocaleString("en-GB", { timeZone: "Africa/Cairo" }) : "",
+      o.customer_name,
+      o.customer_phone,
+      o.customer_phone2,
+      o.governorate,
+      o.city,
+      o.address,
+      o.quantity,
+      o.total_amount,
+      o.shipping_fee,
+      o.final_amount,
+      STATUS_AR[o.status] || o.status,
+      o.payment_method === "cod" ? "الدفع عند الاستلام" : o.payment_method,
+      o.notes,
+      o.landing_page_slug,
+    ]);
+    const day = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
+    downloadCsv(`orders-${day}.csv`, toCsv(headers, rows));
+  };
+
   const toggleSelectAll = () => {
     if (selectedOrderIds.length === orders.length && orders.length > 0) {
       setSelectedOrderIds([]);
@@ -329,6 +373,15 @@ export default function AdminOrdersPage() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncingSafka ? "animate-spin" : ""}`} />
             <span>مزامنة مباشرة مع صفقة (Safka Sync)</span>
+          </button>
+
+          <button
+            onClick={exportOrdersCsv}
+            title="تصدير الطلبات المعروضة (أو المحددة) إلى ملف Excel"
+            className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>تصدير Excel</span>
           </button>
 
           <button
