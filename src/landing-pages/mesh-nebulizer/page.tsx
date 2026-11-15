@@ -278,7 +278,7 @@ export default function MeshNebulizerLandingPage({
 
   // 2. COMPARISON SECTION
   const renderComparison = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-5 text-center">
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5 text-center">
       <div>
         <span className="text-xs font-bold text-cyan-800 bg-cyan-50 px-3 py-1 rounded-full border border-cyan-200">
           {c?.comparison_badge || "ليه تغير جهازك القديم؟"}
@@ -342,7 +342,7 @@ export default function MeshNebulizerLandingPage({
 
   // 3. BOX CONTENTS
   const renderBoxContents = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-right">
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-right">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
           <Package className="w-5 h-5 text-cyan-700" />
@@ -389,7 +389,7 @@ export default function MeshNebulizerLandingPage({
 
   // 4. HOW TO USE (3 QUICK STEPS)
   const renderHowToUse = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-right">
+    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-right">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
           <Zap className="w-5 h-5 text-amber-600" />
@@ -437,7 +437,7 @@ export default function MeshNebulizerLandingPage({
 
   // 5. REVIEWS & SOCIAL PROOF
   const renderReviews = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4 text-right">
+    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 text-right">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-black text-slate-900 font-heading flex items-center gap-2">
           <ThumbsUp className="w-4 h-4 text-cyan-600" />
@@ -527,7 +527,7 @@ export default function MeshNebulizerLandingPage({
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-cyan-500 selection:text-white pb-24 md:pb-16" dir="rtl">
       {/* 1. Announcement Bar */}
-      <div className="bg-gradient-to-r from-cyan-700 via-sky-600 to-cyan-800 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2">
+      <div className="bg-gradient-to-r from-cyan-700 via-sky-600 to-cyan-800 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2">
         <Truck className="w-4 h-4 text-cyan-200 shrink-0" />
         <span>{announcementText}</span>
       </div>

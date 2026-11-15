@@ -74,7 +74,7 @@ export default async function HomePage() {
       <UrgencyBar />
 
       {/* Main Header / Navigation */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
@@ -132,7 +132,7 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             {/* Tag badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-orange-200 shadow-xs">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-orange-200 shadow-sm">
               <Sparkles className="w-4 h-4 text-orange-600" />
               <span>المتجر المصري المعتمد للمنتجات العصرية الذكية</span>
             </div>
@@ -169,7 +169,7 @@ export default async function HomePage() {
 
             {/* 4 Pillars Trust Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 text-right">
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
@@ -179,7 +179,7 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
                   <Truck className="w-5 h-5" />
                 </div>
@@ -189,7 +189,7 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
                   <RotateCcw className="w-5 h-5" />
                 </div>
@@ -199,7 +199,7 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
                   <Headphones className="w-5 h-5" />
                 </div>
@@ -254,7 +254,7 @@ export default async function HomePage() {
                   </span>
                 </div>
 
-                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-1 shadow-xs">
+                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-1 shadow-sm">
                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                   <span>4.9 (تقييمات ممتازة)</span>
                 </div>
@@ -456,7 +456,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-orange-700 font-black text-xl flex items-center justify-center mx-auto">
                 1
               </div>
@@ -466,7 +466,7 @@ export default async function HomePage() {
               </p>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 font-black text-xl flex items-center justify-center mx-auto">
                 2
               </div>
@@ -476,7 +476,7 @@ export default async function HomePage() {
               </p>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-xs text-center space-y-3">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 font-black text-xl flex items-center justify-center mx-auto">
                 3
               </div>
@@ -529,7 +529,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
             <div className="flex items-center gap-1 text-amber-400">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-400" />
@@ -549,7 +549,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
             <div className="flex items-center gap-1 text-amber-400">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-400" />
@@ -569,7 +569,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
             <div className="flex items-center gap-1 text-amber-400">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-400" />

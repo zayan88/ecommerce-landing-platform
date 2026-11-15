@@ -136,12 +136,12 @@ export default function AdminNotificationsPage() {
 
         <div className="flex items-center gap-2">
           {isConfigured ? (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-xs">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>الإشعارات نشطة وشغالة</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold shadow-xs">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold shadow-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
               <span>في انتظار ربط التوكن</span>
             </div>
@@ -152,7 +152,7 @@ export default function AdminNotificationsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Settings Form Column */}
         <div className="lg:col-span-7 space-y-6">
-          <form onSubmit={handleSave} className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs space-y-6">
+          <form onSubmit={handleSave} className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">

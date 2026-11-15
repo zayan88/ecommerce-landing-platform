@@ -273,7 +273,7 @@ export default function AdminProductsPage() {
       {/* Alert Notification */}
       {alertMessage && (
         <div
-          className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-2.5 animate-fade-in shadow-xs ${
+          className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-2.5 animate-fade-in shadow-sm ${
             alertMessage.type === "success"
               ? "bg-emerald-50 border-emerald-200 text-emerald-900"
               : "bg-red-50 border-red-200 text-red-900"
@@ -289,14 +289,14 @@ export default function AdminProductsPage() {
       )}
 
       {/* Search & Stats Filter */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
         <div className="relative w-full sm:w-80">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="ابحث بالاسم أو الكود (SKU) أو الرابط..."
-            className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-xs outline-hidden focus:ring-2 focus:ring-orange-500 bg-slate-50/50"
+            className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/50"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
@@ -324,7 +324,7 @@ export default function AdminProductsPage() {
             return (
               <div
                 key={prod.id}
-                className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:border-orange-300 transition-colors space-y-5"
+                className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:border-orange-300 transition-colors space-y-5"
               >
                 {/* Top Row: Info & Actions */}
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-5 border-b border-slate-100">
@@ -490,7 +490,7 @@ export default function AdminProductsPage() {
                   value={titleAr}
                   onChange={(e) => setTitleAr(e.target.value)}
                   placeholder="مثال: مسدس مساج فليكس برو الكهربائي"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-bold text-slate-900 text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-bold text-slate-900 text-sm"
                 />
               </div>
 
@@ -504,7 +504,7 @@ export default function AdminProductsPage() {
                     min={1}
                     value={basePrice}
                     onChange={(e) => setBasePrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono font-bold text-slate-900 text-sm"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono font-bold text-slate-900 text-sm"
                   />
                 </div>
 
@@ -515,7 +515,7 @@ export default function AdminProductsPage() {
                     min={0}
                     value={comparePrice}
                     onChange={(e) => setComparePrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
                   />
                 </div>
 
@@ -526,7 +526,7 @@ export default function AdminProductsPage() {
                     min={0}
                     value={costPrice}
                     onChange={(e) => setCostPrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
                   />
                 </div>
               </div>
@@ -541,7 +541,7 @@ export default function AdminProductsPage() {
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
                     placeholder="rexrack-massage-gun"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
                   />
                   <span className="text-[10px] text-slate-400 mt-0.5 block">
                     الرابط سيكون: /p/{slug || "example-product"}
@@ -556,7 +556,7 @@ export default function AdminProductsPage() {
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                     placeholder="REX-PROD-01"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
                   />
                 </div>
               </div>
@@ -571,7 +571,7 @@ export default function AdminProductsPage() {
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://.../product.jpg"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
                   />
                 </div>
 
@@ -582,7 +582,7 @@ export default function AdminProductsPage() {
                     min={0}
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs"
                   />
                 </div>
               </div>
@@ -595,7 +595,7 @@ export default function AdminProductsPage() {
                   value={descriptionAr}
                   onChange={(e) => setDescriptionAr(e.target.value)}
                   placeholder="اكتب نقاط القوة والمميزات الرئيسية التي ستظهر في صفحة الهبوط..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 text-xs leading-relaxed"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 text-slate-900 text-xs leading-relaxed"
                 />
               </div>
 

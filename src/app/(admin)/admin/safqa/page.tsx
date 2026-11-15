@@ -302,7 +302,7 @@ export default function AdminSafqaPage() {
         <div className="lg:col-span-7 space-y-6">
           <form
             onSubmit={handleSave}
-            className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-xs space-y-6"
+            className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6"
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
@@ -325,7 +325,7 @@ export default function AdminSafqaPage() {
                     setSettings({ ...settings, safqa_api_secret_token: e.target.value })
                   }
                   placeholder="ألصق مفتاح api-safka-key هنا..."
-                  className="w-full pl-24 pr-4 py-3 rounded-xl border border-slate-300 font-mono text-sm text-left outline-hidden focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-slate-50/50"
+                  className="w-full pl-24 pr-4 py-3 rounded-xl border border-slate-300 font-mono text-sm text-left outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-slate-50/50"
                 />
                 <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <button
@@ -460,7 +460,7 @@ export default function AdminSafqaPage() {
 
         {/* Right Column: Webhook Endpoints & Setup (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-7 shadow-xs space-y-5">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-7 shadow-sm space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Link2 className="w-5 h-5 text-orange-500" />
@@ -589,7 +589,7 @@ export default function AdminSafqaPage() {
       </div>
 
       {/* Product Catalog Explorer from Safka */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-xs space-y-6">
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div>
             <h2 className="text-xl font-black text-slate-900 font-heading flex items-center gap-2">
@@ -608,7 +608,7 @@ export default function AdminSafqaPage() {
                 value={productQuery}
                 onChange={(e) => setProductQuery(e.target.value)}
                 placeholder="ابحث بالاسم أو الباركود..."
-                className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-xs outline-hidden focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-orange-500"
               />
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             </div>

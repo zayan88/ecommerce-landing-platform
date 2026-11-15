@@ -267,7 +267,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     ];
 
     return (
-      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-center">
+      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-center">
         <div>
           <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
             {c?.comparison_badge || "ليه ده أفضل اختيار؟"}
@@ -335,7 +335,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     ];
 
     return (
-      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-4 text-right">
+      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-right">
         <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
           <Package className="w-5 h-5 text-indigo-700" />
           <span>{boxTitle}</span>
@@ -373,7 +373,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 4. HOW TO USE
   const renderHowToUse = () => (
-    <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-3 text-right">
+    <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-3 text-right">
       <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
         <Zap className="w-5 h-5 text-amber-600" />
         <span>طريقة الاستخدام والطلب في خطوات بسيطة:</span>
@@ -397,7 +397,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 5. REVIEWS & SOCIAL PROOF
   const renderReviews = () => (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4 text-right">
+    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 text-right">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-black text-slate-900 font-heading flex items-center gap-2">
           <ThumbsUp className="w-4 h-4 text-indigo-600" />
@@ -507,7 +507,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white pb-24 md:pb-16" dir="rtl">
       {/* 1. Announcement Bar */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2 border-b border-indigo-500/20">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-indigo-500/20">
         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
         <span>{announcementText}</span>
       </div>

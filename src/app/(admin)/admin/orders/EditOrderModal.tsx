@@ -173,7 +173,7 @@ export function EditOrderModal({
                 <select
                   value={productId}
                   onChange={(e) => handleProductChange(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-orange-500 outline-hidden font-bold"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-orange-500 outline-none font-bold"
                 >
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -190,7 +190,7 @@ export function EditOrderModal({
                 <select
                   value={quantity}
                   onChange={(e) => handleQuantityChange(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-orange-500 outline-hidden font-bold"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-orange-500 outline-none font-bold"
                 >
                   <option value={1}>1 قطعة (تجربة)</option>
                   <option value={2}>2 قطع (عرض التوفير)</option>
@@ -217,7 +217,7 @@ export function EditOrderModal({
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-hidden font-bold"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none font-bold"
                   required
                 />
               </div>
@@ -230,7 +230,7 @@ export function EditOrderModal({
                   type="tel"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-hidden font-mono text-left font-bold"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none font-mono text-left font-bold"
                   dir="ltr"
                   required
                 />
@@ -244,7 +244,7 @@ export function EditOrderModal({
                   type="tel"
                   value={customerPhone2}
                   onChange={(e) => setCustomerPhone2(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-hidden font-mono text-left"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none font-mono text-left"
                   dir="ltr"
                 />
               </div>
@@ -265,7 +265,7 @@ export function EditOrderModal({
                 <select
                   value={governorate}
                   onChange={(e) => setGovernorate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-hidden font-bold"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none font-bold"
                 >
                   {EGYPTIAN_GOVERNORATES.map((gov) => (
                     <option key={gov.id} value={gov.nameAr}>
@@ -283,7 +283,7 @@ export function EditOrderModal({
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
                   placeholder="مثال: سموحة / الهرم / بنها"
                 />
               </div>
@@ -296,7 +296,7 @@ export function EditOrderModal({
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
                   required
                 />
               </div>
@@ -309,7 +309,7 @@ export function EditOrderModal({
                   rows={2}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
                   placeholder="مثال: الاتصال قبل الوصول / التوصيل بعد الساعة 4 مساءً"
                 />
               </div>
@@ -331,7 +331,7 @@ export function EditOrderModal({
                   type="number"
                   value={totalAmount}
                   onChange={(e) => handleTotalAmountChange(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
                   min={0}
                 />
               </div>
@@ -344,7 +344,7 @@ export function EditOrderModal({
                   type="number"
                   value={shippingFee}
                   onChange={(e) => handleShippingChange(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
                   min={0}
                 />
               </div>
@@ -357,7 +357,7 @@ export function EditOrderModal({
                   type="number"
                   value={finalAmount}
                   onChange={(e) => setFinalAmount(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-mono font-black text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  className="w-full px-3 py-2 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-mono font-black text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                   min={0}
                 />
               </div>
@@ -369,7 +369,7 @@ export function EditOrderModal({
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as OrderStatus)}
-                  className="w-full px-2 py-2 rounded-xl border border-gray-300 text-xs bg-white font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                  className="w-full px-2 py-2 rounded-xl border border-gray-300 text-xs bg-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
                   <option value="pending">قيد المراجعة</option>
                   <option value="confirmed">مؤكد</option>

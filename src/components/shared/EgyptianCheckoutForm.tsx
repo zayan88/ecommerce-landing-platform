@@ -252,7 +252,7 @@ export function EgyptianCheckoutForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="مثال: محمد السيد"
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition"
           />
         </div>
 
@@ -271,7 +271,7 @@ export function EgyptianCheckoutForm({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="01012345678"
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition text-right font-mono"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition text-right font-mono"
           />
         </div>
 
@@ -283,7 +283,7 @@ export function EgyptianCheckoutForm({
           <select
             value={governorate}
             onChange={(e) => setGovernorate(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 text-sm outline-hidden transition bg-white"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 text-sm outline-none transition bg-white"
           >
             {EGYPTIAN_GOVERNORATES.map((gov) => (
               <option key={gov.id} value={gov.nameAr}>
@@ -304,7 +304,7 @@ export function EgyptianCheckoutForm({
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="المدينة، اسم الشارع، أو أقرب علامة مميزة"
-            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition"
+            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition"
           />
         </div>
 
@@ -318,7 +318,7 @@ export function EgyptianCheckoutForm({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="رقم العمارة والشقة، أو الوقت الأنسب لك للاستلام..."
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-hidden transition resize-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition resize-none"
           />
         </div>
 

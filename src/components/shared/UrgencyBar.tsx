@@ -26,7 +26,7 @@ export function UrgencyBar() {
     <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white text-xs md:text-sm py-2 px-4 shadow-sm border-b border-indigo-500/20">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 px-2.5 py-0.5 rounded-full text-xs font-black animate-pulse flex items-center gap-1 shadow-xs">
+          <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 px-2.5 py-0.5 rounded-full text-xs font-black animate-pulse flex items-center gap-1 shadow-sm">
             <FireIcon className="w-3.5 h-3.5 fill-slate-950" /> عروض الصيف الحصرية
           </span>
           <span className="hidden sm:inline text-slate-200">

@@ -131,12 +131,12 @@ export function HeroOfferSelector({
                   ? `${colors.selectedBorder} ${colors.selectedBg} ${colors.ring} shadow-md`
                   : isDarkTheme
                   ? "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900/90"
-                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80 shadow-2xs"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80 shadow-sm"
               }`}
             >
               {/* Badge */}
               <span
-                className={`absolute -top-2.5 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-2 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap ${badgeClass}`}
+                className={`absolute -top-2.5 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-2 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap ${badgeClass}`}
               >
                 {badgeText}
               </span>

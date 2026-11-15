@@ -117,15 +117,15 @@ export default function AstroBeamLandingPage({
 
             {/* Quick Micro Badges */}
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-xs">
+              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-sm">
                 <Moon className="w-4 h-4 text-purple-400 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-200">6 غيارات متنوعة</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-xs">
+              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-sm">
                 <Compass className="w-4 h-4 text-indigo-400 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-200">دوران 360 درجة</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-xs">
+              <div className="p-2.5 rounded-2xl bg-slate-900/80 border border-purple-500/20 shadow-sm">
                 <Usb className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-200">تشغيل بـ USB</span>
               </div>
@@ -234,7 +234,7 @@ export default function AstroBeamLandingPage({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-900 rounded-3xl overflow-hidden border border-purple-500/20 shadow-md">
-              <div className="relative aspect-4/3">
+              <div className="relative w-full h-64 sm:h-80">
                 <Image
                   src={astrobeamConfig.images[1].src}
                   alt={astrobeamConfig.images[1].alt}
@@ -251,7 +251,7 @@ export default function AstroBeamLandingPage({
             </div>
 
             <div className="bg-slate-900 rounded-3xl overflow-hidden border border-purple-500/20 shadow-md">
-              <div className="relative aspect-4/3">
+              <div className="relative w-full h-64 sm:h-80">
                 <Image
                   src={astrobeamConfig.images[2].src}
                   alt={astrobeamConfig.images[2].alt}
@@ -268,7 +268,7 @@ export default function AstroBeamLandingPage({
             </div>
 
             <div className="bg-slate-900 rounded-3xl overflow-hidden border border-purple-500/20 shadow-md">
-              <div className="relative aspect-4/3">
+              <div className="relative w-full h-64 sm:h-80">
                 <Image
                   src={astrobeamConfig.images[3].src}
                   alt={astrobeamConfig.images[3].alt}

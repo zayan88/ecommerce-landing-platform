@@ -577,7 +577,7 @@ export default function AdminLandingPagesPage() {
           return (
             <div
               key={lp.id}
-              className={`bg-white rounded-3xl border transition-all shadow-xs flex flex-col justify-between overflow-hidden ${
+              className={`bg-white rounded-3xl border transition-all shadow-sm flex flex-col justify-between overflow-hidden ${
                 lp.status === "active" ? "border-gray-200 hover:border-emerald-300" : "border-amber-200 bg-amber-50/20"
               }`}
             >
@@ -622,7 +622,7 @@ export default function AdminLandingPagesPage() {
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     onClick={() => handleCopyUrl(lp.slug)}
-                    className="py-1.5 px-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1 shadow-2xs transition"
+                    className="py-1.5 px-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1 shadow-sm transition"
                   >
                     {isCopied ? (
                       <>
@@ -639,7 +639,7 @@ export default function AdminLandingPagesPage() {
 
                   <button
                     onClick={() => openSectionCustomizer(lp)}
-                    className="py-1.5 px-2.5 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-xs font-bold text-indigo-700 flex items-center gap-1 shadow-2xs transition cursor-pointer"
+                    className="py-1.5 px-2.5 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-xs font-bold text-indigo-700 flex items-center gap-1 shadow-sm transition cursor-pointer"
                     title="تخصيص وترتيب أقسام الصفحة"
                   >
                     <Sliders className="w-3.5 h-3.5 text-indigo-600" />
@@ -648,7 +648,7 @@ export default function AdminLandingPagesPage() {
 
                   <button
                     onClick={() => openContentEditor(lp)}
-                    className="py-1.5 px-2.5 rounded-xl bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 text-xs font-bold text-cyan-800 flex items-center gap-1 shadow-2xs transition cursor-pointer"
+                    className="py-1.5 px-2.5 rounded-xl bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 text-xs font-bold text-cyan-800 flex items-center gap-1 shadow-sm transition cursor-pointer"
                     title="تعديل نصوص وصور الصفحة مع الحفاظ على القالب"
                   >
                     <Edit3 className="w-3.5 h-3.5 text-cyan-600" />
@@ -659,7 +659,7 @@ export default function AdminLandingPagesPage() {
                 <a
                   href={fullUrl}
                   target="_blank"
-                  className="py-1.5 px-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1 shadow-xs transition"
+                  className="py-1.5 px-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1 shadow-sm transition"
                 >
                   <span>معاينة</span>
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -846,7 +846,7 @@ export default function AdminLandingPagesPage() {
                 onClick={() => setActiveContentTab("hero")}
                 className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
                   activeContentTab === "hero"
-                    ? "bg-cyan-600 text-white shadow-xs"
+                    ? "bg-cyan-600 text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
@@ -857,7 +857,7 @@ export default function AdminLandingPagesPage() {
                 onClick={() => setActiveContentTab("comparison")}
                 className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
                   activeContentTab === "comparison"
-                    ? "bg-cyan-600 text-white shadow-xs"
+                    ? "bg-cyan-600 text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
@@ -868,7 +868,7 @@ export default function AdminLandingPagesPage() {
                 onClick={() => setActiveContentTab("box")}
                 className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
                   activeContentTab === "box"
-                    ? "bg-cyan-600 text-white shadow-xs"
+                    ? "bg-cyan-600 text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
@@ -879,7 +879,7 @@ export default function AdminLandingPagesPage() {
                 onClick={() => setActiveContentTab("steps")}
                 className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
                   activeContentTab === "steps"
-                    ? "bg-cyan-600 text-white shadow-xs"
+                    ? "bg-cyan-600 text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
@@ -890,7 +890,7 @@ export default function AdminLandingPagesPage() {
                 onClick={() => setActiveContentTab("reviews")}
                 className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
                   activeContentTab === "reviews"
-                    ? "bg-cyan-600 text-white shadow-xs"
+                    ? "bg-cyan-600 text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
@@ -914,7 +914,7 @@ export default function AdminLandingPagesPage() {
                         setContentForm({ ...contentForm, announcement_bar: e.target.value })
                       }
                       placeholder="عرض الشتاء: شحن مجاني لجميع المحافظات + حق المعاينة والتجربة قبل الدفع"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 text-xs outline-hidden"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 text-xs outline-none"
                     />
                   </div>
 
@@ -929,7 +929,7 @@ export default function AdminLandingPagesPage() {
                         setContentForm({ ...contentForm, hero_headline: e.target.value })
                       }
                       placeholder="اسم المنتج والعنوان الجذاب في أعلى الصفحة"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 text-xs outline-hidden font-bold"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 text-xs outline-none font-bold"
                     />
                   </div>
 
@@ -944,7 +944,7 @@ export default function AdminLandingPagesPage() {
                         setContentForm({ ...contentForm, hero_subheadline: e.target.value })
                       }
                       placeholder="شرح سريع لمشكلة العميل وكيف يحلها المنتج"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 text-xs outline-hidden leading-relaxed"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-900 text-xs outline-none leading-relaxed"
                     />
                   </div>
 
@@ -960,7 +960,7 @@ export default function AdminLandingPagesPage() {
                           setContentForm({ ...contentForm, hero_badge: e.target.value })
                         }
                         placeholder="4.9 / 5.0 (أكثر من 400 تقييم)"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none"
                       />
                     </div>
 
@@ -976,7 +976,7 @@ export default function AdminLandingPagesPage() {
                             setContentForm({ ...contentForm, hero_image: e.target.value })
                           }
                           placeholder="/landing-pages/... أو https://..."
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden font-mono"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-mono"
                         />
                         {contentForm.hero_image && (
                           <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-slate-100 relative">
@@ -1009,7 +1009,7 @@ export default function AdminLandingPagesPage() {
                             setContentForm({ ...contentForm, hero_bullets: newBullets });
                           }}
                           placeholder={`الميزة رقم ${idx + 1}`}
-                          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 text-gray-800 text-xs outline-hidden"
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-cyan-500 text-gray-800 text-xs outline-none"
                         />
                       ))}
                     </div>
@@ -1032,7 +1032,7 @@ export default function AdminLandingPagesPage() {
                           setContentForm({ ...contentForm, comparison_badge: e.target.value })
                         }
                         placeholder="ليه ده أفضل اختيار؟"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none"
                       />
                     </div>
                     <div>
@@ -1046,7 +1046,7 @@ export default function AdminLandingPagesPage() {
                           setContentForm({ ...contentForm, comparison_title: e.target.value })
                         }
                         placeholder="الفرق بين المنتجات التقليدية وجهازنا"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden font-bold"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-bold"
                       />
                     </div>
                   </div>
@@ -1065,7 +1065,7 @@ export default function AdminLandingPagesPage() {
                           setContentForm({ ...contentForm, comparison_old_title: e.target.value })
                         }
                         placeholder="أجهزة النيبولايزر التقليدية القديمة"
-                        className="w-full px-3 py-1.5 rounded-lg border border-rose-300 text-rose-900 text-xs bg-white outline-hidden"
+                        className="w-full px-3 py-1.5 rounded-lg border border-rose-300 text-rose-900 text-xs bg-white outline-none"
                       />
                       <label className="block font-bold text-rose-800 pt-1">3 عيوب للقديم:</label>
                       {[0, 1, 2].map((idx) => (
@@ -1079,7 +1079,7 @@ export default function AdminLandingPagesPage() {
                             setContentForm({ ...contentForm, comparison_old_points: pts });
                           }}
                           placeholder={`عيب رقم ${idx + 1}`}
-                          className="w-full px-3 py-1.5 rounded-lg border border-rose-200 text-rose-900 text-xs bg-white outline-hidden"
+                          className="w-full px-3 py-1.5 rounded-lg border border-rose-200 text-rose-900 text-xs bg-white outline-none"
                         />
                       ))}
                     </div>
@@ -1096,7 +1096,7 @@ export default function AdminLandingPagesPage() {
                           setContentForm({ ...contentForm, comparison_new_title: e.target.value })
                         }
                         placeholder="جهاز Mesh Nebulizer الصامت المحمول"
-                        className="w-full px-3 py-1.5 rounded-lg border border-emerald-300 text-emerald-900 text-xs bg-white outline-hidden"
+                        className="w-full px-3 py-1.5 rounded-lg border border-emerald-300 text-emerald-900 text-xs bg-white outline-none"
                       />
                       <label className="block font-bold text-emerald-800 pt-1">3 مميزات لمنتجنا:</label>
                       {[0, 1, 2].map((idx) => (
@@ -1110,7 +1110,7 @@ export default function AdminLandingPagesPage() {
                             setContentForm({ ...contentForm, comparison_new_points: pts });
                           }}
                           placeholder={`ميزة رقم ${idx + 1}`}
-                          className="w-full px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-900 text-xs bg-white outline-hidden"
+                          className="w-full px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-900 text-xs bg-white outline-none"
                         />
                       ))}
                     </div>
@@ -1130,7 +1130,7 @@ export default function AdminLandingPagesPage() {
                             setContentForm({ ...contentForm, comparison_image: e.target.value })
                           }
                           placeholder="/landing-pages/... أو رابط صورة"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden font-mono"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-mono"
                         />
                         {contentForm.comparison_image && (
                           <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-slate-100 relative">
@@ -1156,7 +1156,7 @@ export default function AdminLandingPagesPage() {
                           setContentForm({ ...contentForm, comparison_image_badge: e.target.value })
                         }
                         placeholder="صوت معدوم < 25dB"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none"
                       />
                     </div>
                   </div>
@@ -1177,7 +1177,7 @@ export default function AdminLandingPagesPage() {
                         setContentForm({ ...contentForm, box_title: e.target.value })
                       }
                       placeholder="محتويات العلبة الأصلية (طقم كامل متكامل):"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden font-bold"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-bold"
                     />
                   </div>
 
@@ -1195,7 +1195,7 @@ export default function AdminLandingPagesPage() {
                         })
                       }
                       placeholder="1× الجهاز الأصلي...&#10;1× ماسك للأطفال...&#10;1× ماسك للكبار...&#10;1× كابل USB..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden leading-relaxed font-sans"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none leading-relaxed font-sans"
                     />
                   </div>
 
@@ -1211,7 +1211,7 @@ export default function AdminLandingPagesPage() {
                           setContentForm({ ...contentForm, box_image: e.target.value })
                         }
                         placeholder="/landing-pages/... أو رابط صورة خارجية"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden font-mono"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-mono"
                       />
                       {contentForm.box_image && (
                         <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-slate-100 relative">
@@ -1243,7 +1243,7 @@ export default function AdminLandingPagesPage() {
                         setContentForm({ ...contentForm, how_to_use_title: e.target.value })
                       }
                       placeholder="طريقة الاستخدام السريعة والمواصفات:"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden font-bold"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-bold"
                     />
                   </div>
 
@@ -1267,7 +1267,7 @@ export default function AdminLandingPagesPage() {
                                 setContentForm({ ...contentForm, how_to_use_steps: steps });
                               }}
                               placeholder={`عنوان الخطوة ${idx + 1}`}
-                              className="w-1/3 px-3 py-1.5 rounded-lg border border-gray-200 font-bold text-gray-900 text-xs bg-white outline-hidden"
+                              className="w-1/3 px-3 py-1.5 rounded-lg border border-gray-200 font-bold text-gray-900 text-xs bg-white outline-none"
                             />
                             <input
                               type="text"
@@ -1278,7 +1278,7 @@ export default function AdminLandingPagesPage() {
                                 setContentForm({ ...contentForm, how_to_use_steps: steps });
                               }}
                               placeholder={`شرح الخطوة ${idx + 1}`}
-                              className="w-2/3 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-800 text-xs bg-white outline-hidden"
+                              className="w-2/3 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-800 text-xs bg-white outline-none"
                             />
                           </div>
                         </div>
@@ -1298,7 +1298,7 @@ export default function AdminLandingPagesPage() {
                           setContentForm({ ...contentForm, how_to_use_image: e.target.value })
                         }
                         placeholder="/landing-pages/... أو رابط صورة"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden font-mono"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-mono"
                       />
                       {contentForm.how_to_use_image && (
                         <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-slate-100 relative">
@@ -1330,7 +1330,7 @@ export default function AdminLandingPagesPage() {
                         setContentForm({ ...contentForm, reviews_title: e.target.value })
                       }
                       placeholder="تجارب حقيقية لعملاء في مصر:"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-hidden font-bold"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-cyan-500 text-gray-900 text-xs outline-none font-bold"
                     />
                   </div>
 
@@ -1355,7 +1355,7 @@ export default function AdminLandingPagesPage() {
                                 setContentForm({ ...contentForm, reviews: revs });
                               }}
                               placeholder="اسم العميل (مثال: أم سليم)"
-                              className="px-3 py-1.5 rounded-lg border border-gray-200 font-bold text-gray-900 text-xs bg-white outline-hidden"
+                              className="px-3 py-1.5 rounded-lg border border-gray-200 font-bold text-gray-900 text-xs bg-white outline-none"
                             />
                             <input
                               type="text"
@@ -1366,7 +1366,7 @@ export default function AdminLandingPagesPage() {
                                 setContentForm({ ...contentForm, reviews: revs });
                               }}
                               placeholder="المنطقة (مثال: التجمع، القاهرة)"
-                              className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-800 text-xs bg-white outline-hidden"
+                              className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-800 text-xs bg-white outline-none"
                             />
                           </div>
                           <textarea
@@ -1378,7 +1378,7 @@ export default function AdminLandingPagesPage() {
                               setContentForm({ ...contentForm, reviews: revs });
                             }}
                             placeholder="نص التقييم وتجربة العميل مع المنتج..."
-                            className="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-gray-800 text-xs bg-white outline-hidden leading-relaxed"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-200 text-gray-800 text-xs bg-white outline-none leading-relaxed"
                           />
                         </div>
                       );
@@ -1447,7 +1447,7 @@ export default function AdminLandingPagesPage() {
                 type="button"
                 onClick={() => setCreateMode("quick")}
                 className={`py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                  createMode === "quick" ? "bg-white text-emerald-700 shadow-xs" : "text-gray-600 hover:text-gray-900"
+                  createMode === "quick" ? "bg-white text-emerald-700 shadow-sm" : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <Zap className="w-4 h-4 text-emerald-600" />
@@ -1458,7 +1458,7 @@ export default function AdminLandingPagesPage() {
                 type="button"
                 onClick={() => setCreateMode("ai_prompt")}
                 className={`py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                  createMode === "ai_prompt" ? "bg-white text-indigo-700 shadow-xs" : "text-gray-600 hover:text-gray-900"
+                  createMode === "ai_prompt" ? "bg-white text-indigo-700 shadow-sm" : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <Wand2 className="w-4 h-4 text-indigo-600" />
@@ -1475,7 +1475,7 @@ export default function AdminLandingPagesPage() {
                 <select
                   value={newProductId}
                   onChange={(e) => handleProductChange(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-hidden font-medium"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none font-medium"
                 >
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1496,7 +1496,7 @@ export default function AdminLandingPagesPage() {
                     required
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                 </div>
 
@@ -1510,7 +1510,7 @@ export default function AdminLandingPagesPage() {
                     dir="ltr"
                     value={newSlug}
                     onChange={(e) => setNewSlug(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden font-mono text-right"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-right"
                   />
                   <span className="text-[10px] text-gray-400 mt-0.5 block">/p/{newSlug || "slug"}</span>
                 </div>
@@ -1539,7 +1539,7 @@ export default function AdminLandingPagesPage() {
                       <button
                         type="button"
                         onClick={handleCopyPrompt}
-                        className="py-1 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-xs transition"
+                        className="py-1 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-sm transition"
                       >
                         {copiedPrompt ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedPrompt ? "تم النسخ!" : "نسخ البرومبت"}</span>
@@ -1564,7 +1564,7 @@ export default function AdminLandingPagesPage() {
                       value={aiInputText}
                       onChange={(e) => setAiInputText(e.target.value)}
                       placeholder='الصق الرد هنا... مثلاً: {"hero_headline": "...", "hero_bullets": [...]} أو النص المكتوب'
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 text-xs font-mono text-slate-900 bg-white outline-hidden leading-relaxed"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 text-xs font-mono text-slate-900 bg-white outline-none leading-relaxed"
                     />
 
                     <div className="flex items-center justify-between gap-2 pt-1">
@@ -1710,7 +1710,7 @@ export default function AdminLandingPagesPage() {
                               })
                             }
                             placeholder="عرض خاص: شحن مجاني لجميع المحافظات + حق المعاينة والتجربة قبل الدفع"
-                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-none"
                           />
                         </div>
 
@@ -1728,7 +1728,7 @@ export default function AdminLandingPagesPage() {
                               })
                             }
                             placeholder="اسم المنتج والعنوان الجذاب"
-                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 font-bold text-xs text-gray-900 bg-white outline-hidden"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 font-bold text-xs text-gray-900 bg-white outline-none"
                           />
                         </div>
 
@@ -1746,7 +1746,7 @@ export default function AdminLandingPagesPage() {
                               })
                             }
                             placeholder="شرح سريع لمشكلة العميل وكيف يحلها المنتج"
-                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden leading-relaxed"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-none leading-relaxed"
                           />
                         </div>
 
@@ -1765,7 +1765,7 @@ export default function AdminLandingPagesPage() {
                                 })
                               }
                               placeholder="/landing-pages/... أو https://..."
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-hidden"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-none"
                             />
                           </div>
 
@@ -1783,7 +1783,7 @@ export default function AdminLandingPagesPage() {
                                 })
                               }
                               placeholder="4.9 / 5.0 (أكثر من 400 تقييم)"
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-none"
                             />
                           </div>
                         </div>
@@ -1809,7 +1809,7 @@ export default function AdminLandingPagesPage() {
                                   });
                                 }}
                                 placeholder={`الميزة رقم ${idx + 1}`}
-                                className="w-full px-3 py-1 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white outline-hidden"
+                                className="w-full px-3 py-1 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white outline-none"
                               />
                             ))}
                           </div>
@@ -1835,7 +1835,7 @@ export default function AdminLandingPagesPage() {
                                 })
                               }
                               placeholder="الفرق بين المنتجات التقليدية وجهازنا"
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-none"
                             />
                           </div>
                           <div>
@@ -1852,7 +1852,7 @@ export default function AdminLandingPagesPage() {
                                 })
                               }
                               placeholder="/landing-pages/..."
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-hidden"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-none"
                             />
                           </div>
                         </div>
@@ -1876,7 +1876,7 @@ export default function AdminLandingPagesPage() {
                                   });
                                 }}
                                 placeholder={`عيب رقم ${idx + 1}`}
-                                className="w-full px-2.5 py-1 rounded-md border border-rose-200 text-rose-900 text-xs bg-white outline-hidden"
+                                className="w-full px-2.5 py-1 rounded-md border border-rose-200 text-rose-900 text-xs bg-white outline-none"
                               />
                             ))}
                           </div>
@@ -1899,7 +1899,7 @@ export default function AdminLandingPagesPage() {
                                   });
                                 }}
                                 placeholder={`ميزة رقم ${idx + 1}`}
-                                className="w-full px-2.5 py-1 rounded-md border border-emerald-200 text-emerald-900 text-xs bg-white outline-hidden"
+                                className="w-full px-2.5 py-1 rounded-md border border-emerald-200 text-emerald-900 text-xs bg-white outline-none"
                               />
                             ))}
                           </div>
@@ -1925,7 +1925,7 @@ export default function AdminLandingPagesPage() {
                                 })
                               }
                               placeholder="محتويات العلبة الأصلية:"
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-none"
                             />
                           </div>
                           <div>
@@ -1942,7 +1942,7 @@ export default function AdminLandingPagesPage() {
                                 })
                               }
                               placeholder="/landing-pages/..."
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-hidden"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-none"
                             />
                           </div>
                         </div>
@@ -1963,7 +1963,7 @@ export default function AdminLandingPagesPage() {
                               })
                             }
                             placeholder="1× الجهاز الأصلي...&#10;1× الملحقات...&#10;1× كارت الضمان..."
-                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-none"
                           />
                         </div>
                       </div>
@@ -1987,7 +1987,7 @@ export default function AdminLandingPagesPage() {
                                 })
                               }
                               placeholder="طريقة الاستخدام السريعة:"
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 bg-white outline-none"
                             />
                           </div>
                           <div>
@@ -2004,7 +2004,7 @@ export default function AdminLandingPagesPage() {
                                 })
                               }
                               placeholder="/landing-pages/..."
-                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-hidden"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs text-gray-900 font-mono bg-white outline-none"
                             />
                           </div>
                         </div>
@@ -2032,7 +2032,7 @@ export default function AdminLandingPagesPage() {
                                     });
                                   }}
                                   placeholder={`عنوان الخطوة ${idx + 1}`}
-                                  className="w-1/3 px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 font-bold bg-white outline-hidden"
+                                  className="w-1/3 px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 font-bold bg-white outline-none"
                                 />
                                 <input
                                   type="text"
@@ -2048,7 +2048,7 @@ export default function AdminLandingPagesPage() {
                                     });
                                   }}
                                   placeholder={`شرح الخطوة ${idx + 1}`}
-                                  className="w-2/3 px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                                  className="w-2/3 px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 bg-white outline-none"
                                 />
                               </div>
                             );
@@ -2083,7 +2083,7 @@ export default function AdminLandingPagesPage() {
                                     });
                                   }}
                                   placeholder="اسم العميل"
-                                  className="px-2.5 py-1 rounded-md border border-gray-300 text-xs font-bold text-gray-900 bg-white outline-hidden"
+                                  className="px-2.5 py-1 rounded-md border border-gray-300 text-xs font-bold text-gray-900 bg-white outline-none"
                                 />
                                 <input
                                   type="text"
@@ -2097,7 +2097,7 @@ export default function AdminLandingPagesPage() {
                                     });
                                   }}
                                   placeholder="المحافظة أو المنطقة"
-                                  className="px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-800 bg-white outline-hidden"
+                                  className="px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-800 bg-white outline-none"
                                 />
                               </div>
                               <input
@@ -2112,7 +2112,7 @@ export default function AdminLandingPagesPage() {
                                   });
                                 }}
                                 placeholder="نص رأي وتجربة العميل..."
-                                className="w-full px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 bg-white outline-hidden"
+                                className="w-full px-2.5 py-1 rounded-md border border-gray-300 text-xs text-gray-900 bg-white outline-none"
                               />
                             </div>
                           );
@@ -2142,7 +2142,7 @@ export default function AdminLandingPagesPage() {
                         value={newPixelId}
                         onChange={(e) => setNewPixelId(e.target.value)}
                         placeholder="اتركه فارغاً لاستخدام البيكسل الافتراضي للمتجر"
-                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden font-mono text-right"
+                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-right"
                       />
                     </div>
 
@@ -2156,7 +2156,7 @@ export default function AdminLandingPagesPage() {
                         value={customHeadScripts}
                         onChange={(e) => setCustomHeadScripts(e.target.value)}
                         placeholder="<script>...أكواد بيكسل تيك توك أو جوجل تاج...</script>"
-                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden font-mono text-left leading-relaxed"
+                        className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-left leading-relaxed"
                       />
                     </div>
                   </div>

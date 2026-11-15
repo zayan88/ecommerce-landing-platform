@@ -78,7 +78,7 @@ export default function AdminOverviewPage() {
 
         <button
           onClick={fetchStats}
-          className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-xs transition"
+          className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           <span>تحديث البيانات</span>
@@ -87,7 +87,7 @@ export default function AdminOverviewPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-500">إجمالي المبيعات المؤكدة</span>
             <div className="text-2xl font-black text-emerald-700 mt-1 font-heading">
@@ -102,7 +102,7 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-500">إجمالي الطلبات</span>
             <div className="text-2xl font-black text-gray-900 mt-1 font-heading">
@@ -117,7 +117,7 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-500">متوسط قيمة الطلب (AOV)</span>
             <div className="text-2xl font-black text-gray-900 mt-1 font-heading">
@@ -132,7 +132,7 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-500">صفحات الهبوط النشطة</span>
             <div className="text-2xl font-black text-gray-900 mt-1 font-heading">
@@ -149,7 +149,7 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Landing Pages Table */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-900 font-heading">
@@ -232,7 +232,7 @@ export default function AdminOverviewPage() {
       {/* Governorates & Quick Deployment Guide */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top Governorates */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xs space-y-4">
+        <div className="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-gray-100">
             <h3 className="font-bold text-gray-900 text-base font-heading flex items-center gap-2">
               <MapPin className="w-4 h-4 text-emerald-600" /> أكثر المحافظات طلباً

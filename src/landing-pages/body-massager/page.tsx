@@ -83,7 +83,7 @@ export default function BodyMassagerLandingPage({
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir="rtl">
       {/* 1. Top Urgency Announcement Bar */}
-      <div className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 text-white py-2.5 px-4 text-center text-xs sm:text-sm font-bold shadow-xs flex items-center justify-center gap-2">
+      <div className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 text-white py-2.5 px-4 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2">
         <Sparkles className="w-4 h-4 text-amber-200 animate-pulse" />
         <span>عرض خاص اليوم: شحن مجاني 100% لجميع المحافظات + حق المعاينة والتجربة قبل الدفع</span>
         <span className="hidden sm:inline bg-white/20 px-2 py-0.5 rounded-full text-xs font-mono font-black">
@@ -108,15 +108,15 @@ export default function BodyMassagerLandingPage({
 
             {/* Quick Micro Badges */}
             <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
-              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
                 <Zap className="w-4 h-4 text-amber-500 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-800">5 استخدامات بجهاز 1</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
                 <Flame className="w-4 h-4 text-red-500 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-800">3 درجات حرارة</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+              <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
                 <BatteryCharging className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
                 <span className="font-bold text-[11px] text-slate-800">لاسلكي تماماً</span>
               </div>
@@ -149,7 +149,7 @@ export default function BodyMassagerLandingPage({
             </p>
 
             {/* Checklist of Core Benefits */}
-            <div className="space-y-2 text-xs sm:text-sm text-slate-700 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+            <div className="space-y-2 text-xs sm:text-sm text-slate-700 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span className="font-semibold">يغطي 5 مناطق رئيسية: الكتف، الظهر، البطن، الركبة، والرجل</span>
@@ -396,7 +396,7 @@ export default function BodyMassagerLandingPage({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-right pt-2">
           {bodyMassagerConfig.steps.map((st) => (
-            <div key={st.num} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+            <div key={st.num} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2">
               <div className="w-8 h-8 rounded-full bg-orange-600 text-white font-black text-sm flex items-center justify-center">
                 {st.num}
               </div>
@@ -513,7 +513,7 @@ export default function BodyMassagerLandingPage({
             </ul>
           </div>
 
-          <div className="p-6 rounded-3xl bg-emerald-50/60 border border-emerald-300 space-y-3 shadow-xs">
+          <div className="p-6 rounded-3xl bg-emerald-50/60 border border-emerald-300 space-y-3 shadow-sm">
             <div className="font-bold text-emerald-800 text-sm flex items-center gap-2">
               <span>✅ مع جهاز التدليك الشامل (الراحة والنشاط):</span>
             </div>
@@ -546,7 +546,7 @@ export default function BodyMassagerLandingPage({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right pt-2">
             {bodyMassagerConfig.reviews.map((rev, idx) => (
-              <div key={idx} className="p-5 rounded-3xl bg-slate-50 border border-slate-200/90 shadow-2xs space-y-3 flex flex-col justify-between">
+              <div key={idx} className="p-5 rounded-3xl bg-slate-50 border border-slate-200/90 shadow-sm space-y-3 flex flex-col justify-between">
                 <div className="space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -615,7 +615,7 @@ export default function BodyMassagerLandingPage({
 
         <div className="space-y-3">
           {bodyMassagerConfig.faqs.map((faq, idx) => (
-            <div key={idx} className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-2xs">
+            <div key={idx} className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-sm">
               <button
                 type="button"
                 onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}

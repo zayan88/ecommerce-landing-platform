@@ -8,6 +8,7 @@ interface StickyBuyBarProps {
   product?: Product;
   selectedOffer?: ProductOffer;
   onOrderClick?: () => void;
+  onBuyClick?: () => void;
   productTitle?: string;
   price?: number;
   compareAtPrice?: number;
@@ -19,10 +20,11 @@ export function StickyBuyBar({
   product,
   selectedOffer,
   onOrderClick,
+  onBuyClick,
   productTitle = product?.title_ar || "",
   price = selectedOffer?.price || product?.base_price || 0,
   compareAtPrice = selectedOffer?.original_price || product?.compare_at_price,
-  onCtaClick = onOrderClick,
+  onCtaClick = onOrderClick ?? onBuyClick,
   ctaText = "أكّد طلبك الآن 🛒",
 }: StickyBuyBarProps) {
   const scrollToForm = () => {

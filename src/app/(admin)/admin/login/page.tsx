@@ -97,7 +97,7 @@ function LoginForm() {
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               placeholder="أدخل الرمز السري هنا..."
-              className="w-full px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-center text-lg font-mono tracking-widest outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition"
+              className="w-full px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-center text-lg font-mono tracking-widest outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition"
             />
             <button
               type="button"

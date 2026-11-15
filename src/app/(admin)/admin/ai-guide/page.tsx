@@ -56,7 +56,7 @@ export default function AdminAiGuidePage() {
 
       {/* 3 Step Card Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs space-y-2">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm space-y-2">
           <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-black flex items-center justify-center text-sm">
             1
           </div>
@@ -68,7 +68,7 @@ export default function AdminAiGuidePage() {
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs space-y-2">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm space-y-2">
           <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-black flex items-center justify-center text-sm">
             2
           </div>
@@ -80,7 +80,7 @@ export default function AdminAiGuidePage() {
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs space-y-2">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm space-y-2">
           <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-black flex items-center justify-center text-sm">
             3
           </div>
@@ -105,7 +105,7 @@ export default function AdminAiGuidePage() {
 
           <button
             onClick={handleCopy}
-            className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+            className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
           >
             {copiedPrompt ? (
               <>
@@ -127,7 +127,7 @@ export default function AdminAiGuidePage() {
       </div>
 
       {/* Development & Architecture Rules Recap */}
-      <div className="bg-white rounded-3xl border border-gray-200/80 p-6 md:p-8 shadow-xs space-y-4">
+      <div className="bg-white rounded-3xl border border-gray-200/80 p-6 md:p-8 shadow-sm space-y-4">
         <h3 className="text-lg font-bold text-gray-900 font-heading flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-emerald-600" />
           <span>قواعد الأمان وعدم تعارض الصفحات (Isolation Rules)</span>

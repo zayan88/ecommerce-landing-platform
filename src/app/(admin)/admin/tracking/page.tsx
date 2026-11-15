@@ -138,12 +138,12 @@ export default function AdminTrackingPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-white rounded-2xl border border-gray-200 shadow-2xs">
+        <div className="flex items-center gap-1.5 p-1 bg-white rounded-2xl border border-gray-200 shadow-sm">
           <button
             onClick={() => setActiveTab("visitors")}
             className={`py-2 px-4 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === "visitors"
-                ? "bg-slate-950 text-white shadow-xs"
+                ? "bg-slate-950 text-white shadow-sm"
                 : "text-gray-600 hover:text-gray-950"
             }`}
           >
@@ -154,7 +154,7 @@ export default function AdminTrackingPage() {
             onClick={() => setActiveTab("meta")}
             className={`py-2 px-4 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === "meta"
-                ? "bg-blue-600 text-white shadow-xs"
+                ? "bg-blue-600 text-white shadow-sm"
                 : "text-gray-600 hover:text-gray-950"
             }`}
           >
@@ -168,7 +168,7 @@ export default function AdminTrackingPage() {
       {activeTab === "visitors" && (
         <div className="space-y-6">
           {/* Quick Control Bar: Refresh & Live Status */}
-          <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
                 <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-600" />
@@ -203,7 +203,7 @@ export default function AdminTrackingPage() {
           {/* KPI Stat Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* 1. Unique Visitors */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-2xs flex items-center justify-between">
+            <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-xs font-semibold text-gray-500">إجمالي الأشخاص (الزوار)</span>
                 <div className="text-2xl font-black text-slate-950 mt-1 font-heading">
@@ -219,7 +219,7 @@ export default function AdminTrackingPage() {
             </div>
 
             {/* 2. Total Page Views */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-2xs flex items-center justify-between">
+            <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-xs font-semibold text-gray-500">مشاهدات وزيارات الصفحات</span>
                 <div className="text-2xl font-black text-blue-700 mt-1 font-heading">
@@ -235,7 +235,7 @@ export default function AdminTrackingPage() {
             </div>
 
             {/* 3. Today's Visitors */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-2xs flex items-center justify-between">
+            <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-xs font-semibold text-gray-500">زوار اليوم (Today)</span>
                 <div className="text-2xl font-black text-emerald-600 mt-1 font-heading">
@@ -251,7 +251,7 @@ export default function AdminTrackingPage() {
             </div>
 
             {/* 4. Conversion Rate */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-2xs flex items-center justify-between">
+            <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-xs font-semibold text-gray-500">معدل التحويل للطلب</span>
                 <div className="text-2xl font-black text-orange-600 mt-1 font-heading">
@@ -268,7 +268,7 @@ export default function AdminTrackingPage() {
           </div>
 
           {/* Behavior Funnel: ماذا فعل الناس في الموقع خطوة بخطوة */}
-          <div className="bg-white rounded-3xl border border-gray-200/80 p-6 shadow-2xs space-y-4">
+          <div className="bg-white rounded-3xl border border-gray-200/80 p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-gray-100">
               <div>
                 <h3 className="text-lg font-black text-gray-950 font-heading flex items-center gap-2">
@@ -321,7 +321,7 @@ export default function AdminTrackingPage() {
           {/* Grid: Live Activity Feed + Devices & Sources */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Live Activity Stream (سجل النشاط المباشر دقيقة بدقيقة) */}
-            <div className="lg:col-span-8 bg-white rounded-3xl border border-gray-200/80 p-6 shadow-2xs space-y-4">
+            <div className="lg:col-span-8 bg-white rounded-3xl border border-gray-200/80 p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div>
                   <h3 className="text-base font-black text-gray-950 font-heading flex items-center gap-2">
@@ -426,7 +426,7 @@ export default function AdminTrackingPage() {
             {/* Devices & Traffic Source Breakdown */}
             <div className="lg:col-span-4 space-y-4">
               {/* Devices Card */}
-              <div className="bg-white rounded-3xl border border-gray-200/80 p-5 shadow-2xs space-y-4">
+              <div className="bg-white rounded-3xl border border-gray-200/80 p-5 shadow-sm space-y-4">
                 <h4 className="text-sm font-black text-gray-950 font-heading flex items-center gap-2">
                   <Smartphone className="w-4 h-4 text-emerald-600" />
                   <span>الأجهزة المستخدمة (Devices)</span>
@@ -466,7 +466,7 @@ export default function AdminTrackingPage() {
               </div>
 
               {/* Traffic Sources */}
-              <div className="bg-white rounded-3xl border border-gray-200/80 p-5 shadow-2xs space-y-4">
+              <div className="bg-white rounded-3xl border border-gray-200/80 p-5 shadow-sm space-y-4">
                 <h4 className="text-sm font-black text-gray-950 font-heading flex items-center gap-2">
                   <Globe className="w-4 h-4 text-blue-600" />
                   <span>مصادر الزيارات (Traffic Sources)</span>
@@ -497,7 +497,7 @@ export default function AdminTrackingPage() {
       {activeTab === "meta" && (
         <div className="space-y-6 max-w-4xl">
           {metaSaveSuccess && (
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold flex items-center gap-2 shadow-xs">
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold flex items-center gap-2 shadow-sm">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>تم حفظ بيانات التتبع وبيكسل ميتا بنجاح</span>
             </div>
@@ -536,7 +536,7 @@ export default function AdminTrackingPage() {
           {/* Main Settings Form */}
           <form
             onSubmit={handleSaveMeta}
-            className="bg-white rounded-3xl border border-gray-200/80 p-6 md:p-8 shadow-xs space-y-6"
+            className="bg-white rounded-3xl border border-gray-200/80 p-6 md:p-8 shadow-sm space-y-6"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-4 border-b border-gray-100">
@@ -560,7 +560,7 @@ export default function AdminTrackingPage() {
                     setSettings({ ...settings, default_meta_pixel_id: e.target.value })
                   }
                   placeholder="123456789012345"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 font-mono text-sm text-right outline-hidden focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 font-mono text-sm text-right outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <span className="text-[11px] text-gray-400 mt-1 block">
                   يمكنك تخصيص بيكسل مختلف لكل صفحة هبوط مستقلة من صفحة إدارة صفحات الهبوط.
@@ -579,7 +579,7 @@ export default function AdminTrackingPage() {
                     setSettings({ ...settings, default_meta_capi_token: e.target.value })
                   }
                   placeholder="EAABw..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 font-mono text-xs text-right outline-hidden focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 font-mono text-xs text-right outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <span className="text-[11px] text-gray-400 mt-1 block">
                   يمكن توليده من إعدادات Meta Events Manager &gt; Conversions API &gt; Generate
@@ -599,7 +599,7 @@ export default function AdminTrackingPage() {
                     setSettings({ ...settings, meta_test_event_code: e.target.value })
                   }
                   placeholder="TEST12345"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 font-mono text-sm text-right outline-hidden focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 font-mono text-sm text-right outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <span className="text-[11px] text-gray-400 mt-1 block">
                   يستخدم لرؤية الأحداث المباشرة داخل تبويب Test Events في مدير أحداث فيسبوك.
