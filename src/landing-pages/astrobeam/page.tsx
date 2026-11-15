@@ -7,6 +7,8 @@ import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import { astrobeamConfig } from "./config";
+import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
+import { SocialProofWall } from "@/components/shared/SocialProofWall";
 import {
   Star,
   ShieldCheck,
@@ -220,6 +222,11 @@ export default function AstroBeamLandingPage({
         </div>
       </section>
 
+      {/* Trust strip (real rating only when configured) */}
+      <section className="px-4 sm:px-6 max-w-4xl mx-auto pb-8">
+        <SocialProofWall />
+      </section>
+
       {/* 3. Visual Gallery & Highlights */}
       <section className="py-12 bg-slate-900/60 border-y border-purple-500/20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -357,6 +364,11 @@ export default function AstroBeamLandingPage({
             </div>
           </div>
         </div>
+      </section>
+
+      {/* The 3 golden guarantees, right before the order form */}
+      <section className="px-4 sm:px-6 max-w-3xl mx-auto pt-4">
+        <GuaranteesStrip title="ضماناتنا ليك" />
       </section>
 
       {/* 6. Checkout Form Section */}

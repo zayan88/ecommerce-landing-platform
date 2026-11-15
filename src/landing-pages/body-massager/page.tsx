@@ -7,6 +7,8 @@ import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import { bodyMassagerConfig } from "./config";
+import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
+import { SocialProofWall } from "@/components/shared/SocialProofWall";
 import {
   Star,
   ShieldCheck,
@@ -209,6 +211,11 @@ export default function BodyMassagerLandingPage({
             </button>
           </div>
         </div>
+      </section>
+
+      {/* Trust strip (real rating only when configured) */}
+      <section className="px-4 sm:px-6 max-w-4xl mx-auto pb-8">
+        <SocialProofWall />
       </section>
 
       {/* 3. The Problem Section */}
@@ -574,6 +581,11 @@ export default function BodyMassagerLandingPage({
             ))}
           </div>
         </div>
+      </section>
+
+      {/* The 3 golden guarantees, right before the order form */}
+      <section className="px-4 sm:px-6 max-w-3xl mx-auto pt-4">
+        <GuaranteesStrip title="ضماناتنا ليك" />
       </section>
 
       {/* 7. The Order Form Section */}

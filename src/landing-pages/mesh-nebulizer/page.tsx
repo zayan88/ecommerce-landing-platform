@@ -2,7 +2,10 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, DEFAULT_LANDING_PAGE_SECTIONS } from "@/types";
+import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSections } from "@/types";
+import { FaqAccordion } from "@/components/shared/FaqAccordion";
+import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
+import { SocialProofWall } from "@/components/shared/SocialProofWall";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
@@ -16,11 +19,9 @@ import {
   ArrowDown,
   Package,
   CheckCircle2,
-  PhoneCall,
   Zap,
   XCircle,
   ThumbsUp,
-  Clock,
 } from "lucide-react";
 
 interface MeshNebulizerPageProps {
@@ -65,10 +66,8 @@ export default function MeshNebulizerLandingPage({
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
-  const sections: LandingPageSectionConfig[] =
-    landingPage.sections_config && landingPage.sections_config.length > 0
-      ? landingPage.sections_config
-      : DEFAULT_LANDING_PAGE_SECTIONS;
+  // Pages saved before new sections existed still get them (saved order/flags win)
+  const sections: LandingPageSectionConfig[] = mergeSections(landingPage.sections_config);
 
   const c = landingPage.content_config;
 
@@ -479,29 +478,21 @@ export default function MeshNebulizerLandingPage({
 
   // 7. GUARANTEES FOOTER
   const renderGuarantees = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs text-slate-600 pt-2">
-      <div className="p-3 rounded-2xl bg-white border border-slate-200">
-        <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
-        <span className="font-bold block text-slate-800">معاينة قبل الدفع</span>
-        <span className="text-[10px] text-slate-500">افحص طلبك مع المندوب</span>
-      </div>
-      <div className="p-3 rounded-2xl bg-white border border-slate-200">
-        <Truck className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
-        <span className="font-bold block text-slate-800">شحن مجاني</span>
-        <span className="text-[10px] text-slate-500">لكل محافظات مصر</span>
-      </div>
-      <div className="p-3 rounded-2xl bg-white border border-slate-200">
-        <Clock className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
-        <span className="font-bold block text-slate-800">توصيل سريع</span>
-        <span className="text-[10px] text-slate-500">من 5 إلى 7 أيام</span>
-      </div>
-      <div className="p-3 rounded-2xl bg-white border border-slate-200">
-        <PhoneCall className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
-        <span className="font-bold block text-slate-800">تأكيد فوري</span>
-        <span className="text-[10px] text-slate-500">اتصال لتأكيد الميعاد</span>
-      </div>
-    </div>
+    <GuaranteesStrip title={c?.guarantees_title || "ضماناتنا ليك"} items={c?.guarantees} />
   );
+
+  // TRUST STRIP (stage 2) — only real rating/count are shown, never invented
+  const renderSocialProof = () => (
+    <SocialProofWall
+      rating={c?.proof_rating}
+      reviewsCount={c?.proof_reviews_count}
+      statements={c?.proof_statements}
+      governorates={c?.proof_governorates}
+    />
+  );
+
+  // FAQ (stage 9)
+  const renderFaq = () => <FaqAccordion title={c?.faq_title} items={c?.faq_items} />;
 
   const renderSection = (id: string) => {
     switch (id) {
@@ -519,6 +510,10 @@ export default function MeshNebulizerLandingPage({
         return renderOrderForm();
       case "guarantees":
         return renderGuarantees();
+      case "social_proof":
+        return renderSocialProof();
+      case "faq":
+        return renderFaq();
       default:
         return null;
     }

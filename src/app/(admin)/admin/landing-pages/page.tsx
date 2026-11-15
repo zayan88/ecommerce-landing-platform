@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { LandingPage, Product, LandingPageSectionConfig, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS } from "@/types";
+import { LandingPage, Product, LandingPageSectionConfig, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, mergeSections } from "@/types";
 import { Plus, ExternalLink, Copy, Check, Trash2, Sliders, Edit3 } from "lucide-react";
 import SectionCustomizerModal from "./_components/SectionCustomizerModal";
 import ContentEditorModal from "./_components/ContentEditorModal";
@@ -331,11 +331,8 @@ export default function AdminLandingPagesPage() {
   // Section Customizer Methods
   const openSectionCustomizer = (lp: LandingPage) => {
     setCustomizingLp(lp);
-    const existing =
-      lp.sections_config && lp.sections_config.length > 0
-        ? JSON.parse(JSON.stringify(lp.sections_config))
-        : JSON.parse(JSON.stringify(DEFAULT_LANDING_PAGE_SECTIONS));
-    setCustomSections(existing);
+    // Merge so sections added after this page was saved (social_proof, faq) show up and can be toggled/moved
+    setCustomSections(JSON.parse(JSON.stringify(mergeSections(lp.sections_config))));
     setSectionSaveSuccess(false);
   };
 
@@ -539,12 +536,9 @@ export default function AdminLandingPagesPage() {
         {landingPages.map((lp) => {
           const fullUrl = `/p/${lp.slug}`;
           const isCopied = copiedSlug === lp.slug;
-          const activeSectionsCount = lp.sections_config
-            ? lp.sections_config.filter((s) => s.enabled).length
-            : DEFAULT_LANDING_PAGE_SECTIONS.length;
-          const totalSectionsCount = lp.sections_config
-            ? lp.sections_config.length
-            : DEFAULT_LANDING_PAGE_SECTIONS.length;
+          const mergedSections = mergeSections(lp.sections_config);
+          const activeSectionsCount = mergedSections.filter((s) => s.enabled).length;
+          const totalSectionsCount = mergedSections.length;
 
           return (
             <div
