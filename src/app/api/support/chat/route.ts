@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
+import { TelegramNotifier } from "@/lib/notifications/telegram";
+import { allowTelegramForward, clipForwardText } from "@/lib/support-guard";
+import { getOrderClientIp } from "@/lib/orders/guard";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -716,8 +719,21 @@ ${activeProducts
 
     // Customer Service query
     if (isHumanAgent) {
+      // Forward to Telegram as high-priority customer service escalation
+      try {
+        if (await allowTelegramForward(getOrderClientIp(req.headers))) {
+          await TelegramNotifier.sendCustomerInquiryNotification({
+            message: `[طلب تحويل بشري / خدمة عملاء]: ${clipForwardText(message)}`,
+            customerPhone: phoneMatch ? phoneMatch[0] : undefined,
+            source: "Customer Requested Human Agent",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to forward human agent request to Telegram:", err);
+      }
+
       return NextResponse.json({
-        reply: `أهلاً بحضرتك يا فندم! أنا **خدمة العملاء الذكية والرسمية لمتجر RexRack** ومسؤول عن مساعدتك فورياً 24 ساعة بدون أي انتظار 🤖✨.\n\nأنا متصل مباشرة بنظام المتجر وقاعدة البيانات، وأقدر أساعدك حالاً وبأعلى دقة في:\n1. 📦 **تتبع أي أوردر:** اكتب رقم تليفونك المسجل وهجيبلك حالة الشحنة وميعاد وصولها فوراً.\n2. 🛒 **تسجيل وتأكيد طلبك:** تقدر تطلب أي منتج وأسجلهولك بالدفع عند الاستلام مع شحن مجاني.\n3. 🛡️ **الاستبدال والمعاينة:** شرح طريقة فحص المنتج مع المندوب وضمان الـ 14 يوم المجاني.\n4. 💡 **أي استفسار أو مساعدة:** اسألني في أي تفاصيل وهجاوبك عليها في ثواني.\n\nقولي يا فندم إيه استفسارك أو مشكلتك وأنا هحلّهالك في لحظتها!`,
+        reply: `أهلاً بحضرتك يا فندم! 🌸\n\nأنا **خدمة العملاء لمتجر RexRack**، وتم إرسال تنبيه فوري لمسؤول خدمة العملاء والدعم على تليجرام لمتابعة استفسارك في الحال.\n\nوفي نفس الوقت، أقدر أساعدك فوراً وبدون أي انتظار في:\n1. 📦 **تتبع أي أوردر:** اكتب رقم تليفونك المسجل وهجيبلك حالة الشحنة فوراً.\n2. 🛒 **تسجيل وتأكيد طلبك:** تقدر تطلب أي منتج وهسجلهولك بالدفع عند الاستلام مع شحن مجاني.\n3. 🛡️ **الاستبدال والمعاينة:** شرح طريقة فحص المنتج مع المندوب وضمان الـ 14 يوم المجاني.\n\nقولي يا فندم إيه استفسارك أو مشكلتك وأنا هحلّهالك في لحظتها!`,
         quickReplies: [
           "تتبع طلبي برقم الهاتف",
           "عروض الشحن المجاني اليوم",
@@ -740,14 +756,26 @@ ${activeProducts
       } satisfies ChatResponseData);
     }
 
-    // General conversational response (Chatbot mode)
+    // Unanswered / Unscripted Question Fallback -> Escalate directly to Telegram
+    try {
+      if (await allowTelegramForward(getOrderClientIp(req.headers))) {
+        await TelegramNotifier.sendCustomerInquiryNotification({
+          message: clipForwardText(message),
+          customerPhone: phoneMatch ? phoneMatch[0] : undefined,
+          source: "Unanswered Support Chat Question",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to forward unanswered inquiry to Telegram:", err);
+    }
+
     return NextResponse.json({
-      reply: `أهلاً بحضرتك يا فندم! أنا معاك وسامعك كويس جداً 🤖.\n\nبخصوص رسالتك: "${message}"\nأنا جاهز أساعدك وأتفاعل معاك في أي استفسار أو تجربة حابب تعملها. سواء كنت بتجرب الشات، أو عندك استفسار عن المنتجات الذكية والأسعار وعروض التوفير والشحن في RexRack، قولي وخليني أجاوبك فوراً!`,
+      reply: `أهلاً بحضرتك يا فندم! 🌸\n\nبخصوص استفسارك: "${message}"\n\n✅ **تم تحويل سؤالك فوراً لمسؤول خدمة العملاء على تليجرام** للمتابعة والرد على حضرتك في أسرع وقت. ⚡\n\nوفي هذه الأثناء تقدر تختار من الخدمات السريعة التلقائية أدناه:`,
       quickReplies: [
-          "💨 جهاز استنشاق البخار",
-          "💆‍♂️ جهاز تدليك الجسم",
-          "قولي نكتة سريعة",
-          "🚚 تفاصيل الشحن والمعاينة",
+        "📦 تتبع طلبي برقم الهاتف",
+        "🚚 عروض الشحن والتوصيل",
+        "🛡️ معاينة الأوردر قبل الدفع",
+        "تصفح عروض المنتجات المتاحة",
       ],
     } satisfies ChatResponseData);
   } catch (error: any) {
