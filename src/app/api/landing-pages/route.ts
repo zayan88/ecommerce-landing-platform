@@ -3,8 +3,14 @@ import { dbStore } from "@/lib/db/store";
 
 export const runtime = "edge";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // Single page, read from the same source the public page uses (always the latest saved content)
+    const id = new URL(req.url).searchParams.get("id");
+    if (id) {
+      const landingPage = await dbStore.getLandingPage(id);
+      return NextResponse.json({ success: !!landingPage, landingPage });
+    }
     const landingPages = await dbStore.getLandingPages();
     return NextResponse.json({ success: true, landingPages });
   } catch (err: any) {

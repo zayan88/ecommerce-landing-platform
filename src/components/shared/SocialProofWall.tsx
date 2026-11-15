@@ -1,5 +1,6 @@
 import React from "react";
 import { Star, MapPin, BadgeCheck } from "lucide-react";
+import { EText } from "@/components/editor/Editable";
 
 /**
  * Trust strip. Deliberately contains NO invented buyer names, NO fake "bought X minutes ago"
@@ -21,9 +22,11 @@ interface SocialProofWallProps {
   reviewsCount?: number;
   statements?: string[];
   governorates?: string[];
+  /** Bind texts to content_config paths for the live editor (no effect on the public render). */
+  editable?: boolean;
 }
 
-export function SocialProofWall({ rating, reviewsCount, statements, governorates }: SocialProofWallProps) {
+export function SocialProofWall({ rating, reviewsCount, statements, governorates, editable }: SocialProofWallProps) {
   const showRating = typeof rating === "number" && rating > 0 && typeof reviewsCount === "number" && reviewsCount > 0;
   const safeRating = showRating ? Math.min(5, Math.max(0, rating as number)) : 0;
   const filledStars = Math.round(safeRating);
@@ -51,7 +54,7 @@ export function SocialProofWall({ rating, reviewsCount, statements, governorates
             className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-2.5 py-2 text-[11px] sm:text-sm font-bold text-emerald-900 leading-snug"
           >
             <BadgeCheck className="w-4 h-4 shrink-0 text-emerald-600" aria-hidden="true" />
-            <span>{s}</span>
+            <EText field={editable ? `proof_statements.${i}` : undefined} base={stmts} as="span" value={s} />
           </li>
         ))}
       </ul>
@@ -60,9 +63,7 @@ export function SocialProofWall({ rating, reviewsCount, statements, governorates
         <MapPin className="w-4 h-4 text-orange-600" aria-hidden="true" />
         <span className="font-bold text-slate-800">بنوصّل:</span>
         {places.map((p, i) => (
-          <span key={i} className="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 font-semibold">
-            {p}
-          </span>
+          <EText key={i} field={editable ? `proof_governorates.${i}` : undefined} base={places} as="span" className="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 font-semibold" value={p} />
         ))}
       </div>
     </section>

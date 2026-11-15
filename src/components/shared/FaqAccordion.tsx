@@ -1,5 +1,6 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
+import { EText } from "@/components/editor/Editable";
 
 export interface FaqItem {
   q: string;
@@ -38,9 +39,11 @@ interface FaqAccordionProps {
   title?: string;
   items?: FaqItem[];
   defaultOpenIndex?: number;
+  /** Bind texts to content_config paths for the live editor (no effect on the public render). */
+  editable?: boolean;
 }
 
-export function FaqAccordion({ title, items, defaultOpenIndex = 0 }: FaqAccordionProps) {
+export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable }: FaqAccordionProps) {
   const titleId = React.useId();
   const list = items && items.length > 0 ? items.filter((i) => i?.q && i?.a) : DEFAULT_FAQ;
   const jsonLd = {
@@ -55,9 +58,7 @@ export function FaqAccordion({ title, items, defaultOpenIndex = 0 }: FaqAccordio
 
   return (
     <section dir="rtl" aria-labelledby={titleId} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm sm:shadow-md p-4 sm:p-6">
-      <h2 id={titleId} className="text-xl sm:text-2xl font-black text-slate-900 font-heading text-center mb-4 leading-relaxed">
-        {title || "أسئلة بتدور في بالك؟ جاوبنا عليها"}
-      </h2>
+      <EText field={editable ? "faq_title" : undefined} id={titleId} as="h2" className="text-xl sm:text-2xl font-black text-slate-900 font-heading text-center mb-4 leading-relaxed" value={title || "أسئلة بتدور في بالك؟ جاوبنا عليها"} />
       <div className="space-y-2.5">
         {list.map((item, idx) => (
           <details
@@ -66,10 +67,10 @@ export function FaqAccordion({ title, items, defaultOpenIndex = 0 }: FaqAccordio
             className="group rounded-2xl border border-slate-200 bg-slate-50/60 open:bg-white open:border-emerald-200 transition"
           >
             <summary className="flex items-center justify-between gap-3 min-h-[52px] p-3 sm:p-4 cursor-pointer list-none font-bold text-slate-900 text-sm sm:text-base leading-relaxed [&::-webkit-details-marker]:hidden">
-              <span>{item.q}</span>
+              <EText field={editable ? `faq_items.${idx}.q` : undefined} base={list} as="span" value={item.q} />
               <ChevronDown className="w-5 h-5 shrink-0 text-emerald-600 transition-transform group-open:rotate-180" aria-hidden="true" />
             </summary>
-            <p className="px-3 sm:px-4 pb-4 text-sm sm:text-base text-slate-700 leading-relaxed">{item.a}</p>
+            <EText field={editable ? `faq_items.${idx}.a` : undefined} base={list} as="p" className="px-3 sm:px-4 pb-4 text-sm sm:text-base text-slate-700 leading-relaxed" value={item.a} />
           </details>
         ))}
       </div>

@@ -23,6 +23,8 @@ interface EgyptianCheckoutFormProps {
   onOfferSelect?: (offer: ProductOffer) => void;
   onOfferChange?: (offer: ProductOffer) => void;
   accentColor?: string;
+  /** Editor preview: blocks submit/redirect/tracking and shows a small note. Default false. */
+  previewOnly?: boolean;
 }
 
 export function EgyptianCheckoutForm({
@@ -33,6 +35,7 @@ export function EgyptianCheckoutForm({
   onOfferSelect,
   onOfferChange,
   accentColor = "orange",
+  previewOnly = false,
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
 
@@ -97,6 +100,7 @@ export function EgyptianCheckoutForm({
   // Track InitiateCheckout on initial interaction
   const [hasInteracted, setHasInteracted] = useState(false);
   const handleFirstInteraction = () => {
+    if (previewOnly) return;
     if (!hasInteracted) {
       setHasInteracted(true);
       trackMetaEvent("InitiateCheckout", {
@@ -124,6 +128,7 @@ export function EgyptianCheckoutForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (previewOnly) return;
     setErrorMessage("");
 
     const error = validateForm();
@@ -380,7 +385,7 @@ export function EgyptianCheckoutForm({
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || previewOnly}
           className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-black text-base sm:text-lg shadow-xl shadow-orange-500/25 active:scale-[0.99] transition transform cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
@@ -395,6 +400,10 @@ export function EgyptianCheckoutForm({
             </>
           )}
         </button>
+
+        {previewOnly && (
+          <p className="text-center text-xs font-bold text-sky-700 bg-sky-50 border border-sky-200 rounded-xl p-2">معاينة فقط — الطلب غير مفعّل داخل المحرر</p>
+        )}
 
         {/* Security & Guarantees Strip */}
         <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center text-xs text-slate-600 font-medium">

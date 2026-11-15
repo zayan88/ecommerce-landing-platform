@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       title: product.title_ar,
       slug: product.slug,
       component_key: "starter-template",
-      status: "active",
+      status: product.status === "active" ? "active" : "paused",
       deployment_url: `/p/${product.slug}`,
       deployment_status: "published",
     });
@@ -77,7 +77,7 @@ export async function PUT(req: NextRequest) {
         title: product.title_ar,
         slug: product.slug,
         component_key: "starter-template",
-        status: "active",
+        status: product.status === "active" ? "active" : "paused",
         deployment_url: `/p/${product.slug}`,
         deployment_status: "published",
       });

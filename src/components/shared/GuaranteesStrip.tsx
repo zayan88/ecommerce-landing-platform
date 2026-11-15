@@ -1,5 +1,6 @@
 import React from "react";
 import { ShieldCheck, RefreshCw, Truck } from "lucide-react";
+import { EText } from "@/components/editor/Editable";
 
 export interface GuaranteeItem {
   icon: "inspect" | "swap" | "shipping";
@@ -19,9 +20,11 @@ const ICONS = { inspect: ShieldCheck, swap: RefreshCw, shipping: Truck } as cons
 interface GuaranteesStripProps {
   title?: string;
   items?: GuaranteeItem[];
+  /** Bind texts to content_config paths for the live editor (no effect on the public render). */
+  editable?: boolean;
 }
 
-export function GuaranteesStrip({ title, items }: GuaranteesStripProps) {
+export function GuaranteesStrip({ title, items, editable }: GuaranteesStripProps) {
   const valid = (items || []).filter((i) => i?.title);
   // Always exactly 3 cards; missing ones fall back to the defaults
   const list = [0, 1, 2].map((i) => valid[i] || DEFAULT_GUARANTEES[i]);
@@ -29,7 +32,7 @@ export function GuaranteesStrip({ title, items }: GuaranteesStripProps) {
   return (
     <section dir="rtl" aria-label={title || "ضماناتنا"} className="bg-emerald-50 rounded-3xl border border-emerald-200 p-4 sm:p-6">
       {title && (
-        <h2 className="text-lg sm:text-xl font-black text-emerald-900 font-heading text-center mb-3 leading-relaxed">{title}</h2>
+        <EText field={editable ? "guarantees_title" : undefined} as="h2" className="text-lg sm:text-xl font-black text-emerald-900 font-heading text-center mb-3 leading-relaxed" value={title} />
       )}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {list.map((g, idx) => {
@@ -39,8 +42,8 @@ export function GuaranteesStrip({ title, items }: GuaranteesStripProps) {
               <span className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-emerald-100 text-emerald-700">
                 <Icon className="w-5 h-5 sm:w-6 sm:h-6" aria-hidden="true" />
               </span>
-              <p className="font-black text-emerald-900 text-xs sm:text-sm leading-snug">{g.title}</p>
-              <p className="text-[11px] sm:text-xs text-slate-600 leading-snug">{g.desc}</p>
+              <EText field={editable ? `guarantees.${idx}.title` : undefined} base={list} as="p" className="font-black text-emerald-900 text-xs sm:text-sm leading-snug" value={g.title} />
+              <EText field={editable ? `guarantees.${idx}.desc` : undefined} base={list} as="p" className="text-[11px] sm:text-xs text-slate-600 leading-snug" value={g.desc} />
             </div>
           );
         })}

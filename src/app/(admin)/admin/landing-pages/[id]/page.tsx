@@ -19,6 +19,8 @@ import {
 import SectionsPanel from "../_components/SectionsPanel";
 import ContentPanel from "../_components/ContentPanel";
 import { useLandingPageEditor } from "../_lib/useLandingPageEditor";
+import StarterEditor from "@/components/editor/StarterEditor";
+import { getLandingPageComponent, landingPageRegistry } from "@/landing-pages/registry";
 
 type DetailTab = "sections" | "content";
 
@@ -40,9 +42,16 @@ export default function LandingPageDetailPage() {
       const lpJson = await lpRes.json();
       const prodJson = await prodRes.json();
       const products: Product[] = prodJson.success ? prodJson.products || [] : [];
-      const found: LandingPage | undefined = lpJson.success
+      const listed: LandingPage | undefined = lpJson.success
         ? (lpJson.landingPages as LandingPage[]).find((x) => x.id === id)
         : undefined;
+      // The list can hold a stale copy; the single-page endpoint reads the latest saved content
+      // (same source as the public page), so editing never starts from outdated data.
+      const freshJson = await fetch(`/api/landing-pages?id=${encodeURIComponent(id)}`)
+        .then((r) => r.json())
+        .catch(() => null);
+      const fresh: LandingPage | undefined = freshJson?.success ? (freshJson.landingPage as LandingPage) : undefined;
+      const found: LandingPage | undefined = fresh ? { ...(listed || {}), ...fresh } as LandingPage : listed;
       if (found) {
         const prod = found.product || products.find((p) => p.id === found.product_id);
         setLp({ ...found, product: prod });
@@ -147,6 +156,24 @@ export default function LandingPageDetailPage() {
           </Link>
         </div>
       </div>
+    );
+  }
+
+  // Landing pages rendered by the universal template get the live click-to-edit editor
+  if (
+    lp.product &&
+    getLandingPageComponent(lp.component_key || lp.slug) === landingPageRegistry["starter-template"]
+  ) {
+    return (
+      <StarterEditor
+        lp={lp}
+        onSaved={(patch) => setLp((prev) => (prev ? { ...prev, ...patch } : prev))}
+        copied={copied}
+        busy={busy}
+        onCopyUrl={handleCopyUrl}
+        onToggleStatus={handleToggleStatus}
+        onDelete={handleDelete}
+      />
     );
   }
 

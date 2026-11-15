@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LandingPage, Product, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, mergeSections } from "@/types";
-import { Plus, Copy, Check, Search, Package, RefreshCw, FileText } from "lucide-react";
+import { LandingPage, Product, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS } from "@/types";
+import { Plus, Copy, Check, Search, RefreshCw, FileText, Eye, Pencil } from "lucide-react";
+import TablePagination from "@/components/admin/TablePagination";
 import CreateLandingPageModal from "./_components/CreateLandingPageModal";
 
 export default function AdminLandingPagesPage() {
@@ -12,7 +13,11 @@ export default function AdminLandingPagesPage() {
   const [landingPages, setLandingPages] = useState<LandingPage[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Creation Mode: "quick" | "ai_prompt" | "safka"
@@ -291,14 +296,62 @@ export default function AdminLandingPagesPage() {
     }
   };
 
-  const handleCopyUrl = (slug: string) => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const fullUrl = `${origin}/p/${slug}`;
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedSlug(slug);
-    setTimeout(() => setCopiedSlug(null), 2500);
+  const showToast = (type: "success" | "error", text: string) => {
+    setToast({ type, text });
+    setTimeout(() => setToast(null), 3500);
   };
 
+  const handleCopyCode = (id: string) => {
+    try {
+      navigator.clipboard.writeText(id);
+    } catch {}
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDuplicate = async (lp: LandingPage) => {
+    if (duplicatingId) return;
+    setDuplicatingId(lp.id);
+    try {
+      const taken = new Set(landingPages.map((p) => p.slug));
+      const base = `${lp.slug}-copy`;
+      let newSlug = base;
+      let n = 2;
+      while (taken.has(newSlug)) newSlug = `${base}-${n++}`;
+
+      const payload = {
+        // no id: the store generates a fresh one
+        title: `${lp.title} (نسخة)`,
+        slug: newSlug,
+        product_id: lp.product_id,
+        component_key: lp.component_key,
+        meta_pixel_id: lp.meta_pixel_id,
+        head_scripts: lp.head_scripts,
+        custom_css: lp.custom_css,
+        content_config: lp.content_config,
+        sections_config: lp.sections_config,
+        status: "paused",
+        deployment_url: `/p/${newSlug}`,
+        deployment_status: "published",
+      };
+      const res = await fetch("/api/landing-pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", `تم إنشاء نسخة "${payload.title}" (متوقفة حتى تفعّلها)`);
+        await fetchData();
+      } else {
+        showToast("error", data.error || "تعذر استنساخ الصفحة");
+      }
+    } catch {
+      showToast("error", "تعذر استنساخ الصفحة");
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
 
   const filteredPages = landingPages.filter((lp) => {
     const q = searchQuery.trim().toLowerCase();
@@ -306,100 +359,128 @@ export default function AdminLandingPagesPage() {
     return lp.title?.toLowerCase().includes(q) || lp.slug?.toLowerCase().includes(q);
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredPages.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedPages = filteredPages.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const openPage = (id: string) => router.push(`/admin/landing-pages/${id}`);
 
-  const copyButton = (slug: string) => {
-    const isCopied = copiedSlug === slug;
-    return (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleCopyUrl(slug);
-        }}
-        onKeyDown={(e) => e.stopPropagation()}
-        className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition cursor-pointer"
-        title="نسخ الرابط"
-        aria-label="نسخ الرابط"
-      >
-        {isCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
-      </button>
-    );
+  const iconBtn =
+    "w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer";
+  const stop = {
+    onClick: (e: React.MouseEvent) => e.stopPropagation(),
+    onKeyDown: (e: React.KeyboardEvent) => e.stopPropagation(),
   };
 
-  const statusBadge = (status: string) => (
-    <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${
-        status === "active"
-          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-          : "bg-amber-100 text-amber-900 border-amber-200"
-      }`}
-    >
-      {status === "active" ? "نشطة" : "متوقفة"}
+  const codeCell = (id: string) => (
+    <span className="inline-flex items-center gap-1" {...stop}>
+      <span className="font-mono text-xs font-bold text-slate-600" dir="ltr">
+        {id.slice(0, 8)}
+      </span>
+      <button type="button" onClick={() => handleCopyCode(id)} className={iconBtn} title="نسخ الكود" aria-label="نسخ كود الصفحة">
+        {copiedId === id ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+      </button>
     </span>
   );
 
-  const thumb = (lp: LandingPage) => {
-    const src = lp.content_config?.hero_image || lp.product?.images?.[0];
-    return (
-      <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
-        {src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="" className="w-full h-full object-cover" />
-        ) : (
-          <Package className="w-5 h-5 text-slate-400" />
-        )}
-      </div>
-    );
-  };
+  const viewBtn = (lp: LandingPage) => (
+    <a
+      href={`/p/${lp.slug}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={iconBtn}
+      title="مشاهدة الصفحة"
+      aria-label="مشاهدة الصفحة"
+      {...stop}
+    >
+      <Eye className="w-4 h-4" />
+    </a>
+  );
 
-  const sectionsCount = (lp: LandingPage) => {
-    const merged = mergeSections(lp.sections_config);
-    return `${merged.filter((s) => s.enabled).length}/${merged.length}`;
-  };
+  const editBtn = (lp: LandingPage, withLabel: boolean) => (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        openPage(lp.id);
+      }}
+      onKeyDown={(e) => e.stopPropagation()}
+      className={`${iconBtn} ${withLabel ? "w-auto px-3 gap-1.5 text-xs font-bold" : ""}`}
+      title="تعديل"
+      aria-label="تعديل"
+    >
+      <Pencil className="w-4 h-4" />
+      {withLabel && <span>تعديل</span>}
+    </button>
+  );
 
-  const formatDate = (iso?: string) => {
-    if (!iso) return "—";
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" });
-  };
+  const cloneBtn = (lp: LandingPage) => (
+    <button
+      type="button"
+      disabled={duplicatingId === lp.id}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleDuplicate(lp);
+      }}
+      onKeyDown={(e) => e.stopPropagation()}
+      className="min-h-[44px] px-3 inline-flex items-center justify-center rounded-xl text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition cursor-pointer disabled:opacity-50"
+      title="استنساخ الصفحة"
+      aria-label="استنساخ الصفحة"
+    >
+      {duplicatingId === lp.id ? "جاري..." : "استنساخ"}
+    </button>
+  );
+
+  const pausedPill = (lp: LandingPage) =>
+    lp.status !== "active" ? (
+      <span className="inline-block mr-2 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 whitespace-nowrap align-middle">
+        متوقفة
+      </span>
+    ) : null;
 
   return (
     <div className="space-y-6 text-right font-sans max-w-6xl mx-auto pb-16" dir="rtl">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-950 font-heading">صفحات الهبوط</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            اضغط على أي صفحة لتعديل أقسامها ونصوصها وصورها أو لفتحها وإيقافها
-          </p>
+          <p className="text-sm text-slate-500 mt-1">أنشئ صفحات بيع جاهزة وعدّل نصوصها وصورها وأقسامها.</p>
         </div>
-
         <button
           onClick={() => setIsModalOpen(true)}
           className="w-full sm:w-auto min-h-[44px] py-2.5 px-5 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-600/25 transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>إنشاء صفحة هبوط جديدة</span>
+          <span>إنشاء صفحة هبوط</span>
         </button>
       </div>
 
+      {toast && (
+        <div
+          role="status"
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-bold shadow-lg border ${
+            toast.type === "success"
+              ? "bg-emerald-50 text-emerald-900 border-emerald-200"
+              : "bg-rose-50 text-rose-900 border-rose-200"
+          }`}
+        >
+          {toast.text}
+        </div>
+      )}
+
       {/* Search */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
-        <div className="relative w-full sm:w-80">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ابحث بالعنوان أو الرابط..."
-            className="w-full pl-9 pr-3.5 min-h-[44px] rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/50"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-        </div>
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 w-full sm:w-auto justify-end">
-          <span>إجمالي الصفحات:</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-mono text-slate-900">{landingPages.length}</span>
-        </div>
+      <div className="relative w-full sm:w-72">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="بحث بالاسم أو الرابط"
+          className="w-full pr-9 pl-3.5 min-h-[44px] rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+        />
+        <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
       </div>
 
       {loading ? (
@@ -414,16 +495,16 @@ export default function AdminLandingPagesPage() {
             <table className="w-full text-sm text-right">
               <thead className="bg-slate-50 text-xs font-bold text-slate-500 border-b border-slate-200">
                 <tr>
-                  <th className="px-5 py-3.5">صفحة الهبوط</th>
+                  <th className="px-5 py-3.5">اسم الصفحة</th>
                   <th className="px-4 py-3.5">الرابط</th>
-                  <th className="px-4 py-3.5">المنتج والسعر</th>
-                  <th className="px-4 py-3.5">الحالة</th>
-                  <th className="px-4 py-3.5">الأقسام</th>
-                  <th className="px-4 py-3.5">تاريخ الإنشاء</th>
+                  <th className="px-4 py-3.5">كود الصفحة</th>
+                  <th className="px-2 py-3.5 text-center">مشاهدة</th>
+                  <th className="px-2 py-3.5 text-center">تعديل</th>
+                  <th className="px-2 py-3.5 text-center">استنساخ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredPages.map((lp) => (
+                {pagedPages.map((lp) => (
                   <tr
                     key={lp.id}
                     tabIndex={0}
@@ -436,26 +517,18 @@ export default function AdminLandingPagesPage() {
                     className="h-16 cursor-pointer hover:bg-orange-50/40 focus:bg-orange-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500 transition-colors"
                   >
                     <td className="px-5 py-2">
-                      <div className="flex items-center gap-3">
-                        {thumb(lp)}
-                        <span className="font-black text-slate-900 leading-snug">{lp.title}</span>
-                      </div>
+                      <span className="font-black text-slate-900 leading-snug">{lp.title}</span>
+                      {pausedPill(lp)}
                     </td>
                     <td className="px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-slate-700" dir="ltr">
-                          /p/{lp.slug}
-                        </span>
-                        {copyButton(lp.slug)}
-                      </div>
+                      <span className="font-mono text-xs font-bold text-slate-600" dir="ltr">
+                        /p/{lp.slug}
+                      </span>
                     </td>
-                    <td className="px-4 py-2">
-                      <div className="font-bold text-slate-900 truncate max-w-[200px]">{lp.product?.title_ar || "منتج"}</div>
-                      <div className="font-mono text-xs font-bold text-emerald-600">{lp.product?.base_price || 0} ج.م</div>
-                    </td>
-                    <td className="px-4 py-2">{statusBadge(lp.status)}</td>
-                    <td className="px-4 py-2 font-mono font-bold text-slate-700">{sectionsCount(lp)}</td>
-                    <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap">{formatDate(lp.created_at)}</td>
+                    <td className="px-4 py-2">{codeCell(lp.id)}</td>
+                    <td className="px-2 py-2 text-center">{viewBtn(lp)}</td>
+                    <td className="px-2 py-2 text-center">{editBtn(lp, true)}</td>
+                    <td className="px-2 py-2 text-center">{cloneBtn(lp)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -464,7 +537,7 @@ export default function AdminLandingPagesPage() {
 
           {/* Mobile stacked rows */}
           <div className="lg:hidden space-y-3">
-            {filteredPages.map((lp) => (
+            {pagedPages.map((lp) => (
               <div
                 key={lp.id}
                 tabIndex={0}
@@ -474,34 +547,37 @@ export default function AdminLandingPagesPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") openPage(lp.id);
                 }}
-                className="min-h-[72px] bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3 cursor-pointer active:bg-orange-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-2 cursor-pointer active:bg-orange-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
               >
-                <div className="flex items-center gap-3">
-                  {thumb(lp)}
-                  <div className="min-w-0 flex-1">
-                    <div className="font-black text-slate-900 leading-snug truncate">{lp.title}</div>
-                    <div className="text-xs text-slate-500 truncate">
-                      {lp.product?.title_ar || "منتج"} ·{" "}
-                      <span className="font-mono font-bold text-emerald-600">{lp.product?.base_price || 0} ج.م</span>
-                    </div>
-                  </div>
-                  {statusBadge(lp.status)}
+                <div className="font-black text-slate-900 leading-snug">
+                  {lp.title}
+                  {pausedPill(lp)}
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-bold text-slate-700 truncate" dir="ltr">
-                    /p/{lp.slug}
-                  </span>
-                  <div className="flex items-center gap-2 shrink-0 text-xs text-slate-500">
-                    <span>
-                      الأقسام <span className="font-mono font-bold text-slate-700">{sectionsCount(lp)}</span>
-                    </span>
-                    {copyButton(lp.slug)}
+                <div className="font-mono text-xs font-bold text-slate-500 truncate" dir="ltr">
+                  /p/{lp.slug}
+                </div>
+                <div className="flex items-center justify-between gap-1 pt-1">
+                  {codeCell(lp.id)}
+                  <div className="flex items-center gap-1">
+                    {viewBtn(lp)}
+                    {editBtn(lp, false)}
+                    {cloneBtn(lp)}
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-400">{formatDate(lp.created_at)}</div>
               </div>
             ))}
           </div>
+
+          <TablePagination
+            total={filteredPages.length}
+            page={currentPage}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => {
+              setPageSize(s);
+              setPage(1);
+            }}
+          />
         </>
       ) : (
         <div className="p-12 text-center bg-white rounded-3xl border border-dashed border-slate-300 space-y-3">
