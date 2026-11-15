@@ -19,20 +19,18 @@ import {
   LogOut,
   Lock,
   Activity,
-  Bell,
-  Palette,
+  Settings,
 } from "lucide-react";
 
 const navigationItems = [
-  { name: "هوية المتجر وشكله", href: "/admin/brand", icon: Palette },
   { name: "الإحصائيات والأداء", href: "/admin", icon: LayoutDashboard },
   { name: "إدارة الطلبات", href: "/admin/orders", icon: ShoppingBag },
-  { name: "إشعارات المبيعات (تليجرام)", href: "/admin/notifications", icon: Bell },
   { name: "صفحات الهبوط", href: "/admin/landing-pages", icon: Layers },
   { name: "المنتجات والعروض", href: "/admin/products", icon: Tag },
   { name: "تتبع الزوار والنشاط", href: "/admin/tracking", icon: Activity },
   { name: "دروبشيبينغ صفقة (Safka)", href: "/admin/safqa", icon: ShoppingBag },
   { name: "دليل وكيل AI (الإنشاء السريع)", href: "/admin/ai-guide", icon: Bot },
+  { name: "الإعدادات", href: "/admin/settings", icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -120,7 +118,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Navigation Links */}
           <nav className="space-y-1">
             {navigationItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = item.href === "/admin/settings" ? pathname.startsWith(item.href) : pathname === item.href;
               const Icon = item.icon;
               return (
                 <Link
