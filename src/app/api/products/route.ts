@@ -72,7 +72,7 @@ export async function PUT(req: NextRequest) {
     const product = await dbStore.saveProduct(body);
 
     // Sync landing page title and slug if updated
-    if (body.title_ar || body.slug) {
+    if ((body.title_ar || body.slug) && !body.skip_lp_sync) {
       await dbStore.saveLandingPage({
         product_id: product.id,
         title: product.title_ar,

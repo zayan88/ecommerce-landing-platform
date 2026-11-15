@@ -6,6 +6,7 @@ import {
   LandingPage,
   LandingPageContentConfig,
   LandingPageSectionConfig,
+  ProductOffer,
   DEFAULT_LANDING_PAGE_SECTIONS,
   mergeSections,
 } from "@/types";
@@ -31,8 +32,11 @@ import {
   X,
   MousePointerClick,
   Sparkles,
+  Tags,
 } from "lucide-react";
 import AiPanel from "./AiPanel";
+import OffersPanel from "./OffersPanel";
+import { buildDefaultOffers, sanitizeOffers } from "@/lib/offers";
 import StarterLandingPage from "@/landing-pages/starter-template/page";
 import SectionsPanel from "@/app/(admin)/admin/landing-pages/_components/SectionsPanel";
 import { ImageUploader } from "@/components/admin/ImageUploader";
@@ -45,6 +49,8 @@ import { PreviewFrame } from "./PreviewFrame";
 interface Draft {
   content: LandingPageContentConfig;
   sections: LandingPageSectionConfig[];
+  /** Quantity tiers of the product (the upsell ladder). Saved on the product, not the page. */
+  offers: ProductOffer[];
 }
 
 interface History {
@@ -111,6 +117,9 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
     () => ({
       content: lp.content_config || {},
       sections: JSON.parse(JSON.stringify(mergeSections(lp.sections_config))),
+      offers: JSON.parse(
+        JSON.stringify(lp.product?.offers && lp.product.offers.length > 0 ? lp.product.offers : buildDefaultOffers(lp.product!))
+      ),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lp.id]
@@ -123,7 +132,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
   const [saveError, setSaveError] = useState("");
   const [device, setDevice] = useState<"mobile" | "desktop">("mobile");
   const [panelOpen, setPanelOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
-  const [tab, setTab] = useState<"sections" | "content" | "colors" | "ai">("content");
+  const [tab, setTab] = useState<"sections" | "content" | "colors" | "offers" | "ai">("content");
   const [menuOpen, setMenuOpen] = useState(false);
   const [selected, setSelected] = useState<EditSelection | null>(null);
   const lastEdit = useRef<{ key: string; t: number } | null>(null);
@@ -190,6 +199,28 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
     setSaving(true);
     setSaveError("");
     try {
+      // Offers live on the product: save them first (only when they changed), full product because the API replaces it.
+      const offersChanged = JSON.stringify(draft.offers) !== JSON.stringify(JSON.parse(savedJson).offers);
+      let savedOffers: ProductOffer[] | null = null;
+      if (offersChanged && lp.product) {
+        const clean = sanitizeOffers(lp.product.id, draft.offers);
+        if (clean.length === 0 || clean.some((o) => !(o.price > 0))) {
+          setSaveError("سعر كل عرض لازم يكون أكبر من صفر (تاب العروض)");
+          return;
+        }
+        const pr = await fetch("/api/products", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...lp.product, offers: clean, skip_lp_sync: true }),
+        });
+        const pd = await pr.json();
+        if (!pd.success) {
+          setSaveError(pd.error || "تعذر حفظ العروض");
+          return;
+        }
+        savedOffers = clean;
+      }
+
       const res = await fetch("/api/landing-pages", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -198,7 +229,11 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
       const data = await res.json();
       if (data.success) {
         setSavedJson(JSON.stringify(draft));
-        onSaved({ content_config: draft.content, sections_config: draft.sections });
+        onSaved({
+          content_config: draft.content,
+          sections_config: draft.sections,
+          ...(savedOffers && lp.product ? { product: { ...lp.product, offers: savedOffers } } : {}),
+        });
         setJustSaved(true);
         setTimeout(() => setJustSaved(false), 2000);
       } else {
@@ -210,7 +245,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
     } finally {
       setSaving(false);
     }
-  }, [draft, lp.id, onSaved]);
+  }, [draft, lp.id, lp.product, savedJson, onSaved]);
 
   // Warn before leaving with unsaved edits
   useEffect(() => {
@@ -277,6 +312,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
             ["content", "المحتوى", Type],
             ["sections", "الأقسام", Layers],
             ["colors", "الألوان", Palette],
+            ["offers", "العروض", Tags],
             ["ai", "AI", Sparkles],
           ] as const
         ).map(([key, label, Icon]) => (
@@ -297,7 +333,14 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
-        {tab === "ai" ? (
+        {tab === "offers" ? (
+          <OffersPanel
+            offers={draft.offers}
+            currency={brand.currency}
+            onChange={(offers) => apply((d) => ({ ...d, offers }), "offers")}
+            onReset={() => apply((d) => ({ ...d, offers: buildDefaultOffers(lp.product!) }))}
+          />
+        ) : tab === "ai" ? (
           <AiPanel
             title={lp.title}
             brandName={brand.store_name}
@@ -553,7 +596,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
           >
             <PreviewFrame width="100%">
               <EditProvider content={draft.content} setField={setField} selected={selected} select={select}>
-                <StarterLandingPage product={lp.product!} landingPage={draftPage} />
+                <StarterLandingPage product={{ ...lp.product!, offers: draft.offers }} landingPage={draftPage} />
               </EditProvider>
             </PreviewFrame>
           </div>

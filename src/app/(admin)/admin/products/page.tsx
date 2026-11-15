@@ -202,7 +202,8 @@ export default function AdminProductsPage() {
         description_ar: descriptionAr.trim(),
         status: "active",
         images: imagesArray,
-        offers,
+        // Editing keeps the offers the merchant customized in the page editor
+        offers: editingProduct?.offers && editingProduct.offers.length > 0 ? editingProduct.offers : offers,
       };
 
       const res = await fetch("/api/products", {

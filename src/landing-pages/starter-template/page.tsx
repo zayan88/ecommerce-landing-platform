@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSections } from "@/types";
 import { cssVarsFor, isPaletteKey } from "@/lib/palettes";
+import { buildDefaultOffers } from "@/lib/offers";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
 import { SocialProofWall } from "@/components/shared/SocialProofWall";
@@ -59,45 +60,8 @@ const DEFAULT_STEPS: { step_num: number; title: string; desc: string }[] = [
 export default function StarterLandingPage({ product, landingPage }: StarterLandingPageProps) {
   // Editor (admin) provides edit mode; on the public site this is always false
   const { editMode } = useEdit();
-  // Built-in Dynamic Offers
-  const defaultOffers: ProductOffer[] = [
-    {
-      id: `offer-1-${product.id}`,
-      product_id: product.id,
-      title_ar: "قطعة واحدة (تجربة)",
-      quantity: 1,
-      price: product.base_price,
-      original_price: product.compare_at_price || Math.round(product.base_price * 1.35),
-      discount_label: "خصم خاص",
-      is_popular: false,
-      free_shipping: true,
-      sort_order: 1,
-    },
-    {
-      id: `offer-2-${product.id}`,
-      product_id: product.id,
-      title_ar: "قطعتان (الأكثر طلباً - توفير إضافي)",
-      quantity: 2,
-      price: Math.round(product.base_price * 1.75),
-      original_price: Math.round((product.compare_at_price || product.base_price * 1.35) * 2),
-      discount_label: "وفر أكثر + شحن مجاني",
-      is_popular: true,
-      free_shipping: true,
-      sort_order: 2,
-    },
-    {
-      id: `offer-3-${product.id}`,
-      product_id: product.id,
-      title_ar: "3 قطع (عرض التوفير العائلي الشامل)",
-      quantity: 3,
-      price: Math.round(product.base_price * 2.45),
-      original_price: Math.round((product.compare_at_price || product.base_price * 1.35) * 3),
-      discount_label: "أعلى توفير + شحن مجاني",
-      is_popular: false,
-      free_shipping: true,
-      sort_order: 3,
-    },
-  ];
+  // Built-in default tiers (the merchant can override them in the editor's offers tab)
+  const defaultOffers: ProductOffer[] = buildDefaultOffers(product);
 
   const availableOffers =
     product.offers && product.offers.length > 0 ? product.offers : defaultOffers;
@@ -105,6 +69,17 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(
     availableOffers.find((o) => o.quantity === 1) || availableOffers[0]
   );
+
+  // Keep the selection in sync when offers are edited live in the editor
+  useEffect(() => {
+    setSelectedOffer(
+      (prev) =>
+        availableOffers.find((o) => o.id === prev.id) ||
+        availableOffers.find((o) => o.quantity === 1) ||
+        availableOffers[0]
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(availableOffers)]);
 
   const images = product.images && product.images.length > 0 ? product.images : ["/landing-pages/mesh-nebulizer/images/hero.webp"];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
