@@ -4,7 +4,8 @@ import { PALETTE_KEYS, isPaletteKey } from "@/lib/palettes";
 /**
  * AI-assisted page content: the merchant copies a prompt into any AI chat, pastes the JSON
  * answer back. We never accept raw HTML/code — only whitelisted JSON fields, sanitized here.
- * Reviews and rating numbers are deliberately NOT part of the schema (no invented social proof).
+ * Reviews are requested as paraphrased real opinions about similar products found online;
+ * rating/count numbers (proof_rating, proof_reviews_count) stay out of the schema.
  */
 
 const STR_MAX = 300;
@@ -51,7 +52,8 @@ ${input.description.trim() || "(لم يضف التاجر وصفاً — اكتب
 
 القواعد:
 - لهجة مصرية ودودة وواثقة، جمل قصيرة.
-- ممنوع اختراع تقييمات أو أسماء عملاء أو نسب أو ضمانات غير مذكورة.
+- ممنوع اختراع نسب أو ضمانات أو مواصفات غير مذكورة.
+- آراء العملاء: ابحث على الإنترنت (أمازون، نون، جوميا، فيسبوك، يوتيوب) عن آراء حقيقية لمنتجات مشابهة أو نفس المنتج، وأعد صياغة ما يقوله الناس فعلاً (المزايا المتكررة والعيوب الشائعة) بلهجة مصرية. لا تنسخ حرفياً، ولا تخترع رأياً لم يقله أحد. اكتب 3 إلى 6 آراء بالاسم الأول فقط والمحافظة إن وُجدت.
 - ركز على: الدفع عند الاستلام، فتح الشحنة قبل الدفع، الشحن المجاني، ضمان الاستبدال.
 - كل نص أقل من ${STR_MAX} حرف، وكل قائمة بحد أقصى ${LIST_MAX} عناصر.
 
@@ -61,6 +63,8 @@ ${lines.join(",\n")},
   "how_to_use_steps": [{"title": "...", "desc": "..."}],        // 3 خطوات
   "faq_items": [{"q": "...", "a": "..."}],                       // 4 أسئلة
   "guarantees": [{"icon": "inspect|swap|shipping", "title": "...", "desc": "..."}],  // 3 بالضبط
+  "reviews_title": "...",
+  "reviews": [{"name": "اسم أول", "location": "المحافظة", "comment": "...", "rating": 5}],   // آراء مشابهة من الويب (3-6)
   "theme_primary": "${PALETTE_KEYS[0]}",   // اختياري، من: ${PALETTE_KEYS.join(" | ")}
   "theme_accent": "${PALETTE_KEYS[0]}"     // اختياري، نفس القائمة
 }`;
@@ -145,6 +149,25 @@ export function parseAiContent(text: string): AiParseResult {
       .filter((s) => s.title && s.desc)
       .slice(0, 3);
     if (g.length === 3) put("guarantees", g);
+  }
+
+  const rt = clean(r.reviews_title, 100);
+  if (rt) put("reviews_title", rt);
+  if (Array.isArray(r.reviews)) {
+    const rv = r.reviews
+      .map((s) => {
+        const o = (s || {}) as Record<string, unknown>;
+        const n = Number(o.rating);
+        return {
+          name: clean(o.name, 40),
+          location: clean(o.location, 40),
+          comment: clean(o.comment, 400),
+          rating: Number.isFinite(n) ? Math.min(5, Math.max(1, Math.round(n))) : 5,
+        };
+      })
+      .filter((s) => s.name && s.comment)
+      .slice(0, 6);
+    if (rv.length) put("reviews", rv);
   }
 
   for (const k of ["theme_primary", "theme_accent"] as const) {

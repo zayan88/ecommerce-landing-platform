@@ -103,7 +103,7 @@ export default function AiPanel({ title, brandName, onApply }: Props) {
           </p>
         )}
         <p className="text-[11px] text-slate-500 leading-relaxed">
-          بنقبل حقول النص فقط (بدون HTML أو صور). التقييمات وأسماء العملاء مش بتتولد عشان متكونش مخترعة.
+          بنقبل حقول النص فقط (بدون HTML أو صور). الآراء بتتجمع من مراجعات منتجات مشابهة على الويب. استخدم ذكاء اصطناعي بيبحث في الإنترنت، وراجعها قبل النشر.
         </p>
       </div>
     </div>
