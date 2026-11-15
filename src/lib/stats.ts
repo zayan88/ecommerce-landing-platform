@@ -11,6 +11,8 @@
  *  - never throws, never awaited by the response path.
  */
 import { kvStore } from "@/lib/db/kv";
+import { isD1Available } from "@/lib/db/d1";
+import { getOrdersRepo, ordersBackend } from "@/lib/db/orders-repo";
 
 export type StatKind = "visit" | "checkout_start";
 export interface DayStats {
@@ -21,6 +23,10 @@ export interface DayStats {
 // Write budget: free KV = 1,000 writes/day and each order needs 3, so ≥250 orders/day leaves ~250 writes
 // for everything else. One flush per isolate per hour caps this at 24 writes/day/isolate (was 144).
 export const FLUSH_INTERVAL_MS = 60 * 60 * 1000;
+// ORDERS_BACKEND=d1: counters go to D1 table `stats_daily` (atomic `visits = visits + ?` upsert, no KV
+// write, no read-merge-write). D1's budget is ~100x larger, so the buffer is flushed every 5 minutes.
+export const D1_FLUSH_INTERVAL_MS = 5 * 60 * 1000;
+const flushIntervalMs = () => (ordersBackend() === "d1" ? D1_FLUSH_INTERVAL_MS : FLUSH_INTERVAL_MS);
 const SESSION_CAP = 5000;
 const KEY_PREFIX = "stats:day:";
 
@@ -74,8 +80,10 @@ function waitUntil(p: Promise<unknown>) {
   } catch {}
 }
 
-async function flushBuffer(): Promise<void> {
-  if (state.flushing || buffer.size === 0 || !kvStore.isAvailable()) return;
+/** Writes the buffered counters to the durable store. Exported for tests; requests use recordStat(). */
+export async function flushBuffer(): Promise<void> {
+  const useD1 = ordersBackend() === "d1";
+  if (state.flushing || buffer.size === 0 || !(useD1 ? isD1Available() : kvStore.isAvailable())) return;
   state.flushing = true;
   state.lastFlush = Date.now();
   const snapshot = Array.from(buffer.entries());
@@ -83,7 +91,14 @@ async function flushBuffer(): Promise<void> {
   try {
     for (const [day, delta] of snapshot) {
       let ok = false;
-      try {
+      if (useD1) {
+        try {
+          await getOrdersRepo().addDayStats(day, delta.visits, delta.checkout_starts);
+          ok = true;
+        } catch {
+          ok = false;
+        }
+      } else try {
         const key = KEY_PREFIX + day;
         const res = await kvStore.read<DayStats>(key);
         if (res.status === "found" || res.status === "missing") {
@@ -120,7 +135,7 @@ export function recordStat(kind: StatKind, sessionId?: string): void {
       seenSessions.set(sessionId, true);
     }
     bump(cairoDate(), kind);
-    if (Date.now() - state.lastFlush >= FLUSH_INTERVAL_MS) {
+    if (Date.now() - state.lastFlush >= flushIntervalMs()) {
       const p = flushBuffer().catch(() => {});
       waitUntil(p);
     }
@@ -132,6 +147,19 @@ export function recordStat(kind: StatKind, sessionId?: string): void {
 /** Stored counts for each day (missing day = zeros) plus this isolate's unflushed buffer. */
 export async function readDayStats(days: string[]): Promise<Record<string, DayStats>> {
   const out: Record<string, DayStats> = {};
+  if (ordersBackend() === "d1") {
+    // One range query instead of one KV read per day.
+    let stored: Record<string, DayStats> = {};
+    try {
+      const sorted = [...days].sort();
+      if (sorted.length > 0) stored = await getOrdersRepo().readDayStats(sorted[0], sorted[sorted.length - 1]);
+    } catch (e) {
+      console.warn("[stats] D1 read failed", (e as Error)?.message);
+    }
+    for (const d of days) {
+      out[d] = { visits: Number(stored[d]?.visits) || 0, checkout_starts: Number(stored[d]?.checkout_starts) || 0 };
+    }
+  } else
   for (let i = 0; i < days.length; i += 10) {
     const batch = days.slice(i, i + 10);
     const vals = await Promise.all(batch.map((d) => kvStore.get<DayStats>(KEY_PREFIX + d).catch(() => null)));

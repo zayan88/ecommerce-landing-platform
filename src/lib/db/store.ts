@@ -1,7 +1,8 @@
 import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
-import { generateOrderId, generateUniqueOrderNumber } from "@/lib/orders/guard";
+import { generateOrderId, generateOrderNumber, generateUniqueOrderNumber } from "@/lib/orders/guard";
+import { getOrdersRepo, ordersBackend, ordersKvMirrorEnabled } from "./orders-repo";
 import {
   findOrderRecord,
   listDeletedOrderTokens,
@@ -12,6 +13,7 @@ import {
   orderKey,
   readOrderRecord,
   reconcileLegacyOrders,
+  sanitizeOrderForStorage,
   writeOrderRecord,
   writeOrderTombstone,
 } from "./order-kv";
@@ -698,6 +700,34 @@ async function applyOrderPatch(id: string, patch: Partial<Order>, savedElsewhere
   return next;
 }
 
+/** Verification period only (ORDERS_KV_MIRROR=1): best-effort copy of a D1 order to its KV key. */
+async function mirrorOrderToKv(order: Order): Promise<void> {
+  if (!ordersKvMirrorEnabled()) return;
+  try {
+    const ok = await writeOrderRecord(order);
+    if (!ok) console.warn("[orders/d1] KV mirror write failed");
+  } catch {
+    console.warn("[orders/d1] KV mirror write failed");
+  }
+}
+
+/**
+ * Backend-neutral order patch: D1 (ORDERS_BACKEND=d1) or the KV read-modify-write above.
+ * `source` labels the order_status_history row when the status changes.
+ */
+async function patchOrder(id: string, patch: Partial<Order>, savedElsewhere: boolean, source: string): Promise<Order | null> {
+  if (ordersBackend() !== "d1") return applyOrderPatch(id, patch, savedElsewhere);
+  try {
+    const next = await getOrdersRepo().updateOrder(id, patch, source);
+    if (next) await mirrorOrderToKv(next);
+    return next;
+  } catch (e) {
+    console.error("[orders/d1] update failed", (e as Error)?.message);
+    if (savedElsewhere) return null;
+    throw new Error(ORDER_STORE_UNAVAILABLE);
+  }
+}
+
 const getStoreFilePath = () => "";
 
 const DUMMY_IDS = new Set([
@@ -1213,6 +1243,12 @@ export const dbStore = {
     product_id?: string;
     status?: OrderStatus;
     search?: string;
+    governorate?: string;
+    /** created_at range (epoch ms, inclusive) and pagination — all optional. */
+    created_from?: number;
+    created_to?: number;
+    limit?: number;
+    offset?: number;
   }): Promise<Order[]> {
     loadFromFile();
     const admin = getSupabaseAdmin();
@@ -1231,6 +1267,19 @@ export const dbStore = {
 
       const { data, error } = await query;
       if (!error && data) return data;
+    }
+
+    // D1 (ORDERS_BACKEND=d1): filtering, ordering and pagination happen in SQL. No KV traffic.
+    if (ordersBackend() === "d1") {
+      const rows = await getOrdersRepo().listOrders(filters || {});
+      let d1Products: Product[] = memoryProducts;
+      try {
+        d1Products = await this.getProducts();
+      } catch (e) {
+        console.warn("[getOrders] products lookup failed, using built-in catalog", e);
+      }
+      attachOrderRelations(rows, d1Products);
+      return rows;
     }
 
     // KV: one list call per 1000 orders. Each key's metadata is the order's list view; only orders
@@ -1325,6 +1374,20 @@ export const dbStore = {
     attachOrderRelations(results, products);
 
     results.sort((a, b) => orderTime(b.created_at) - orderTime(a.created_at));
+
+    // Same optional filters as the D1 backend, applied in memory.
+    if (filters?.governorate) results = results.filter((o) => o.governorate === filters.governorate);
+    if (Number.isFinite(filters?.created_from)) {
+      results = results.filter((o) => orderTime(o.created_at) >= (filters!.created_from as number));
+    }
+    if (Number.isFinite(filters?.created_to)) {
+      results = results.filter((o) => orderTime(o.created_at) <= (filters!.created_to as number));
+    }
+    if (filters?.limit !== undefined || filters?.offset !== undefined) {
+      const offset = Math.max(Math.floor(Number(filters.offset) || 0), 0);
+      const limit = filters.limit === undefined ? results.length : Math.max(Math.floor(Number(filters.limit) || 0), 1);
+      results = results.slice(offset, offset + limit);
+    }
     return results;
   },
 
@@ -1344,7 +1407,7 @@ export const dbStore = {
       }
     }
 
-    const order = await applyOrderPatch(id, updatePayload, Boolean(admin));
+    const order = await patchOrder(id, updatePayload, Boolean(admin), "admin");
     if (!order) return null;
 
     let products: Product[] = memoryProducts;
@@ -1367,8 +1430,14 @@ export const dbStore = {
       if (!error && data) return data;
     }
 
-    const { order, kvError } = await loadOrderForWrite(id);
-    if (kvError) console.error(`[getOrder] KV read failed for ${id}`);
+    let order: Order | null;
+    if (ordersBackend() === "d1") {
+      order = await getOrdersRepo().getOrder(id);
+    } else {
+      const loaded = await loadOrderForWrite(id);
+      if (loaded.kvError) console.error(`[getOrder] KV read failed for ${id}`);
+      order = loaded.order;
+    }
     if (!order || memoryDeletedOrderIds.has(order.id)) return null;
 
     const found: Order = { ...order };
@@ -1383,21 +1452,25 @@ export const dbStore = {
   async createOrder(order: Partial<Order> & { tracking?: Partial<OrderTrackingMeta> }): Promise<Order> {
     const admin = getSupabaseAdmin();
     const id = generateOrderId();
+    const useD1 = ordersBackend() === "d1";
 
     // Collision check against today's order numbers (KV listing metadata + this isolate's memory).
     // Read-only and best-effort: if the listing fails we skip the check — the order is written to
     // its own brand-new key either way, so a failed read can never overwrite or drop other orders.
+    // D1: skipped entirely — uniqueness is a UNIQUE index and a collision is retried at insert time.
     let takenNumbers = new Set<string>();
     try {
-      if (kvStore.isAvailable()) takenNumbers = await listRecentOrderNumbers();
+      if (!useD1 && kvStore.isAvailable()) takenNumbers = await listRecentOrderNumbers();
     } catch (e) {
       console.warn("[KV createOrder read error]", e);
     }
-    const orderNumber = generateUniqueOrderNumber(
-      (candidate) =>
-        takenNumbers.has(candidate) ||
-        memoryOrders.some((o) => o.order_number === candidate)
-    );
+    const orderNumber = useD1
+      ? generateOrderNumber()
+      : generateUniqueOrderNumber(
+          (candidate) =>
+            takenNumbers.has(candidate) ||
+            memoryOrders.some((o) => o.order_number === candidate)
+        );
 
     const newOrder: Order = {
       id,
@@ -1433,6 +1506,24 @@ export const dbStore = {
     const product = memoryProducts.find((p) => p.id === newOrder.product_id);
     newOrder.product = product;
     newOrder.landing_page = publicLandingPageFor(newOrder.landing_page_slug);
+
+    // D1 first, so the order number is final (unique-index retry) before anything else sees it.
+    // One batch: the order row + its first status-history row. Zero KV writes, zero KV list calls.
+    let savedToD1 = false;
+    if (useD1) {
+      try {
+        const stored = await getOrdersRepo().insertOrderWithUniqueNumber(
+          sanitizeOrderForStorage(newOrder),
+          () => generateOrderNumber()
+        );
+        if (stored) {
+          newOrder.order_number = stored.order_number;
+          savedToD1 = true;
+        }
+      } catch (e) {
+        console.error("[D1 createOrder write error]", (e as Error)?.message);
+      }
+    }
 
     let savedToSupabase = false;
     if (admin) {
@@ -1489,6 +1580,15 @@ export const dbStore = {
     }
 
     // One KV key per order: no shared list to read-modify-write, no cap on how many are kept.
+    if (useD1) {
+      // With D1 selected an order is never left only in memory (lists read D1): fail loudly instead.
+      if (!savedToD1 && !savedToSupabase) {
+        throw new OrderPersistenceError(`Order ${newOrder.order_number} could not be persisted to D1`);
+      }
+      if (savedToD1) await mirrorOrderToKv(newOrder);
+      return newOrder;
+    }
+
     let savedToKv = false;
     try {
       savedToKv = await writeOrderRecord(newOrder);
@@ -1519,7 +1619,7 @@ export const dbStore = {
       await admin.from("orders").update({ status, updated_at }).eq("id", id);
     }
     try {
-      const order = await applyOrderPatch(id, { status, updated_at }, Boolean(admin));
+      const order = await patchOrder(id, { status, updated_at }, Boolean(admin), "status");
       saveToFile();
       return Boolean(order);
     } catch (e) {
@@ -1545,7 +1645,7 @@ export const dbStore = {
       await admin.from("orders").update(updatePayload).eq("id", id);
     }
     try {
-      const order = await applyOrderPatch(id, updatePayload, Boolean(admin));
+      const order = await patchOrder(id, updatePayload, Boolean(admin), "safka");
       saveToFile();
       return Boolean(order);
     } catch (e) {
@@ -1564,6 +1664,11 @@ export const dbStore = {
       } catch (e) {
         console.error("[Supabase deleteOrder error]", e);
       }
+    }
+
+    if (ordersBackend() === "d1") {
+      const result = await this.deleteOrders([id]); // (Supabase delete above is idempotent)
+      return result.count > 0 || Boolean(admin);
     }
 
     // Everything that identifies this order, so the Safka sync can never resurrect it.
@@ -1609,6 +1714,29 @@ export const dbStore = {
         await admin.from("orders").delete().in("id", ids);
       } catch (e) {
         console.error("[Supabase deleteOrders error]", e);
+      }
+    }
+
+    // D1: tombstones + deletes for every id in ONE transaction (one D1 query, no KV traffic).
+    if (ordersBackend() === "d1") {
+      try {
+        const res = await getOrdersRepo().deleteOrders(
+          Array.from(idSet).map((id) => ({ key: id, tokens: id.startsWith("sfk-") ? [id.slice(4)] : [] }))
+        );
+        res.tokens.forEach((t) => memoryDeletedOrderIds.add(t));
+        if (ordersKvMirrorEnabled()) {
+          await mapLimit(Array.from(idSet), 6, async (id) => {
+            try {
+              await writeOrderTombstone(id, res.tokens);
+              await kvStore.delete(orderKey(id));
+            } catch {}
+          });
+        }
+        // Like the KV path: a recorded deletion counts even when no stored row existed (virtual Safka orders).
+        return { count: idSet.size };
+      } catch (e) {
+        console.error("[D1 deleteOrders error]", (e as Error)?.message);
+        return { count: admin ? ids.length : 0 };
       }
     }
 
@@ -1667,6 +1795,10 @@ export const dbStore = {
   /** Loads the durable deletion tombstones from KV into this isolate (deletions made by other isolates). */
   async refreshDeletedOrderIds(): Promise<void> {
     try {
+      if (ordersBackend() === "d1") {
+        (await getOrdersRepo().listDeletedTokens()).forEach((t) => memoryDeletedOrderIds.add(t));
+        return;
+      }
       const res = await listDeletedOrderTokens();
       if (res.ok) res.tokens.forEach((t) => memoryDeletedOrderIds.add(t));
     } catch (e) {

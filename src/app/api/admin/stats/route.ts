@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
     const dayIndex = new Map(days.map((d, i) => [d, i]));
 
     const [orders, products, dayStats] = await Promise.all([
-      dbStore.getOrders(),
+      // Only the requested range (± a day of margin for the Cairo/UTC offset; exact day matching is below).
+      // On D1 this keeps the rows read proportional to the range instead of the whole order history.
+      dbStore.getOrders({ created_from: fromT - 86400000, created_to: toT + 2 * 86400000 }),
       dbStore.getProducts(),
       readDayStats(days),
     ]);

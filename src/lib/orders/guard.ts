@@ -1,11 +1,16 @@
 import { kvStore } from "@/lib/db/kv";
 import { sha256 } from "@/lib/crypto/sha256";
+import { getOrdersRepo, ordersBackend } from "@/lib/db/orders-repo";
 
 /**
  * Spam / duplicate protection for the public order endpoint.
  * Everything here is best-effort: KV is eventually consistent, so every KV
  * failure fails OPEN (a guard problem must never block a legitimate order).
  * Edge-safe: Web Crypto globals only.
+ *
+ * With ORDERS_BACKEND=d1 the durable half of both guards lives in D1 (tables `rate_limits` and
+ * `order_dedupe`) and is atomic across isolates; no KV key is read or written. Same limits, same
+ * responses, and a D1 failure still fails open.
  */
 
 // ───────────────────────── ID generation ─────────────────────────
@@ -94,8 +99,29 @@ export async function consumeOrderRateLimit(
   try {
     const now = Date.now();
     const key = orderRateKey(ip);
+    const useD1 = ordersBackend() === "d1";
+
+    if (useD1) {
+      try {
+        // One atomic upsert: counts this attempt and returns the window (correct across isolates).
+        const repo = getOrdersRepo();
+        const res = await repo.consumeRateLimit(key, now, ORDER_RATE_WINDOW_MS, ORDER_RATE_MAX);
+        if (Math.random() < 0.02) await repo.pruneExpired(now).catch(() => {});
+        if (res.count > ORDER_RATE_MAX) {
+          return {
+            allowed: false,
+            retryAfterSec: Math.max(1, Math.ceil((res.windowStart + ORDER_RATE_WINDOW_MS - now) / 1000)),
+          };
+        }
+        return { allowed: true, retryAfterSec: 0 };
+      } catch (err) {
+        // Fall through to this isolate's in-memory counter (never to KV).
+        console.warn("[Order Guard] D1 rate-limit failed (memory fallback)", (err as Error)?.message);
+      }
+    }
+
     let entry: RateEntry | null = rateMem.get(key) || null;
-    try {
+    if (!useD1) try {
       const fromKv = await kvStore.get<RateEntry>(key);
       if (
         fromKv &&
@@ -123,7 +149,7 @@ export async function consumeOrderRateLimit(
     const next: RateEntry = { count: (entry?.count || 0) + 1, first: entry?.first || now };
     rateMem.set(key, next);
     pruneMap(rateMem, (v) => now - v.first > ORDER_RATE_WINDOW_MS);
-    try {
+    if (!useD1) try {
       const ok = await kvStore.put(key, next);
       if (!ok) console.warn("[Order Guard] rate-limit write failed (fail open)");
     } catch (err) {
@@ -179,6 +205,60 @@ export function isFreshDedupeEntry(entry: unknown, now: number = Date.now()): en
   );
 }
 
+/** A claim whose owner never finished (crashed isolate) may be taken over after this long. */
+export const ORDER_DEDUPE_PENDING_TTL_MS = 20 * 1000;
+/** Waits (ms) while another request is still creating the same order: ~4.2s in total, 6 D1 queries. */
+const DEDUPE_POLL_DELAYS_MS = [100, 200, 400, 800, 1200, 1500];
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * D1 half of beginOrder: an atomic claim on (phone + product) in table `order_dedupe`.
+ * Exactly one of N concurrent identical requests — in any isolate — gets the claim; the others wait
+ * for the winner's order and return it. Any D1 failure fails open (order proceeds unguarded).
+ */
+async function beginOrderD1(key: string, release: (o: PublicOrderSnapshot | null) => void): Promise<OrderSlot> {
+  const claimId = randomHex(8);
+  let claimed = false;
+  try {
+    const repo = getOrdersRepo();
+    const claim = () => repo.claimDedupe(key, claimId, Date.now(), ORDER_DEDUPE_WINDOW_MS, ORDER_DEDUPE_PENDING_TTL_MS);
+    let outcome = await claim();
+    for (const delay of DEDUPE_POLL_DELAYS_MS) {
+      if (outcome.state !== "pending") break;
+      await sleep(delay);
+      outcome = await claim();
+    }
+    if (outcome.state === "existing") {
+      dedupeMem.set(key, { order_id: outcome.order.id, ts: Date.now(), order: outcome.order });
+      release(outcome.order);
+      return { existing: outcome.order, settle: async () => {} };
+    }
+    claimed = outcome.state === "claimed"; // still "pending" after the wait → proceed unguarded
+  } catch (err) {
+    console.warn("[Order Guard] D1 dedupe claim failed (fail open)", (err as Error)?.message);
+  }
+
+  return {
+    existing: null,
+    settle: async (order) => {
+      try {
+        if (!order) {
+          if (claimed) await getOrdersRepo().releaseDedupe(key, claimId);
+          return;
+        }
+        const now = Date.now();
+        dedupeMem.set(key, { order_id: order.id, ts: now, order });
+        pruneMap(dedupeMem, (v) => now - v.ts > ORDER_DEDUPE_WINDOW_MS);
+        if (claimed) await getOrdersRepo().settleDedupe(key, claimId, order.id, now);
+      } catch (err) {
+        console.warn("[Order Guard] D1 dedupe settle failed (fail open)", (err as Error)?.message);
+      } finally {
+        release(order);
+      }
+    },
+  };
+}
+
 export interface OrderSlot {
   /** Set when the same phone + product already ordered inside the window. */
   existing: PublicOrderSnapshot | null;
@@ -221,6 +301,8 @@ export async function beginOrder(key: string): Promise<OrderSlot> {
         resolveInflight(o);
       }
     };
+
+    if (ordersBackend() === "d1") return beginOrderD1(key, release);
 
     try {
       const fromKv = await kvStore.get<DedupeEntry>(key);

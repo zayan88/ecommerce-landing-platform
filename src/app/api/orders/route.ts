@@ -306,10 +306,27 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("q") || undefined;
     const syncSafka = searchParams.get("sync") === "true";
 
+    // Optional filters / pagination (all absent by default → same full list as before).
+    const dayStart = (v: string | null, endOfDay = false): number | undefined => {
+      if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return undefined;
+      // Egypt time (UTC+2; summer time shifts the edge by one hour at most)
+      const t = Date.parse(`${v}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}+02:00`);
+      return Number.isFinite(t) ? t : undefined;
+    };
+    const intParam = (name: string): number | undefined => {
+      const raw = searchParams.get(name);
+      return raw !== null && /^\d{1,7}$/.test(raw) ? Number(raw) : undefined;
+    };
+
     const orders = await dbStore.getOrders({
       landing_page_slug,
       status,
       search,
+      governorate: searchParams.get("gov") || undefined,
+      created_from: dayStart(searchParams.get("from")),
+      created_to: dayStart(searchParams.get("to"), true),
+      limit: intParam("limit"),
+      offset: intParam("offset"),
     });
 
     // Sync live orders from Safka Dropshipping platform only when sync is explicitly requested
