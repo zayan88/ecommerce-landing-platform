@@ -3,53 +3,59 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { LandingPage, Product } from "@/types";
+import { LandingPage } from "@/types";
 import {
   ArrowRight,
   ExternalLink,
   Copy,
   Check,
   Trash2,
-  Sparkles,
   Power,
+  Pencil,
   RefreshCw,
   FileQuestion,
+  Loader2,
 } from "lucide-react";
-import StarterEditor from "@/components/editor/StarterEditor";
-import { getLandingPageComponent, landingPageRegistry } from "@/landing-pages/registry";
 
-export default function LandingPageDetailPage() {
+const inputCls =
+  "w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition bg-white";
+
+/** Same rules the server applies, so the merchant sees the final link while typing. */
+function previewSlug(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9؀-ۿ\-_]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+export default function LandingPageDetailsPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = decodeURIComponent(String(params?.id || ""));
 
   const [lp, setLp] = useState<LandingPage | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [lpRes, prodRes] = await Promise.all([fetch("/api/landing-pages"), fetch("/api/products")]);
-      const lpJson = await lpRes.json();
-      const prodJson = await prodRes.json();
-      const products: Product[] = prodJson.success ? prodJson.products || [] : [];
-      const listed: LandingPage | undefined = lpJson.success
-        ? (lpJson.landingPages as LandingPage[]).find((x) => x.id === id)
-        : undefined;
-      // The list can hold a stale copy; the single-page endpoint reads the latest saved content
-      // (same source as the public page), so editing never starts from outdated data.
-      const freshJson = await fetch(`/api/landing-pages?id=${encodeURIComponent(id)}`)
-        .then((r) => r.json())
-        .catch(() => null);
-      const fresh: LandingPage | undefined = freshJson?.success ? (freshJson.landingPage as LandingPage) : undefined;
-      const found: LandingPage | undefined = fresh ? { ...(listed || {}), ...fresh } as LandingPage : listed;
+      // Single-page endpoint = latest saved copy (same source as the public page)
+      const json = await fetch(`/api/landing-pages?id=${encodeURIComponent(id)}`).then((r) => r.json());
+      const found: LandingPage | null = json?.success ? (json.landingPage as LandingPage) : null;
+      setLp(found);
       if (found) {
-        const prod = found.product || products.find((p) => p.id === found.product_id);
-        setLp({ ...found, product: prod });
-      } else {
-        setLp(null);
+        setTitle(found.title || "");
+        setSlug(found.slug || "");
       }
     } catch (err) {
       console.error(err);
@@ -62,50 +68,6 @@ export default function LandingPageDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
-
-  const handleCopyUrl = () => {
-    if (!lp) return;
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    navigator.clipboard.writeText(`${origin}/p/${lp.slug}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
-  const handleToggleStatus = async () => {
-    if (!lp) return;
-    const next = lp.status === "active" ? "paused" : "active";
-    setBusy(true);
-    try {
-      const res = await fetch("/api/landing-pages", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lp.id, status: next }),
-      });
-      const data = await res.json();
-      if (data.success) setLp({ ...lp, status: next });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!lp) return;
-    if (!window.confirm(`هل أنت متأكد من رغبتك في حذف صفحة الهبوط "${lp.title}"؟`)) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/landing-pages?id=${lp.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        router.push("/admin/landing-pages");
-        return;
-      }
-    } catch (err) {
-      console.error(err);
-    }
-    setBusy(false);
-  };
 
   const backLink = (
     <Link
@@ -123,7 +85,7 @@ export default function LandingPageDetailPage() {
         {backLink}
         <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
           <RefreshCw className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
-          <p className="text-sm font-bold text-slate-600">جاري تحميل صفحة الهبوط...</p>
+          <p className="text-sm font-bold text-slate-600">جاري تحميل الصفحة...</p>
         </div>
       </div>
     );
@@ -137,98 +99,207 @@ export default function LandingPageDetailPage() {
           <FileQuestion className="w-12 h-12 text-slate-300 mx-auto" />
           <h1 className="text-base font-bold text-slate-700">لم يتم العثور على صفحة الهبوط</h1>
           <p className="text-xs text-slate-400">ربما تم حذفها أو أن الرابط غير صحيح</p>
-          <Link
-            href="/admin/landing-pages"
-            className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold"
-          >
-            العودة إلى القائمة
-          </Link>
         </div>
       </div>
     );
   }
 
-  // Landing pages rendered by the universal template get the live click-to-edit editor
-  if (
-    lp.product &&
-    getLandingPageComponent(lp.component_key || lp.slug) === landingPageRegistry["starter-template"]
-  ) {
-    return (
-      <StarterEditor
-        lp={lp}
-        onSaved={(patch) => setLp((prev) => (prev ? { ...prev, ...patch } : prev))}
-        copied={copied}
-        busy={busy}
-        onCopyUrl={handleCopyUrl}
-        onToggleStatus={handleToggleStatus}
-        onDelete={handleDelete}
-      />
-    );
-  }
+  const finalSlug = previewSlug(slug);
+  const dirty = title.trim() !== lp.title || finalSlug !== lp.slug;
+  const isActive = lp.status === "active";
 
-  // Old hand-written templates cannot be edited live. There is no old editor any more:
-  // the merchant converts the page to the new template, then edits it visually.
-  const handleConvert = async () => {
-    if (!lp) return;
-    if (
-      !window.confirm(
-        "هيتحوّل شكل الصفحة للقالب الجديد القابل للتعديل المباشر، وهتاخد بيانات المنتج (الاسم والوصف والصور والعروض). تكمل؟"
-      )
-    )
-      return;
-    setBusy(true);
+  const saveMeta = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dirty) return;
+    setSaving(true);
+    setMessage(null);
     try {
-      const { product: _product, ...rest } = lp as any;
       const res = await fetch("/api/landing-pages", {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...rest, component_key: "starter-template" }),
+        body: JSON.stringify({ id: lp.id, title: title.trim(), slug: finalSlug }),
       });
       const data = await res.json();
-      if (data.success) {
-        await load();
-      } else {
-        window.alert(data.error || "تعذر التحويل، حاول مرة أخرى");
-      }
-    } catch (err) {
-      console.error(err);
-      window.alert("تعذر التحويل، حاول مرة أخرى");
+      if (!res.ok || !data.success) throw new Error(data.error || "تعذر الحفظ");
+      setLp({ ...lp, ...data.landingPage });
+      setTitle(data.landingPage.title);
+      setSlug(data.landingPage.slug);
+      setMessage({ ok: true, text: "تم الحفظ. اسم الصفحة ورابطها اتحدّثوا." });
+    } catch (err: any) {
+      setMessage({ ok: false, text: err.message || "تعذر الحفظ" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyUrl = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/p/${lp.slug}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const toggleStatus = async () => {
+    const next = isActive ? "paused" : "active";
+    setBusy(true);
+    try {
+      const res = await fetch("/api/landing-pages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: lp.id, status: next }),
+      });
+      const data = await res.json();
+      if (data.success) setLp({ ...lp, status: next });
     } finally {
       setBusy(false);
     }
   };
 
+  const remove = async () => {
+    if (!window.confirm(`هل أنت متأكد من حذف صفحة الهبوط "${lp.title}"؟`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/landing-pages?id=${lp.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        router.push("/admin/landing-pages");
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setBusy(false);
+  };
+
   return (
-    <div className="space-y-5 text-right font-sans max-w-3xl mx-auto pb-16" dir="rtl">
+    <div className="space-y-5 text-right font-sans max-w-2xl mx-auto pb-16" dir="rtl">
       {backLink}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-5 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto">
-          <Sparkles className="w-7 h-7" />
-        </div>
-        <div className="space-y-2">
+
+      {/* Primary action */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl sm:text-2xl font-black text-slate-950 font-heading leading-snug">{lp.title}</h1>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            الصفحة دي مبنية على قالب قديم ما بيدعمش التعديل المباشر. حوّلها للقالب الجديد وتقدر تعدّل أي نص أو صورة
-            أو لون بالضغط عليه مباشرة في الصفحة.
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-bold border ${
+              isActive ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-800 border-amber-200"
+            }`}
+          >
+            {isActive ? "نشطة" : "متوقفة"}
+          </span>
+        </div>
+        <Link
+          href={`/admin/landing-pages/${lp.id}/edit`}
+          className="w-full min-h-[56px] rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition"
+        >
+          <Pencil className="w-5 h-5" /> تعديل وتحرير الصفحة
+        </Link>
+        <p className="text-xs text-slate-500 text-center leading-relaxed">
+          بتفتح الصفحة نفسها وتضغط على أي نص أو صورة أو لون وتعدّله مباشرة.
+        </p>
+      </div>
+
+      {/* Name and link */}
+      <form onSubmit={saveMeta} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-5">
+        <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3">بيانات الصفحة</h2>
+
+        <div className="space-y-1.5">
+          <label htmlFor="lp-title" className="block text-sm font-black text-slate-900">
+            اسم الصفحة
+          </label>
+          <input
+            id="lp-title"
+            className={inputCls}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={120}
+            placeholder="مثال: جهاز التدليك الشامل"
+          />
+          <p className="text-xs text-slate-500">بيظهر في عنوان الصفحة ونتائج البحث.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="lp-slug" className="block text-sm font-black text-slate-900">
+            رابط الصفحة
+          </label>
+          <div className="flex items-stretch gap-0" dir="ltr">
+            <span className="px-3 flex items-center rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-sm font-mono">
+              /p/
+            </span>
+            <input
+              id="lp-slug"
+              className={`${inputCls} rounded-l-none font-mono`}
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              maxLength={80}
+              placeholder="my-product"
+            />
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed" dir="rtl">
+            الرابط النهائي:{" "}
+            <span className="font-mono" dir="ltr">
+              /p/{finalSlug || "..."}
+            </span>
+            . لو غيّرته، الرابط القديم هيتوقف، فعدّل أي إعلانات بتستخدمه.
           </p>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={handleConvert}
-            disabled={busy}
-            className="min-h-[48px] px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm shadow-lg shadow-orange-500/25 disabled:opacity-60 cursor-pointer"
+
+        {message && (
+          <div
+            role="status"
+            className={`p-3 rounded-xl text-sm font-bold border ${
+              message.ok ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-700"
+            }`}
           >
-            {busy ? "جاري التحويل..." : "تحويل للقالب الجديد وفتح المحرر"}
-          </button>
+            {message.text}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={!dirty || saving || !title.trim() || !finalSlug}
+          className="min-h-[48px] px-7 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm disabled:opacity-40 flex items-center gap-2 cursor-pointer"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          حفظ الاسم والرابط
+        </button>
+      </form>
+
+      {/* Other actions */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-3">
+        <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3">إجراءات</h2>
+        <div className="flex flex-wrap gap-2">
           <a
             href={`/p/${lp.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="min-h-[48px] px-5 rounded-2xl bg-white border border-slate-300 hover:bg-slate-50 text-sm font-bold text-slate-700 flex items-center gap-2"
+            className="min-h-[44px] px-4 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-sm font-bold text-slate-700 flex items-center gap-2"
           >
-            <ExternalLink className="w-4 h-4" /> فتح الصفحة الحالية
+            <ExternalLink className="w-4 h-4" /> فتح الصفحة
           </a>
+          <button
+            type="button"
+            onClick={copyUrl}
+            className="min-h-[44px] px-4 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-sm font-bold text-slate-700 flex items-center gap-2 cursor-pointer"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+            {copied ? "تم النسخ" : "نسخ الرابط"}
+          </button>
+          <button
+            type="button"
+            onClick={toggleStatus}
+            disabled={busy}
+            className="min-h-[44px] px-4 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-sm font-bold text-slate-700 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+          >
+            <Power className={`w-4 h-4 ${isActive ? "text-amber-600" : "text-emerald-600"}`} />
+            {isActive ? "إيقاف الصفحة" : "تفعيل الصفحة"}
+          </button>
+          <button
+            type="button"
+            onClick={remove}
+            disabled={busy}
+            className="min-h-[44px] px-4 rounded-xl bg-white border border-rose-200 hover:bg-rose-50 text-sm font-bold text-rose-700 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" /> حذف
+          </button>
         </div>
       </div>
     </div>

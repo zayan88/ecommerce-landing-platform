@@ -1117,6 +1117,70 @@ export const dbStore = {
     return true;
   },
 
+  /** Reserved first path segments that a landing page slug must never take. */
+  _RESERVED_SLUGS: new Set(["admin", "api", "p", "policy", "thank-you", "support", "_next"]),
+
+  /** Lowercase, trim, spaces -> hyphens, keep Latin letters/digits/Arabic/hyphen/underscore. */
+  normalizeSlug(raw: string): string {
+    return String(raw || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\u0600-\u06FF\-_]/g, "")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60);
+  },
+
+  /**
+   * Renames a landing page (title and/or link) safely: validates, checks uniqueness against other
+   * landing pages and products, writes the new keys and removes the stale old-slug key so the old
+   * URL does not keep serving an outdated copy.
+   */
+  async updateLandingPageMeta(
+    id: string,
+    patch: { title?: string; slug?: string }
+  ): Promise<{ ok: true; landingPage: LandingPage } | { ok: false; error: string }> {
+    const current = await this.getLandingPage(id);
+    if (!current) return { ok: false, error: "صفحة الهبوط غير موجودة" };
+
+    const title = patch.title !== undefined ? String(patch.title).trim().slice(0, 120) : current.title;
+    if (!title) return { ok: false, error: "اسم الصفحة مطلوب" };
+
+    let slug = current.slug;
+    if (patch.slug !== undefined) {
+      slug = this.normalizeSlug(patch.slug);
+      if (!slug) return { ok: false, error: "الرابط غير صالح. استخدم حروف أو أرقام أو شرطة فقط" };
+      if (this._RESERVED_SLUGS.has(slug)) return { ok: false, error: "الرابط ده محجوز، اختار رابط تاني" };
+      if (slug !== current.slug) {
+        const [pages, prods] = await Promise.all([this.getLandingPages(), this.getProducts()]);
+        if (pages.some((l) => l.id !== current.id && l.slug === slug)) {
+          return { ok: false, error: "الرابط ده مستخدم في صفحة هبوط تانية" };
+        }
+        if (prods.some((p) => p.slug === slug && p.id !== current.product_id)) {
+          return { ok: false, error: "الرابط ده مستخدم كرابط منتج تاني" };
+        }
+      }
+    }
+
+    const { product: _product, ...rest } = current as any;
+    const updated = await this.saveLandingPage({
+      ...rest,
+      title,
+      slug,
+      deployment_url: `/p/${slug}`,
+    });
+
+    if (slug !== current.slug) {
+      try {
+        await kvStore.delete(`lp:${current.slug}`);
+      } catch {}
+      const mi = memoryLandingPages.findIndex((p) => p.id === current.id);
+      if (mi >= 0) memoryLandingPages[mi] = { ...memoryLandingPages[mi], title, slug };
+    }
+    return { ok: true, landingPage: updated };
+  },
+
   async deleteLandingPage(id: string): Promise<boolean> {
     const admin = getSupabaseAdmin();
     if (admin) {

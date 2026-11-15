@@ -389,13 +389,13 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
       {/* Top bar */}
       <header className="shrink-0 bg-white border-b border-slate-200 px-2 sm:px-3 py-1.5 flex items-center gap-1.5 sm:gap-2">
         <Link
-          href="/admin/landing-pages"
+          href={`/admin/landing-pages/${lp.id}`}
           onClick={confirmLeave}
           className={`${ghost} shrink-0`}
-          aria-label="رجوع للقائمة"
+          aria-label="رجوع لبيانات الصفحة"
         >
           <ArrowRight className="w-4 h-4" />
-          <span className="hidden md:inline">رجوع للقائمة</span>
+          <span className="hidden md:inline">رجوع</span>
         </Link>
 
         <div className="min-w-0 flex-1 flex items-center gap-2 px-1">
