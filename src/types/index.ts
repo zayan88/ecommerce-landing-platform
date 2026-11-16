@@ -329,6 +329,8 @@ export interface SystemSettings {
   // Shipping fee / minimum order / coupons / popup / downsell (see lib/commerce.ts)
   shipping_config?: import("@/lib/commerce").ShippingConfig;
   coupons?: import("@/lib/commerce").Coupon[];
+  /** Orders that used each coupon code (server-written). */
+  coupon_usage?: Record<string, number>;
   popup?: import("@/lib/commerce").PopupConfig;
   downsell?: import("@/lib/commerce").DownsellConfig;
   // Manual payment methods shown at checkout next to cash on delivery (numbers are public by design)

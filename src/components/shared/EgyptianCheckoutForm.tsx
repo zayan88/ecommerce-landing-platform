@@ -140,7 +140,7 @@ export function EgyptianCheckoutForm({
   const [couponInput, setCouponInput] = useState("");
   const [couponBusy, setCouponBusy] = useState(false);
   const [couponMsg, setCouponMsg] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; discount: number; shipping: number } | null>(null);
+  const [coupon, setCoupon] = useState<{ code: string; discount: number; shipping: number; auto?: boolean } | null>(null);
   const offerFree = Boolean(activeOffer?.free_shipping);
   const discount = coupon?.discount || 0;
   const shipFee = coupon
@@ -168,7 +168,7 @@ export function EgyptianCheckoutForm({
       });
       const j = await res.json();
       if (j.valid) {
-        setCoupon({ code: code.toUpperCase(), discount: j.discount, shipping: j.shipping });
+        setCoupon({ code: String(j.code || code).toUpperCase(), discount: j.discount, shipping: j.shipping, auto: Boolean(j.auto) });
         setCouponMsg("");
         setCouponOpen(true);
         setCouponInput(code.toUpperCase());
@@ -182,10 +182,28 @@ export function EgyptianCheckoutForm({
       setCouponBusy(false);
     }
   };
+  // automatic discount (no code): the server says whether this order gets one; a typed coupon takes its place
+  const checkAuto = async () => {
+    try {
+      const res = await fetch("/api/coupons/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_id: product.id,
+          offer_id: activeOffer?.id && product.offers?.some((o) => o.id === activeOffer.id) ? activeOffer.id : undefined,
+        }),
+      });
+      const j = await res.json();
+      setCoupon((cur) => (cur && !cur.auto ? cur : j.valid ? { code: String(j.code || ""), discount: j.discount, shipping: j.shipping, auto: true } : null));
+    } catch {
+      // no automatic discount shown; the server still applies it when the order is placed
+    }
+  };
   // a new offer changes the total: check the coupon again; the downsell popup applies its coupon through this event
-  const appliedCode = coupon?.code;
+  const appliedCode = coupon && !coupon.auto ? coupon.code : undefined;
   useEffect(() => {
     if (appliedCode) applyCouponCode(appliedCode, true);
+    else if (brand.commerce?.has_auto && !previewOnly) checkAuto();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeOffer?.id]);
   useEffect(() => {
@@ -318,7 +336,7 @@ export function EgyptianCheckoutForm({
         website: website || undefined,
         payment_method: payMethod,
         payment_reference: payMethod === "cod" ? undefined : payRef.trim() || undefined,
-        coupon_code: coupon?.code,
+        coupon_code: coupon && !coupon.auto ? coupon.code : undefined,
         event_id: eventId,
         ...utms,
       };
@@ -519,7 +537,7 @@ export function EgyptianCheckoutForm({
 
         {/* Coupon */}
         <div>
-          {!couponOpen && !coupon ? (
+          {!couponOpen && (!coupon || coupon.auto) ? (
             <button type="button" onClick={() => setCouponOpen(true)} className="text-sm font-bold text-orange-600 hover:text-orange-700 cursor-pointer min-h-[44px]">
               عندك كوبون خصم؟
             </button>
@@ -544,7 +562,7 @@ export function EgyptianCheckoutForm({
                   {couponBusy ? "..." : "تطبيق"}
                 </button>
               </div>
-              {coupon && <p className="text-xs font-bold text-emerald-700">✓ اتطبّق خصم {coupon.discount} ج.م</p>}
+              {coupon && !coupon.auto && <p className="text-xs font-bold text-emerald-700">✓ اتطبّق خصم {coupon.discount} ج.م</p>}
               {couponMsg && <p className="text-xs font-bold text-rose-700">{couponMsg}</p>}
             </div>
           )}
@@ -558,7 +576,7 @@ export function EgyptianCheckoutForm({
           </div>
           {discount > 0 && (
             <div className="flex justify-between text-emerald-700">
-              <span>خصم الكوبون ({coupon?.code}):</span>
+              <span>{coupon?.auto ? "خصم تلقائي:" : `خصم الكوبون (${coupon?.code}):`}</span>
               <span className="font-bold">- {discount} ج.م</span>
             </div>
           )}

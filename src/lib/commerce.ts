@@ -18,11 +18,25 @@ export interface ShippingConfig {
 export const DEFAULT_SHIPPING: ShippingConfig = { default_fee: 0, free_over: 0, min_order: 0, product_fees: {} };
 
 export interface Coupon {
+  /** The code the customer types. For an automatic discount it is just the internal name. */
   code: string;
+  /** "discount" takes money off; "free_shipping" removes the shipping fee. */
+  kind: "discount" | "free_shipping";
   type: "fixed" | "percent";
   value: number;
+  /** Applied without a code when the conditions are met. */
+  auto: boolean;
   /** The order total must reach this for the coupon to apply. 0 = no minimum. */
   min_order: number;
+  /** The quantity of items must reach this. 0 = no minimum. */
+  min_qty: number;
+  /** Only these products. Empty = every product. */
+  product_ids: string[];
+  /** Total number of orders that may use it. 0 = unlimited. */
+  max_uses: number;
+  /** "YYYY-MM-DD" (Egypt time). Empty = no limit. */
+  starts_at: string;
+  ends_at: string;
   enabled: boolean;
 }
 
@@ -69,16 +83,33 @@ export function normalizeCouponCode(v: unknown): string {
   return typeof v === "string" ? v.trim().toUpperCase().slice(0, 20) : "";
 }
 
+const day = (v: unknown): string => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v.trim()) ? v.trim() : "");
+
 export function sanitizeCoupons(input: unknown): Coupon[] {
   const out: Coupon[] = [];
   for (const c of (Array.isArray(input) ? input : []).slice(0, 30)) {
     const code = normalizeCouponCode(c?.code);
     if (!/^[A-Z0-9_-]{2,20}$/.test(code) || out.some((x) => x.code === code)) continue;
+    const kind = c?.kind === "free_shipping" ? "free_shipping" : "discount";
     const type = c?.type === "percent" ? "percent" : "fixed";
     let value = money(c?.value, 100000);
     if (type === "percent") value = Math.min(100, value);
-    if (value <= 0) continue;
-    out.push({ code, type, value, min_order: money(c?.min_order), enabled: c?.enabled !== false });
+    if (kind === "discount" && value <= 0) continue;
+    const ids = (Array.isArray(c?.product_ids) ? c.product_ids : []).filter((x: unknown) => typeof x === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(x)).slice(0, 100);
+    out.push({
+      code,
+      kind,
+      type,
+      value: kind === "free_shipping" ? 0 : value,
+      auto: Boolean(c?.auto),
+      min_order: money(c?.min_order),
+      min_qty: money(c?.min_qty, 1000),
+      product_ids: Array.from(new Set<string>(ids)),
+      max_uses: money(c?.max_uses, 10_000_000),
+      starts_at: day(c?.starts_at),
+      ends_at: day(c?.ends_at),
+      enabled: c?.enabled !== false,
+    });
   }
   return out;
 }
@@ -120,23 +151,63 @@ export function sanitizeDownsell(input: unknown, coupons: Coupon[]): DownsellCon
 export interface CouponResult {
   ok: boolean;
   discount: number;
+  /** The coupon removes the shipping fee. */
+  free_shipping?: boolean;
   code?: string;
+  /** Applied automatically (no code typed). */
+  auto?: boolean;
   /** Arabic reason shown to the customer when not ok. */
   reason?: string;
 }
 
-/** Discount of a coupon for an order of `subtotal` (before shipping). Never more than the subtotal. */
-export function applyCoupon(coupons: Coupon[] | undefined, rawCode: unknown, subtotal: number): CouponResult {
+export interface CouponContext {
+  /** Order total before shipping and before the coupon. */
+  subtotal: number;
+  quantity?: number;
+  productId?: string;
+  /** Orders that already used each code. */
+  usage?: Record<string, number>;
+  now?: number;
+}
+
+const EGYPT = "+02:00";
+
+function evaluate(c: Coupon, ctx: CouponContext): CouponResult {
+  const now = ctx.now ?? Date.now();
+  if (!c.enabled) return { ok: false, discount: 0, reason: "الكوبون ده مش صحيح أو منتهي" };
+  if (c.starts_at && now < Date.parse(`${c.starts_at}T00:00:00.000${EGYPT}`)) return { ok: false, discount: 0, reason: "الكوبون ده لسه مابدأش" };
+  if (c.ends_at && now > Date.parse(`${c.ends_at}T23:59:59.999${EGYPT}`)) return { ok: false, discount: 0, reason: "الكوبون ده انتهى" };
+  if (c.max_uses > 0 && (ctx.usage?.[c.code] || 0) >= c.max_uses) return { ok: false, discount: 0, reason: "الكوبون ده خلص عدد مرات استخدامه" };
+  if (c.product_ids.length > 0 && !(ctx.productId && c.product_ids.includes(ctx.productId))) {
+    return { ok: false, discount: 0, reason: "الكوبون ده مش على المنتج ده" };
+  }
+  if (c.min_order > 0 && ctx.subtotal < c.min_order) return { ok: false, discount: 0, reason: `الكوبون ده للطلبات من ${c.min_order} ج.م وأكتر` };
+  if (c.min_qty > 0 && (ctx.quantity ?? 1) < c.min_qty) return { ok: false, discount: 0, reason: `الكوبون ده لو طلبت ${c.min_qty} قطع أو أكتر` };
+  if (c.kind === "free_shipping") return { ok: true, discount: 0, free_shipping: true, code: c.code };
+  const raw = c.type === "percent" ? Math.round((ctx.subtotal * c.value) / 100) : c.value;
+  const discount = Math.max(0, Math.min(Math.round(ctx.subtotal), raw));
+  return { ok: discount > 0, discount, code: c.code };
+}
+
+/** One coupon the customer typed. `ctx` may also be just the subtotal (older callers). */
+export function applyCoupon(coupons: Coupon[] | undefined, rawCode: unknown, ctx: CouponContext | number): CouponResult {
   const code = normalizeCouponCode(rawCode);
   if (!code) return { ok: false, discount: 0 };
   const c = (coupons || []).find((x) => x.code === code);
-  if (!c || !c.enabled) return { ok: false, discount: 0, reason: "الكوبون ده مش صحيح أو منتهي" };
-  if (c.min_order > 0 && subtotal < c.min_order) {
-    return { ok: false, discount: 0, reason: `الكوبون ده للطلبات من ${c.min_order} ج.م وأكتر` };
+  if (!c) return { ok: false, discount: 0, reason: "الكوبون ده مش صحيح أو منتهي" };
+  return evaluate(c, typeof ctx === "number" ? { subtotal: ctx } : ctx);
+}
+
+/** The best automatic coupon whose conditions are met (the biggest discount; free shipping when nothing takes money off). */
+export function bestAutoCoupon(coupons: Coupon[] | undefined, ctx: CouponContext): CouponResult {
+  let best: CouponResult = { ok: false, discount: 0 };
+  for (const c of coupons || []) {
+    if (!c.auto) continue;
+    const r = evaluate(c, ctx);
+    if (!r.ok) continue;
+    if (!best.ok || r.discount > best.discount) best = { ...r, auto: true };
   }
-  const raw = c.type === "percent" ? Math.round((subtotal * c.value) / 100) : c.value;
-  const discount = Math.max(0, Math.min(Math.round(subtotal), raw));
-  return { ok: discount > 0, discount, code: c.code };
+  return best;
 }
 
 /** The shipping fee of an order. `total` is the order total after the coupon, before shipping. */
@@ -157,6 +228,8 @@ export function shippingHint(cfg: ShippingConfig): { free: boolean; text: string
 
 export interface PublicCommerce {
   shipping: ShippingConfig;
+  /** There is at least one active automatic discount (the checkout asks the server for it). */
+  has_auto?: boolean;
   popup?: PopupConfig;
   downsell?: { code: string; message: string; delay_seconds: number; on_exit: boolean; auto: boolean };
 }
@@ -165,6 +238,7 @@ export interface PublicCommerce {
 export function publicCommerce(s: any): PublicCommerce {
   const shipping = sanitizeShipping(s?.shipping_config);
   const out: PublicCommerce = { shipping };
+  if (sanitizeCoupons(s?.coupons).some((c) => c.auto && c.enabled)) out.has_auto = true;
   const popup = s?.popup ? sanitizePopup(s.popup) : null;
   if (popup && popup.enabled && (popup.title || popup.body)) out.popup = popup;
   const coupons = sanitizeCoupons(s?.coupons);

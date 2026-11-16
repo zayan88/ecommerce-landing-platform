@@ -140,6 +140,79 @@ for (const backend of ["d1", "kv"]) {
   });
 }
 
+await test("coupon conditions: products, quantity, dates, usage limit, free-shipping kind", () => {
+  const day = (d) => Date.parse(d + "T12:00:00+02:00");
+  const cs = lib.sanitizeCoupons([
+    { code: "ONLYP1", kind: "discount", type: "fixed", value: 30, product_ids: ["p1"] },
+    { code: "QTY2", kind: "discount", type: "percent", value: 10, min_qty: 2 },
+    { code: "WINDOW", kind: "discount", type: "fixed", value: 20, starts_at: "2026-06-10", ends_at: "2026-06-20" },
+    { code: "LIMIT1", kind: "discount", type: "fixed", value: 10, max_uses: 1 },
+    { code: "SHIPFREE", kind: "free_shipping" },
+  ]);
+  assert.equal(cs.length, 5, "a free-shipping coupon needs no value");
+  assert.equal(lib.applyCoupon(cs, "ONLYP1", { subtotal: 500, productId: "p1" }).discount, 30);
+  assert.equal(lib.applyCoupon(cs, "ONLYP1", { subtotal: 500, productId: "p2" }).ok, false);
+  assert.equal(lib.applyCoupon(cs, "QTY2", { subtotal: 500, quantity: 1 }).ok, false);
+  assert.equal(lib.applyCoupon(cs, "QTY2", { subtotal: 500, quantity: 2 }).discount, 50);
+  assert.equal(lib.applyCoupon(cs, "WINDOW", { subtotal: 500, now: day("2026-06-09") }).ok, false, "before the start day");
+  assert.equal(lib.applyCoupon(cs, "WINDOW", { subtotal: 500, now: day("2026-06-20") }).ok, true, "the end day is included");
+  assert.equal(lib.applyCoupon(cs, "WINDOW", { subtotal: 500, now: day("2026-06-21") }).ok, false, "after the end day");
+  assert.equal(lib.applyCoupon(cs, "LIMIT1", { subtotal: 500, usage: { LIMIT1: 1 } }).ok, false, "used up");
+  assert.equal(lib.applyCoupon(cs, "LIMIT1", { subtotal: 500, usage: {} }).ok, true);
+  const sf = lib.applyCoupon(cs, "SHIPFREE", { subtotal: 500 });
+  assert.equal(sf.ok, true);
+  assert.equal(sf.free_shipping, true);
+  assert.equal(sf.discount, 0);
+});
+
+await test("automatic discounts: the best one wins; a public flag tells the page to ask the server", () => {
+  const cs = lib.sanitizeCoupons([
+    { code: "AUTO10", kind: "discount", type: "percent", value: 10, auto: true, min_order: 400 },
+    { code: "AUTO50", kind: "discount", type: "fixed", value: 50, auto: true, min_order: 400 },
+    { code: "TYPED", kind: "discount", type: "fixed", value: 99 },
+  ]);
+  assert.equal(lib.bestAutoCoupon(cs, { subtotal: 600 }).code, "AUTO10", "10% of 600 = 60 beats a flat 50");
+  assert.equal(lib.bestAutoCoupon(cs, { subtotal: 450 }).code, "AUTO50", "10% of 450 = 45 loses to a flat 50");
+  assert.equal(lib.bestAutoCoupon(cs, { subtotal: 300 }).ok, false, "below the minimum");
+  assert.equal(lib.bestAutoCoupon([cs[2]], { subtotal: 600 }).ok, false, "a coupon that needs a code is never automatic");
+  assert.equal(lib.publicCommerce({ coupons: cs }).has_auto, true);
+  assert.equal(lib.publicCommerce({ coupons: [cs[2]] }).has_auto, undefined);
+});
+
+await test("orders: automatic discount, free-shipping coupon, usage count and limit work end to end", async () => {
+  process.env.ORDERS_BACKEND = "d1";
+  await save({
+    shipping_config: { default_fee: 60 },
+    coupons: [
+      { code: "AUTO10", kind: "discount", type: "percent", value: 10, auto: true, min_order: 400 },
+      { code: "FREESHIP", kind: "free_shipping" },
+      { code: "LIM1", kind: "discount", type: "fixed", value: 25, max_uses: 1 },
+    ],
+  });
+  // no code typed: the automatic 10% applies by itself (500 -> 450), shipping 60 still charged
+  let o = await dbStore.getOrder((await place({ offer_id: "off-paid" })).body.order.id);
+  assert.equal(o.final_amount, 450 + 60);
+  assert.equal(o.tracking.coupon.auto, true);
+  // a typed coupon replaces the automatic one: free shipping, no discount
+  o = await dbStore.getOrder((await place({ offer_id: "off-paid", coupon_code: "freeship" })).body.order.id);
+  assert.equal(o.shipping_fee, 0);
+  assert.equal(o.final_amount, 500);
+  // usage limit: the second use is refused and the count is recorded
+  assert.equal((await place({ offer_id: "off-paid", coupon_code: "LIM1" })).status, 200);
+  const again = await place({ offer_id: "off-paid", coupon_code: "LIM1" });
+  assert.equal(again.status, 400);
+  assert.match(again.body.error, /خلص/);
+  assert.equal((await dbStore.getSettings()).coupon_usage.LIM1, 1);
+  // the browser can never write the counter
+  await save({ coupon_usage: { LIM1: 0 } });
+  assert.equal((await dbStore.getSettings()).coupon_usage.LIM1, 1);
+  // the check endpoint with no code reports the automatic discount
+  const c = await check({ product_id: "prod-c1", offer_id: "off-paid" });
+  assert.equal(c.body.valid, true);
+  assert.equal(c.body.auto, true);
+  assert.equal(c.body.final, 450 + 60);
+});
+
 await test("coupon check endpoint: public, answers only for the code sent, and mirrors the order rules", async () => {
   assert.notEqual(middleware(request("/api/coupons/check", { method: "POST" })).status, 401);
   await save({ shipping_config: { default_fee: 40 }, coupons: [{ code: "SAVE50", type: "fixed", value: 50 }, { code: "SECRET", type: "fixed", value: 99 }] });

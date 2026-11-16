@@ -9,7 +9,7 @@ import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
 import type { Order } from "@/types";
 import { markAbandonedConverted } from "@/lib/db/abandoned-repo";
-import { applyCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
+import { applyCoupon, bestAutoCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
 import {
   beginOrder,
   consumeOrderRateLimit,
@@ -132,17 +132,25 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    let couponApplied: { code: string; amount: number } | null = null;
+    let couponApplied: { code: string; amount: number; auto?: boolean; free_shipping?: boolean } | null = null;
+    const allCoupons = sanitizeCoupons(commerceSettings.coupons);
+    const couponCtx = { subtotal: totalAmount, quantity, productId: product.id, usage: ((commerceSettings as any).coupon_usage || {}) as Record<string, number> };
     if (data.coupon_code) {
-      const c = applyCoupon(sanitizeCoupons(commerceSettings.coupons), data.coupon_code, totalAmount);
+      const c = applyCoupon(allCoupons, data.coupon_code, couponCtx);
       if (!c.ok) {
         return NextResponse.json({ success: false, error: c.reason || "الكوبون ده مش صحيح أو منتهي" }, { status: 400 });
       }
-      couponApplied = { code: c.code as string, amount: c.discount };
-      discountAmount += c.discount;
+      couponApplied = { code: c.code as string, amount: c.discount, ...(c.free_shipping ? { free_shipping: true } : {}) };
+    } else {
+      // no code typed: the merchant's automatic discount (if any) applies by itself
+      const auto = bestAutoCoupon(allCoupons, couponCtx);
+      if (auto.ok) couponApplied = { code: auto.code as string, amount: auto.discount, auto: true, ...(auto.free_shipping ? { free_shipping: true } : {}) };
     }
+    if (couponApplied) discountAmount += couponApplied.amount;
     const afterCoupon = totalAmount - (couponApplied?.amount || 0);
-    const shippingFee = computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping });
+    const shippingFee = couponApplied?.free_shipping
+      ? 0
+      : computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping });
     const finalAmount = afterCoupon + shippingFee;
 
     // 4. Resolve client IP and User-Agent for CAPI / rate limiting
@@ -264,6 +272,16 @@ export async function POST(req: NextRequest) {
       landing_page_slug: createdOrder.landing_page_slug,
       event_id: eventId,
     };
+
+    // Count the coupon use (best effort; the limit is approximate under heavy parallel orders)
+    if (couponApplied) {
+      try {
+        const cur = ((await dbStore.getSettings()) as any).coupon_usage || {};
+        await dbStore.updateSettings({ coupon_usage: { ...cur, [couponApplied.code]: (Number(cur[couponApplied.code]) || 0) + 1 } } as any);
+      } catch (e) {
+        console.warn("[coupon usage]", (e as Error)?.message);
+      }
+    }
 
     // 5-bis. The visitor finished: close their abandoned-checkout rows (best effort, never blocks the order)
     await markAbandonedConverted(createdOrder.customer_phone).catch(() => {});

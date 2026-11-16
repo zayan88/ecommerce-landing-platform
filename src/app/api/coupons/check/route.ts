@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
-import { applyCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
+import { applyCoupon, bestAutoCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
 
 export const runtime = "edge";
 
@@ -25,11 +25,25 @@ export async function POST(req: NextRequest) {
 
   const settings = await dbStore.getSettings();
   const cfg = sanitizeShipping(settings.shipping_config);
-  const c = applyCoupon(sanitizeCoupons(settings.coupons), body?.code, subtotal);
-  const after = subtotal - (c.ok ? c.discount : 0);
-  const shipping = computeShipping(cfg, { total: after, productId: product.id, offerFree: Boolean(offer?.free_shipping) });
+  const all = sanitizeCoupons(settings.coupons);
+  const ctx = { subtotal, quantity: offer ? Number(offer.quantity) || 1 : 1, productId: product.id, usage: ((settings as any).coupon_usage || {}) as Record<string, number> };
+  const typed = typeof body?.code === "string" && body.code.trim() !== "";
+  // a typed code is checked as typed; with no code the automatic discount (if any) is what the order would get
+  const c = typed ? applyCoupon(all, body.code, ctx) : bestAutoCoupon(all, ctx);
+  const discount = c.ok ? c.discount : 0;
+  const after = subtotal - discount;
+  const shipping = c.ok && c.free_shipping ? 0 : computeShipping(cfg, { total: after, productId: product.id, offerFree: Boolean(offer?.free_shipping) });
   return NextResponse.json(
-    { valid: c.ok, discount: c.ok ? c.discount : 0, shipping, final: after + shipping, reason: c.ok ? undefined : c.reason || "الكوبون ده مش صحيح أو منتهي" },
+    {
+      valid: c.ok,
+      auto: Boolean(c.auto),
+      code: c.ok ? c.code : undefined,
+      free_shipping: Boolean(c.ok && c.free_shipping),
+      discount,
+      shipping,
+      final: after + shipping,
+      reason: c.ok || !typed ? undefined : c.reason || "الكوبون ده مش صحيح أو منتهي",
+    },
     { headers: noStore }
   );
 }

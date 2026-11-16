@@ -149,6 +149,7 @@ export async function POST(req: NextRequest) {
         toUpdate.home_config = clean;
       }
     }
+    delete (toUpdate as Record<string, unknown>).coupon_usage;
     if ("shipping_config" in toUpdate) toUpdate.shipping_config = sanitizeShipping(toUpdate.shipping_config);
     if ("coupons" in toUpdate) toUpdate.coupons = sanitizeCoupons(toUpdate.coupons);
     if ("popup" in toUpdate) toUpdate.popup = sanitizePopup(toUpdate.popup);
