@@ -1,7 +1,7 @@
 export type ProductStatus = 'active' | 'draft' | 'archived';
 export type LandingPageStatus = 'active' | 'paused' | 'draft';
 export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
-export type PaymentMethod = 'cod' | 'safqa' | 'card';
+export type PaymentMethod = 'cod' | 'safqa' | 'card' | 'vodafone_cash' | 'instapay';
 export type SafqaSyncStatus = 'not_synced' | 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface ProductOffer {
@@ -222,6 +222,14 @@ export interface Order {
   tracking?: OrderTrackingMeta;
 }
 
+/** Manual payment (Vodafone Cash / InstaPay transfer): what the customer wrote and whether the merchant confirmed it. */
+export interface OrderPayment {
+  method: string;
+  reference?: string;
+  status: "awaiting" | "paid";
+  confirmed_at?: string;
+}
+
 /** A shipment created at a courier for this order (stored inside order.tracking). */
 export interface OrderShipment {
   provider: string;
@@ -236,6 +244,7 @@ export interface OrderShipment {
 
 export interface OrderTrackingMeta {
   shipping?: OrderShipment;
+  payment?: OrderPayment;
   id?: string;
   order_id?: string;
   utm_source?: string;
@@ -316,6 +325,11 @@ export interface SystemSettings {
   };
   // Customer reviews on the store home page: written by the merchant himself (none by default, section hidden)
   home_reviews?: { name: string; place?: string; comment: string; rating?: number }[];
+  // Manual payment methods shown at checkout next to cash on delivery (numbers are public by design)
+  payment_methods?: {
+    vodafone_cash?: { enabled: boolean; number: string; holder?: string };
+    instapay?: { enabled: boolean; address: string; holder?: string };
+  };
   // Shipping: which courier is connected ("none" = ship by file export) and its credentials
   shipping_provider?: "none" | "bosta";
   bosta_api_key?: string; // secret

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { isThemeColor } from "@/lib/palettes";
+import { normalizeEgyptPhone } from "@/lib/db/abandoned-repo";
 import { META_PIXEL_RE, TIKTOK_PIXEL_RE, SNAP_PIXEL_RE, GA4_RE, GTM_RE, META_TEST_CODE_RE, cleanIdList } from "@/lib/tracking/tag-ids";
 
 export const runtime = "edge";
@@ -146,6 +147,26 @@ export async function POST(req: NextRequest) {
         }
         toUpdate.home_config = clean;
       }
+    }
+    if ("payment_methods" in toUpdate) {
+      const pm = toUpdate.payment_methods && typeof toUpdate.payment_methods === "object" ? toUpdate.payment_methods : {};
+      const clean: any = {};
+      const holderOf = (v: unknown) => (typeof v === "string" ? v.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 60) : "");
+      if (pm.vodafone_cash && typeof pm.vodafone_cash === "object") {
+        const num = normalizeEgyptPhone(pm.vodafone_cash.number);
+        const enabled = Boolean(pm.vodafone_cash.enabled);
+        if (enabled && !num) return NextResponse.json({ success: false, error: "رقم فودافون كاش غير صحيح (11 رقم يبدأ بـ 01)" }, { status: 400 });
+        clean.vodafone_cash = { enabled, number: num || "", holder: holderOf(pm.vodafone_cash.holder) };
+      }
+      if (pm.instapay && typeof pm.instapay === "object") {
+        const raw = typeof pm.instapay.address === "string" ? pm.instapay.address.trim() : "";
+        // an InstaPay address (name@bank) or a mobile number linked to InstaPay
+        const addr = /^[A-Za-z0-9._-]{2,40}@[A-Za-z]{2,20}$/.test(raw) ? raw : normalizeEgyptPhone(raw) || "";
+        const enabled = Boolean(pm.instapay.enabled);
+        if (enabled && !addr) return NextResponse.json({ success: false, error: "عنوان إنستاباي غير صحيح (مثال: name@instapay أو رقم موبايل)" }, { status: 400 });
+        clean.instapay = { enabled, address: addr, holder: holderOf(pm.instapay.holder) };
+      }
+      toUpdate.payment_methods = clean;
     }
     if ("shipping_provider" in toUpdate && toUpdate.shipping_provider !== "none" && toUpdate.shipping_provider !== "bosta") {
       delete toUpdate.shipping_provider;

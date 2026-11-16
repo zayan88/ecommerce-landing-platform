@@ -104,7 +104,9 @@ export const orderFormSchema = z
       .max(1000, "الكمية غير صالحة"),
 
     // Payment method
-    payment_method: z.enum(["cod", "safqa", "card"]).default("cod"),
+    payment_method: z.enum(["cod", "safqa", "card", "vodafone_cash", "instapay"]).default("cod"),
+    // Transfer reference the customer typed (manual methods only)
+    payment_reference: trackingText(60, "truncate"),
 
     // Tracking metadata (lenient)
     utm_source: trackingText(300, "truncate"),

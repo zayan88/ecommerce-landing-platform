@@ -8,6 +8,7 @@ import { trackMetaEvent } from "@/lib/tracking/meta-pixel";
 import { trackMarketingEvent } from "@/lib/tracking/marketing-pixels";
 import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
+import { useBrand } from "@/components/brand/BrandProvider";
 import {
   CheckCircleIcon,
   ShieldCheckIcon,
@@ -55,6 +56,9 @@ export function EgyptianCheckoutForm({
   const [governorate, setGovernorate] = useState("القاهرة");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const brand = useBrand();
+  const [payMethod, setPayMethod] = useState<"cod" | "vodafone_cash" | "instapay">("cod");
+  const [payRef, setPayRef] = useState("");
   // Honeypot: hidden from humans; bots that fill it get a fake success server-side
   const [website, setWebsite] = useState("");
 
@@ -218,7 +222,8 @@ export function EgyptianCheckoutForm({
             : undefined,
         quantity,
         website: website || undefined,
-        payment_method: "cod",
+        payment_method: payMethod,
+        payment_reference: payMethod === "cod" ? undefined : payRef.trim() || undefined,
         event_id: eventId,
         ...utms,
       };
@@ -435,6 +440,57 @@ export function EgyptianCheckoutForm({
             ✓ هتدفع للمندوب بس لما تستلم الشحنة وتعاينها بنفسك.
           </div>
         </div>
+
+        {/* Payment method: cash on delivery by default; transfer options only when the merchant enabled them */}
+        {(brand.payments.vodafone_cash || brand.payments.instapay) && (
+          <fieldset className="space-y-2">
+            <legend className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">طريقة الدفع</legend>
+            {(
+              [
+                ["cod", "الدفع عند الاستلام", "ادفع للمندوب بعد ما تفتح الشحنة وتعاينها"],
+                ...(brand.payments.vodafone_cash ? [["vodafone_cash", "فودافون كاش", "حوّل المبلغ على رقم المتجر"]] : []),
+                ...(brand.payments.instapay ? [["instapay", "إنستاباي", "حوّل المبلغ على عنوان المتجر"]] : []),
+              ] as [typeof payMethod, string, string][]
+            ).map(([id, title, hint]) => (
+              <label
+                key={id}
+                className={`flex items-start gap-3 rounded-xl border-2 p-3 min-h-[56px] cursor-pointer transition ${
+                  payMethod === id ? "border-orange-500 bg-orange-50/60" : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <input type="radio" name="pay_method" value={id} checked={payMethod === id} onChange={() => setPayMethod(id)} className="mt-1 w-4 h-4 accent-orange-600" />
+                <span>
+                  <span className="block text-sm font-black text-slate-900">{title}</span>
+                  <span className="block text-xs text-slate-500">{hint}</span>
+                </span>
+              </label>
+            ))}
+            {payMethod !== "cod" && (
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2 text-sm">
+                <p className="font-bold text-slate-800">
+                  حوّل <span className="font-mono">{Number(totalAmount).toLocaleString("en-US")}</span> {brand.currency} على:
+                </p>
+                <p className="font-mono text-base font-black text-slate-950 select-all" dir="ltr">
+                  {payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.number : brand.payments.instapay?.address}
+                </p>
+                {(payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.holder : brand.payments.instapay?.holder) && (
+                  <p className="text-xs text-slate-600">
+                    باسم: {payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.holder : brand.payments.instapay?.holder}
+                  </p>
+                )}
+                <input
+                  type="text"
+                  value={payRef}
+                  onChange={(e) => setPayRef(e.target.value)}
+                  maxLength={60}
+                  placeholder="رقم العملية أو آخر 4 أرقام من رقم التحويل (اختياري)"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <p className="text-xs text-slate-500 leading-relaxed">بنأكد الطلب لما التحويل يوصلنا ونكلمك. لو حوّلت بعد ما تبعت الطلب، ابعت صورة الإيصال لنا على واتساب.</p>
+              </div>
+            )}
+          </fieldset>
+        )}
 
         {/* Submit Button */}
         <button

@@ -20,6 +20,12 @@ interface BrandForm {
   site_domain: string;
   currency_symbol: string;
   home_reviews: { name: string; place: string; comment: string; rating: number }[];
+  vodafone_enabled: boolean;
+  vodafone_number: string;
+  vodafone_holder: string;
+  instapay_enabled: boolean;
+  instapay_address: string;
+  instapay_holder: string;
   shipping_provider: "none" | "bosta";
   bosta_api_key: string;
   bosta_location_id: string;
@@ -39,6 +45,12 @@ const EMPTY: BrandForm = {
   site_domain: "",
   currency_symbol: "ج.م",
   home_reviews: [],
+  vodafone_enabled: false,
+  vodafone_number: "",
+  vodafone_holder: "",
+  instapay_enabled: false,
+  instapay_address: "",
+  instapay_holder: "",
   shipping_provider: "none",
   bosta_api_key: "",
   bosta_location_id: "",
@@ -84,6 +96,12 @@ export default function BrandPage() {
           support_email: s.support_email || "",
           site_domain: s.site_domain || "",
           currency_symbol: s.currency_symbol || "ج.م",
+          vodafone_enabled: Boolean(s.payment_methods?.vodafone_cash?.enabled),
+          vodafone_number: s.payment_methods?.vodafone_cash?.number || "",
+          vodafone_holder: s.payment_methods?.vodafone_cash?.holder || "",
+          instapay_enabled: Boolean(s.payment_methods?.instapay?.enabled),
+          instapay_address: s.payment_methods?.instapay?.address || "",
+          instapay_holder: s.payment_methods?.instapay?.holder || "",
           shipping_provider: s.shipping_provider === "bosta" ? "bosta" : "none",
           bosta_api_key: s.bosta_api_key || "",
           bosta_location_id: s.bosta_location_id || "",
@@ -107,7 +125,14 @@ export default function BrandPage() {
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, onboarding_done: true }),
+        body: JSON.stringify({
+          ...form,
+          payment_methods: {
+            vodafone_cash: { enabled: form.vodafone_enabled, number: form.vodafone_number, holder: form.vodafone_holder },
+            instapay: { enabled: form.instapay_enabled, address: form.instapay_address, holder: form.instapay_holder },
+          },
+          onboarding_done: true,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "تعذر الحفظ");
@@ -193,6 +218,35 @@ export default function BrandPage() {
         <Field label="رابط المتجر" hint="دومين متجرك بعد الربط، مثال: https://yourstore.com">
           <input className={inputCls} dir="ltr" value={form.site_domain} onChange={(e) => set("site_domain", e.target.value)} placeholder="https://yourstore.com" />
         </Field>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-5">
+        <div>
+          <h2 className="text-lg font-black text-slate-900">طرق الدفع</h2>
+          <p className="text-xs text-slate-500 leading-relaxed mt-1">
+            الدفع عند الاستلام شغال دايماً. فعّل فودافون كاش أو إنستاباي لو عاوز العميل يقدر يحوّل. بتظهر في فورم الطلب، والتاجر بيأكد التحويل من تفاصيل الطلب.
+          </p>
+        </div>
+        <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
+          <span className="text-sm font-black text-slate-900">فودافون كاش</span>
+          <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={form.vodafone_enabled} onChange={(e) => set("vodafone_enabled", e.target.checked)} />
+        </label>
+        {form.vodafone_enabled && (
+          <div className="grid sm:grid-cols-2 gap-3">
+            <input className={inputCls} dir="ltr" inputMode="tel" placeholder="رقم المحفظة 01xxxxxxxxx" value={form.vodafone_number} onChange={(e) => set("vodafone_number", e.target.value)} />
+            <input className={inputCls} placeholder="الاسم المسجل (اختياري)" maxLength={60} value={form.vodafone_holder} onChange={(e) => set("vodafone_holder", e.target.value)} />
+          </div>
+        )}
+        <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
+          <span className="text-sm font-black text-slate-900">إنستاباي</span>
+          <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={form.instapay_enabled} onChange={(e) => set("instapay_enabled", e.target.checked)} />
+        </label>
+        {form.instapay_enabled && (
+          <div className="grid sm:grid-cols-2 gap-3">
+            <input className={inputCls} dir="ltr" placeholder="name@instapay أو رقم موبايل" value={form.instapay_address} onChange={(e) => set("instapay_address", e.target.value)} />
+            <input className={inputCls} placeholder="الاسم المسجل (اختياري)" maxLength={60} value={form.instapay_holder} onChange={(e) => set("instapay_holder", e.target.value)} />
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-5">

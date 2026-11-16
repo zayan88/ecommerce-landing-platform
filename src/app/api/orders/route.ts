@@ -149,6 +149,15 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 4a-bis. Manual payment methods must be enabled by the merchant; the amount always comes from the server.
+    const manualMethod = data.payment_method === "vodafone_cash" || data.payment_method === "instapay" ? data.payment_method : null;
+    if (manualMethod) {
+      const enabled = Boolean((await dbStore.getSettings()).payment_methods?.[manualMethod]?.enabled);
+      if (!enabled) {
+        return NextResponse.json({ success: false, error: "طريقة الدفع دي مش متاحة حالياً، اختار الدفع عند الاستلام" }, { status: 400 });
+      }
+    }
+
     // 4b. Duplicate guard: same phone + product inside 15 minutes returns the existing order.
     slot = await beginOrder(orderDedupeKey(data.customer_phone, product.id));
     if (slot.existing) {
@@ -206,6 +215,9 @@ export async function POST(req: NextRequest) {
           fbp: data.fbp || undefined,
           fbc: data.fbc || undefined,
           event_id: eventId,
+          ...(manualMethod
+            ? { payment: { method: manualMethod, reference: data.payment_reference || undefined, status: "awaiting" as const } }
+            : {}),
         },
       });
     } catch (persistErr) {
@@ -483,6 +495,19 @@ export async function PATCH(req: NextRequest) {
       if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
       const res = await SafkaClient.createOrder(order);
       return NextResponse.json(res);
+    }
+
+    // The merchant saw the transfer: mark the payment as received and confirm the order
+    if (action === "confirm_payment") {
+      const order = await dbStore.getOrder(orderId);
+      if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
+      const pay = order.tracking?.payment;
+      if (!pay) return NextResponse.json({ success: false, error: "الطلب ده دفعه عند الاستلام" }, { status: 400 });
+      const updated = await dbStore.updateOrder(orderId, {
+        tracking: { ...(order.tracking || {}), payment: { ...pay, status: "paid", confirmed_at: new Date().toISOString() } },
+        status: order.status === "pending" ? "confirmed" : order.status,
+      });
+      return NextResponse.json({ success: true, order: updated });
     }
 
     // General update for order fields

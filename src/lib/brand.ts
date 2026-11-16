@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { dbStore } from "@/lib/db/store";
 import { isThemeColor } from "@/lib/palettes";
+import { publicPayments, type PublicPayments } from "@/lib/payments";
 
 /**
  * White-label brand. Everything a merchant can customize from /admin/brand.
@@ -20,6 +21,8 @@ export interface Brand {
   support_email: string;
   site_domain: string;
   currency: string;
+  /** Enabled manual payment methods (public: the customer needs the number to transfer to). */
+  payments: PublicPayments;
   /** landing = each product has its own landing page; catalog = regular store home listing all products. */
 }
 
@@ -35,6 +38,7 @@ export const BRAND_DEFAULTS: Brand = {
   support_email: "",
   site_domain: "",
   currency: "ج.م",
+  payments: {},
 };
 
 /** Subset that is safe to send to the browser (no secrets live in Brand, but keep the intent explicit). */
@@ -83,5 +87,6 @@ export const getBrand = cache(async (): Promise<Brand> => {
     support_email: (s.support_email || env.email).trim().slice(0, 120),
     site_domain: cleanUrl(s.site_domain) || cleanUrl(env.siteUrl) || cleanUrl(env.appUrl),
     currency: (s.currency_symbol || BRAND_DEFAULTS.currency).trim(),
+    payments: publicPayments(s.payment_methods),
   };
 });

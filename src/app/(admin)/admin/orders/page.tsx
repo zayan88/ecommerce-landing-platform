@@ -980,6 +980,11 @@ export default function AdminOrdersPage() {
                         <div className="text-[10px] text-gray-400 font-normal">
                           {ord.quantity} قطع
                         </div>
+                        {ord.tracking?.payment && (
+                          <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${ord.tracking.payment.status === "paid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                            {ord.tracking.payment.method === "instapay" ? "إنستاباي" : "فودافون كاش"} · {ord.tracking.payment.status === "paid" ? "وصل" : "منتظر"}
+                          </span>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4">
@@ -1199,6 +1204,53 @@ export default function AdminOrdersPage() {
                 </a>
               </div>
             </div>
+
+            {/* Manual payment (transfer) */}
+            {selectedOrder.tracking?.payment && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">الدفع</h4>
+                <div className="bg-slate-50 rounded-2xl p-4 border border-gray-200/80 space-y-1.5 text-sm">
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-500">الطريقة:</span>
+                    <span className="font-bold text-gray-900">{selectedOrder.tracking.payment.method === "instapay" ? "تحويل إنستاباي" : "تحويل فودافون كاش"}</span>
+                  </div>
+                  {selectedOrder.tracking.payment.reference && (
+                    <div className="flex justify-between gap-2">
+                      <span className="text-gray-500">رقم العملية:</span>
+                      <span className="font-mono font-bold text-gray-900" dir="ltr">{selectedOrder.tracking.payment.reference}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between gap-2 items-center">
+                    <span className="text-gray-500">الحالة:</span>
+                    {selectedOrder.tracking.payment.status === "paid" ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">التحويل وصل ✓</span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">في انتظار التحويل</span>
+                    )}
+                  </div>
+                </div>
+                {selectedOrder.tracking.payment.status !== "paid" && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const res = await fetch(`/api/orders?id=${encodeURIComponent(selectedOrder.id)}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "confirm_payment" }),
+                      });
+                      const j = await res.json().catch(() => null);
+                      if (j?.success && j.order) {
+                        handleOrderUpdated(j.order);
+                        fetchOrders({ withTotal: true });
+                      } else alert(j?.error || "تعذر تأكيد التحويل");
+                    }}
+                    className="w-full min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-black cursor-pointer"
+                  >
+                    تأكيد وصول التحويل
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Shipping */}
             <div className="space-y-2">
