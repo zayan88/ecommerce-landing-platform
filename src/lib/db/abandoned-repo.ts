@@ -127,7 +127,9 @@ export async function listAbandoned(opts: { status?: string; limit?: number; off
   const limit = Math.min(Math.max(Math.floor(Number(opts.limit) || 50), 1), 200);
   const offset = Math.max(Math.floor(Number(opts.offset) || 0), 0);
   const status = ABANDONED_STATUSES.includes(opts.status as AbandonedStatus) ? (opts.status as string) : null;
-  const [rows, counts] = await ctx.db.batch([
+  let rows, counts;
+  try {
+    [rows, counts] = await ctx.db.batch([
     {
       sql:
         "SELECT id, phone, name, governorate, product_id, product_title, landing_slug, offer_title, amount, utm_source, status, " +
@@ -138,6 +140,11 @@ export async function listAbandoned(opts: { status?: string; limit?: number; off
     },
     { sql: "SELECT status, COUNT(*) AS n FROM abandoned_checkouts WHERE store_id = ? GROUP BY status", params: [ctx.store] },
   ]);
+  } catch (err) {
+    // migration 0005 not applied yet on this database: the feature is simply off
+    if (/no such table/i.test(String((err as Error)?.message))) return { supported: false, items: [], counts: empty };
+    throw err;
+  }
   const out = { ...empty };
   for (const r of counts.rows) {
     if (r.status in out) (out as Record<string, number>)[r.status] = Number(r.n) || 0;
