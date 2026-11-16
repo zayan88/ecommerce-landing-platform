@@ -26,6 +26,10 @@ interface EgyptianCheckoutFormProps {
   accentColor?: string;
   /** Editor preview: blocks submit/redirect/tracking and shows a small note. Default false. */
   previewOnly?: boolean;
+  /** Merchant turned the offer tiers off: one flat price, no selector. */
+  hideOffers?: boolean;
+  /** Merchant turned the repeated trust icons off. */
+  hideTrust?: boolean;
 }
 
 export function EgyptianCheckoutForm({
@@ -37,6 +41,8 @@ export function EgyptianCheckoutForm({
   onOfferChange,
   accentColor = "orange",
   previewOnly = false,
+  hideOffers = false,
+  hideTrust = false,
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
 
@@ -265,7 +271,7 @@ export function EgyptianCheckoutForm({
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-4" onFocus={handleFirstInteraction}>
         {/* Tiered Offers Selection */}
-        {product.offers && product.offers.length > 0 && (
+        {!hideOffers && product.offers && product.offers.length > 0 && (
           <div className="pb-1">
             <HeroOfferSelector
               offers={product.offers}
@@ -414,6 +420,7 @@ export function EgyptianCheckoutForm({
           <p className="text-center text-xs font-bold text-sky-700 bg-sky-50 border border-sky-200 rounded-xl p-2">معاينة فقط — الطلب غير مفعّل داخل المحرر</p>
         )}
 
+        {!hideTrust && (<>
         {/* Security & Guarantees Strip */}
         <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center text-xs text-slate-600 font-medium">
           🔒 مفيش دفع أونلاين • معاينة كاملة قبل الدفع للمندوب • استبدال فوري لو في أي عيب
@@ -434,6 +441,7 @@ export function EgyptianCheckoutForm({
             <span>استبدال 14 يوم</span>
           </div>
         </div>
+        </>)}
       </form>
     </div>
   );

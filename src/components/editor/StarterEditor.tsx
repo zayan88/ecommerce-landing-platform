@@ -381,6 +381,32 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
             })}
           </div>
         ) : tab === "sections" ? (
+          <div className="space-y-4">
+          <div className="bg-white rounded-3xl p-5 border border-gray-200 shadow-sm space-y-3">
+            <div>
+              <h3 className="text-base font-black text-gray-900 font-heading">عناصر إضافية في الصفحة</h3>
+              <p className="text-xs text-gray-500 mt-0.5">اقفل أي عنصر مش عاوزه، عشان الصفحة متتكررش فيها نفس الكلام.</p>
+            </div>
+            {([
+              ["hide_announcement", "شريط الإعلان العلوي"],
+              ["hide_hero_trust", "أيقونات الثقة تحت صور المنتج"],
+              ["hide_checkout_trust", "أيقونات الضمان تحت فورم الطلب"],
+              ["hide_offers", "باقات العروض (٢ و٣ قطع) — لو قفلتها يظهر سعر واحد بس"],
+            ] as const).map(([key, label]) => {
+              const on = !draft.content[key];
+              return (
+                <label key={key} className="flex items-center justify-between gap-3 min-h-[44px] p-3 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer">
+                  <span className={`text-sm font-bold ${on ? "text-slate-900" : "text-gray-500 line-through"}`}>{label}</span>
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() => apply((d) => ({ ...d, content: { ...d.content, [key]: on ? true : undefined } }))}
+                    className="w-5 h-5 accent-emerald-600"
+                  />
+                </label>
+              );
+            })}
+          </div>
           <SectionsPanel
             customSections={draft.sections}
             isSavingSections={saving}
@@ -390,6 +416,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
             handleResetSections={handleResetSections}
             handleSaveSections={save}
           />
+          </div>
         ) : (
           <>
             <div className="flex items-start gap-2 p-3 rounded-2xl bg-sky-50 border border-sky-200 text-sky-900 text-xs font-bold leading-relaxed">

@@ -64,8 +64,10 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   // Built-in default tiers (the merchant can override them in the editor's offers tab)
   const defaultOffers: ProductOffer[] = buildDefaultOffers(product);
 
-  const availableOffers =
-    product.offers && product.offers.length > 0 ? product.offers : defaultOffers;
+  const hideOffers = !!landingPage.content_config?.hide_offers;
+  const allOffers = product.offers && product.offers.length > 0 ? product.offers : defaultOffers;
+  // "No offers": one flat price (the single-piece tier), no selector
+  const availableOffers = hideOffers ? [allOffers.find((o) => o.quantity === 1) || allOffers[0]] : allOffers;
 
   const [selectedOffer, setSelectedOffer] = useState<ProductOffer>(
     availableOffers.find((o) => o.quantity === 1) || availableOffers[0]
@@ -190,7 +192,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           )}
 
           {/* Trust Badges */}
-          <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+          {!c?.hide_hero_trust && (<div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
               <span className="font-bold text-[11px] text-slate-700 block">معاينة قبل الدفع</span>
@@ -203,7 +205,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               <Clock className="w-4 h-4 text-amber-600 mx-auto mb-0.5" />
               <span className="font-bold text-[11px] text-slate-700 block">توصيل 5-7 أيام</span>
             </div>
-          </div>
+          </div>)}
         </div>
 
         {/* Info & Core Specs */}
@@ -248,14 +250,14 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           </div>
 
           {/* Offer Selector Directly in the Hero */}
-          <div className="pt-1">
+          {!hideOffers && <div className="pt-1">
             <HeroOfferSelector
               offers={availableOffers}
               selectedOffer={selectedOffer}
               onSelectOffer={(offer) => setSelectedOffer(offer)}
               accentColor="emerald"
             />
-          </div>
+          </div>}
 
           {/* Price Display */}
           <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
@@ -510,6 +512,8 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         landingPageSlug={landingPage.slug}
         accentColor="emerald"
         previewOnly={editMode}
+        hideOffers={hideOffers}
+        hideTrust={!!c?.hide_checkout_trust}
       />
     </div>
   );
@@ -561,10 +565,12 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   return (
     <main style={pageTheme} className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir="rtl">
       {/* 1. Announcement Bar */}
+      {!c?.hide_announcement && (
       <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-slate-500/20">
         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
         <EText field="announcement_bar" as="span" value={announcementText} />
       </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {sections.map((sec) => {
