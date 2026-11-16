@@ -37,6 +37,8 @@ export default function AdminProductsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -283,6 +285,53 @@ export default function AdminProductsPage() {
     }
   };
 
+  const toggleOne = (id: string) => setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+  const flashMsg = (type: "success" | "error", text: string) => {
+    setAlertMessage({ type, text });
+    setTimeout(() => setAlertMessage(null), 4000);
+  };
+
+  const bulkDelete = async () => {
+    if (selected.length === 0 || bulkBusy) return;
+    if (!window.confirm(`مسح ${selected.length} منتج نهائياً مع صفحات الهبوط بتاعتهم؟\nمش هتقدر ترجّعهم.`)) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/products", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selected }),
+      });
+      const j = await res.json();
+      if (j.success) {
+        setProducts((prev) => prev.filter((x) => !selected.includes(x.id)));
+        setSelected([]);
+        flashMsg("success", `تم مسح ${j.deleted} منتج`);
+      } else flashMsg("error", j.error || "تعذر المسح");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const bulkStatus = async (status: "active" | "draft") => {
+    if (selected.length === 0 || bulkBusy) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selected, status }),
+      });
+      const j = await res.json();
+      if (j.success) {
+        setProducts((prev) => prev.map((x) => (selected.includes(x.id) ? { ...x, status } : x)));
+        setSelected([]);
+        flashMsg("success", status === "active" ? `اتفعّل ${j.updated} منتج` : `اتخبّى ${j.updated} منتج`);
+      } else flashMsg("error", j.error || "تعذر التحديث");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const filteredProducts = products.filter((p) => {
     const nameQ = searchQuery.trim().toLowerCase();
     const skuQ = skuQuery.trim().toLowerCase();
@@ -419,6 +468,12 @@ export default function AdminProductsPage() {
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <a
+            href="/admin/marketing/catalog"
+            className="hidden sm:inline-flex min-h-[44px] px-4 rounded-xl border border-slate-300 hover:bg-slate-100 text-sm font-bold text-slate-700 items-center cursor-pointer"
+          >
+            Product Feed
+          </a>
           <button
             onClick={fetchProducts}
             disabled={loading}
@@ -463,6 +518,20 @@ export default function AdminProductsPage() {
         {searchInput(skuQuery, setSkuQuery, "بحث بكود المنتج (SKU)")}
       </div>
 
+      {selected.length > 0 && (
+        <div className="rounded-2xl bg-slate-900 text-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span className="text-sm font-bold">تم تحديد {selected.length} منتج</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => bulkStatus("active")} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer disabled:opacity-50">إظهار</button>
+            <button onClick={() => bulkStatus("draft")} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer disabled:opacity-50">إخفاء</button>
+            <button onClick={bulkDelete} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+              <Trash2 className="w-4 h-4" /> {bulkBusy ? "جاري..." : "مسح المحدد"}
+            </button>
+            <button onClick={() => setSelected([])} className="min-h-[40px] px-3 rounded-lg hover:bg-white/10 text-xs font-bold cursor-pointer">إلغاء التحديد</button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
           <RefreshCw className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
@@ -475,6 +544,19 @@ export default function AdminProductsPage() {
             <table className="w-full text-sm text-right">
               <thead className="bg-slate-50 text-xs font-bold text-slate-500 border-b border-slate-200">
                 <tr>
+                  <th className="px-4 py-3.5 w-10">
+                    <input
+                      type="checkbox"
+                      aria-label="تحديد كل منتجات الصفحة"
+                      checked={pagedProducts.length > 0 && pagedProducts.every((x) => selected.includes(x.id))}
+                      onChange={(e) =>
+                        setSelected((cur) =>
+                          e.target.checked ? Array.from(new Set([...cur, ...pagedProducts.map((x) => x.id)])) : cur.filter((id) => !pagedProducts.some((x) => x.id === id))
+                        )
+                      }
+                      className="w-4 h-4 cursor-pointer accent-orange-600"
+                    />
+                  </th>
                   <th className="px-5 py-3.5">المنتج</th>
                   <th className="px-4 py-3.5">الحالة</th>
                   <th className="px-4 py-3.5">المخزون</th>
@@ -485,7 +567,10 @@ export default function AdminProductsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pagedProducts.map((prod) => (
-                  <tr key={prod.id} className="h-16 hover:bg-orange-50/30 transition-colors">
+                  <tr key={prod.id} className={`h-16 hover:bg-orange-50/30 transition-colors ${selected.includes(prod.id) ? "bg-orange-50/50" : ""}`}>
+                    <td className="px-4 py-2">
+                      <input type="checkbox" aria-label="تحديد المنتج" checked={selected.includes(prod.id)} onChange={() => toggleOne(prod.id)} className="w-4 h-4 cursor-pointer accent-orange-600" />
+                    </td>
                     <td className="px-5 py-2">
                       <div className="flex items-center gap-3">
                         {thumb(prod)}
@@ -511,8 +596,9 @@ export default function AdminProductsPage() {
           {/* Mobile stacked rows */}
           <div className="lg:hidden space-y-3">
             {pagedProducts.map((prod) => (
-              <div key={prod.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3">
+              <div key={prod.id} className={`bg-white rounded-3xl border shadow-sm p-4 space-y-3 ${selected.includes(prod.id) ? "border-orange-400" : "border-slate-200"}`}>
                 <div className="flex items-center gap-3">
+                  <input type="checkbox" aria-label="تحديد المنتج" checked={selected.includes(prod.id)} onChange={() => toggleOne(prod.id)} className="w-5 h-5 cursor-pointer accent-orange-600 shrink-0" />
                   {thumb(prod)}
                   <div className="min-w-0 flex-1">
                     <div className="font-black text-slate-900 leading-snug">{prod.title_ar}</div>

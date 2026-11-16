@@ -15,6 +15,8 @@ export default function AdminLandingPagesPage() {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -353,6 +355,49 @@ export default function AdminLandingPagesPage() {
     }
   };
 
+  const toggleOne = (id: string) => setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+
+  const bulkDelete = async () => {
+    if (selected.length === 0 || bulkBusy) return;
+    if (!window.confirm(`مسح ${selected.length} صفحة هبوط نهائياً؟\nمش هتقدر ترجّعهم.`)) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/landing-pages", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selected }),
+      });
+      const j = await res.json();
+      if (j.success) {
+        showToast("success", `تم مسح ${j.deleted} صفحة`);
+        setSelected([]);
+        await fetchData();
+      } else showToast("error", j.error || "تعذر المسح");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const bulkStatus = async (status: "active" | "paused") => {
+    if (selected.length === 0 || bulkBusy) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/landing-pages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selected, status }),
+      });
+      const j = await res.json();
+      if (j.success) {
+        showToast("success", status === "active" ? `اتفعّلت ${j.updated} صفحة` : `اتوقّفت ${j.updated} صفحة`);
+        setSelected([]);
+        await fetchData();
+      } else showToast("error", j.error || "تعذر التحديث");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const filteredPages = landingPages.filter((lp) => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
@@ -483,6 +528,18 @@ export default function AdminLandingPagesPage() {
         <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
       </div>
 
+      {selected.length > 0 && (
+        <div className="rounded-2xl bg-slate-900 text-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span className="text-sm font-bold">تم تحديد {selected.length} صفحة</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => bulkStatus("active")} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer disabled:opacity-50">تفعيل</button>
+            <button onClick={() => bulkStatus("paused")} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer disabled:opacity-50">إيقاف</button>
+            <button onClick={bulkDelete} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-bold cursor-pointer disabled:opacity-50">{bulkBusy ? "جاري..." : "مسح المحدد"}</button>
+            <button onClick={() => setSelected([])} className="min-h-[40px] px-3 rounded-lg hover:bg-white/10 text-xs font-bold cursor-pointer">إلغاء التحديد</button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
           <RefreshCw className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
@@ -495,6 +552,19 @@ export default function AdminLandingPagesPage() {
             <table className="w-full text-sm text-right">
               <thead className="bg-slate-50 text-xs font-bold text-slate-500 border-b border-slate-200">
                 <tr>
+                  <th className="px-4 py-3.5 w-10">
+                    <input
+                      type="checkbox"
+                      aria-label="تحديد كل صفحات الصفحة"
+                      checked={pagedPages.length > 0 && pagedPages.every((x) => selected.includes(x.id))}
+                      onChange={(e) =>
+                        setSelected((cur) =>
+                          e.target.checked ? Array.from(new Set([...cur, ...pagedPages.map((x) => x.id)])) : cur.filter((id) => !pagedPages.some((x) => x.id === id))
+                        )
+                      }
+                      className="w-4 h-4 cursor-pointer accent-orange-600"
+                    />
+                  </th>
                   <th className="px-5 py-3.5">اسم الصفحة</th>
                   <th className="px-4 py-3.5">الرابط</th>
                   <th className="px-4 py-3.5">كود الصفحة</th>
@@ -516,6 +586,9 @@ export default function AdminLandingPagesPage() {
                     }}
                     className="h-16 cursor-pointer hover:bg-orange-50/40 focus:bg-orange-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500 transition-colors"
                   >
+                    <td className="px-4 py-2" {...stop}>
+                      <input type="checkbox" aria-label="تحديد الصفحة" checked={selected.includes(lp.id)} onChange={() => toggleOne(lp.id)} className="w-4 h-4 cursor-pointer accent-orange-600" />
+                    </td>
                     <td className="px-5 py-2">
                       <span className="font-black text-slate-900 leading-snug">{lp.title}</span>
                       {pausedPill(lp)}
@@ -549,9 +622,14 @@ export default function AdminLandingPagesPage() {
                 }}
                 className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-2 cursor-pointer active:bg-orange-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
               >
-                <div className="font-black text-slate-900 leading-snug">
-                  {lp.title}
-                  {pausedPill(lp)}
+                <div className="flex items-start gap-3">
+                  <span {...stop} className="pt-0.5">
+                    <input type="checkbox" aria-label="تحديد الصفحة" checked={selected.includes(lp.id)} onChange={() => toggleOne(lp.id)} className="w-5 h-5 cursor-pointer accent-orange-600" />
+                  </span>
+                  <div className="font-black text-slate-900 leading-snug">
+                    {lp.title}
+                    {pausedPill(lp)}
+                  </div>
                 </div>
                 <div className="font-mono text-xs font-bold text-slate-500 truncate" dir="ltr">
                   /p/{lp.slug}

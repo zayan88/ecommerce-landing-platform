@@ -83,11 +83,19 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     let id = searchParams.get("id");
+    const body = id ? {} : await req.json().catch(() => ({}));
 
-    if (!id) {
-      const body = await req.json().catch(() => ({}));
-      id = body.id;
+    // Bulk: { ids: [...] } removes up to 100 products (and their pages) in one request
+    if (!id && Array.isArray(body.ids)) {
+      const ids: string[] = body.ids.filter((x: unknown) => typeof x === "string" && x.length > 0 && x.length <= 120).slice(0, 100);
+      if (ids.length === 0) return NextResponse.json({ success: false, error: "اختار منتج واحد على الأقل" }, { status: 400 });
+      let deleted = 0;
+      for (const pid of ids) {
+        if (await dbStore.deleteProduct(pid).catch(() => false)) deleted++;
+      }
+      return NextResponse.json({ success: true, deleted, requested: ids.length });
     }
+    if (!id) id = body.id;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "معرف المنتج (id) مطلوب للحذف" }, { status: 400 });
@@ -102,6 +110,29 @@ export async function DELETE(req: NextRequest) {
       success: true,
       message: "تم حذف المنتج وصفحة الهبوط المرتبطة به بنجاح",
     });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+/** Bulk visibility: { ids: [...], status: "active" | "draft" } shows or hides up to 100 products. */
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => null);
+    const status = body?.status;
+    if (status !== "active" && status !== "draft") {
+      return NextResponse.json({ success: false, error: "الحالة غير صحيحة" }, { status: 400 });
+    }
+    const ids: string[] = Array.isArray(body?.ids) ? body.ids.filter((x: unknown) => typeof x === "string" && x.length <= 120).slice(0, 100) : [];
+    if (ids.length === 0) return NextResponse.json({ success: false, error: "اختار منتج واحد على الأقل" }, { status: 400 });
+    let updated = 0;
+    for (const pid of ids) {
+      const p = await dbStore.getProduct(pid);
+      if (!p) continue;
+      await dbStore.saveProductWithLandingPage({ ...p, status }, false);
+      updated++;
+    }
+    return NextResponse.json({ success: true, updated });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

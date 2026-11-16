@@ -33,6 +33,18 @@ export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
     const { id, status, sections_config, content_config } = body;
+    // Bulk: { ids: [...], status: "active" | "paused" }
+    if (!id && Array.isArray(body.ids)) {
+      if (status !== "active" && status !== "paused") {
+        return NextResponse.json({ success: false, error: "الحالة غير صحيحة" }, { status: 400 });
+      }
+      const ids: string[] = body.ids.filter((x: unknown) => typeof x === "string" && x.length <= 120).slice(0, 100);
+      let updated = 0;
+      for (const pid of ids) {
+        if (await dbStore.toggleLandingPageStatus(pid, status).catch(() => false)) updated++;
+      }
+      return NextResponse.json({ success: true, updated });
+    }
     if (id && (typeof body.title === "string" || typeof body.slug === "string")) {
       const result = await dbStore.updateLandingPageMeta(id, { title: body.title, slug: body.slug });
       if (!result.ok) return NextResponse.json({ success: false, error: result.error }, { status: 400 });
@@ -63,7 +75,18 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    // Bulk: { ids: [...] } deletes up to 100 pages in one request
     if (!id) {
+      const body = await req.json().catch(() => null);
+      if (Array.isArray(body?.ids)) {
+        const ids: string[] = body.ids.filter((x: unknown) => typeof x === "string" && x.length > 0 && x.length <= 120).slice(0, 100);
+        if (ids.length === 0) return NextResponse.json({ success: false, error: "اختار صفحة واحدة على الأقل" }, { status: 400 });
+        let deleted = 0;
+        for (const pid of ids) {
+          if (await dbStore.deleteLandingPage(pid).catch(() => false)) deleted++;
+        }
+        return NextResponse.json({ success: true, deleted, requested: ids.length });
+      }
       return NextResponse.json({ success: false, error: "معرف الصفحة مطلوب للحذف" }, { status: 400 });
     }
     const success = await dbStore.deleteLandingPage(id);

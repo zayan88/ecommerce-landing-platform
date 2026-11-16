@@ -63,7 +63,6 @@ const allNavigationItems: NavItem[] = [
     ],
   },
   { name: "دروبشيبينغ صفقة (Safka)", href: "/admin/safqa", icon: ShoppingBag },
-  { name: "مساعد الذكاء الاصطناعي", href: "/admin/ai-guide", icon: Bot },
   { name: "الإعدادات", href: "/admin/settings", icon: Settings },
 ];
 
