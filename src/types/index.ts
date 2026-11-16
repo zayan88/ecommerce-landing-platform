@@ -47,14 +47,15 @@ export interface LandingPageSectionConfig {
 
 export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
   { id: "hero", name_ar: "المعرض الرئيسي والسعر وباقات العروض والزر السريع", enabled: true },
-  { id: "social_proof", name_ar: "شريط الثقة والتقييم وتغطية الشحن", enabled: false },
-  { id: "comparison", name_ar: "المقارنة البصرية (القديم vs الجديد)", enabled: true },
-  { id: "box_contents", name_ar: "محتويات العلبة الأصلية", enabled: true },
-  { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: true },
+  { id: "comparison", name_ar: "المشكلة والحل (القديم vs الجديد)", enabled: true },
+  { id: "box_contents", name_ar: "المواصفات ومحتويات العلبة", enabled: true },
   { id: "reviews", name_ar: "آراء وتجارب العملاء الواقعية", enabled: true },
+  { id: "order_form", name_ar: "فورم الطلب السريع وباقات العروض والدفع عند الاستلام", enabled: true },
   { id: "guarantees", name_ar: "الضمانات الثلاثة الذهبية", enabled: true },
   { id: "faq", name_ar: "الأسئلة الشائعة (كسر الاعتراضات)", enabled: true },
-  { id: "order_form", name_ar: "فورم الطلب السريع وباقات العروض والدفع عند الاستلام", enabled: true },
+  { id: "final_cta", name_ar: "دعوة أخيرة للشراء (زر في آخر الصفحة)", enabled: true },
+  { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: false },
+  { id: "social_proof", name_ar: "شريط الثقة والتقييم وتغطية الشحن", enabled: false },
 ];
 
 /** Previous default order (order form before the FAQ). Pages still on it are moved to the new default. */
@@ -98,6 +99,8 @@ export interface LandingPageContentConfig {
   hide_checkout_trust?: boolean;
   /** One flat price instead of the 1/2/3-piece offer tiers. */
   hide_offers?: boolean;
+  final_cta_title?: string;
+  final_cta_desc?: string;
   /** Mobile sticky buy bar off, and a custom text for the order button. */
   hide_sticky_bar?: boolean;
   cta_text?: string;

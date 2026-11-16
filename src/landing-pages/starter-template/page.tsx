@@ -535,6 +535,31 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     />
   );
 
+  // 10. FINAL CALL TO ACTION: one more button at the end of the page
+  const renderFinalCta = () => (
+    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 text-center space-y-3">
+      <EText
+        field="final_cta_title"
+        as="h2"
+        className="text-xl sm:text-2xl font-black font-heading text-slate-950 leading-snug"
+        value={c?.final_cta_title || heroTitle}
+      />
+      <EText
+        field="final_cta_desc"
+        as="p"
+        className="text-sm text-slate-600 leading-relaxed"
+        value={c?.final_cta_desc || "اطلب دلوقتي وادفع لما يوصلك، وافتح الشحنة وجرّبها قبل ما تدفع."}
+      />
+      <button
+        type="button"
+        onClick={scrollToCheckout}
+        className="min-h-[52px] px-8 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base shadow-lg shadow-orange-500/25 active:scale-[0.98] transition cursor-pointer"
+      >
+        {c?.cta_text?.trim() || "اطلب دلوقتي"}
+      </button>
+    </div>
+  );
+
   // 9. FAQ (stage 9)
   const renderFaq = () => <FaqAccordion title={c?.faq_title} items={c?.faq_items} editable />;
 
@@ -558,6 +583,8 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         return renderSocialProof();
       case "faq":
         return renderFaq();
+      case "final_cta":
+        return renderFinalCta();
       default:
         return null;
     }
