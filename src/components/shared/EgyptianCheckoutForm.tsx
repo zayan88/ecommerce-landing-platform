@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EGYPTIAN_GOVERNORATES } from "@/lib/constants/governorates";
 import { captureUtmParams, generateEventId } from "@/lib/tracking/utm";
@@ -107,6 +107,41 @@ export function EgyptianCheckoutForm({
   const quantity = activeOffer?.quantity || 1;
   const totalAmount = activeOffer?.price || product.base_price || 0;
 
+  // Abandoned checkout: once a valid mobile number and a name are typed, tell the server (debounced,
+  // once per distinct value). Never in the editor preview, never after the order was submitted.
+  const lastReported = useRef("");
+  const orderSent = useRef(false);
+  useEffect(() => {
+    if (previewOnly || orderSent.current) return;
+    const digits = phone.replace(/[^0-9]/g, "");
+    if (digits.length < 10 || name.trim().length < 2) return;
+    const payload = {
+      phone,
+      name: name.trim(),
+      governorate,
+      product_id: product.id,
+      product_title: product.title_ar,
+      landing_slug: landingPageSlug || landingPage?.slug,
+      offer_title: activeOffer?.title_ar,
+      amount: totalAmount,
+      utm_source: new URLSearchParams(window.location.search).get("utm_source") || undefined,
+    };
+    const fingerprint = JSON.stringify([phone, name.trim(), governorate, activeOffer?.id]);
+    if (fingerprint === lastReported.current) return;
+    const t = setTimeout(() => {
+      if (orderSent.current) return;
+      lastReported.current = fingerprint;
+      fetch("/api/abandoned", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => {});
+    }, 1800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone, name, governorate, activeOffer?.id]);
+
   // Track InitiateCheckout on initial interaction
   const [hasInteracted, setHasInteracted] = useState(false);
   const handleFirstInteraction = () => {
@@ -149,6 +184,7 @@ export function EgyptianCheckoutForm({
     }
 
     setIsSubmitting(true);
+    orderSent.current = true;
 
     try {
       const utms = captureUtmParams();
