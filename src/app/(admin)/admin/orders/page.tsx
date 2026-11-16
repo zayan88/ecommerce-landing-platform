@@ -74,6 +74,8 @@ export default function AdminOrdersPage() {
   const [bulkStatusBusy, setBulkStatusBusy] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [abandonedOpen, setAbandonedOpen] = useState<number | null>(null);
+  const [shipProvider, setShipProvider] = useState<"none" | "bosta">("none");
+  const [shipBusy, setShipBusy] = useState(false);
   const isAbandonedTab = statusFilter === "abandoned";
   const requestSeq = useRef(0);
   const totalRef = useRef<number | null>(null);
@@ -204,6 +206,10 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchProducts();
+    fetch("/api/admin/shipping", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => j?.success && j.configured && setShipProvider(j.provider === "bosta" ? "bosta" : "none"))
+      .catch(() => {});
     fetch("/api/admin/abandoned?status=open&limit=1", { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => j?.success && j.supported !== false && setAbandonedOpen(j.counts?.open ?? 0))
@@ -370,6 +376,48 @@ export default function AdminOrdersPage() {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  /** Sends orders to the connected courier; shows what worked and the courier's reason for what did not. */
+  const sendToShipping = async (ids: string[]) => {
+    if (ids.length === 0 || shipBusy) return;
+    setShipBusy(true);
+    try {
+      const res = await fetch("/api/admin/shipping", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_ids: ids }),
+      });
+      const j = await res.json();
+      if (!j.success) {
+        alert(j.error || "تعذر الإرسال لشركة الشحن");
+        return;
+      }
+      const failed = (j.results || []).filter((r: any) => !r.ok);
+      flash(`✓ اتبعت ${j.sent} طلب لشركة الشحن${failed.length ? ` — فشل ${failed.length}` : ""}`, 6000);
+      if (failed.length) alert(failed.slice(0, 5).map((r: any) => `${r.order_number}: ${r.error}`).join("\n"));
+      setSelectedOrderIds([]);
+      fetchOrders({ withTotal: true });
+      if (selectedOrder) {
+        const fresh = await fetch(`/api/orders?id=${encodeURIComponent(selectedOrder.id)}`).then((r) => r.json()).catch(() => null);
+        if (fresh?.order) setSelectedOrder(fresh.order);
+      }
+    } finally {
+      setShipBusy(false);
+    }
+  };
+
+  /** Plain courier file (works with any courier): one row per selected order. */
+  const exportCourierFile = () => {
+    const list = orders.filter((o) => selectedOrderIds.includes(o.id));
+    if (list.length === 0) return;
+    const headers = ["رقم الطلب", "اسم العميل", "الموبايل", "موبايل آخر", "المحافظة", "المدينة", "العنوان", "المبلغ المطلوب تحصيله", "عدد القطع", "المنتج", "ملاحظات"];
+    const rows = list.map((o) => [
+      o.order_number, o.customer_name, o.customer_phone, o.customer_phone2, o.governorate, o.city, o.address,
+      o.final_amount, o.quantity, o.product?.title_ar || "", o.notes,
+    ]);
+    const day = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
+    downloadCsv(`shipping-${day}.csv`, toCsv(headers, rows));
   };
 
   const handleBulkStatus = async (status: OrderStatus) => {
@@ -716,6 +764,18 @@ export default function AdminOrdersPage() {
                 <option value="cancelled" className="text-gray-900">ملغي</option>
                 <option value="pending" className="text-gray-900">قيد المراجعة</option>
               </select>
+              {shipProvider === "bosta" && (
+                <button
+                  onClick={() => sendToShipping(selectedOrderIds)}
+                  disabled={shipBusy}
+                  className="h-10 px-3 rounded-lg bg-orange-600 hover:bg-orange-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                >
+                  <Truck className="w-4 h-4" /> {shipBusy ? "جاري الإرسال..." : "إرسال للشحن"}
+                </button>
+              )}
+              <button onClick={exportCourierFile} className="h-10 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                <Truck className="w-4 h-4" /> ملف شحن
+              </button>
               <button onClick={exportOrdersCsv} className="h-10 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold flex items-center gap-1.5 cursor-pointer">
                 <Download className="w-4 h-4" /> تصدير المحدد
               </button>
@@ -1138,6 +1198,35 @@ export default function AdminOrdersPage() {
                   <MessageCircle className="w-4 h-4" /> واتساب
                 </a>
               </div>
+            </div>
+
+            {/* Shipping */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">الشحن</h4>
+              {selectedOrder.tracking?.shipping ? (
+                <div className="bg-slate-50 rounded-2xl p-4 border border-gray-200/80 space-y-1.5 text-sm">
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-500">رقم التتبع:</span>
+                    <span className="font-mono font-bold text-gray-900" dir="ltr">{selectedOrder.tracking.shipping.tracking_number}</span>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-500">الحالة عند الشركة:</span>
+                    <span className="font-bold text-gray-900">{selectedOrder.tracking.shipping.state_label || "—"}</span>
+                  </div>
+                  {selectedOrder.tracking.shipping.note && <p className="text-xs text-amber-800 bg-amber-50 rounded-lg p-2">{selectedOrder.tracking.shipping.note}</p>}
+                </div>
+              ) : shipProvider === "bosta" ? (
+                <button
+                  type="button"
+                  onClick={() => sendToShipping([selectedOrder.id])}
+                  disabled={shipBusy || ["cancelled", "delivered", "returned"].includes(selectedOrder.status)}
+                  className="w-full min-h-[48px] rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-black flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Truck className="w-4 h-4" /> {shipBusy ? "جاري الإرسال..." : "إرسال لبوسطة"}
+                </button>
+              ) : (
+                <p className="text-xs text-gray-500 leading-relaxed">مفيش شركة شحن متربطة. اربطها من الإعدادات، أو نزّل «ملف شحن» من الطلبات المحددة.</p>
+              )}
             </div>
 
             {/* Product & Offer Card */}

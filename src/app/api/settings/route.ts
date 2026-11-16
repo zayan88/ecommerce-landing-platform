@@ -11,6 +11,8 @@ const SECRET_FIELDS = [
   "safqa_webhook_secret",
   "default_meta_capi_token",
   "telegram_bot_token",
+  "bosta_api_key",
+  "bosta_webhook_key",
 ] as const;
 
 function maskSecret(v: unknown): string {
@@ -143,6 +145,22 @@ export async function POST(req: NextRequest) {
           if (v === "" || /^https?:\/\/[^\s]+$/i.test(v) || /^\/[^\s]*$/.test(v)) clean.hero_image = v;
         }
         toUpdate.home_config = clean;
+      }
+    }
+    if ("shipping_provider" in toUpdate && toUpdate.shipping_provider !== "none" && toUpdate.shipping_provider !== "bosta") {
+      delete toUpdate.shipping_provider;
+    }
+    if ("bosta_location_id" in toUpdate) {
+      const v = typeof toUpdate.bosta_location_id === "string" ? toUpdate.bosta_location_id.trim() : "";
+      if (v === "" || /^[A-Za-z0-9_-]{4,64}$/.test(v)) toUpdate.bosta_location_id = v;
+      else return NextResponse.json({ success: false, error: "معرّف فرع بوسطة غير صحيح" }, { status: 400 });
+    }
+    for (const f of ["bosta_api_key", "bosta_webhook_key"] as const) {
+      if (f in toUpdate) {
+        const v = typeof toUpdate[f] === "string" ? toUpdate[f].trim() : "";
+        // keys go into HTTP headers: printable ASCII only, no spaces / line breaks
+        if (v === "" || /^[\x21-\x7e]{8,200}$/.test(v)) toUpdate[f] = v;
+        else return NextResponse.json({ success: false, error: "المفتاح غير صحيح (حروف وأرقام بدون مسافات)" }, { status: 400 });
       }
     }
     if ("home_reviews" in toUpdate) {

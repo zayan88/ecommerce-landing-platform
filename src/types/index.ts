@@ -222,7 +222,20 @@ export interface Order {
   tracking?: OrderTrackingMeta;
 }
 
+/** A shipment created at a courier for this order (stored inside order.tracking). */
+export interface OrderShipment {
+  provider: string;
+  tracking_number: string;
+  external_id?: string;
+  state?: number;
+  state_label?: string;
+  note?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface OrderTrackingMeta {
+  shipping?: OrderShipment;
   id?: string;
   order_id?: string;
   utm_source?: string;
@@ -303,6 +316,11 @@ export interface SystemSettings {
   };
   // Customer reviews on the store home page: written by the merchant himself (none by default, section hidden)
   home_reviews?: { name: string; place?: string; comment: string; rating?: number }[];
+  // Shipping: which courier is connected ("none" = ship by file export) and its credentials
+  shipping_provider?: "none" | "bosta";
+  bosta_api_key?: string; // secret
+  bosta_location_id?: string;
+  bosta_webhook_key?: string; // secret: Bosta sends it back in the Authorization header of its webhook
   // Optional Safka (Egyptian dropshipping) module
   safka_enabled?: boolean;
   safka_page_id?: string;

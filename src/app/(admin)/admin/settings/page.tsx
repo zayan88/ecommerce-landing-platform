@@ -20,6 +20,10 @@ interface BrandForm {
   site_domain: string;
   currency_symbol: string;
   home_reviews: { name: string; place: string; comment: string; rating: number }[];
+  shipping_provider: "none" | "bosta";
+  bosta_api_key: string;
+  bosta_location_id: string;
+  bosta_webhook_key: string;
 }
 
 const EMPTY: BrandForm = {
@@ -35,6 +39,10 @@ const EMPTY: BrandForm = {
   site_domain: "",
   currency_symbol: "ج.م",
   home_reviews: [],
+  shipping_provider: "none",
+  bosta_api_key: "",
+  bosta_location_id: "",
+  bosta_webhook_key: "",
 };
 
 const CURRENCIES = ["ج.م", "ر.س", "د.إ", "د.ك", "د.ب", "ر.ع", "ر.ق", "د.أ", "$"];
@@ -76,6 +84,10 @@ export default function BrandPage() {
           support_email: s.support_email || "",
           site_domain: s.site_domain || "",
           currency_symbol: s.currency_symbol || "ج.م",
+          shipping_provider: s.shipping_provider === "bosta" ? "bosta" : "none",
+          bosta_api_key: s.bosta_api_key || "",
+          bosta_location_id: s.bosta_location_id || "",
+          bosta_webhook_key: s.bosta_webhook_key || "",
           home_reviews: Array.isArray(s.home_reviews)
             ? s.home_reviews.map((r: any) => ({ name: r.name || "", place: r.place || "", comment: r.comment || "", rating: Number(r.rating) || 5 }))
             : [],
@@ -181,6 +193,50 @@ export default function BrandPage() {
         <Field label="رابط المتجر" hint="دومين متجرك بعد الربط، مثال: https://yourstore.com">
           <input className={inputCls} dir="ltr" value={form.site_domain} onChange={(e) => set("site_domain", e.target.value)} placeholder="https://yourstore.com" />
         </Field>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-5">
+        <div>
+          <h2 className="text-lg font-black text-slate-900">الشحن</h2>
+          <p className="text-xs text-slate-500 leading-relaxed mt-1">
+            اربط شركة الشحن عشان تبعت الطلبات لها بضغطة وتتابع حالتها تلقائي. من غير ربط، تقدر تنزّل ملف الطلبات وتبعته للشركة.
+          </p>
+        </div>
+        <Field label="شركة الشحن">
+          <select className={inputCls} value={form.shipping_provider} onChange={(e) => set("shipping_provider", e.target.value as "none" | "bosta")}>
+            <option value="none">من غير ربط (ملف تصدير)</option>
+            <option value="bosta">بوسطة (Bosta)</option>
+          </select>
+        </Field>
+        {form.shipping_provider === "bosta" && (
+          <div className="space-y-4">
+            <Field label="مفتاح بوسطة (API Key)" hint="من حسابك في بوسطة: الإعدادات ← تكامل API ← مفتاح بصلاحية Read/Write.">
+              <input className={inputCls} dir="ltr" autoComplete="off" value={form.bosta_api_key} onChange={(e) => set("bosta_api_key", e.target.value.trim())} placeholder="مفتاح بوسطة" />
+            </Field>
+            <Field label="معرّف فرع الاستلام (اختياري)" hint="لو سبته فاضي بوسطة بتستخدم فرعك الافتراضي.">
+              <input className={inputCls} dir="ltr" value={form.bosta_location_id} onChange={(e) => set("bosta_location_id", e.target.value.trim())} placeholder="Business Location ID" />
+            </Field>
+            <Field label="مفتاح تأكيد التحديثات" hint="كلمة سر بنبعتها لبوسطة وترجعها مع كل تحديث حالة، عشان نتأكد إنه منها. اضغط توليد.">
+              <div className="flex gap-2">
+                <input className={inputCls} dir="ltr" autoComplete="off" value={form.bosta_webhook_key} onChange={(e) => set("bosta_webhook_key", e.target.value.trim())} placeholder="اضغط توليد" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const b = new Uint8Array(18);
+                    crypto.getRandomValues(b);
+                    set("bosta_webhook_key", Array.from(b, (x) => x.toString(16).padStart(2, "0")).join(""));
+                  }}
+                  className="min-h-[48px] px-4 rounded-xl bg-slate-900 text-white text-sm font-bold cursor-pointer whitespace-nowrap"
+                >
+                  توليد
+                </button>
+              </div>
+            </Field>
+            <p className="text-xs text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-3">
+              بعد الحفظ، زرار «إرسال للشحن» بيظهر في تفاصيل كل طلب. حالات الشحنة بترجع لوحدها لو الموقع على رابط https.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-4">
