@@ -3,11 +3,12 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, Bell, Globe } from "lucide-react";
+import { Store, Bell, Globe, Truck } from "lucide-react";
 
 /** Settings area: one entry in the sidebar, sections as tabs at the top (like the reference admin). */
 const SETTINGS_TABS = [
   { href: "/admin/settings", label: "إعدادات المتجر", icon: Store },
+  { href: "/admin/settings/commerce", label: "الشحن والعروض", icon: Truck },
   { href: "/admin/settings/domain", label: "الدومين", icon: Globe },
   { href: "/admin/settings/notifications", label: "إشعارات المبيعات", icon: Bell },
 ] as const;

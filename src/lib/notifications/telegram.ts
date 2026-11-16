@@ -68,6 +68,11 @@ export class TelegramNotifier {
       const utmCampaign = order.tracking?.utm_campaign ? ` (${esc(order.tracking.utm_campaign)})` : "";
       const sourceDisplay = `${utmSource}${utmCampaign}`;
 
+      const pay = order.tracking?.payment;
+      const paymentLine = pay
+        ? `${pay.method === "instapay" ? "تحويل إنستاباي" : "تحويل فودافون كاش"} — في انتظار التأكيد${pay.reference ? ` (رقم العملية: ${esc(pay.reference)})` : ""}`
+        : "الدفع نقدياً عند الاستلام (COD)";
+
       // Beautiful Telegram HTML Message (every dynamic value is escaped)
       const messageText = `
 🔔 <b>أوردر جديد نزل حالاً في ${storeName}! 🛒</b>
@@ -81,7 +86,7 @@ export class TelegramNotifier {
 📦 <b>المنتج:</b> ${esc(productTitle)}
 🔢 <b>الكمية:</b> ${esc(order.quantity)} قطعة
 💰 <b>المبلغ عند الاستلام:</b> <b>${esc(order.final_amount)} ج.م</b> (شحن مجاني 🚚)
-💵 <b>طريقة الدفع:</b> الدفع نقدياً عند الاستلام (COD)
+💵 <b>طريقة الدفع:</b> ${paymentLine}
 ${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500))}</i>\n` : ""}━━━━━━━━━━━━━━━━━━━━
 🎯 <b>مصدر الإعلان:</b> ${sourceDisplay}
 ⏰ <b>التوقيت:</b> ${orderDate}

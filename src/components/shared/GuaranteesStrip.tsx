@@ -1,4 +1,8 @@
+"use client";
+
 import React from "react";
+import { useBrand } from "@/components/brand/BrandProvider";
+import { shippingHint } from "@/lib/commerce";
 import { ShieldCheck, RefreshCw, Truck } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
 
@@ -25,9 +29,11 @@ interface GuaranteesStripProps {
 }
 
 export function GuaranteesStrip({ title, items, editable }: GuaranteesStripProps) {
+  const hint = shippingHint(useBrand().commerce.shipping);
+  const defaults = DEFAULT_GUARANTEES.map((g) => (g.icon === "shipping" && !hint.free ? { ...g, title: hint.text, desc: "لكل محافظات مصر" } : g));
   const valid = (items || []).filter((i) => i?.title);
   // Always exactly 3 cards; missing ones fall back to the defaults
-  const list = [0, 1, 2].map((i) => valid[i] || DEFAULT_GUARANTEES[i]);
+  const list = [0, 1, 2].map((i) => valid[i] || defaults[i]);
 
   return (
     <section dir="rtl" aria-label={title || "ضماناتنا"} className="bg-emerald-50 rounded-3xl border border-emerald-200 p-4 sm:p-6">

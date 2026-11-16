@@ -1,7 +1,7 @@
 export type ProductStatus = 'active' | 'draft' | 'archived';
 export type LandingPageStatus = 'active' | 'paused' | 'draft';
 export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
-export type PaymentMethod = 'cod' | 'safqa' | 'card';
+export type PaymentMethod = 'cod' | 'safqa' | 'card' | 'vodafone_cash' | 'instapay';
 export type SafqaSyncStatus = 'not_synced' | 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface ProductOffer {
@@ -222,7 +222,30 @@ export interface Order {
   tracking?: OrderTrackingMeta;
 }
 
+/** Manual payment (Vodafone Cash / InstaPay transfer): what the customer wrote and whether the merchant confirmed it. */
+export interface OrderPayment {
+  method: string;
+  reference?: string;
+  status: "awaiting" | "paid";
+  confirmed_at?: string;
+}
+
+/** A shipment created at a courier for this order (stored inside order.tracking). */
+export interface OrderShipment {
+  provider: string;
+  tracking_number: string;
+  external_id?: string;
+  state?: number;
+  state_label?: string;
+  note?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface OrderTrackingMeta {
+  shipping?: OrderShipment;
+  payment?: OrderPayment;
+  coupon?: { code: string; amount: number };
   id?: string;
   order_id?: string;
   utm_source?: string;
@@ -292,7 +315,6 @@ export interface SystemSettings {
   brand_accent?: string; // PaletteKey: buy-button color (orange-*)
   site_domain?: string; // https://shop.example.com
   currency_symbol?: string;
-  store_mode?: "landing" | "catalog"; // landing = one landing page per product; catalog = regular store home with all products
   onboarding_done?: boolean;
   // Catalog-mode home page content (all optional; defaults in lib/home-config.ts)
   home_config?: {
@@ -302,6 +324,25 @@ export interface SystemSettings {
     hero_subtitle?: string;
     hero_cta?: string;
   };
+  // Customer reviews on the store home page: written by the merchant himself (none by default, section hidden)
+  home_reviews?: { name: string; place?: string; comment: string; rating?: number }[];
+  // Shipping fee / minimum order / coupons / popup / downsell (see lib/commerce.ts)
+  shipping_config?: import("@/lib/commerce").ShippingConfig;
+  coupons?: import("@/lib/commerce").Coupon[];
+  /** Orders that used each coupon code (server-written). */
+  coupon_usage?: Record<string, number>;
+  popup?: import("@/lib/commerce").PopupConfig;
+  downsell?: import("@/lib/commerce").DownsellConfig;
+  // Manual payment methods shown at checkout next to cash on delivery (numbers are public by design)
+  payment_methods?: {
+    vodafone_cash?: { enabled: boolean; number: string; holder?: string };
+    instapay?: { enabled: boolean; address: string; holder?: string };
+  };
+  // Shipping: which courier is connected ("none" = ship by file export) and its credentials
+  shipping_provider?: "none" | "bosta";
+  bosta_api_key?: string; // secret
+  bosta_location_id?: string;
+  bosta_webhook_key?: string; // secret: Bosta sends it back in the Authorization header of its webhook
   // Optional Safka (Egyptian dropshipping) module
   safka_enabled?: boolean;
   safka_page_id?: string;

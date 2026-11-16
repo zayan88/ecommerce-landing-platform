@@ -1,4 +1,8 @@
+"use client";
+
 import React from "react";
+import { useBrand } from "@/components/brand/BrandProvider";
+import { shippingHint } from "@/lib/commerce";
 import { ChevronDown } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
 
@@ -45,7 +49,13 @@ interface FaqAccordionProps {
 
 export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable }: FaqAccordionProps) {
   const titleId = React.useId();
-  const list = items && items.length > 0 ? items.filter((i) => i?.q && i?.a) : DEFAULT_FAQ;
+  const hint = shippingHint(useBrand().commerce.shipping);
+  const defaults = hint.free
+    ? DEFAULT_FAQ
+    : DEFAULT_FAQ.map((f, i) =>
+        i === 0 ? { ...f, a: `الشحن لكل محافظات مصر لحد باب بيتك (${hint.text}). تكلفة الشحن بتظهر لك قبل ما تأكد الطلب، والتوصيل بياخد من 5 لـ 7 أيام عمل.` } : f
+      );
+  const list = items && items.length > 0 ? items.filter((i) => i?.q && i?.a) : defaults;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",

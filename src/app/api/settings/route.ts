@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { isThemeColor } from "@/lib/palettes";
+import { sanitizeCoupons, sanitizeDownsell, sanitizePopup, sanitizeShipping } from "@/lib/commerce";
+import { normalizeEgyptPhone } from "@/lib/db/abandoned-repo";
 import { META_PIXEL_RE, TIKTOK_PIXEL_RE, SNAP_PIXEL_RE, GA4_RE, GTM_RE, META_TEST_CODE_RE, cleanIdList } from "@/lib/tracking/tag-ids";
 
 export const runtime = "edge";
@@ -11,6 +13,8 @@ const SECRET_FIELDS = [
   "safqa_webhook_secret",
   "default_meta_capi_token",
   "telegram_bot_token",
+  "bosta_api_key",
+  "bosta_webhook_key",
 ] as const;
 
 function maskSecret(v: unknown): string {
@@ -56,9 +60,7 @@ export async function POST(req: NextRequest) {
     // Brand fields: whitelist + sanitize (never trust the client)
     if ("brand_primary" in toUpdate && !isThemeColor(toUpdate.brand_primary)) delete toUpdate.brand_primary;
     if ("brand_accent" in toUpdate && !isThemeColor(toUpdate.brand_accent)) delete toUpdate.brand_accent;
-    if ("store_mode" in toUpdate && toUpdate.store_mode !== "landing" && toUpdate.store_mode !== "catalog") {
-      delete toUpdate.store_mode;
-    }
+    delete (toUpdate as Record<string, unknown>).store_mode;
     for (const f of ["logo_url", "favicon_url", "site_domain"] as const) {
       if (f in toUpdate) {
         const v = typeof toUpdate[f] === "string" ? toUpdate[f].trim() : "";
@@ -146,6 +148,63 @@ export async function POST(req: NextRequest) {
         }
         toUpdate.home_config = clean;
       }
+    }
+    delete (toUpdate as Record<string, unknown>).coupon_usage;
+    if ("shipping_config" in toUpdate) toUpdate.shipping_config = sanitizeShipping(toUpdate.shipping_config);
+    if ("coupons" in toUpdate) toUpdate.coupons = sanitizeCoupons(toUpdate.coupons);
+    if ("popup" in toUpdate) toUpdate.popup = sanitizePopup(toUpdate.popup);
+    if ("downsell" in toUpdate) {
+      const known = "coupons" in toUpdate ? toUpdate.coupons : (await dbStore.getSettings()).coupons || [];
+      toUpdate.downsell = sanitizeDownsell(toUpdate.downsell, known);
+    }
+    if ("payment_methods" in toUpdate) {
+      const pm = toUpdate.payment_methods && typeof toUpdate.payment_methods === "object" ? toUpdate.payment_methods : {};
+      const clean: any = {};
+      const holderOf = (v: unknown) => (typeof v === "string" ? v.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 60) : "");
+      if (pm.vodafone_cash && typeof pm.vodafone_cash === "object") {
+        const num = normalizeEgyptPhone(pm.vodafone_cash.number);
+        const enabled = Boolean(pm.vodafone_cash.enabled);
+        if (enabled && !num) return NextResponse.json({ success: false, error: "رقم فودافون كاش غير صحيح (11 رقم يبدأ بـ 01)" }, { status: 400 });
+        clean.vodafone_cash = { enabled, number: num || "", holder: holderOf(pm.vodafone_cash.holder) };
+      }
+      if (pm.instapay && typeof pm.instapay === "object") {
+        const raw = typeof pm.instapay.address === "string" ? pm.instapay.address.trim() : "";
+        // an InstaPay address (name@bank) or a mobile number linked to InstaPay
+        const addr = /^[A-Za-z0-9._-]{2,40}@[A-Za-z]{2,20}$/.test(raw) ? raw : normalizeEgyptPhone(raw) || "";
+        const enabled = Boolean(pm.instapay.enabled);
+        if (enabled && !addr) return NextResponse.json({ success: false, error: "عنوان إنستاباي غير صحيح (مثال: name@instapay أو رقم موبايل)" }, { status: 400 });
+        clean.instapay = { enabled, address: addr, holder: holderOf(pm.instapay.holder) };
+      }
+      toUpdate.payment_methods = clean;
+    }
+    if ("shipping_provider" in toUpdate && toUpdate.shipping_provider !== "none" && toUpdate.shipping_provider !== "bosta") {
+      delete toUpdate.shipping_provider;
+    }
+    if ("bosta_location_id" in toUpdate) {
+      const v = typeof toUpdate.bosta_location_id === "string" ? toUpdate.bosta_location_id.trim() : "";
+      if (v === "" || /^[A-Za-z0-9_-]{4,64}$/.test(v)) toUpdate.bosta_location_id = v;
+      else return NextResponse.json({ success: false, error: "معرّف فرع بوسطة غير صحيح" }, { status: 400 });
+    }
+    for (const f of ["bosta_api_key", "bosta_webhook_key"] as const) {
+      if (f in toUpdate) {
+        const v = typeof toUpdate[f] === "string" ? toUpdate[f].trim() : "";
+        // keys go into HTTP headers: printable ASCII only, no spaces / line breaks
+        if (v === "" || /^[\x21-\x7e]{8,200}$/.test(v)) toUpdate[f] = v;
+        else return NextResponse.json({ success: false, error: "المفتاح غير صحيح (حروف وأرقام بدون مسافات)" }, { status: 400 });
+      }
+    }
+    if ("home_reviews" in toUpdate) {
+      const list = Array.isArray(toUpdate.home_reviews) ? toUpdate.home_reviews : [];
+      const clean = [];
+      for (const r of list.slice(0, 6)) {
+        const name = typeof r?.name === "string" ? r.name.trim().slice(0, 60) : "";
+        const comment = typeof r?.comment === "string" ? r.comment.trim().slice(0, 400) : "";
+        if (!name || !comment) continue;
+        const place = typeof r?.place === "string" ? r.place.trim().slice(0, 60) : "";
+        const rating = Math.min(5, Math.max(1, Math.round(Number(r?.rating) || 5)));
+        clean.push({ name, comment, rating, ...(place ? { place } : {}) });
+      }
+      toUpdate.home_reviews = clean;
     }
     for (const f of SECRET_FIELDS) {
       if (typeof toUpdate[f] === "string" && toUpdate[f].includes("...")) {

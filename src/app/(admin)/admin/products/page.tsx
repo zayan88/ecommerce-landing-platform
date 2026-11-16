@@ -208,7 +208,7 @@ export default function AdminProductsPage() {
       if (data.success) {
         setIsModalOpen(false);
         // New product in landing-page mode: go straight to the live editor of its page.
-        if (!editingProduct && data.landing_page_id && brand.store_mode !== "catalog") {
+        if (!editingProduct && data.landing_page_id) {
           router.push(`/admin/landing-pages/${data.landing_page_id}/edit`);
           return;
         }
@@ -630,6 +630,7 @@ export default function AdminProductsPage() {
                 <section className={cardCls}>
                   <h3 className={cardTitle}>الصور</h3>
                   <ImageGalleryEditor label="صور المنتج (الأولى هي الصورة الرئيسية)" value={images} onChange={setImages} />
+                  <p className="text-xs text-slate-500 leading-relaxed">أول 4 صور بس هي اللي بتظهر في صفحة الهبوط. كل صورة بتستهلك من حد الزيارات في الخطة المجانية، فالأفضل 4 إلى 5 صور بالكتير للصفحة كلها.</p>
                 </section>
 
                 <section className={cardCls}>

@@ -9,6 +9,7 @@ import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
 import type { Order } from "@/types";
 import { markAbandonedConverted } from "@/lib/db/abandoned-repo";
+import { applyCoupon, bestAutoCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
 import {
   beginOrder,
   consumeOrderRateLimit,
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
     let unitPrice: number;
     let totalAmount: number;
     let discountAmount = 0;
+    let offerFreeShipping = false;
 
     if (data.offer_id) {
       // An offer id must match one of this product's offers; price AND quantity come from the offer.
@@ -100,6 +102,7 @@ export async function POST(req: NextRequest) {
         );
       }
       quantity = offerQty;
+      offerFreeShipping = Boolean(selectedOffer.free_shipping);
       totalAmount = offerPrice;
       unitPrice = offerPrice / offerQty;
       const originalPrice = Number(selectedOffer.original_price);
@@ -120,7 +123,35 @@ export async function POST(req: NextRequest) {
       totalAmount = basePrice * quantity;
     }
 
-    const finalAmount = totalAmount; // Zero shipping added
+    // Minimum order, coupon and shipping fee: always decided here, never taken from the browser.
+    const commerceSettings = await dbStore.getSettings();
+    const shippingCfg = sanitizeShipping(commerceSettings.shipping_config);
+    if (shippingCfg.min_order > 0 && totalAmount < shippingCfg.min_order) {
+      return NextResponse.json(
+        { success: false, error: `أقل قيمة للطلب ${shippingCfg.min_order} ج.م` },
+        { status: 400 }
+      );
+    }
+    let couponApplied: { code: string; amount: number; auto?: boolean; free_shipping?: boolean } | null = null;
+    const allCoupons = sanitizeCoupons(commerceSettings.coupons);
+    const couponCtx = { subtotal: totalAmount, quantity, productId: product.id, usage: ((commerceSettings as any).coupon_usage || {}) as Record<string, number> };
+    if (data.coupon_code) {
+      const c = applyCoupon(allCoupons, data.coupon_code, couponCtx);
+      if (!c.ok) {
+        return NextResponse.json({ success: false, error: c.reason || "الكوبون ده مش صحيح أو منتهي" }, { status: 400 });
+      }
+      couponApplied = { code: c.code as string, amount: c.discount, ...(c.free_shipping ? { free_shipping: true } : {}) };
+    } else {
+      // no code typed: the merchant's automatic discount (if any) applies by itself
+      const auto = bestAutoCoupon(allCoupons, couponCtx);
+      if (auto.ok) couponApplied = { code: auto.code as string, amount: auto.discount, auto: true, ...(auto.free_shipping ? { free_shipping: true } : {}) };
+    }
+    if (couponApplied) discountAmount += couponApplied.amount;
+    const afterCoupon = totalAmount - (couponApplied?.amount || 0);
+    const shippingFee = couponApplied?.free_shipping
+      ? 0
+      : computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping });
+    const finalAmount = afterCoupon + shippingFee;
 
     // 4. Resolve client IP and User-Agent for CAPI / rate limiting
     const clientIp = getOrderClientIp(req.headers);
@@ -147,6 +178,15 @@ export async function POST(req: NextRequest) {
           event_id: eventId,
         },
       });
+    }
+
+    // 4a-bis. Manual payment methods must be enabled by the merchant; the amount always comes from the server.
+    const manualMethod = data.payment_method === "vodafone_cash" || data.payment_method === "instapay" ? data.payment_method : null;
+    if (manualMethod) {
+      const enabled = Boolean((await dbStore.getSettings()).payment_methods?.[manualMethod]?.enabled);
+      if (!enabled) {
+        return NextResponse.json({ success: false, error: "طريقة الدفع دي مش متاحة حالياً، اختار الدفع عند الاستلام" }, { status: 400 });
+      }
     }
 
     // 4b. Duplicate guard: same phone + product inside 15 minutes returns the existing order.
@@ -190,7 +230,7 @@ export async function POST(req: NextRequest) {
         quantity,
         unit_price: unitPrice,
         total_amount: totalAmount,
-        shipping_fee: 0,
+        shipping_fee: shippingFee,
         discount_amount: discountAmount,
         final_amount: finalAmount,
         payment_method: data.payment_method,
@@ -206,6 +246,10 @@ export async function POST(req: NextRequest) {
           fbp: data.fbp || undefined,
           fbc: data.fbc || undefined,
           event_id: eventId,
+          ...(couponApplied ? { coupon: couponApplied } : {}),
+          ...(manualMethod
+            ? { payment: { method: manualMethod, reference: data.payment_reference || undefined, status: "awaiting" as const } }
+            : {}),
         },
       });
     } catch (persistErr) {
@@ -228,6 +272,16 @@ export async function POST(req: NextRequest) {
       landing_page_slug: createdOrder.landing_page_slug,
       event_id: eventId,
     };
+
+    // Count the coupon use (best effort; the limit is approximate under heavy parallel orders)
+    if (couponApplied) {
+      try {
+        const cur = ((await dbStore.getSettings()) as any).coupon_usage || {};
+        await dbStore.updateSettings({ coupon_usage: { ...cur, [couponApplied.code]: (Number(cur[couponApplied.code]) || 0) + 1 } } as any);
+      } catch (e) {
+        console.warn("[coupon usage]", (e as Error)?.message);
+      }
+    }
 
     // 5-bis. The visitor finished: close their abandoned-checkout rows (best effort, never blocks the order)
     await markAbandonedConverted(createdOrder.customer_phone).catch(() => {});
@@ -483,6 +537,19 @@ export async function PATCH(req: NextRequest) {
       if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
       const res = await SafkaClient.createOrder(order);
       return NextResponse.json(res);
+    }
+
+    // The merchant saw the transfer: mark the payment as received and confirm the order
+    if (action === "confirm_payment") {
+      const order = await dbStore.getOrder(orderId);
+      if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
+      const pay = order.tracking?.payment;
+      if (!pay) return NextResponse.json({ success: false, error: "الطلب ده دفعه عند الاستلام" }, { status: 400 });
+      const updated = await dbStore.updateOrder(orderId, {
+        tracking: { ...(order.tracking || {}), payment: { ...pay, status: "paid", confirmed_at: new Date().toISOString() } },
+        status: order.status === "pending" ? "confirmed" : order.status,
+      });
+      return NextResponse.json({ success: true, order: updated });
     }
 
     // General update for order fields

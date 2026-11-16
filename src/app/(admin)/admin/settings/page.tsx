@@ -2,19 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, LayoutTemplate, Store } from "lucide-react";
+import { Check, Loader2, Plus, Trash2 } from "lucide-react";
 import { PALETTE_KEYS } from "@/lib/palettes";
 import { PaletteSwatches } from "@/components/admin/PaletteSwatches";
 import { ImageUploader } from "@/components/admin/ImageUploader";
-
-type Mode = "landing" | "catalog";
 
 interface BrandForm {
   store_name: string;
   store_tagline: string;
   logo_url: string;
   favicon_url: string;
-  store_mode: Mode;
   brand_primary: string;
   brand_accent: string;
   support_phone: string;
@@ -22,6 +19,17 @@ interface BrandForm {
   support_email: string;
   site_domain: string;
   currency_symbol: string;
+  home_reviews: { name: string; place: string; comment: string; rating: number }[];
+  vodafone_enabled: boolean;
+  vodafone_number: string;
+  vodafone_holder: string;
+  instapay_enabled: boolean;
+  instapay_address: string;
+  instapay_holder: string;
+  shipping_provider: "none" | "bosta";
+  bosta_api_key: string;
+  bosta_location_id: string;
+  bosta_webhook_key: string;
 }
 
 const EMPTY: BrandForm = {
@@ -29,7 +37,6 @@ const EMPTY: BrandForm = {
   store_tagline: "",
   logo_url: "",
   favicon_url: "",
-  store_mode: "landing",
   brand_primary: "emerald",
   brand_accent: "orange",
   support_phone: "",
@@ -37,6 +44,17 @@ const EMPTY: BrandForm = {
   support_email: "",
   site_domain: "",
   currency_symbol: "ج.م",
+  home_reviews: [],
+  vodafone_enabled: false,
+  vodafone_number: "",
+  vodafone_holder: "",
+  instapay_enabled: false,
+  instapay_address: "",
+  instapay_holder: "",
+  shipping_provider: "none",
+  bosta_api_key: "",
+  bosta_location_id: "",
+  bosta_webhook_key: "",
 };
 
 const CURRENCIES = ["ج.م", "ر.س", "د.إ", "د.ك", "د.ب", "ر.ع", "ر.ق", "د.أ", "$"];
@@ -71,7 +89,6 @@ export default function BrandPage() {
           store_tagline: s.store_tagline || "",
           logo_url: s.logo_url || "",
           favicon_url: s.favicon_url || "",
-          store_mode: s.store_mode === "catalog" ? "catalog" : "landing",
           brand_primary: PALETTE_KEYS.includes(s.brand_primary) ? s.brand_primary : "emerald",
           brand_accent: PALETTE_KEYS.includes(s.brand_accent) ? s.brand_accent : "orange",
           support_phone: s.support_phone || "",
@@ -79,6 +96,19 @@ export default function BrandPage() {
           support_email: s.support_email || "",
           site_domain: s.site_domain || "",
           currency_symbol: s.currency_symbol || "ج.م",
+          vodafone_enabled: Boolean(s.payment_methods?.vodafone_cash?.enabled),
+          vodafone_number: s.payment_methods?.vodafone_cash?.number || "",
+          vodafone_holder: s.payment_methods?.vodafone_cash?.holder || "",
+          instapay_enabled: Boolean(s.payment_methods?.instapay?.enabled),
+          instapay_address: s.payment_methods?.instapay?.address || "",
+          instapay_holder: s.payment_methods?.instapay?.holder || "",
+          shipping_provider: s.shipping_provider === "bosta" ? "bosta" : "none",
+          bosta_api_key: s.bosta_api_key || "",
+          bosta_location_id: s.bosta_location_id || "",
+          bosta_webhook_key: s.bosta_webhook_key || "",
+          home_reviews: Array.isArray(s.home_reviews)
+            ? s.home_reviews.map((r: any) => ({ name: r.name || "", place: r.place || "", comment: r.comment || "", rating: Number(r.rating) || 5 }))
+            : [],
         });
       })
       .catch(() => setMessage({ ok: false, text: "تعذر تحميل الإعدادات" }))
@@ -95,7 +125,14 @@ export default function BrandPage() {
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, onboarding_done: true }),
+        body: JSON.stringify({
+          ...form,
+          payment_methods: {
+            vodafone_cash: { enabled: form.vodafone_enabled, number: form.vodafone_number, holder: form.vodafone_holder },
+            instapay: { enabled: form.instapay_enabled, address: form.instapay_address, holder: form.instapay_holder },
+          },
+          onboarding_done: true,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "تعذر الحفظ");
@@ -125,34 +162,6 @@ export default function BrandPage() {
 
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-6">
         <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3">إعدادات المتجر</h2>
-
-        <Field label="شكل المتجر" hint="تقدر تغيّره في أي وقت. المنتجات والطلبات بتفضل زي ما هي.">
-          <div className="grid sm:grid-cols-2 gap-3" role="radiogroup">
-            {(
-              [
-                { id: "landing", title: "صفحات هبوط", desc: "كل منتج له صفحة هبوط كاملة تساعد على البيع.", Icon: LayoutTemplate },
-                { id: "catalog", title: "متجر عادي", desc: "صفحة رئيسية بكل المنتجات وصفحة منتج بسيطة.", Icon: Store },
-              ] as const
-            ).map(({ id, title, desc, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                role="radio"
-                aria-checked={form.store_mode === id}
-                onClick={() => set("store_mode", id)}
-                className={`text-right rounded-2xl border-2 p-4 min-h-[88px] transition flex gap-3 items-start cursor-pointer ${
-                  form.store_mode === id ? "border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/30" : "border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                <Icon className="w-6 h-6 shrink-0 text-orange-600 mt-0.5" />
-                <span>
-                  <span className="block font-black text-slate-900">{title}</span>
-                  <span className="block text-xs text-slate-600 leading-relaxed mt-1">{desc}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </Field>
 
         <Field label="اسم المتجر">
           <input className={inputCls} value={form.store_name} onChange={(e) => set("store_name", e.target.value)} placeholder="مثال: متجر النور" maxLength={80} />
@@ -209,6 +218,146 @@ export default function BrandPage() {
         <Field label="رابط المتجر" hint="دومين متجرك بعد الربط، مثال: https://yourstore.com">
           <input className={inputCls} dir="ltr" value={form.site_domain} onChange={(e) => set("site_domain", e.target.value)} placeholder="https://yourstore.com" />
         </Field>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-5">
+        <div>
+          <h2 className="text-lg font-black text-slate-900">طرق الدفع</h2>
+          <p className="text-xs text-slate-500 leading-relaxed mt-1">
+            الدفع عند الاستلام شغال دايماً. فعّل فودافون كاش أو إنستاباي لو عاوز العميل يقدر يحوّل. بتظهر في فورم الطلب، والتاجر بيأكد التحويل من تفاصيل الطلب.
+          </p>
+        </div>
+        <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
+          <span className="text-sm font-black text-slate-900">فودافون كاش</span>
+          <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={form.vodafone_enabled} onChange={(e) => set("vodafone_enabled", e.target.checked)} />
+        </label>
+        {form.vodafone_enabled && (
+          <div className="grid sm:grid-cols-2 gap-3">
+            <input className={inputCls} dir="ltr" inputMode="tel" placeholder="رقم المحفظة 01xxxxxxxxx" value={form.vodafone_number} onChange={(e) => set("vodafone_number", e.target.value)} />
+            <input className={inputCls} placeholder="الاسم المسجل (اختياري)" maxLength={60} value={form.vodafone_holder} onChange={(e) => set("vodafone_holder", e.target.value)} />
+          </div>
+        )}
+        <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
+          <span className="text-sm font-black text-slate-900">إنستاباي</span>
+          <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={form.instapay_enabled} onChange={(e) => set("instapay_enabled", e.target.checked)} />
+        </label>
+        {form.instapay_enabled && (
+          <div className="grid sm:grid-cols-2 gap-3">
+            <input className={inputCls} dir="ltr" placeholder="name@instapay أو رقم موبايل" value={form.instapay_address} onChange={(e) => set("instapay_address", e.target.value)} />
+            <input className={inputCls} placeholder="الاسم المسجل (اختياري)" maxLength={60} value={form.instapay_holder} onChange={(e) => set("instapay_holder", e.target.value)} />
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-5">
+        <div>
+          <h2 className="text-lg font-black text-slate-900">الشحن</h2>
+          <p className="text-xs text-slate-500 leading-relaxed mt-1">
+            اربط شركة الشحن عشان تبعت الطلبات لها بضغطة وتتابع حالتها تلقائي. من غير ربط، تقدر تنزّل ملف الطلبات وتبعته للشركة.
+          </p>
+        </div>
+        <Field label="شركة الشحن">
+          <select className={inputCls} value={form.shipping_provider} onChange={(e) => set("shipping_provider", e.target.value as "none" | "bosta")}>
+            <option value="none">من غير ربط (ملف تصدير)</option>
+            <option value="bosta">بوسطة (Bosta)</option>
+          </select>
+        </Field>
+        {form.shipping_provider === "bosta" && (
+          <div className="space-y-4">
+            <Field label="مفتاح بوسطة (API Key)" hint="من حسابك في بوسطة: الإعدادات ← تكامل API ← مفتاح بصلاحية Read/Write.">
+              <input className={inputCls} dir="ltr" autoComplete="off" value={form.bosta_api_key} onChange={(e) => set("bosta_api_key", e.target.value.trim())} placeholder="مفتاح بوسطة" />
+            </Field>
+            <Field label="معرّف فرع الاستلام (اختياري)" hint="لو سبته فاضي بوسطة بتستخدم فرعك الافتراضي.">
+              <input className={inputCls} dir="ltr" value={form.bosta_location_id} onChange={(e) => set("bosta_location_id", e.target.value.trim())} placeholder="Business Location ID" />
+            </Field>
+            <Field label="مفتاح تأكيد التحديثات" hint="كلمة سر بنبعتها لبوسطة وترجعها مع كل تحديث حالة، عشان نتأكد إنه منها. اضغط توليد.">
+              <div className="flex gap-2">
+                <input className={inputCls} dir="ltr" autoComplete="off" value={form.bosta_webhook_key} onChange={(e) => set("bosta_webhook_key", e.target.value.trim())} placeholder="اضغط توليد" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const b = new Uint8Array(18);
+                    crypto.getRandomValues(b);
+                    set("bosta_webhook_key", Array.from(b, (x) => x.toString(16).padStart(2, "0")).join(""));
+                  }}
+                  className="min-h-[48px] px-4 rounded-xl bg-slate-900 text-white text-sm font-bold cursor-pointer whitespace-nowrap"
+                >
+                  توليد
+                </button>
+              </div>
+            </Field>
+            <p className="text-xs text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-3">
+              بعد الحفظ، زرار «إرسال للشحن» بيظهر في تفاصيل كل طلب. حالات الشحنة بترجع لوحدها لو الموقع على رابط https.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-4">
+        <div>
+          <h2 className="text-lg font-black text-slate-900">آراء العملاء في الصفحة الرئيسية</h2>
+          <p className="text-xs text-slate-500 leading-relaxed mt-1">
+            اكتب آراء عملائك الحقيقية بس. القسم بيظهر في الصفحة الرئيسية لو فيه رأي واحد على الأقل، ولو مفيش بيختفي.
+          </p>
+        </div>
+        {form.home_reviews.map((r, i) => (
+          <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
+            <div className="grid sm:grid-cols-2 gap-2.5">
+              <input
+                className={inputCls}
+                placeholder="اسم العميل"
+                maxLength={60}
+                value={r.name}
+                onChange={(e) => set("home_reviews", form.home_reviews.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)))}
+              />
+              <input
+                className={inputCls}
+                placeholder="المحافظة أو المنطقة (اختياري)"
+                maxLength={60}
+                value={r.place}
+                onChange={(e) => set("home_reviews", form.home_reviews.map((x, k) => (k === i ? { ...x, place: e.target.value } : x)))}
+              />
+            </div>
+            <textarea
+              className={inputCls + " leading-relaxed"}
+              rows={3}
+              maxLength={400}
+              placeholder="رأي العميل"
+              value={r.comment}
+              onChange={(e) => set("home_reviews", form.home_reviews.map((x, k) => (k === i ? { ...x, comment: e.target.value } : x)))}
+            />
+            <div className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                التقييم
+                <select
+                  className="h-11 px-2 rounded-xl border border-slate-300 bg-white text-sm"
+                  value={r.rating}
+                  onChange={(e) => set("home_reviews", form.home_reviews.map((x, k) => (k === i ? { ...x, rating: Number(e.target.value) } : x)))}
+                >
+                  {[5, 4, 3, 2, 1].map((n) => (
+                    <option key={n} value={n}>{n} من 5</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={() => set("home_reviews", form.home_reviews.filter((_, k) => k !== i))}
+                className="min-h-[44px] px-3 rounded-xl text-rose-600 hover:bg-rose-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" /> حذف
+              </button>
+            </div>
+          </div>
+        ))}
+        {form.home_reviews.length < 6 && (
+          <button
+            type="button"
+            onClick={() => set("home_reviews", [...form.home_reviews, { name: "", place: "", comment: "", rating: 5 }])}
+            className="min-h-[48px] w-full rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> إضافة رأي
+          </button>
+        )}
       </div>
 
       {message && (

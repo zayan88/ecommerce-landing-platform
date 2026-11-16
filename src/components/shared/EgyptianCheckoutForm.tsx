@@ -8,6 +8,8 @@ import { trackMetaEvent } from "@/lib/tracking/meta-pixel";
 import { trackMarketingEvent } from "@/lib/tracking/marketing-pixels";
 import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
+import { useBrand } from "@/components/brand/BrandProvider";
+import { bestAutoCoupon, computeShipping, shippingHint } from "@/lib/commerce";
 import {
   CheckCircleIcon,
   ShieldCheckIcon,
@@ -55,6 +57,31 @@ export function EgyptianCheckoutForm({
   const [governorate, setGovernorate] = useState("القاهرة");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const brand = useBrand();
+  const [payMethod, setPayMethod] = useState<"cod" | "vodafone_cash" | "instapay">("cod");
+  const [payRef, setPayRef] = useState("");
+  const [copied, setCopied] = useState(false);
+  const copyPayTarget = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // old browsers: select the text in a temporary field and use the legacy command
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        return;
+      }
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   // Honeypot: hidden from humans; bots that fill it get a fake success server-side
   const [website, setWebsite] = useState("");
 
@@ -106,6 +133,87 @@ export function EgyptianCheckoutForm({
 
   const quantity = activeOffer?.quantity || 1;
   const totalAmount = activeOffer?.price || product.base_price || 0;
+
+  // Shipping fee / minimum order / coupon: the numbers shown here mirror what /api/orders decides on the server
+  const shipCfg = brand.commerce?.shipping;
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponBusy, setCouponBusy] = useState(false);
+  const [couponMsg, setCouponMsg] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount: number; shipping: number; auto?: boolean } | null>(null);
+  const offerFree = Boolean(activeOffer?.free_shipping);
+  // the merchant's automatic discount is computed here from the public list (no request); the server re-decides
+  const autoRes = brand.commerce?.auto_coupons
+    ? bestAutoCoupon(brand.commerce.auto_coupons, { subtotal: totalAmount, quantity: activeOffer?.quantity || 1, productId: product.id })
+    : null;
+  const autoCoupon =
+    autoRes && autoRes.ok
+      ? {
+          code: autoRes.code || "",
+          discount: autoRes.discount,
+          auto: true as const,
+          shipping: autoRes.free_shipping || !shipCfg ? 0 : computeShipping(shipCfg, { total: totalAmount - autoRes.discount, productId: product.id, offerFree }),
+        }
+      : null;
+  const eff = coupon ?? autoCoupon;
+  const discount = eff?.discount || 0;
+  const shipFee = eff
+    ? eff.shipping
+    : shipCfg
+    ? computeShipping(shipCfg, { total: totalAmount, productId: product.id, offerFree })
+    : 0;
+  const finalTotal = totalAmount - discount + shipFee;
+  const belowMin = Boolean(shipCfg && shipCfg.min_order > 0 && totalAmount < shipCfg.min_order);
+  const ship = shipCfg ? shippingHint(shipCfg) : { free: true, text: "شحن مجاني" };
+
+  const applyCouponCode = async (raw: string, silent = false) => {
+    const code = raw.trim();
+    if (!code) return;
+    setCouponBusy(true);
+    try {
+      const res = await fetch("/api/coupons/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          product_id: product.id,
+          offer_id: activeOffer?.id && product.offers?.some((o) => o.id === activeOffer.id) ? activeOffer.id : undefined,
+        }),
+      });
+      const j = await res.json();
+      if (j.valid) {
+        setCoupon({ code: String(j.code || code).toUpperCase(), discount: j.discount, shipping: j.shipping, auto: Boolean(j.auto) });
+        setCouponMsg("");
+        setCouponOpen(true);
+        setCouponInput(code.toUpperCase());
+      } else {
+        setCoupon(null);
+        if (!silent) setCouponMsg(j.reason || "الكوبون ده مش صحيح");
+      }
+    } catch {
+      if (!silent) setCouponMsg("تعذر التحقق من الكوبون، جرّب تاني");
+    } finally {
+      setCouponBusy(false);
+    }
+  };
+  // a new offer changes the total: check the coupon again; the downsell popup applies its coupon through this event
+  const appliedCode = coupon?.code;
+  useEffect(() => {
+    if (appliedCode) applyCouponCode(appliedCode, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeOffer?.id]);
+  useEffect(() => {
+    const onApply = (e: Event) => {
+      const code = String((e as CustomEvent).detail || "");
+      if (code) {
+        setCouponInput(code);
+        applyCouponCode(code);
+      }
+    };
+    window.addEventListener("apply-coupon", onApply);
+    return () => window.removeEventListener("apply-coupon", onApply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeOffer?.id, product.id]);
 
   // Abandoned checkout: once a valid mobile number and a name are typed, tell the server (debounced,
   // once per distinct value). Never in the editor preview, never after the order was submitted.
@@ -183,6 +291,10 @@ export function EgyptianCheckoutForm({
       return;
     }
 
+    if (belowMin) {
+      setErrorMessage(`أقل قيمة للطلب ${shipCfg?.min_order} ج.م`);
+      return;
+    }
     setIsSubmitting(true);
     orderSent.current = true;
 
@@ -218,7 +330,9 @@ export function EgyptianCheckoutForm({
             : undefined,
         quantity,
         website: website || undefined,
-        payment_method: "cod",
+        payment_method: payMethod,
+        payment_reference: payMethod === "cod" ? undefined : payRef.trim() || undefined,
+        coupon_code: coupon?.code,
         event_id: eventId,
         ...utms,
       };
@@ -417,24 +531,137 @@ export function EgyptianCheckoutForm({
           />
         </div>
 
+        {/* Coupon */}
+        <div>
+          {!couponOpen && !coupon ? (
+            <button type="button" onClick={() => setCouponOpen(true)} className="text-sm font-bold text-orange-600 hover:text-orange-700 cursor-pointer min-h-[44px]">
+              عندك كوبون خصم؟
+            </button>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  maxLength={20}
+                  placeholder="كود الكوبون"
+                  className="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => applyCouponCode(couponInput)}
+                  disabled={couponBusy || !couponInput.trim()}
+                  className="min-h-[48px] px-5 rounded-xl bg-slate-900 text-white text-sm font-black cursor-pointer disabled:opacity-50"
+                >
+                  {couponBusy ? "..." : "تطبيق"}
+                </button>
+              </div>
+              {coupon && <p className="text-xs font-bold text-emerald-700">✓ اتطبّق خصم {coupon.discount} ج.م</p>}
+              {couponMsg && <p className="text-xs font-bold text-rose-700">{couponMsg}</p>}
+            </div>
+          )}
+        </div>
+
         {/* Pricing Summary */}
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2 text-xs sm:text-sm">
           <div className="flex justify-between text-slate-600">
             <span>سعر الطلب ({activeOffer?.title_ar || "المنتج"}):</span>
             <span className="font-bold text-slate-900">{totalAmount} ج.م</span>
           </div>
+          {discount > 0 && (
+            <div className="flex justify-between text-emerald-700">
+              <span>{eff?.auto ? "خصم تلقائي:" : `خصم الكوبون (${eff?.code}):`}</span>
+              <span className="font-bold">- {discount} ج.م</span>
+            </div>
+          )}
           <div className="flex justify-between text-slate-600">
             <span>الشحن والتوصيل إلى {governorate}:</span>
-            <span className="font-bold text-emerald-600">مجاناً بالكامل علينا 🎁</span>
+            {shipFee > 0 ? (
+              <span className="font-bold text-slate-900">{shipFee} ج.م</span>
+            ) : (
+              <span className="font-bold text-emerald-600">مجاناً بالكامل علينا 🎁</span>
+            )}
           </div>
+          {belowMin && (
+            <div className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-2.5">
+              أقل قيمة للطلب {shipCfg?.min_order} ج.م. اختار عرض أكبر عشان تكمّل.
+            </div>
+          )}
           <div className="pt-2.5 border-t border-slate-200 flex justify-between items-baseline text-sm sm:text-base font-extrabold text-slate-900">
             <span>المبلغ المطلوب عند الاستلام:</span>
-            <span className="text-2xl font-black text-orange-600 font-mono">{totalAmount} ج.م</span>
+            <span className="text-2xl font-black text-orange-600 font-mono">{finalTotal} ج.م</span>
           </div>
           <div className="text-[11px] text-slate-500 pt-0.5">
             ✓ هتدفع للمندوب بس لما تستلم الشحنة وتعاينها بنفسك.
           </div>
         </div>
+
+        {/* Payment method: cash on delivery by default; transfer options only when the merchant enabled them */}
+        {(brand.payments.vodafone_cash || brand.payments.instapay) && (
+          <fieldset className="space-y-2">
+            <legend className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">طريقة الدفع</legend>
+            {(
+              [
+                ["cod", "الدفع عند الاستلام", "ادفع للمندوب بعد ما تفتح الشحنة وتعاينها"],
+                ...(brand.payments.vodafone_cash ? [["vodafone_cash", "فودافون كاش", "حوّل المبلغ على رقم المتجر"]] : []),
+                ...(brand.payments.instapay ? [["instapay", "إنستاباي", "حوّل المبلغ على عنوان المتجر"]] : []),
+              ] as [typeof payMethod, string, string][]
+            ).map(([id, title, hint]) => (
+              <label
+                key={id}
+                className={`flex items-start gap-3 rounded-xl border-2 p-3 min-h-[56px] cursor-pointer transition ${
+                  payMethod === id ? "border-orange-500 bg-orange-50/60" : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <input type="radio" name="pay_method" value={id} checked={payMethod === id} onChange={() => setPayMethod(id)} className="mt-1 w-4 h-4 accent-orange-600" />
+                <span>
+                  <span className="block text-sm font-black text-slate-900">{title}</span>
+                  <span className="block text-xs text-slate-500">{hint}</span>
+                </span>
+              </label>
+            ))}
+            {payMethod !== "cod" && (
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2 text-sm">
+                <p className="font-bold text-slate-800">
+                  حوّل <span className="font-mono">{Number(finalTotal).toLocaleString("en-US")}</span> {brand.currency} على:
+                </p>
+                {(() => {
+                  const target = (payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.number : brand.payments.instapay?.address) || "";
+                  return (
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-white border border-slate-200 px-3 py-2">
+                      <span className="font-mono text-base font-black text-slate-950" dir="ltr">{target}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyPayTarget(target)}
+                        className={`min-h-[44px] px-4 rounded-xl text-sm font-black cursor-pointer transition ${
+                          copied ? "bg-emerald-600 text-white" : "bg-slate-900 text-white hover:bg-slate-800"
+                        }`}
+                      >
+                        {copied ? "تم النسخ ✓" : "نسخ الرقم"}
+                      </button>
+                    </div>
+                  );
+                })()}
+                {(payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.holder : brand.payments.instapay?.holder) && (
+                  <p className="text-xs text-slate-600">
+                    باسم: {payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.holder : brand.payments.instapay?.holder}
+                  </p>
+                )}
+                <input
+                  type="text"
+                  value={payRef}
+                  onChange={(e) => setPayRef(e.target.value)}
+                  maxLength={60}
+                  placeholder="رقم العملية أو آخر 4 أرقام من رقم التحويل (اختياري)"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <p className="text-xs text-slate-500 leading-relaxed">بنأكد الطلب لما التحويل يوصلنا ونكلمك. لو حوّلت بعد ما تبعت الطلب، ابعت صورة الإيصال لنا على واتساب.</p>
+              </div>
+            )}
+          </fieldset>
+        )}
 
         {/* Submit Button */}
         <button
@@ -469,7 +696,7 @@ export function EgyptianCheckoutForm({
         <div className="grid grid-cols-3 gap-2 pt-2 text-center text-[11px] text-slate-500">
           <div className="flex flex-col items-center gap-1">
             <TruckIcon className="w-4 h-4 text-emerald-600" />
-            <span>شحن مجاني (5-7 أيام)</span>
+            <span>{ship.free ? "شحن مجاني (5-7 أيام)" : `${ship.text} (5-7 أيام)`}</span>
           </div>
           <div className="flex flex-col items-center gap-1">
             <ShieldCheckIcon className="w-4 h-4 text-emerald-600" />

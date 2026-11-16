@@ -9,6 +9,8 @@ import { LandingFooter } from "@/components/shared/LandingFooter";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
 import { SocialProofWall } from "@/components/shared/SocialProofWall";
+import { shippingHint } from "@/lib/commerce";
+import { useBrand } from "@/components/brand/BrandProvider";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
 import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
@@ -112,10 +114,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     .slice(0, 4);
 
   const c = landingPage.content_config;
+  const shipHint = shippingHint(useBrand().commerce.shipping);
 
   const announcementText =
     c?.announcement_bar ||
-    "شحن مجاني 100% لجميع محافظات مصر + حق المعاينة والتجربة قبل الدفع 💵";
+    (shipHint.free ? "شحن مجاني 100% لجميع محافظات مصر" : shipHint.text) + " + حق المعاينة والتجربة قبل الدفع 💵";
   const heroTitle = c?.hero_headline || product.title_ar;
   const heroSubtitle =
     c?.hero_subheadline ||
@@ -199,7 +202,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </div>
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <Truck className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
-              <span className="font-bold text-[11px] text-slate-700 block">شحن مجاني 100%</span>
+              <span className="font-bold text-[11px] text-slate-700 block">{shipHint.free ? "شحن مجاني 100%" : shipHint.text}</span>
             </div>
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <Clock className="w-4 h-4 text-amber-600 mx-auto mb-0.5" />
@@ -272,7 +275,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             </div>
             <div className="text-left">
               <span className="inline-block text-xs font-bold text-emerald-800 bg-emerald-100/90 px-3 py-1 rounded-full border border-emerald-300">
-                🚚 شحن مجاني
+                🚚 {shipHint.free ? "شحن مجاني" : shipHint.text}
               </span>
               <span className="block text-[11px] text-emerald-800 mt-1 font-semibold">الدفع عند الاستلام</span>
             </div>
