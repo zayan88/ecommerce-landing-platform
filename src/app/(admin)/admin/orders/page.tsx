@@ -1058,21 +1058,71 @@ export default function AdminOrdersPage() {
 
       {/* Order Details Drawer / Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 space-y-6 max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 flex justify-end"
+          onMouseDown={(e) => e.target === e.currentTarget && setSelectedOrder(null)}
+          onKeyDown={(e) => e.key === "Escape" && setSelectedOrder(null)}
+        >
+          <div
+            role="dialog"
+            aria-label="تفاصيل الطلب"
+            tabIndex={-1}
+            ref={(el) => el?.focus()}
+            className="bg-white w-full sm:max-w-md h-full p-5 shadow-2xl border-r border-gray-100 space-y-5 overflow-y-auto outline-none"
+          >
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div>
-                <span className="text-xs text-gray-400 font-mono">تفاصيل الطلب:</span>
-                <h3 className="text-xl font-black text-gray-900 font-heading">
+                <span className="text-xs text-gray-400">
+                  {new Date(selectedOrder.created_at).toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" })}
+                </span>
+                <h3 className="text-xl font-black text-gray-900 font-heading font-mono">
                   {selectedOrder.order_number}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-2 rounded-xl text-gray-400 hover:bg-gray-100"
+                aria-label="إغلاق"
+                className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Status + quick contact */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                {getStatusBadge(selectedOrder.status)}
+                <select
+                  aria-label="تغيير الحالة"
+                  value={selectedOrder.status}
+                  onChange={(e) => handleUpdateStatus(selectedOrder.id, e.target.value as OrderStatus)}
+                  className="h-10 text-xs font-bold rounded-xl border border-gray-200 px-3 bg-white outline-none cursor-pointer"
+                >
+                  <option value="pending">قيد المراجعة</option>
+                  <option value="confirmed">مؤكد</option>
+                  <option value="shipped">تم الشحن</option>
+                  <option value="delivered">تم التوصيل</option>
+                  <option value="cancelled">ملغي</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href={`tel:${selectedOrder.customer_phone}`}
+                  className="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <Phone className="w-4 h-4" /> اتصال
+                </a>
+                <a
+                  href={`https://wa.me/2${selectedOrder.customer_phone.replace(/^0/, "")}?text=${encodeURIComponent(
+                    `أهلاً بحضرتك، بنكلمك لتأكيد طلبك رقم (${selectedOrder.order_number}). العنوان: ${selectedOrder.governorate} - ${selectedOrder.address}. هل الميعاد مناسب للشحن؟`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" /> واتساب
+                </a>
+              </div>
             </div>
 
             {/* Product & Offer Card */}
