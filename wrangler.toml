@@ -36,5 +36,6 @@ database_id = "7c3cea96-28b7-4c79-8128-87e89ea3ed7a"
 
 [env.preview.vars]
 ORDERS_BACKEND = "d1"
+CATALOG_BACKEND = "d1"
 BRAND_NAME = "RexRack (preview)"
 DEMO_MODE = "1"
