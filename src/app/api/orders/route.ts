@@ -21,6 +21,10 @@ import {
 
 export const runtime = "edge";
 
+/** Page size limits of GET /api/orders (rows per request). */
+const MAX_PAGE = 100;
+const MAX_EXPORT_PAGE = 1000;
+
 const ORDER_SUCCESS_MESSAGE = "تم تسجيل طلبك بنجاح وسيتواصل معك مندوبنا للتأكيد";
 
 export async function POST(req: NextRequest) {
@@ -318,27 +322,52 @@ export async function GET(req: NextRequest) {
       return raw !== null && /^\d{1,7}$/.test(raw) ? Number(raw) : undefined;
     };
 
-    const orders = await dbStore.getOrders({
+    const filters = {
       landing_page_slug,
       status,
       search,
       governorate: searchParams.get("gov") || undefined,
       created_from: dayStart(searchParams.get("from")),
       created_to: dayStart(searchParams.get("to"), true),
-      limit: intParam("limit"),
-      offset: intParam("offset"),
-    });
+    };
+    const limit = intParam("limit");
+    const offset = intParam("offset") || 0;
+    // `export=1` (CSV export): bigger pages, no product/landing-page relations in the payload.
+    const isExport = searchParams.get("export") === "1";
+
+    let orders: Order[];
+    let page: { total: number | null; total_capped: boolean; has_more: boolean; limit: number; offset: number } | null = null;
+    if (limit !== undefined) {
+      // Paginated (admin orders page): `limit` rows, whether a next page exists, and a capped total.
+      // `total=0` skips the COUNT (page flips reuse the total they already have).
+      const pageLimit = Math.min(Math.max(limit, 1), isExport ? MAX_EXPORT_PAGE : MAX_PAGE);
+      const res = await dbStore.getOrdersPage(filters, {
+        limit: pageLimit,
+        offset,
+        withTotal: searchParams.get("total") !== "0",
+        relations: !isExport,
+      });
+      orders = res.orders;
+      page = { total: res.total, total_capped: res.total_capped, has_more: res.has_more, limit: pageLimit, offset };
+    } else {
+      // No `limit`: the full list, as before (kept for compatibility; the admin UI no longer uses it).
+      orders = await dbStore.getOrders({ ...filters, offset: intParam("offset") });
+    }
 
     // Sync live orders from Safka Dropshipping platform only when sync is explicitly requested
-    if (syncSafka) {
+    if (syncSafka && offset === 0) {
       try {
         const safkaOrders = await SafkaClient.fetchSafkaMcpOrders(20);
         if (Array.isArray(safkaOrders) && safkaOrders.length > 0) {
           // Deletions are recorded durably in KV; load them so isOrderDeleted() sees other isolates' deletes.
           await dbStore.refreshDeletedOrderIds();
-          const existingSerials = new Set(
-            orders.map((o) => o.safqa_invoice_id || o.order_number)
-          );
+          // With pagination only one page is loaded, so "already stored" is asked of the store
+          // (indexed lookup on D1) instead of being derived from the listed orders.
+          const existingSerials: Set<string> = page
+            ? await dbStore.findKnownOrderTokens(
+                safkaOrders.map((s: any) => String(s?.serial_number || "")).filter(Boolean)
+              )
+            : new Set(orders.map((o) => o.safqa_invoice_id || o.order_number));
 
           for (const sOrd of safkaOrders) {
             if (!existingSerials.has(sOrd.serial_number) && !dbStore.isOrderDeleted(sOrd.serial_number)) {
@@ -385,7 +414,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, orders });
+    return NextResponse.json({ success: true, orders, ...(page || {}) }, { headers: { "Cache-Control": "no-store" } });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

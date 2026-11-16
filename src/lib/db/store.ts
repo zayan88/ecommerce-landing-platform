@@ -2,7 +2,10 @@ import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, LandingPa
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
 import { generateOrderId, generateOrderNumber, generateUniqueOrderNumber } from "@/lib/orders/guard";
-import { getOrdersRepo, ordersBackend, ordersKvMirrorEnabled } from "./orders-repo";
+import { getOrdersRepo, ordersBackend, ordersKvMirrorEnabled, type OrdersPulse } from "./orders-repo";
+
+/** Upper bound of the "total" shown by the orders pager (bounds the D1 rows read by the COUNT). */
+export const ORDERS_TOTAL_CAP = 5000;
 import {
   findOrderRecord,
   listDeletedOrderTokens,
@@ -1389,6 +1392,115 @@ export const dbStore = {
       results = results.slice(offset, offset + limit);
     }
     return results;
+  },
+
+  /**
+   * One page of orders plus what the pager needs. D1: `limit + 1` rows are read to know whether a next
+   * page exists, and the total is a COUNT capped at ORDERS_TOTAL_CAP (skipped for text search, which
+   * is a table scan, and when `withTotal` is false, e.g. page flips). KV: the list is built once in
+   * memory as before, so the total is free.
+   */
+  async getOrdersPage(
+    filters: {
+      landing_page_slug?: string;
+      product_id?: string;
+      status?: OrderStatus;
+      search?: string;
+      governorate?: string;
+      created_from?: number;
+      created_to?: number;
+    },
+    page: { limit: number; offset: number; withTotal?: boolean; relations?: boolean }
+  ): Promise<{ orders: Order[]; total: number | null; total_capped: boolean; has_more: boolean }> {
+    const limit = Math.min(Math.max(Math.floor(Number(page.limit) || 25), 1), 1000);
+    const offset = Math.max(Math.floor(Number(page.offset) || 0), 0);
+    if (ordersBackend() === "d1" && !getSupabaseAdmin()) {
+      const repo = getOrdersRepo();
+      const rows = await repo.listOrders({ ...filters, limit: limit + 1, offset });
+      const has_more = rows.length > limit;
+      const orders = has_more ? rows.slice(0, limit) : rows;
+      let total: number | null = null;
+      let total_capped = false;
+      if (!has_more) total = offset + orders.length; // last page: the total is known without counting
+      else if (page.withTotal !== false && !filters.search) {
+        const counted = await repo.countOrdersCapped(filters, ORDERS_TOTAL_CAP);
+        total = counted.count;
+        total_capped = counted.capped;
+      }
+      if (page.relations !== false) {
+        let products: Product[] = memoryProducts;
+        try {
+          products = await this.getProducts();
+        } catch (e) {
+          console.warn("[getOrdersPage] products lookup failed, using built-in catalog", e);
+        }
+        attachOrderRelations(orders, products);
+      }
+      return { orders, total, total_capped, has_more };
+    }
+    const all = await this.getOrders(filters);
+    const slice = all.slice(offset, offset + limit);
+    return {
+      orders:
+        page.relations === false
+          ? slice.map((o) => {
+              const { product, landing_page, ...rest } = o as Order & Record<string, any>;
+              return rest as Order;
+            })
+          : slice,
+      total: all.length,
+      total_capped: false,
+      has_more: offset + limit < all.length,
+    };
+  },
+
+  /**
+   * "Anything new?" for the admin orders page. D1: one bounded, index-only batch. KV: not supported on
+   * purpose (it would need a list operation per poll; the KV free plan allows 1,000 a day).
+   */
+  async getOrdersPulse(sinceMs?: number): Promise<({ supported: true } & OrdersPulse) | { supported: false }> {
+    if (ordersBackend() !== "d1" || getSupabaseAdmin()) return { supported: false };
+    return { supported: true, ...(await getOrdersRepo().pulse(sinceMs)) };
+  },
+
+  /** Which of these order numbers / Safka serials already exist (Safka sync de-duplication). */
+  async findKnownOrderTokens(tokens: string[]): Promise<Set<string>> {
+    if (ordersBackend() === "d1" && !getSupabaseAdmin()) return getOrdersRepo().findKnownTokens(tokens);
+    const wanted = new Set(tokens);
+    const known = new Set<string>();
+    for (const o of await this.getOrders()) {
+      if (wanted.has(o.order_number)) known.add(o.order_number);
+      if (o.safqa_invoice_id && wanted.has(o.safqa_invoice_id)) known.add(o.safqa_invoice_id);
+    }
+    return known;
+  },
+
+  /**
+   * Orders matching an identifier (id / order number / Safka serial) or an exact phone, newest first.
+   * D1: indexed lookups, a handful of rows read. KV: the full list is loaded, as before.
+   */
+  async findOrdersForLookup(lookup: { keys?: string[]; phone?: string | null }): Promise<Order[]> {
+    const keys = (lookup.keys || []).filter((k) => typeof k === "string" && k);
+    const phone = String(lookup.phone || "").replace(/\D/g, "").replace(/^(?:20|0020)/, "0");
+    if (keys.length === 0 && !phone) return [];
+    if (ordersBackend() === "d1" && !getSupabaseAdmin()) {
+      const intl = phone ? phone.replace(/^0/, "") : "";
+      return getOrdersRepo().findOrders({
+        // an order number may be stored in either case
+        keys: Array.from(new Set(keys.flatMap((k) => [k, k.toUpperCase(), k.toLowerCase()]))),
+        phones: phone ? [phone, `+20${intl}`, `20${intl}`, `0020${intl}`] : [],
+        limit: 50,
+      });
+    }
+    const upper = new Set(keys.map((k) => k.toUpperCase()));
+    const norm = (v: unknown) => String(v || "").replace(/\D/g, "").replace(/^(?:20|0020)/, "0");
+    return (await this.getOrders()).filter(
+      (o) =>
+        upper.has(String(o.id || "").toUpperCase()) ||
+        upper.has(String(o.order_number || "").toUpperCase()) ||
+        (!!o.safqa_invoice_id && upper.has(String(o.safqa_invoice_id).toUpperCase())) ||
+        (!!phone && norm(o.customer_phone) === phone)
+    );
   },
 
   async updateOrder(id: string, updates: Partial<Order>): Promise<Order | null> {

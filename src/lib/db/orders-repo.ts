@@ -208,12 +208,37 @@ export interface DeleteTarget {
   tokens?: string[];
 }
 
+export interface OrdersPulse {
+  /** Newest order, or null when the store has none. */
+  latest_created_at: string | null;
+  latest_created_ms: number;
+  /** Orders created after `sinceMs` (0 when no `sinceMs` was given). Capped at PULSE_NEW_CAP. */
+  new_count: number;
+  /** Pending orders, capped at PULSE_PENDING_CAP (then `pending_capped` is true). */
+  pending_count: number;
+  pending_capped: boolean;
+  /** Total orders, only on the first call (no `sinceMs`); capped at PULSE_TOTAL_CAP. */
+  count: number | null;
+  count_capped: boolean;
+}
+export const PULSE_NEW_CAP = 500;
+export const PULSE_PENDING_CAP = 200;
+export const PULSE_TOTAL_CAP = 10000;
+
 export interface OrdersRepo {
   insertOrder(order: Order): Promise<boolean>;
   insertOrderWithUniqueNumber(order: Order, nextNumber: () => string, maxAttempts?: number): Promise<Order | null>;
   getOrder(idOrNumber: string): Promise<Order | null>;
   listOrders(filter?: OrderListFilter): Promise<Order[]>;
   countOrders(filter?: OrderListFilter): Promise<number>;
+  /** COUNT that stops scanning after `cap` matches (bounds the D1 rows read). */
+  countOrdersCapped(filter: OrderListFilter | undefined, cap: number): Promise<{ count: number; capped: boolean }>;
+  /** Cheap "anything new?" check for the admin orders page: one batch, index-only, bounded rows read. */
+  pulse(sinceMs?: number): Promise<OrdersPulse>;
+  /** Which of these identifiers (order number / Safka serial) already belong to a stored order. Indexed. */
+  findKnownTokens(tokens: string[]): Promise<Set<string>>;
+  /** Targeted lookup by id / order number / Safka serial / exact phone (newest first, at most `limit`). Indexed. */
+  findOrders(lookup: { keys?: string[]; phones?: string[]; limit?: number }): Promise<Order[]>;
   updateOrder(idOrNumber: string, patch: Partial<Order>, source?: string): Promise<Order | null>;
   getStatusHistory(orderId: string): Promise<{ from_status: string | null; to_status: string; source: string; changed_at: string }[]>;
   deleteOrders(targets: DeleteTarget[]): Promise<{ deleted: number; tokens: string[] }>;
@@ -331,6 +356,90 @@ export function createD1OrdersRepo(db: SqlClient, store: string = "default"): Or
       const where = buildWhere(store, filter);
       const res = await db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM orders WHERE ${where.sql}`, where.params);
       return Number(res.rows[0]?.n) || 0;
+    },
+
+    async countOrdersCapped(filter = {}, cap) {
+      const where = buildWhere(store, filter);
+      const max = Math.min(Math.max(toInt(cap, 1000), 1), 100000);
+      const res = await db.query<{ n: number }>(
+        `SELECT COUNT(*) AS n FROM (SELECT 1 FROM orders WHERE ${where.sql} LIMIT ?)`,
+        [...where.params, max + 1]
+      );
+      const n = Number(res.rows[0]?.n) || 0;
+      return { count: Math.min(n, max), capped: n > max };
+    },
+
+    async pulse(sinceMs) {
+      const hasSince = Number.isFinite(sinceMs) && (sinceMs as number) > 0;
+      const statements: SqlStatement[] = [
+        // newest order: one row through orders_created_idx
+        { sql: "SELECT created_at, created_ms FROM orders WHERE store_id = ? ORDER BY created_ms DESC LIMIT 1", params: [store] },
+        // pending backlog: orders_status_idx, at most PULSE_PENDING_CAP + 1 index rows
+        {
+          sql: "SELECT COUNT(*) AS n FROM (SELECT 1 FROM orders WHERE store_id = ? AND status = 'pending' LIMIT ?)",
+          params: [store, PULSE_PENDING_CAP + 1],
+        },
+        hasSince
+          ? {
+              // only the orders that arrived since the last pulse: index range on created_ms
+              sql: "SELECT COUNT(*) AS n FROM (SELECT 1 FROM orders WHERE store_id = ? AND created_ms > ? LIMIT ?)",
+              params: [store, Math.floor(sinceMs as number), PULSE_NEW_CAP],
+            }
+          : {
+              sql: "SELECT COUNT(*) AS n FROM (SELECT 1 FROM orders WHERE store_id = ? LIMIT ?)",
+              params: [store, PULSE_TOTAL_CAP + 1],
+            },
+      ];
+      const res = await db.batch(statements);
+      const latest = res[0].rows[0];
+      const pending = Number(res[1].rows[0]?.n) || 0;
+      const third = Number(res[2].rows[0]?.n) || 0;
+      return {
+        latest_created_at: latest ? String(latest.created_at) : null,
+        latest_created_ms: latest ? Number(latest.created_ms) || 0 : 0,
+        new_count: hasSince ? third : 0,
+        pending_count: Math.min(pending, PULSE_PENDING_CAP),
+        pending_capped: pending > PULSE_PENDING_CAP,
+        count: hasSince ? null : Math.min(third, PULSE_TOTAL_CAP),
+        count_capped: !hasSince && third > PULSE_TOTAL_CAP,
+      };
+    },
+
+    async findKnownTokens(tokens) {
+      const list = cleanTokens(tokens).slice(0, 40);
+      if (list.length === 0) return new Set();
+      const marks = list.map(() => "?").join(", ");
+      // Two index lookups (orders_number_uq, orders_safqa_idx); UNION ALL keeps each branch on its own index.
+      const res = await db.query<{ t: string }>(
+        `SELECT order_number AS t FROM orders WHERE store_id = ? AND order_number IN (${marks}) ` +
+          `UNION ALL SELECT safqa_invoice_id AS t FROM orders WHERE store_id = ? AND safqa_invoice_id IN (${marks})`,
+        [store, ...list, store, ...list]
+      );
+      return new Set(res.rows.map((r) => String(r.t)));
+    },
+
+    async findOrders(lookup) {
+      const keys = cleanTokens(lookup.keys || []).slice(0, 10);
+      const phones = cleanTokens(lookup.phones || []).slice(0, 10);
+      const limit = Math.min(Math.max(toInt(lookup.limit, 5), 1), 50);
+      const branches: string[] = [];
+      const params: SqlParam[] = [];
+      const add = (column: "id" | "order_number" | "safqa_invoice_id" | "customer_phone", values: string[]) => {
+        if (values.length === 0) return;
+        branches.push(`SELECT * FROM orders WHERE store_id = ? AND ${column} IN (${values.map(() => "?").join(", ")})`);
+        params.push(store, ...values);
+      };
+      add("id", keys);
+      add("order_number", keys);
+      add("safqa_invoice_id", keys);
+      add("customer_phone", phones);
+      if (branches.length === 0) return [];
+      // UNION (not ALL) removes an order matched by more than one branch.
+      const res = await db.query(
+        `SELECT * FROM (${branches.join(" UNION ")}) ORDER BY created_ms DESC, id DESC LIMIT ?`,
+        [...params, limit]
+      );
+      return res.rows.map(rowToOrder);
     },
 
     async updateOrder(idOrNumber, patch, source = "admin") {
