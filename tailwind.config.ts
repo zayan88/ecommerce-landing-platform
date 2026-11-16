@@ -33,8 +33,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-cairo)", "Cairo", "Tajawal", "sans-serif"],
-        heading: ["var(--font-tajawal)", "Tajawal", "Cairo", "sans-serif"],
+        sans: ['"Cairo Variable"', "Cairo", "Tajawal", "sans-serif"],
+        heading: ["Tajawal", '"Cairo Variable"', "Cairo", "sans-serif"],
       },
       keyframes: {
         pulseGlow: {

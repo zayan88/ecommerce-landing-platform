@@ -3,27 +3,20 @@ import { getSiteUrl } from "@/lib/seo";
 import { getBrand } from "@/lib/brand";
 import { PALETTES, cssVarsFor } from "@/lib/palettes";
 import { BrandProvider } from "@/components/brand/BrandProvider";
-import { Cairo, Tajawal } from "next/font/google";
 import { Suspense } from "react";
+// Fonts are bundled from npm packages (no download from Google at build or run time):
+// a build can no longer fail because fonts.googleapis.com was unreachable.
+import "@fontsource-variable/cairo/index.css";
+import "@fontsource/tajawal/400.css";
+import "@fontsource/tajawal/500.css";
+import "@fontsource/tajawal/700.css";
+import "@fontsource/tajawal/800.css";
+import "@fontsource/tajawal/900.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { VisitorTracker } from "@/components/tracking/VisitorTracker";
 
 export const runtime = "edge";
-
-// Self-hosted at build time (no render-blocking request to fonts.googleapis.com)
-const cairo = Cairo({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "600", "700", "800", "900"],
-  display: "swap",
-  variable: "--font-cairo",
-});
-const tajawal = Tajawal({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "700", "800", "900"],
-  display: "swap",
-  variable: "--font-tajawal",
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrand();
@@ -56,7 +49,7 @@ export default async function RootLayout({
   const themeVars = { ...cssVarsFor("primary", brand.primary), ...cssVarsFor("accent", brand.accent) } as React.CSSProperties;
 
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${tajawal.variable}`} style={themeVars}>
+    <html lang="ar" dir="rtl" style={themeVars}>
       <body className="antialiased bg-slate-50 text-gray-900 font-sans">
         <BrandProvider brand={brand}>
           <Suspense fallback={null}>
