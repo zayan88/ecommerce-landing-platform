@@ -102,14 +102,17 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     (descriptionLines[0]
       ? `💡 ${descriptionLines[0]}`
       : "💡 احصل على أفضل تجربة مع المنتج الأصلي المعتمد وبأعلى معايير الجودة.");
-  const heroBadge = c?.hero_badge || "4.9 / 5.0 (أكثر من 350 تقييم إيجابي)";
+  // No invented rating: the badge only shows when the merchant wrote one.
+  const heroBadge = c?.hero_badge || "";
   const heroImageSrc = c?.hero_image || images[activeImageIndex] || images[0];
 
+  // The first description line is already used as the subtitle: do not repeat it in the bullet list.
+  const bulletLines = descriptionLines.slice(!c?.hero_subheadline && descriptionLines[0] ? 1 : 0);
   const features =
     c?.hero_bullets && c.hero_bullets.length > 0
       ? c.hero_bullets
-      : descriptionLines.length > 0
-      ? descriptionLines
+      : bulletLines.length > 0
+      ? bulletLines
       : [
           "خامات أصلية عالية الجودة تضمن المتانة والتحمل طويل الأمد.",
           "تصميم عملي وعصري يلبي احتياجات الاستخدام اليومي بكل سهولة.",
@@ -140,13 +143,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {/* Gallery Column */}
         <div className="space-y-3">
-          <div className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
+          <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-50">
             <Image
               src={heroImageSrc}
               alt={heroTitle}
               fill
               priority
-              className="object-contain p-2"
+              className="object-contain p-1"
             />
             <EImage field="hero_image" value={heroImageSrc} />
           </div>
@@ -159,7 +162,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
                   type="button"
                   onClick={() => setActiveImageIndex(idx)}
                   className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer bg-slate-50 ${
-                    activeImageIndex === idx ? "border-indigo-600 ring-2 ring-indigo-600/20" : "border-slate-200 hover:border-slate-300"
+                    activeImageIndex === idx ? "border-orange-500 ring-2 ring-orange-500/25" : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
                   <Image src={img} alt={`صورة ${idx + 1}`} fill className="object-cover" />
@@ -175,7 +178,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               <span className="font-bold text-[11px] text-slate-700 block">معاينة قبل الدفع</span>
             </div>
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
-              <Truck className="w-4 h-4 text-indigo-600 mx-auto mb-0.5" />
+              <Truck className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
               <span className="font-bold text-[11px] text-slate-700 block">شحن مجاني 100%</span>
             </div>
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
@@ -188,12 +191,14 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         {/* Info & Core Specs */}
         <div className="space-y-4 text-right">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-              <Star className="w-3.5 h-3.5 fill-amber-500" />
-              <EText field="hero_badge" as="span" className="text-slate-800" value={heroBadge} />
-            </div>
+            {(heroBadge || editMode) && (
+              <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                <Star className="w-3.5 h-3.5 fill-amber-500" />
+                <EText field="hero_badge" as="span" className="text-slate-800" value={heroBadge || "اضغط لإضافة شارة (اختياري)"} />
+              </div>
+            )}
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-              ✓ متوفر في المخزن (شحن فوري)
+              ✓ متوفر الآن
             </span>
           </div>
 
@@ -207,7 +212,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             <EText
               field="hero_subheadline"
               as="p"
-              className="text-xs sm:text-sm text-indigo-950 font-semibold mt-1.5 leading-relaxed bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-100"
+              className="text-xs sm:text-sm text-slate-900 font-semibold mt-1.5 leading-relaxed bg-slate-50/70 p-2.5 rounded-xl border border-slate-200"
               value={heroSubtitle}
             />
           </div>
@@ -235,13 +240,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           </div>
 
           {/* Price Display */}
-          <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-2xl p-4 flex items-center justify-between">
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
             <div>
-              <span className="text-xs text-indigo-950 block font-medium">السعر في العرض الحالي:</span>
+              <span className="text-xs text-slate-900 block font-medium">السعر في العرض الحالي:</span>
               <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-2xl sm:text-3xl font-black text-indigo-900 font-mono">{selectedOffer.price} ج.م</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-950 font-mono">{Number(selectedOffer.price).toLocaleString("en-US")} ج.م</span>
                 {selectedOffer.original_price && (
-                  <span className="text-sm text-slate-400 line-through font-mono">{selectedOffer.original_price} ج.م</span>
+                  <span className="text-sm text-slate-400 line-through font-mono">{Number(selectedOffer.original_price).toLocaleString("en-US")} ج.م</span>
                 )}
               </div>
             </div>
@@ -249,7 +254,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               <span className="inline-block text-xs font-bold text-emerald-800 bg-emerald-100/90 px-3 py-1 rounded-full border border-emerald-300">
                 🚚 شحن مجاني
               </span>
-              <span className="block text-[11px] text-indigo-800 mt-1 font-semibold">الدفع عند الاستلام</span>
+              <span className="block text-[11px] text-emerald-800 mt-1 font-semibold">الدفع عند الاستلام</span>
             </div>
           </div>
 
@@ -257,7 +262,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           <button
             type="button"
             onClick={scrollToCheckout}
-            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-base sm:text-lg shadow-lg shadow-emerald-600/25 active:scale-98 transition cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-4 px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base sm:text-lg shadow-lg shadow-orange-500/25 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2"
           >
             <span>اطلب الآن - الدفع بعد الفحص والمعاينة</span>
             <ArrowDown className="w-5 h-5 animate-bounce" />
@@ -292,7 +297,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           <EText
             field="comparison_badge"
             as="span"
-            className="text-xs font-bold text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200"
+            className="text-xs font-bold text-emerald-800 bg-slate-50 px-3 py-1 rounded-full border border-slate-200"
             value={c?.comparison_badge || "ليه ده أفضل اختيار؟"}
           />
           <EText
@@ -364,7 +369,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     return (
       <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-right">
         <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
-          <Package className="w-5 h-5 text-indigo-700" />
+          <Package className="w-5 h-5 text-emerald-700" />
           <EText field="box_title" as="span" value={boxTitle} />
         </div>
 
@@ -388,7 +393,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             <ul className="text-xs sm:text-sm text-slate-700 space-y-2.5 pr-1">
               {boxItems.map((item, idx) => (
                 <li key={idx} className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
                   <EText field={`box_items.${idx}`} base={boxItems} as="span" className="text-slate-800 leading-relaxed" value={item} />
                 </li>
               ))}
@@ -415,7 +420,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         <div className="space-y-2 text-xs sm:text-sm text-slate-700 pr-1">
           {steps.map((step, i) => (
             <div key={i} className="flex items-start gap-2.5">
-              <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+              <span className="w-5 h-5 rounded-full bg-slate-200 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
               <EText field={`how_to_use_steps.${i}.desc`} base={steps} as="span" value={step.desc} />
             </div>
           ))}
@@ -443,7 +448,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 text-right">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-black text-slate-900 font-heading flex items-center gap-2">
-            <ThumbsUp className="w-4 h-4 text-indigo-600" />
+            <ThumbsUp className="w-4 h-4 text-emerald-600" />
             <EText field="reviews_title" as="span" value={c?.reviews_title || "تجارب حقيقية لعملائنا في مصر:"} />
           </h3>
           <div className="flex text-amber-400">
@@ -538,7 +543,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   return (
     <main style={pageTheme} className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir="rtl">
       {/* 1. Announcement Bar */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-indigo-500/20">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-slate-500/20">
         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
         <EText field="announcement_bar" as="span" value={announcementText} />
       </div>
