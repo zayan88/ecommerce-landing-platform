@@ -26,6 +26,10 @@ ORDERS_BACKEND = "d1"
 CATALOG_BACKEND = "d1"
 BRAND_NAME = "RexRack"
 DEMO_MODE = "1"
+# Domain tab (admin > Settings > Domain): needs the secret CF_PAGES_API_TOKEN (a SCOPED token, Pages Write only)
+# plus these two non-secret values. Without the token the tab shows "not enabled".
+CF_ACCOUNT_ID = "29840259dea50eb6e54fc804e1d3f11b"
+CF_PAGES_PROJECT = "ecommerce-landing-platform"
 
 # ── Preview deployments (every non-main branch) ─────────────────────────────
 # ISOLATED from the live store: its own empty KV namespace (store-preview), so testing a branch can never
