@@ -233,6 +233,8 @@ export interface OrdersRepo {
   countOrders(filter?: OrderListFilter): Promise<number>;
   /** COUNT that stops scanning after `cap` matches (bounds the D1 rows read). */
   countOrdersCapped(filter: OrderListFilter | undefined, cap: number): Promise<{ count: number; capped: boolean }>;
+  /** Orders per status for the admin status tabs (the `status` filter itself is ignored). One GROUP BY. */
+  statusCounts(filter?: OrderListFilter): Promise<Record<string, number>>;
   /** Cheap "anything new?" check for the admin orders page: one batch, index-only, bounded rows read. */
   pulse(sinceMs?: number): Promise<OrdersPulse>;
   /** Which of these identifiers (order number / Safka serial) already belong to a stored order. Indexed. */
@@ -367,6 +369,17 @@ export function createD1OrdersRepo(db: SqlClient, store: string = "default"): Or
       );
       const n = Number(res.rows[0]?.n) || 0;
       return { count: Math.min(n, max), capped: n > max };
+    },
+
+    async statusCounts(filter = {}) {
+      const where = buildWhere(store, { ...filter, status: undefined });
+      const res = await db.query<{ status: string; n: number }>(
+        `SELECT status, COUNT(*) AS n FROM orders WHERE ${where.sql} GROUP BY status`,
+        where.params
+      );
+      const out: Record<string, number> = {};
+      for (const r of res.rows) out[String(r.status)] = Number(r.n) || 0;
+      return out;
     },
 
     async pulse(sinceMs) {

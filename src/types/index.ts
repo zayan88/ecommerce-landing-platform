@@ -47,7 +47,7 @@ export interface LandingPageSectionConfig {
 
 export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
   { id: "hero", name_ar: "المعرض الرئيسي والسعر وباقات العروض والزر السريع", enabled: true },
-  { id: "social_proof", name_ar: "شريط الثقة والتقييم وتغطية الشحن", enabled: true },
+  { id: "social_proof", name_ar: "شريط الثقة والتقييم وتغطية الشحن", enabled: false },
   { id: "comparison", name_ar: "المقارنة البصرية (القديم vs الجديد)", enabled: true },
   { id: "box_contents", name_ar: "محتويات العلبة الأصلية", enabled: true },
   { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: true },
@@ -92,6 +92,15 @@ export function mergeSections(
 export interface LandingPageContentConfig {
   // 1. Hero & Header
   announcement_bar?: string;
+  /** Optional page extras the merchant can switch off (shown by default so existing pages do not change). */
+  hide_announcement?: boolean;
+  hide_hero_trust?: boolean;
+  hide_checkout_trust?: boolean;
+  /** One flat price instead of the 1/2/3-piece offer tiers. */
+  hide_offers?: boolean;
+  /** Mobile sticky buy bar off, and a custom text for the order button. */
+  hide_sticky_bar?: boolean;
+  cta_text?: string;
   hero_headline?: string;
   hero_subheadline?: string;
   hero_badge?: string;

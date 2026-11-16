@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Order, OrderStatus, Product } from "@/types";
 import { EditOrderModal } from "./EditOrderModal";
 import { toCsv, downloadCsv } from "@/lib/csv";
+import { SAFKA_ENABLED } from "@/lib/features";
 import { EGYPTIAN_GOVERNORATES } from "@/lib/constants/governorates";
 import {
   EXPORT_MAX_ROWS,
@@ -68,6 +69,9 @@ export default function AdminOrdersPage() {
   const [hasMore, setHasMore] = useState(false);
   const [pendingCount, setPendingCount] = useState<{ n: number; capped: boolean } | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number> | null>(null);
+  const [bulkStatusBusy, setBulkStatusBusy] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const requestSeq = useRef(0);
   const totalRef = useRef<number | null>(null);
 
@@ -154,6 +158,7 @@ export default function AdminOrdersPage() {
           setTotal(null);
           setTotalCapped(false);
         }
+        if (json.status_counts && typeof json.status_counts === "object") setStatusCounts(json.status_counts);
         setHasMore(Boolean(json.has_more));
         setOrders(json.orders);
       }
@@ -359,6 +364,29 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleBulkStatus = async (status: OrderStatus) => {
+    if (selectedOrderIds.length === 0) return;
+    if (!confirm("تغيير حالة (" + selectedOrderIds.length + ") طلب إلى «" + STATUS_AR[status] + "»؟")) return;
+    setBulkStatusBusy(true);
+    let ok = 0;
+    try {
+      for (const id of selectedOrderIds) {
+        const res = await fetch("/api/orders?id=" + encodeURIComponent(id), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        });
+        const j = await res.json().catch(() => null);
+        if (j?.success) ok++;
+      }
+    } finally {
+      setBulkStatusBusy(false);
+    }
+    setSelectedOrderIds([]);
+    fetchOrders({ withTotal: true });
+    flash("✓ تم تحديث حالة " + ok + " طلب");
+  };
+
   const handleBulkDelete = async () => {
     if (selectedOrderIds.length === 0) return;
     if (
@@ -493,217 +521,279 @@ export default function AdminOrdersPage() {
     }
   };
 
-  return (
-    <div className="space-y-6 text-right font-sans" dir="rtl">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-950 font-heading">
-            إدارة طلبات المبيعات
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            سجل موحد لجميع الطلبات الواردة من كافة صفحات الهبوط مع إمكانية مسح وحذف أي طلب ومزامنة صفقة
-          </p>
-        </div>
+  const TABS: { id: string; label: string }[] = [
+    { id: "all", label: "الكل" },
+    { id: "pending", label: "قيد المراجعة" },
+    { id: "confirmed", label: "مؤكد" },
+    { id: "shipped", label: "تم الشحن" },
+    { id: "delivered", label: "تم التوصيل" },
+    { id: "cancelled", label: "ملغي" },
+  ];
+  const tabCount = (id: string): number | null => {
+    if (!statusCounts) return null;
+    if (id === "all") return Object.values(statusCounts).reduce((x, y) => x + y, 0);
+    return statusCounts[id] ?? 0;
+  };
+  const activeFilters = [govFilter, dateFrom, dateTo].filter(Boolean).length;
+  const btnGhost =
+    "h-10 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-50";
 
-        <div className="flex items-center gap-2">
-          {/* Sound Alert Toggle Button */}
+  return (
+    <div className="space-y-5 text-right font-sans" dir="rtl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-black text-gray-950 font-heading">الطلبات</h1>
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
               setSoundEnabled(!soundEnabled);
               if (!soundEnabled) playChaChing();
             }}
-            title={soundEnabled ? "كتم صوت إشعارات البيع" : "تشغيل صوت إشعارات البيع (Cha-Ching)"}
-            className={`py-2 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer border ${
-              soundEnabled
-                ? "bg-amber-500/10 border-amber-500/30 text-amber-600 hover:bg-amber-500/20"
-                : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200"
-            }`}
+            title={soundEnabled ? "كتم صوت إشعار الطلبات" : "تشغيل صوت إشعار الطلبات"}
+            className={btnGhost}
           >
-            {soundEnabled ? (
-              <>
-                <Volume2 className="w-3.5 h-3.5 text-amber-500" />
-                <span>صوت البيع (Cha-Ching) 💰</span>
-              </>
-            ) : (
-              <>
-                <VolumeX className="w-3.5 h-3.5 text-gray-400" />
-                <span>الصوت مكتوم</span>
-              </>
-            )}
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-500" /> : <VolumeX className="w-4 h-4 text-gray-400" />}
+            <span>{soundEnabled ? "الصوت شغال" : "الصوت مكتوم"}</span>
           </button>
-
-          <button
-            onClick={() => {
-              setPage(0);
-              setSelectedOrderIds([]);
-              fetchOrders({ page: 0, sync: true, withTotal: true });
-            }}
-            disabled={syncingSafka}
-            className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncingSafka ? "animate-spin" : ""}`} />
-            <span>مزامنة مباشرة مع صفقة (Safka Sync)</span>
+          {SAFKA_ENABLED && (
+            <button
+              onClick={() => {
+                setPage(0);
+                setSelectedOrderIds([]);
+                fetchOrders({ page: 0, sync: true, withTotal: true });
+              }}
+              disabled={syncingSafka}
+              className={btnGhost}
+            >
+              <RefreshCw className={`w-4 h-4 ${syncingSafka ? "animate-spin" : ""}`} />
+              <span>مزامنة صفقة</span>
+            </button>
+          )}
+          <button onClick={exportOrdersCsv} disabled={exporting} className={btnGhost} title="تصدير الطلبات المحددة أو كل نتائج الفلتر">
+            <Download className="w-4 h-4" />
+            <span>{exporting ? "جاري التصدير..." : "تصدير"}</span>
           </button>
-
-          <button
-            onClick={exportOrdersCsv}
-            disabled={exporting}
-            title="تصدير كل طلبات الفلتر الحالي (أو الطلبات المحددة) إلى ملف Excel"
-            className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>{exporting ? "جاري التصدير..." : "تصدير Excel"}</span>
-          </button>
-
-          <button
-            onClick={() => fetchOrders({ withTotal: true })}
-            className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading && !syncingSafka ? "animate-spin" : ""}`} />
+          <button onClick={() => fetchOrders({ withTotal: true })} className={btnGhost}>
+            <RefreshCw className={`w-4 h-4 ${loading && !syncingSafka ? "animate-spin" : ""}`} />
             <span>تحديث</span>
           </button>
         </div>
       </div>
 
-      {/* Action Notification Alert */}
       {actionMessage && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm transition-all">
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{actionMessage}</span>
         </div>
       )}
 
-      {/* Bulk Delete Floating/Top Bar */}
-      {selectedOrderIds.length > 0 && (
-        <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-bold text-red-950">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
-            <span>تم تحديد ({selectedOrderIds.length}) طلبات</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleBulkDelete}
-              disabled={isDeleting}
-              className="py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>{isDeleting ? "جاري المسح..." : `مسح (${selectedOrderIds.length}) طلبات نهائياً`}</span>
-            </button>
-            <button
-              onClick={() => setSelectedOrderIds([])}
-              className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 transition cursor-pointer"
-            >
-              إلغاء التحديد
-            </button>
-          </div>
+      {/* Tabs + search + filters in one card */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm">
+        <div className="flex items-center gap-1 overflow-x-auto px-2 border-b border-gray-100" role="tablist" aria-label="حالة الطلب">
+          {TABS.map((tab) => {
+            const n = tabCount(tab.id);
+            const active = statusFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setStatusFilter(tab.id)}
+                className={`relative whitespace-nowrap px-3.5 py-3.5 text-sm font-bold cursor-pointer transition ${
+                  active ? "text-slate-950" : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  {tab.label}
+                  {n !== null && (
+                    <span
+                      className={`min-w-[22px] h-[22px] px-1.5 rounded-full text-[11px] font-black inline-flex items-center justify-center ${
+                        active ? "bg-slate-900 text-white" : tab.id === "pending" && n > 0 ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {n.toLocaleString("en-US")}
+                    </span>
+                  )}
+                </span>
+                {active && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-slate-900" />}
+              </button>
+            );
+          })}
         </div>
-      )}
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <form onSubmit={handleSearchSubmit} className="relative w-full md:w-96">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="بحث بالاسم، الهاتف، رقم الطلب، أو المحافظة..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-          />
-          <button type="submit" className="absolute left-3 top-3 text-gray-400 hover:text-gray-600">
-            <Search className="w-4 h-4" />
-          </button>
-        </form>
-
-        {/* Status Filters */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 text-xs font-bold">
-          {[
-            { id: "all", label: "الكل" },
-            { id: "pending", label: "قيد المراجعة" },
-            { id: "confirmed", label: "مؤكد" },
-            { id: "shipped", label: "تم الشحن" },
-            { id: "delivered", label: "تم التوصيل" },
-            { id: "cancelled", label: "ملغي" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setStatusFilter(tab.id)}
-              className={`py-2 px-3 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                statusFilter === tab.id
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {tab.label}
+        <div className="p-3 sm:p-4 flex flex-col sm:flex-row gap-2.5">
+          <form onSubmit={handleSearchSubmit} className="relative flex-1">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ابحث بالاسم أو الموبايل أو رقم الطلب..."
+              className="w-full h-11 pr-4 pl-10 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+            />
+            <button type="submit" aria-label="بحث" className="absolute left-3 top-3 text-gray-400 hover:text-gray-600 cursor-pointer">
+              <Search className="w-4 h-4" />
             </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex flex-wrap items-end gap-3 text-xs font-bold text-gray-600">
-        <label className="flex flex-col gap-1 w-full sm:w-auto">
-          <span>المحافظة</span>
-          <select
-            value={govFilter}
-            onChange={(e) => setGovFilter(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            <option value="">كل المحافظات</option>
-            {EGYPTIAN_GOVERNORATES.map((g) => (
-              <option key={g.nameAr} value={g.nameAr}>
-                {g.nameAr}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 flex-1 min-w-[9rem] sm:flex-none">
-          <span>من تاريخ</span>
-          <input
-            type="date"
-            value={dateFrom}
-            max={dateTo || undefined}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-gray-200 text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500"
-          />
-        </label>
-        <label className="flex flex-col gap-1 flex-1 min-w-[9rem] sm:flex-none">
-          <span>إلى تاريخ</span>
-          <input
-            type="date"
-            value={dateTo}
-            min={dateFrom || undefined}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-gray-200 text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500"
-          />
-        </label>
-        {(govFilter || dateFrom || dateTo) && (
+          </form>
           <button
             type="button"
-            onClick={() => {
-              setGovFilter("");
-              setDateFrom("");
-              setDateTo("");
-            }}
-            className="h-11 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition cursor-pointer"
+            onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
+            className="h-11 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-sm font-bold text-gray-700 flex items-center justify-center gap-2 cursor-pointer"
           >
-            مسح الفلاتر
+            <Filter className="w-4 h-4" />
+            <span>فلاتر</span>
+            {activeFilters > 0 && (
+              <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-black inline-flex items-center justify-center">{activeFilters}</span>
+            )}
           </button>
+        </div>
+
+        {(showFilters || activeFilters > 0) && (
+          <div className="px-3 sm:px-4 pb-4 flex flex-wrap items-end gap-3 text-xs font-bold text-gray-600">
+            <label className="flex flex-col gap-1 w-full sm:w-auto">
+              <span>المحافظة</span>
+              <select
+                value={govFilter}
+                onChange={(e) => setGovFilter(e.target.value)}
+                className="h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="">كل المحافظات</option>
+                {EGYPTIAN_GOVERNORATES.map((g) => (
+                  <option key={g.nameAr} value={g.nameAr}>{g.nameAr}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 flex-1 min-w-[9rem] sm:flex-none">
+              <span>من تاريخ</span>
+              <input type="date" value={dateFrom} max={dateTo || undefined} onChange={(e) => setDateFrom(e.target.value)} className="h-11 px-3 rounded-xl border border-gray-200 text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500" />
+            </label>
+            <label className="flex flex-col gap-1 flex-1 min-w-[9rem] sm:flex-none">
+              <span>إلى تاريخ</span>
+              <input type="date" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} className="h-11 px-3 rounded-xl border border-gray-200 text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500" />
+            </label>
+            {activeFilters > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setGovFilter("");
+                  setDateFrom("");
+                  setDateTo("");
+                }}
+                className="h-11 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition cursor-pointer"
+              >
+                مسح الفلاتر
+              </button>
+            )}
+          </div>
         )}
-        {pendingCount && pendingCount.n > 0 && (
-          <span className="h-11 inline-flex items-center gap-1.5 px-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 sm:mr-auto">
-            <Clock className="w-3.5 h-3.5" />
-            <span>
-              قيد المراجعة: {pendingCount.n.toLocaleString("en-US")}
-              {pendingCount.capped ? "+" : ""}
-            </span>
-          </span>
+
+        {/* Bulk actions bar */}
+        {selectedOrderIds.length > 0 && (
+          <div className="mx-3 sm:mx-4 mb-4 p-3 rounded-xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span className="text-xs font-bold">تم تحديد {selectedOrderIds.length} طلب</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                aria-label="تغيير حالة المحدد"
+                disabled={bulkStatusBusy}
+                value=""
+                onChange={(e) => e.target.value && handleBulkStatus(e.target.value as OrderStatus)}
+                className="h-10 px-2 rounded-lg bg-white/10 border border-white/20 text-xs font-bold text-white outline-none cursor-pointer"
+              >
+                <option value="" className="text-gray-900">{bulkStatusBusy ? "جاري التحديث..." : "تغيير الحالة إلى..."}</option>
+                <option value="confirmed" className="text-gray-900">مؤكد</option>
+                <option value="shipped" className="text-gray-900">تم الشحن</option>
+                <option value="delivered" className="text-gray-900">تم التوصيل</option>
+                <option value="cancelled" className="text-gray-900">ملغي</option>
+                <option value="pending" className="text-gray-900">قيد المراجعة</option>
+              </select>
+              <button onClick={exportOrdersCsv} className="h-10 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                <Download className="w-4 h-4" /> تصدير المحدد
+              </button>
+              <button onClick={handleBulkDelete} disabled={isDeleting} className="h-10 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                <Trash2 className="w-4 h-4" /> {isDeleting ? "جاري المسح..." : "حذف"}
+              </button>
+              <button onClick={() => setSelectedOrderIds([])} className="h-10 px-3 rounded-lg hover:bg-white/10 text-xs font-bold cursor-pointer">إلغاء التحديد</button>
+            </div>
+          </div>
         )}
       </div>
 
       {/* Orders Table */}
       <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile: one card per order */}
+        <div className="md:hidden divide-y divide-gray-100">
+          {loading && orders.length === 0 ? (
+            <div className="py-10 text-center text-gray-400 text-sm">جاري تحميل الطلبات...</div>
+          ) : orders.length === 0 ? (
+            <div className="py-10 text-center text-gray-400 text-sm">لا توجد طلبات تطابق هذا البحث</div>
+          ) : (
+            orders.map((ord) => {
+              const isChecked = selectedOrderIds.includes(ord.id);
+              return (
+                <div key={ord.id} className={`p-4 space-y-3 ${isChecked ? "bg-slate-50" : ""}`}>
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      aria-label="تحديد الطلب"
+                      checked={isChecked}
+                      onChange={() => toggleSelectOrder(ord.id)}
+                      className="w-5 h-5 mt-1 rounded border-gray-300 cursor-pointer"
+                    />
+                    <button type="button" onClick={() => setSelectedOrder(ord)} className="flex-1 min-w-0 text-right cursor-pointer">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-black text-gray-950 truncate">{ord.customer_name}</span>
+                        <span className="font-black text-gray-950 whitespace-nowrap">{ord.final_amount} ج.م</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 mt-1 text-xs text-gray-500">
+                        <span dir="ltr" className="font-mono">{ord.customer_phone}</span>
+                        <span>{ord.governorate}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 mt-1.5 text-[11px] text-gray-400">
+                        <span className="font-mono truncate">{ord.order_number}</span>
+                        <span>{new Date(ord.created_at).toLocaleDateString("ar-EG")} · {ord.quantity} قطع</span>
+                      </div>
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    {getStatusBadge(ord.status)}
+                    <div className="flex items-center gap-1.5">
+                      <a
+                        href={`tel:${ord.customer_phone}`}
+                        aria-label="اتصال"
+                        className="h-10 w-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center"
+                      >
+                        <Phone className="w-4 h-4" />
+                      </a>
+                      <a
+                        href={`https://wa.me/2${ord.customer_phone.replace(/^0/, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="واتساب"
+                        className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                      <select
+                        aria-label="تغيير الحالة"
+                        value={ord.status}
+                        onChange={(e) => handleUpdateStatus(ord.id, e.target.value as OrderStatus)}
+                        className="h-10 text-xs font-bold rounded-xl border border-gray-200 px-2 bg-white outline-none"
+                      >
+                        <option value="pending">قيد المراجعة</option>
+                        <option value="confirmed">مؤكد</option>
+                        <option value="shipped">تم الشحن</option>
+                        <option value="delivered">تم التوصيل</option>
+                        <option value="cancelled">ملغي</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-right text-sm">
             <thead className="bg-gray-50/80 text-gray-500 text-xs font-bold border-b border-gray-100">
               <tr>
@@ -722,21 +812,21 @@ export default function AdminOrdersPage() {
                 <th className="py-3.5 px-4 min-w-[220px]">المنتج والباقة المطلوبة</th>
                 <th className="py-3.5 px-4">المبلغ</th>
                 <th className="py-3.5 px-4">حالة الطلب</th>
-                <th className="py-3.5 px-4">بوابة صفقة</th>
+                {SAFKA_ENABLED && <th className="py-3.5 px-4">بوابة صفقة</th>}
                 <th className="py-3.5 px-4 text-center">إجراءات سريعة</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading && orders.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-gray-400">
+                  <td colSpan={SAFKA_ENABLED ? 9 : 8} className="py-8 text-center text-gray-400">
                     <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     <span>جاري تحميل الطلبات...</span>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-gray-400">
+                  <td colSpan={SAFKA_ENABLED ? 9 : 8} className="py-12 text-center text-gray-400">
                     لا توجد طلبات تطابق هذا البحث
                   </td>
                 </tr>
@@ -833,6 +923,7 @@ export default function AdminOrdersPage() {
                         </select>
                       </td>
 
+                      {SAFKA_ENABLED && (
                       <td className="py-3.5 px-4 text-xs">
                         <div className="flex items-center gap-1.5">
                           <span
@@ -864,6 +955,7 @@ export default function AdminOrdersPage() {
                           )}
                         </div>
                       </td>
+                      )}
 
                       <td className="py-3.5 px-4">
                         <div className="flex items-center justify-center gap-1.5">
@@ -966,21 +1058,71 @@ export default function AdminOrdersPage() {
 
       {/* Order Details Drawer / Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 space-y-6 max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 flex justify-end"
+          onMouseDown={(e) => e.target === e.currentTarget && setSelectedOrder(null)}
+          onKeyDown={(e) => e.key === "Escape" && setSelectedOrder(null)}
+        >
+          <div
+            role="dialog"
+            aria-label="تفاصيل الطلب"
+            tabIndex={-1}
+            ref={(el) => el?.focus()}
+            className="bg-white w-full sm:max-w-md h-full p-5 shadow-2xl border-r border-gray-100 space-y-5 overflow-y-auto outline-none"
+          >
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div>
-                <span className="text-xs text-gray-400 font-mono">تفاصيل الطلب:</span>
-                <h3 className="text-xl font-black text-gray-900 font-heading">
+                <span className="text-xs text-gray-400">
+                  {new Date(selectedOrder.created_at).toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" })}
+                </span>
+                <h3 className="text-xl font-black text-gray-900 font-heading font-mono">
                   {selectedOrder.order_number}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-2 rounded-xl text-gray-400 hover:bg-gray-100"
+                aria-label="إغلاق"
+                className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Status + quick contact */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                {getStatusBadge(selectedOrder.status)}
+                <select
+                  aria-label="تغيير الحالة"
+                  value={selectedOrder.status}
+                  onChange={(e) => handleUpdateStatus(selectedOrder.id, e.target.value as OrderStatus)}
+                  className="h-10 text-xs font-bold rounded-xl border border-gray-200 px-3 bg-white outline-none cursor-pointer"
+                >
+                  <option value="pending">قيد المراجعة</option>
+                  <option value="confirmed">مؤكد</option>
+                  <option value="shipped">تم الشحن</option>
+                  <option value="delivered">تم التوصيل</option>
+                  <option value="cancelled">ملغي</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href={`tel:${selectedOrder.customer_phone}`}
+                  className="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <Phone className="w-4 h-4" /> اتصال
+                </a>
+                <a
+                  href={`https://wa.me/2${selectedOrder.customer_phone.replace(/^0/, "")}?text=${encodeURIComponent(
+                    `أهلاً بحضرتك، بنكلمك لتأكيد طلبك رقم (${selectedOrder.order_number}). العنوان: ${selectedOrder.governorate} - ${selectedOrder.address}. هل الميعاد مناسب للشحن؟`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" /> واتساب
+                </a>
+              </div>
             </div>
 
             {/* Product & Offer Card */}

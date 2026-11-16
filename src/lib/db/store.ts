@@ -1590,7 +1590,13 @@ export const dbStore = {
       created_to?: number;
     },
     page: { limit: number; offset: number; withTotal?: boolean; relations?: boolean }
-  ): Promise<{ orders: Order[]; total: number | null; total_capped: boolean; has_more: boolean }> {
+  ): Promise<{
+    orders: Order[];
+    total: number | null;
+    total_capped: boolean;
+    has_more: boolean;
+    status_counts?: Record<string, number>;
+  }> {
     const limit = Math.min(Math.max(Math.floor(Number(page.limit) || 25), 1), 1000);
     const offset = Math.max(Math.floor(Number(page.offset) || 0), 0);
     if (ordersBackend() === "d1" && !getSupabaseAdmin()) {
@@ -1615,11 +1621,22 @@ export const dbStore = {
         }
         attachOrderRelations(orders, products);
       }
-      return { orders, total, total_capped, has_more };
+      let status_counts: Record<string, number> | undefined;
+      if (page.withTotal !== false && !filters.search) {
+        status_counts = await repo.statusCounts(filters).catch(() => undefined);
+      }
+      return { orders, total, total_capped, has_more, status_counts };
     }
     const all = await this.getOrders(filters);
     const slice = all.slice(offset, offset + limit);
+    let status_counts: Record<string, number> | undefined;
+    if (page.withTotal !== false) {
+      const base = filters.status ? await this.getOrders({ ...filters, status: undefined }) : all;
+      status_counts = {};
+      for (const o of base) status_counts[o.status] = (status_counts[o.status] || 0) + 1;
+    }
     return {
+      status_counts,
       orders:
         page.relations === false
           ? slice.map((o) => {
