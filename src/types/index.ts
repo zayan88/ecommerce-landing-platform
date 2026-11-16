@@ -271,6 +271,7 @@ export interface SystemSettings {
   store_name: string;
   support_phone: string;
   support_whatsapp: string;
+  support_email?: string;
   // White-label brand (all optional: empty = neutral defaults, see lib/brand.ts)
   store_tagline?: string;
   logo_url?: string;

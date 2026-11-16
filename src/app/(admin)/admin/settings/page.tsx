@@ -19,6 +19,7 @@ interface BrandForm {
   brand_accent: PaletteKey;
   support_phone: string;
   support_whatsapp: string;
+  support_email: string;
   site_domain: string;
   currency_symbol: string;
 }
@@ -33,6 +34,7 @@ const EMPTY: BrandForm = {
   brand_accent: "orange",
   support_phone: "",
   support_whatsapp: "",
+  support_email: "",
   site_domain: "",
   currency_symbol: "ج.م",
 };
@@ -74,6 +76,7 @@ export default function BrandPage() {
           brand_accent: PALETTE_KEYS.includes(s.brand_accent) ? s.brand_accent : "orange",
           support_phone: s.support_phone || "",
           support_whatsapp: s.support_whatsapp || "",
+          support_email: s.support_email || "",
           site_domain: s.site_domain || "",
           currency_symbol: s.currency_symbol || "ج.م",
         });
@@ -197,6 +200,10 @@ export default function BrandPage() {
 
         <Field label="واتساب (بكود الدولة)" hint="مثال لمصر: 201012345678">
           <input className={inputCls} dir="ltr" inputMode="tel" value={form.support_whatsapp} onChange={(e) => set("support_whatsapp", e.target.value)} placeholder="201012345678" />
+        </Field>
+
+        <Field label="بريد الدعم" hint="مثال: support@yourstore.store. بيظهر في آخر الصفحات، ويوصّل رسايل العملاء لإيميلك لو ربطت التحويل.">
+          <input className={inputCls} dir="ltr" type="email" inputMode="email" value={form.support_email} onChange={(e) => set("support_email", e.target.value.trim())} placeholder="support@yourstore.store" />
         </Field>
 
         <Field label="رابط المتجر" hint="دومين متجرك بعد الربط، مثال: https://yourstore.com">

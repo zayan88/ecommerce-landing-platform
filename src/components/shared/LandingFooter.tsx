@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { MessageCircle, Phone, ShieldCheck } from "lucide-react";
+import { MessageCircle, Phone, Mail, ShieldCheck } from "lucide-react";
 import { useBrand } from "@/components/brand/BrandProvider";
 import { whatsappUrl, telUrl } from "@/lib/store-contact";
 
@@ -38,7 +38,13 @@ export function LandingFooter({ extraBottomSpace = false }: { extraBottomSpace?:
               اتصال <span dir="ltr">{brand.support_phone}</span>
             </a>
           )}
-          {!wa && !tel && <p className="leading-relaxed text-slate-400">يمكنك الطلب مباشرة من النموذج في الصفحة.</p>}
+          {brand.support_email && (
+            <a href={`mailto:${brand.support_email}`} className="flex min-h-[44px] items-center gap-2 hover:text-white">
+              <Mail className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+              <span dir="ltr">{brand.support_email}</span>
+            </a>
+          )}
+          {!wa && !tel && !brand.support_email && <p className="leading-relaxed text-slate-400">يمكنك الطلب مباشرة من النموذج في الصفحة.</p>}
         </div>
 
         <div className="space-y-1">

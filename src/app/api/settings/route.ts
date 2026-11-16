@@ -115,6 +115,12 @@ export async function POST(req: NextRequest) {
         toUpdate[f] = v.slice(0, 20);
       }
     }
+    if ("support_email" in toUpdate) {
+      const v = typeof toUpdate.support_email === "string" ? toUpdate.support_email.trim().slice(0, 120) : "";
+      // empty clears it; otherwise a plain address (it ends up in a mailto: link)
+      if (v === "" || /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(v)) toUpdate.support_email = v;
+      else return NextResponse.json({ success: false, error: "البريد الإلكتروني غير صحيح" }, { status: 400 });
+    }
     for (const f of ["store_name", "store_tagline", "currency_symbol"] as const) {
       if (f in toUpdate) toUpdate[f] = typeof toUpdate[f] === "string" ? toUpdate[f].trim().slice(0, 80) : "";
     }

@@ -26,7 +26,12 @@ export async function StoreFooter() {
               اتصال: <span dir="ltr" className="mx-1">{brand.support_phone}</span>
             </a>
           )}
-          {!wa && !tel && <p className="leading-relaxed">يمكنك الطلب مباشرة من صفحة أي منتج.</p>}
+          {brand.support_email && (
+            <a href={`mailto:${brand.support_email}`} className="flex min-h-[44px] items-center hover:text-white">
+              بريد: <span dir="ltr" className="mx-1">{brand.support_email}</span>
+            </a>
+          )}
+          {!wa && !tel && !brand.support_email && <p className="leading-relaxed">يمكنك الطلب مباشرة من صفحة أي منتج.</p>}
         </div>
         <div className="space-y-2 text-sm">
           <div className="font-black text-white">روابط مهمة</div>

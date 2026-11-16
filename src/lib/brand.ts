@@ -16,6 +16,8 @@ export interface Brand {
   accent: PaletteKey;
   support_phone: string;
   support_whatsapp: string;
+  /** Professional support email shown in the footer (e.g. support@yourstore.store). */
+  support_email: string;
   site_domain: string;
   currency: string;
   /** landing = each product has its own landing page; catalog = regular store home listing all products. */
@@ -31,6 +33,7 @@ export const BRAND_DEFAULTS: Brand = {
   accent: "orange",
   support_phone: "",
   support_whatsapp: "",
+  support_email: "",
   site_domain: "",
   currency: "ج.م",
   store_mode: "landing",
@@ -63,6 +66,7 @@ export const getBrand = cache(async (): Promise<Brand> => {
     accent: (process.env.BRAND_ACCENT || "").trim(),
     phone: (process.env.SUPPORT_PHONE || "").trim(),
     whatsapp: (process.env.SUPPORT_WHATSAPP || "").trim(),
+    email: (process.env.SUPPORT_EMAIL || "").trim(),
     siteUrl: (process.env.SITE_URL || "").trim(),
     appUrl: (process.env.NEXT_PUBLIC_APP_URL || "").trim(),
     mode: (process.env.STORE_MODE || "").trim(),
@@ -80,6 +84,7 @@ export const getBrand = cache(async (): Promise<Brand> => {
     accent: isPaletteKey(accent) ? accent : BRAND_DEFAULTS.accent,
     support_phone: (s.support_phone || env.phone).trim(),
     support_whatsapp: (s.support_whatsapp || env.whatsapp).trim(),
+    support_email: (s.support_email || env.email).trim().slice(0, 120),
     site_domain: cleanUrl(s.site_domain) || cleanUrl(env.siteUrl) || cleanUrl(env.appUrl),
     currency: (s.currency_symbol || BRAND_DEFAULTS.currency).trim(),
     store_mode: mode === "catalog" ? "catalog" : "landing",
