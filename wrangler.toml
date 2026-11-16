@@ -15,9 +15,17 @@ id = "c051d16cb4f44bc196304ef9f6709fb2"
 # Schema: migrations/*.sql  ->  `npx wrangler d1 migrations apply DB --remote`
 [[d1_databases]]
 binding = "DB"
-database_name = "store-orders"
-database_id = "7c3cea96-28b7-4c79-8128-87e89ea3ed7a"
+database_name = "store-orders-prod"
+database_id = "21658fdc-9d82-4dd3-9916-149382a17ffd"
 migrations_dir = "migrations"
+
+# Production (non-secret) variables. Secrets (ADMIN_PIN, AUTH_SECRET, ...) are set with
+# `wrangler pages secret put <NAME> --project-name <project> --env production` and are never committed.
+[vars]
+ORDERS_BACKEND = "d1"
+CATALOG_BACKEND = "d1"
+BRAND_NAME = "RexRack"
+DEMO_MODE = "1"
 
 # ── Preview deployments (every non-main branch) ─────────────────────────────
 # ISOLATED from the live store: its own empty KV namespace (store-preview), so testing a branch can never
