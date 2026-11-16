@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { dbStore } from "@/lib/db/store";
-import { isPaletteKey, type PaletteKey } from "@/lib/palettes";
+import { isThemeColor } from "@/lib/palettes";
 
 /**
  * White-label brand. Everything a merchant can customize from /admin/brand.
@@ -12,8 +12,8 @@ export interface Brand {
   tagline: string;
   logo_url: string;
   favicon_url: string;
-  primary: PaletteKey;
-  accent: PaletteKey;
+  primary: string;
+  accent: string;
   support_phone: string;
   support_whatsapp: string;
   /** Professional support email shown in the footer (e.g. support@yourstore.store). */
@@ -80,8 +80,8 @@ export const getBrand = cache(async (): Promise<Brand> => {
     tagline: (s.store_tagline || env.tagline).trim(),
     favicon_url: cleanUrl(s.favicon_url) || (typeof s.favicon_url === "string" && s.favicon_url.startsWith("/") ? s.favicon_url : ""),
     logo_url: cleanUrl(logo) || (typeof logo === "string" && logo.startsWith("/") ? logo : ""),
-    primary: isPaletteKey(primary) ? primary : BRAND_DEFAULTS.primary,
-    accent: isPaletteKey(accent) ? accent : BRAND_DEFAULTS.accent,
+    primary: isThemeColor(primary) ? primary : BRAND_DEFAULTS.primary,
+    accent: isThemeColor(accent) ? accent : BRAND_DEFAULTS.accent,
     support_phone: (s.support_phone || env.phone).trim(),
     support_whatsapp: (s.support_whatsapp || env.whatsapp).trim(),
     support_email: (s.support_email || env.email).trim().slice(0, 120),

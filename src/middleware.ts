@@ -39,6 +39,7 @@ function isPublicApi(method: string, p: string): boolean {
   if (p === "/api/orders") return m === "POST";
   if (p === "/api/products") return m === "GET";
   if (p === "/api/analytics") return m === "POST";
+  if (p === "/api/abandoned") return m === "POST";
   if (p === "/api/support/chat") return m === "POST";
   // Uploaded product images are public (GET /api/media/<id>); uploading (POST /api/media) stays admin-only
   if (p.startsWith("/api/media/")) return m === "GET" && !p.slice("/api/media/".length).includes("/");

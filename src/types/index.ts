@@ -47,18 +47,19 @@ export interface LandingPageSectionConfig {
 
 export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
   { id: "hero", name_ar: "المعرض الرئيسي والسعر وباقات العروض والزر السريع", enabled: true },
-  { id: "social_proof", name_ar: "شريط الثقة والتقييم وتغطية الشحن", enabled: false },
-  { id: "comparison", name_ar: "المقارنة البصرية (القديم vs الجديد)", enabled: true },
-  { id: "box_contents", name_ar: "محتويات العلبة الأصلية", enabled: true },
-  { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: true },
+  { id: "comparison", name_ar: "المشكلة والحل (القديم vs الجديد)", enabled: true },
+  { id: "box_contents", name_ar: "المواصفات ومحتويات العلبة", enabled: true },
   { id: "reviews", name_ar: "آراء وتجارب العملاء الواقعية", enabled: true },
+  { id: "order_form", name_ar: "فورم الطلب السريع وباقات العروض والدفع عند الاستلام", enabled: true },
   { id: "guarantees", name_ar: "الضمانات الثلاثة الذهبية", enabled: true },
   { id: "faq", name_ar: "الأسئلة الشائعة (كسر الاعتراضات)", enabled: true },
-  { id: "order_form", name_ar: "فورم الطلب السريع وباقات العروض والدفع عند الاستلام", enabled: true },
+  { id: "final_cta", name_ar: "دعوة أخيرة للشراء (زر في آخر الصفحة)", enabled: true },
+  { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: false },
+  { id: "social_proof", name_ar: "شريط الثقة والتقييم وتغطية الشحن", enabled: false },
 ];
 
-/** Previous default order (order form before the FAQ). Pages still on it are moved to the new default. */
-const LEGACY_SECTION_ORDER = "hero,social_proof,comparison,box_contents,how_to_use,reviews,guarantees,order_form,faq";
+/** Earlier default order (FAQ before the order form). Pages still on it are moved to the current default: order form, then FAQ. */
+const LEGACY_SECTION_ORDER = "hero,social_proof,comparison,box_contents,how_to_use,reviews,guarantees,faq,order_form";
 
 /**
  * Pages saved in KV keep their own sections_config, so newly introduced default
@@ -72,7 +73,7 @@ export function mergeSections(
   if (!Array.isArray(saved) || saved.length === 0) return defaults;
   // Drop invalid entries and duplicate ids (a duplicate would render a section twice)
   const result = saved.filter((s, i, arr) => s?.id && arr.findIndex((x) => x?.id === s.id) === i);
-  // Untouched pages (still on the old default order): questions now come before the order form.
+  // Untouched pages (still on the previous default order): the order form comes first, then the questions.
   if (defaults === DEFAULT_LANDING_PAGE_SECTIONS && result.map((s) => s.id).join(",") === LEGACY_SECTION_ORDER) {
     const o = result.findIndex((s) => s.id === "order_form");
     const f = result.findIndex((s) => s.id === "faq");
@@ -98,6 +99,8 @@ export interface LandingPageContentConfig {
   hide_checkout_trust?: boolean;
   /** One flat price instead of the 1/2/3-piece offer tiers. */
   hide_offers?: boolean;
+  final_cta_title?: string;
+  final_cta_desc?: string;
   /** Mobile sticky buy bar off, and a custom text for the order button. */
   hide_sticky_bar?: boolean;
   cta_text?: string;

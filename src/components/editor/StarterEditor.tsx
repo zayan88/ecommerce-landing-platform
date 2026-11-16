@@ -41,7 +41,7 @@ import StarterLandingPage from "@/landing-pages/starter-template/page";
 import SectionsPanel from "@/app/(admin)/admin/landing-pages/_components/SectionsPanel";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { PaletteSwatches } from "@/components/admin/PaletteSwatches";
-import { isPaletteKey } from "@/lib/palettes";
+import { isThemeColor } from "@/lib/palettes";
 import { useBrand } from "@/components/brand/BrandProvider";
 import { EditProvider, EditSelection, applyFieldEdit, getByPath } from "./EditContext";
 import { PreviewFrame } from "./PreviewFrame";
@@ -359,7 +359,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
               ] as const
             ).map(([field, title, storeDefault]) => {
               const current = getByPath(draft.content, field);
-              const active = isPaletteKey(current) ? current : "";
+              const active = isThemeColor(current) ? current : "";
               return (
                 <div key={field} className="bg-white rounded-2xl border border-slate-200 p-3 space-y-2.5">
                   <p className="text-sm font-black text-slate-900">{title}</p>

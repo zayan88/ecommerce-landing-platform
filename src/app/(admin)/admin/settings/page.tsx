@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, LayoutTemplate, Store } from "lucide-react";
-import { PALETTE_KEYS, type PaletteKey } from "@/lib/palettes";
+import { PALETTE_KEYS } from "@/lib/palettes";
 import { PaletteSwatches } from "@/components/admin/PaletteSwatches";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 
@@ -15,8 +15,8 @@ interface BrandForm {
   logo_url: string;
   favicon_url: string;
   store_mode: Mode;
-  brand_primary: PaletteKey;
-  brand_accent: PaletteKey;
+  brand_primary: string;
+  brand_accent: string;
   support_phone: string;
   support_whatsapp: string;
   support_email: string;

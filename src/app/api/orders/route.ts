@@ -8,6 +8,7 @@ import { MetaCapiClient } from "@/lib/tracking/meta-capi";
 import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
 import type { Order } from "@/types";
+import { markAbandonedConverted } from "@/lib/db/abandoned-repo";
 import {
   beginOrder,
   consumeOrderRateLimit,
@@ -227,6 +228,9 @@ export async function POST(req: NextRequest) {
       landing_page_slug: createdOrder.landing_page_slug,
       event_id: eventId,
     };
+
+    // 5-bis. The visitor finished: close their abandoned-checkout rows (best effort, never blocks the order)
+    await markAbandonedConverted(createdOrder.customer_phone).catch(() => {});
 
     // 5a. Remember this order for the duplicate guard (best-effort, never throws)
     slotSettled = true;

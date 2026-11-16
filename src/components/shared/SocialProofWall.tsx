@@ -14,7 +14,7 @@ export const DEFAULT_PROOF_STATEMENTS = [
   "فريق التأكيد بيتصل بيك قبل الشحن",
 ];
 
-export const DEFAULT_COVERAGE = ["القاهرة", "الجيزة", "الإسكندرية", "الدلتا", "الصعيد", "القناة"];
+export const DEFAULT_COVERAGE = ["مصر كلها"];
 
 interface SocialProofWallProps {
   /** Only pass real values from real customer feedback. */

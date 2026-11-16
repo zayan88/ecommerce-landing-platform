@@ -110,9 +110,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile Header Bar */}
       <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 text-slate-950 font-black flex items-center justify-center text-base">
-            {(brand.store_name || "M").trim().charAt(0).toUpperCase()}
-          </div>
+          {brand.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={brand.logo_url} alt={brand.store_name} className="h-9 max-w-[7rem] rounded-lg bg-white p-1 object-contain" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-emerald-500 text-slate-950 font-black flex items-center justify-center text-base">
+              {(brand.store_name || "M").trim().charAt(0).toUpperCase()}
+            </div>
+          )}
           <span className="font-heading font-black text-base">لوحة تحكم {brand.store_name}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -142,9 +147,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Logo / Brand Header */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-800 px-2">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-emerald-500/20">
-                {(brand.store_name || "M").trim().charAt(0).toUpperCase()}
-              </div>
+              {brand.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={brand.logo_url} alt={brand.store_name} className="h-11 max-w-[8rem] rounded-xl bg-white p-1 object-contain shadow-lg" />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-emerald-500/20">
+                  {(brand.store_name || "M").trim().charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
                 <h2 className="font-heading font-black text-white text-base leading-tight">
                   {brand.store_name}
