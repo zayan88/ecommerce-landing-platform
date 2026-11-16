@@ -3,6 +3,7 @@ import { dbStore } from "@/lib/db/store";
 import { isThemeColor } from "@/lib/palettes";
 import { publicPayments, type PublicPayments } from "@/lib/payments";
 import { publicCommerce, type PublicCommerce, DEFAULT_SHIPPING } from "@/lib/commerce";
+import { publicChat, type PublicChat } from "@/lib/chat";
 
 /**
  * White-label brand. Everything a merchant can customize from /admin/brand.
@@ -26,6 +27,8 @@ export interface Brand {
   payments: PublicPayments;
   /** Shipping fees, popup and downsell the pages need (never the coupon list). */
   commerce: PublicCommerce;
+  /** The store chat, only when the merchant enabled it (never the LLM key or the Telegram bot). */
+  chat?: PublicChat;
   /** landing = each product has its own landing page; catalog = regular store home listing all products. */
 }
 
@@ -93,5 +96,6 @@ export const getBrand = cache(async (): Promise<Brand> => {
     currency: (s.currency_symbol || BRAND_DEFAULTS.currency).trim(),
     payments: publicPayments(s.payment_methods),
     commerce: publicCommerce(s),
+    chat: publicChat(s),
   };
 });

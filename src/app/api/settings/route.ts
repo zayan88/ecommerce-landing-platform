@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { isThemeColor } from "@/lib/palettes";
 import { sanitizeCoupons, sanitizeDownsell, sanitizePopup, sanitizeShipping } from "@/lib/commerce";
+import { sanitizeChat } from "@/lib/chat";
 import { normalizeEgyptPhone } from "@/lib/db/abandoned-repo";
 import { META_PIXEL_RE, TIKTOK_PIXEL_RE, SNAP_PIXEL_RE, GA4_RE, GTM_RE, META_TEST_CODE_RE, cleanIdList } from "@/lib/tracking/tag-ids";
 
@@ -15,6 +16,8 @@ const SECRET_FIELDS = [
   "telegram_bot_token",
   "bosta_api_key",
   "bosta_webhook_key",
+  "support_bot_token",
+  "llm_api_key",
 ] as const;
 
 function maskSecret(v: unknown): string {
@@ -152,6 +155,22 @@ export async function POST(req: NextRequest) {
     }
     delete (toUpdate as Record<string, unknown>).coupon_usage;
     for (const f of ["mcp_enabled", "mcp_token_hash", "mcp_token_created_at"]) delete (toUpdate as Record<string, unknown>)[f];
+    if ("chat" in toUpdate) toUpdate.chat = sanitizeChat(toUpdate.chat);
+    if ("support_chat_id" in toUpdate) {
+      const v = typeof toUpdate.support_chat_id === "string" ? toUpdate.support_chat_id.trim() : "";
+      if (v === "" || /^-?\d{5,20}$/.test(v)) toUpdate.support_chat_id = v;
+      else return NextResponse.json({ success: false, error: "معرّف شات تليجرام غير صحيح (أرقام فقط)" }, { status: 400 });
+    }
+    if ("support_bot_token" in toUpdate) {
+      const v = typeof toUpdate.support_bot_token === "string" ? toUpdate.support_bot_token.trim() : "";
+      if (v === "" || v.includes("...") || /^\d{6,12}:[A-Za-z0-9_-]{30,50}$/.test(v)) toUpdate.support_bot_token = v;
+      else return NextResponse.json({ success: false, error: "توكن بوت تليجرام غير صحيح" }, { status: 400 });
+    }
+    if ("llm_api_key" in toUpdate) {
+      const v = typeof toUpdate.llm_api_key === "string" ? toUpdate.llm_api_key.trim() : "";
+      if (v === "" || v.includes("...") || /^[\x21-\x7e]{8,300}$/.test(v)) toUpdate.llm_api_key = v;
+      else return NextResponse.json({ success: false, error: "مفتاح الـ LLM غير صحيح" }, { status: 400 });
+    }
     if ("shipping_config" in toUpdate) toUpdate.shipping_config = sanitizeShipping(toUpdate.shipping_config);
     if ("coupons" in toUpdate) toUpdate.coupons = sanitizeCoupons(toUpdate.coupons);
     if ("popup" in toUpdate) toUpdate.popup = sanitizePopup(toUpdate.popup);

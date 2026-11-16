@@ -8,9 +8,7 @@ import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
 import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
 import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
-import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 import { getBrand } from "@/lib/brand";
-import { CHAT_ENABLED } from "@/lib/features";
 import { absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
 
 export const runtime = "edge";
@@ -128,7 +126,6 @@ export default async function DynamicLandingPage({ params }: PageProps) {
       <Component product={publicProduct} landingPage={publicLandingPage} />
 
       {/* Floating AI Sales Closer Chat Widget */}
-      {CHAT_ENABLED && <FloatingSalesAgent currentProduct={publicProduct} />}
     </>
   );
 }

@@ -338,6 +338,11 @@ export interface SystemSettings {
     vodafone_cash?: { enabled: boolean; number: string; holder?: string };
     instapay?: { enabled: boolean; address: string; holder?: string };
   };
+  // Store chat (floating bubble): config + the merchant's Telegram support bot + optional LLM key (see lib/chat.ts)
+  chat?: import("@/lib/chat").ChatConfig;
+  support_bot_token?: string; // secret
+  support_chat_id?: string;
+  llm_api_key?: string; // secret
   // MCP: lets an AI assistant the merchant connects manage the store (token is stored hashed; see /api/mcp)
   mcp_enabled?: boolean;
   mcp_token_hash?: string;
