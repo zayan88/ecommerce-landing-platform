@@ -60,3 +60,19 @@ export function sanitizeOffers(productId: string, offers: ProductOffer[]): Produ
       sort_order: i + 1,
     }));
 }
+
+/** What a product with no extra offers sells as: one piece at the base price (no selector shown). */
+export function singleBaseOffer(product: Pick<Product, "id" | "base_price" | "compare_at_price">): ProductOffer[] {
+  return [
+    {
+      id: `${product.id}-offer-1`,
+      product_id: product.id,
+      title_ar: "قطعة واحدة",
+      quantity: 1,
+      price: product.base_price,
+      original_price: product.compare_at_price || undefined,
+      free_shipping: true,
+      sort_order: 0,
+    },
+  ];
+}

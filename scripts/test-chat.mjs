@@ -160,5 +160,22 @@ await test("rate limit: more than 20 messages from one address in 10 minutes get
   assert.equal((await chat({ message: "من جهاز تاني" }, "10.9.9.10")).status, 200);
 });
 
+await test("per-product Q&A and nudges are sanitized and saved; the public chat carries the nudges", async () => {
+  const r = lib.sanitizeChatProducts({ "p-1": [{ q: "بطارية؟", keywords: "بطارية، شحن", answer: "8 ساعات" }, { q: "", answer: "x" }], "bad id!": [{ q: "a", answer: "b" }], "p-2": [] });
+  assert.deepEqual(Object.keys(r), ["p-1"]);
+  assert.equal(r["p-1"].length, 1);
+  assert.deepEqual(r["p-1"][0].keywords, ["بطارية", "شحن"]);
+  const c = lib.sanitizeChat({ enabled: true, nudges: ["اطلب الآن", "", "x".repeat(300)], nudge_seconds: 1 });
+  assert.equal(c.nudges.length, 2);
+  assert.equal(c.nudges[1].length, 100);
+  assert.equal(c.nudge_seconds, 10);
+  assert.equal(lib.sanitizeChat({ nudge_seconds: 9999 }).nudge_seconds, 300);
+  await save({ chat: { enabled: true, faq: FAQ, nudges: ["اطلب الآن"], nudge_seconds: 30 }, chat_products: { "p-1": [{ q: "بطارية؟", keywords: "بطارية", answer: "8 ساعات" }], "../x": [{ q: "a", answer: "b" }] } });
+  const st = await dbStore.getSettings();
+  assert.deepEqual(Object.keys(st.chat_products), ["p-1"]);
+  assert.deepEqual(lib.publicChat(st).nudges, ["اطلب الآن"]);
+  assert.equal(lib.publicChat(st).nudge_seconds, 30);
+});
+
 globalThis.fetch = realFetch;
 await finish();

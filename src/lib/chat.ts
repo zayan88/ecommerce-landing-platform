@@ -26,6 +26,10 @@ export interface ChatConfig {
   llm_model: string;
   /** What the assistant may talk about: written by the merchant (shipping, returns, products...). */
   llm_prompt: string;
+  /** Proactive balloons shown now and then while the chat is closed (empty = built-in defaults). */
+  nudges: string[];
+  /** Seconds between balloons (10-300). */
+  nudge_seconds: number;
 }
 
 const clean = (v: unknown, max: number): string =>
@@ -41,6 +45,8 @@ export const DEFAULT_CHAT: ChatConfig = {
   llm_base_url: "https://api.openai.com/v1",
   llm_model: "",
   llm_prompt: "",
+  nudges: [],
+  nudge_seconds: 25,
 };
 
 /** https URL with a real hostname (no IP literals, no localhost, no credentials): the server will call it. */
@@ -52,10 +58,10 @@ export function safeLlmBaseUrl(v: unknown): string {
   return s;
 }
 
-export function sanitizeChat(input: unknown): ChatConfig {
-  const i = input && typeof input === "object" ? (input as Record<string, any>) : {};
+/** Q&A rows typed by the merchant: trims, drops empty rows, splits keywords. Used by the store chat and the per-product chat. */
+export function sanitizeFaqList(input: unknown, max = 30): ChatFaq[] {
   const faq: ChatFaq[] = [];
-  for (const f of (Array.isArray(i.faq) ? i.faq : []).slice(0, 30)) {
+  for (const f of (Array.isArray(input) ? input : []).slice(0, max)) {
     const q = clean(f?.q, 80);
     const answer = clean(f?.answer, 600);
     if (!q || !answer) continue;
@@ -63,7 +69,29 @@ export function sanitizeChat(input: unknown): ChatConfig {
     const keywords = Array.from(new Set(rawKeys.map((k) => clean(k, 30)).filter(Boolean))).slice(0, 12);
     faq.push({ q, keywords, answer });
   }
+  return faq;
+}
+
+/** Per-product Q&A, keyed by product id (only safe id characters). */
+export function sanitizeChatProducts(input: unknown): Record<string, ChatFaq[]> {
+  const out: Record<string, ChatFaq[]> = {};
+  if (!input || typeof input !== "object") return out;
+  for (const [id, list] of Object.entries(input as Record<string, unknown>).slice(0, 500)) {
+    if (!/^[A-Za-z0-9_-]{1,80}$/.test(id)) continue;
+    const faq = sanitizeFaqList(list, 15);
+    if (faq.length) out[id] = faq;
+  }
+  return out;
+}
+
+export function sanitizeChat(input: unknown): ChatConfig {
+  const i = input && typeof input === "object" ? (input as Record<string, any>) : {};
+  const faq = sanitizeFaqList(i.faq, 30);
+  const nudges = (Array.isArray(i.nudges) ? i.nudges : []).map((n: unknown) => clean(n, 100)).filter(Boolean).slice(0, 6);
+  const secs = Math.round(Number(i.nudge_seconds));
   return {
+    nudges,
+    nudge_seconds: Number.isFinite(secs) ? Math.min(300, Math.max(10, secs)) : DEFAULT_CHAT.nudge_seconds,
     enabled: Boolean(i.enabled),
     title: clean(i.title, 40) || DEFAULT_CHAT.title,
     welcome: clean(i.welcome, 200) || DEFAULT_CHAT.welcome,
@@ -115,6 +143,8 @@ export interface PublicChat {
   welcome: string;
   fallback: string;
   faq: ChatFaq[];
+  nudges: string[];
+  nudge_seconds: number;
   /** The server may answer (LLM) before handing off. */
   ask_server: boolean;
 }
@@ -125,7 +155,7 @@ export function publicChat(s: any): PublicChat | undefined {
   const c = sanitizeChat(s.chat);
   if (!c.enabled) return undefined;
   const llm = c.llm_enabled && Boolean(c.llm_model) && typeof s.llm_api_key === "string" && s.llm_api_key.length > 0;
-  return { title: c.title, welcome: c.welcome, fallback: c.fallback, faq: c.faq, ask_server: llm };
+  return { title: c.title, welcome: c.welcome, fallback: c.fallback, faq: c.faq, nudges: c.nudges, nudge_seconds: c.nudge_seconds, ask_server: llm };
 }
 
 /** System prompt sent with the customer's question. The merchant's text is data, the rules come first. */

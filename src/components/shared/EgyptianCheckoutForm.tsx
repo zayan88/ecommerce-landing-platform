@@ -424,7 +424,7 @@ export function EgyptianCheckoutForm({
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-4" onFocus={handleFirstInteraction}>
         {/* Tiered Offers Selection */}
-        {!hideOffers && product.offers && product.offers.length > 0 && (
+        {!hideOffers && product.offers && product.offers.length > 1 && (
           <div className="pb-1">
             <HeroOfferSelector
               offers={product.offers}
@@ -667,7 +667,7 @@ export function EgyptianCheckoutForm({
         <button
           type="submit"
           disabled={isSubmitting || previewOnly}
-          className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-black text-base sm:text-lg shadow-xl shadow-orange-500/25 active:scale-[0.99] transition transform cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base sm:text-lg shadow-xl shadow-orange-500/25 active:scale-[0.99] transition transform cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <div className="flex items-center gap-2">

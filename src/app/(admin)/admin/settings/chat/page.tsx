@@ -32,7 +32,7 @@ export default function ChatSettingsPage() {
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [cfg, setCfg] = useState<Omit<ChatConfig, "faq">>({
-    enabled: false, title: "اسألنا", welcome: "", fallback: "", llm_enabled: false, llm_base_url: "https://api.openai.com/v1", llm_model: "", llm_prompt: "",
+    enabled: false, title: "اسألنا", welcome: "", fallback: "", llm_enabled: false, llm_base_url: "https://api.openai.com/v1", llm_model: "", llm_prompt: "", nudges: [], nudge_seconds: 25,
   });
   const [faq, setFaq] = useState<FaqRow[]>([]);
   const [botToken, setBotToken] = useState("");
@@ -148,6 +148,27 @@ export default function ChatSettingsPage() {
             <Plus className="w-4 h-4" /> إضافة سؤال
           </button>
         )}
+      </section>
+
+      <section className={card}>
+        <div>
+          <h2 className="text-lg font-black text-slate-900">رسائل تفاعلية</h2>
+          <p className="text-xs text-slate-500 leading-relaxed mt-1">رسالة صغيرة بتطلع جنب الشات كل شوية (4 مرات بحد أقصى) بتشجّع العميل يسأل أو يطلب. سيبها فاضية لو عايز الرسائل الجاهزة.</p>
+        </div>
+        {cfg.nudges.map((n, i) => (
+          <div key={i} className="flex gap-2">
+            <input className={inputCls} maxLength={100} value={n} placeholder="مثال: اطلب دلوقتي والشحن مجاني 🚚" onChange={(e) => setCfg({ ...cfg, nudges: cfg.nudges.map((x, k) => (k === i ? e.target.value : x)) })} />
+            <button type="button" aria-label="حذف" onClick={() => setCfg({ ...cfg, nudges: cfg.nudges.filter((_, k) => k !== i) })} className="min-h-[48px] px-3 rounded-xl text-red-600 hover:bg-red-50 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+          </div>
+        ))}
+        {cfg.nudges.length < 6 && (
+          <button type="button" onClick={() => setCfg({ ...cfg, nudges: [...cfg.nudges, ""] })} className="min-h-[48px] w-full rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
+            <Plus className="w-4 h-4" /> إضافة رسالة
+          </button>
+        )}
+        <Field label="كل كام ثانية" hint="من 10 لـ 300 ثانية.">
+          <input className={inputCls} type="number" min={10} max={300} value={cfg.nudge_seconds} onChange={(e) => setCfg({ ...cfg, nudge_seconds: Number(e.target.value) || 25 })} />
+        </Field>
       </section>
 
       <section className={card}>

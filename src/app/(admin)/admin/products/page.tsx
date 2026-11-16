@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
 import OffersPanel from "@/components/editor/OffersPanel";
-import { buildDefaultOffers, sanitizeOffers } from "@/lib/offers";
+import { buildDefaultOffers, sanitizeOffers, singleBaseOffer } from "@/lib/offers";
 import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
 import TablePagination from "@/components/admin/TablePagination";
 import { Product, ProductOffer } from "@/types";
@@ -58,6 +58,9 @@ export default function AdminProductsPage() {
   const [descriptionAr, setDescriptionAr] = useState("");
   const [productActive, setProductActive] = useState(true);
   const [upsellOpen, setUpsellOpen] = useState(false);
+  // Questions & answers the store chat uses on this product's page (stored in settings.chat_products[id])
+  const [chatFaq, setChatFaq] = useState<{ q: string; keywords: string; answer: string }[]>([]);
+  const [allChatFaq, setAllChatFaq] = useState<Record<string, any[]>>({});
   // Quantity tiers. Until the merchant touches them they follow the price (defaults).
   const [offers, setOffers] = useState<ProductOffer[]>([]);
   const [offersTouched, setOffersTouched] = useState(false);
@@ -108,11 +111,26 @@ export default function AdminProductsPage() {
     setOffers([]);
     setOffersTouched(false);
     setUpsellOpen(false);
+    setChatFaq([]);
+    loadChatFaq();
     setIsModalOpen(true);
+  };
+
+  const loadChatFaq = async () => {
+    try {
+      const j = await (await fetch("/api/settings")).json();
+      const all = (j?.settings?.chat_products || {}) as Record<string, any[]>;
+      setAllChatFaq(all);
+      return all;
+    } catch {
+      return {} as Record<string, any[]>;
+    }
   };
 
   const openEditModal = (prod: Product) => {
     setEditingProduct(prod);
+    setChatFaq([]);
+    loadChatFaq().then((all) => setChatFaq((all[prod.id] || []).map((x: any) => ({ q: x.q, keywords: (x.keywords || []).join("، "), answer: x.answer }))));
     setTitleAr(prod.title_ar || "");
     setSlug(prod.slug || "");
     setSku(prod.sku || "");
@@ -168,7 +186,7 @@ export default function AdminProductsPage() {
       const numStock = Number(stock) || 50;
 
       // Offers: what the merchant edited, or defaults derived from the price (see lib/offers.ts)
-      const finalOffers = sanitizeOffers(editingProduct?.id || "", effectiveOffers);
+      const finalOffers = effectiveOffers.length === 0 ? singleBaseOffer({ id: editingProduct?.id || "", base_price: Number(basePrice) || 0, compare_at_price: Number(comparePrice) || 0 }) : sanitizeOffers(editingProduct?.id || "", effectiveOffers);
       if (finalOffers.some((o) => !(o.price > 0))) {
         alert("سعر كل عرض لازم يكون أكبر من صفر");
         setIsSubmitting(false);
@@ -207,6 +225,13 @@ export default function AdminProductsPage() {
 
       const data = await res.json();
       if (data.success) {
+        const pid = data.product?.id || editingProduct?.id;
+        if (pid) {
+          const next = { ...allChatFaq };
+          if (chatFaq.some((f) => f.q.trim() && f.answer.trim())) next[pid] = chatFaq as any;
+          else delete next[pid];
+          fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_products: next }) }).catch(() => {});
+        }
         setIsModalOpen(false);
         // New product in landing-page mode: go straight to the live editor of its page.
         if (!editingProduct && data.landing_page_id) {
@@ -786,6 +811,24 @@ export default function AdminProductsPage() {
                       setOffersTouched(false);
                     }}
                   />
+                  )}
+                </section>
+
+                <section className={cardCls}>
+                  <div>
+                    <h3 className={cardTitle}>أسئلة وأجوبة الشات للمنتج ده</h3>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">الشات في صفحة المنتج بيرد منها لوحده من غير أي مصاريف (اكتب الكلمات المفتاحية مفصولة بفاصلة)، وبيقترح على العميل يطلب.</p>
+                  </div>
+                  {chatFaq.map((f, i) => (
+                    <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
+                      <input className={inputCls} maxLength={80} placeholder="السؤال (مثال: بيشتغل بالبطارية؟)" value={f.q} onChange={(e) => setChatFaq((l) => l.map((x, k) => (k === i ? { ...x, q: e.target.value } : x)))} />
+                      <input className={inputCls} placeholder="كلمات مفتاحية: بطارية، شحن" value={f.keywords} onChange={(e) => setChatFaq((l) => l.map((x, k) => (k === i ? { ...x, keywords: e.target.value } : x)))} />
+                      <textarea className={inputCls + " py-3 leading-relaxed"} rows={2} maxLength={600} placeholder="الإجابة" value={f.answer} onChange={(e) => setChatFaq((l) => l.map((x, k) => (k === i ? { ...x, answer: e.target.value } : x)))} />
+                      <button type="button" onClick={async () => { if (await confirmAsk({ title: "حذف السؤال", message: "هتحذف السؤال ده وإجابته." })) setChatFaq((l) => l.filter((_, k) => k !== i)); }} className="min-h-[44px] px-3 rounded-xl text-red-600 hover:bg-red-50 text-sm font-bold cursor-pointer">حذف</button>
+                    </div>
+                  ))}
+                  {chatFaq.length < 15 && (
+                    <button type="button" onClick={() => setChatFaq((l) => [...l, { q: "", keywords: "", answer: "" }])} className="min-h-[48px] w-full rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 text-slate-700 font-bold text-sm cursor-pointer">+ إضافة سؤال</button>
                   )}
                 </section>
               </div>

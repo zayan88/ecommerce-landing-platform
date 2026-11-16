@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import AiPanel from "./AiPanel";
 import OffersPanel from "./OffersPanel";
-import { buildDefaultOffers, sanitizeOffers } from "@/lib/offers";
+import { buildDefaultOffers, sanitizeOffers, singleBaseOffer } from "@/lib/offers";
 import StarterLandingPage from "@/landing-pages/starter-template/page";
 import SectionsPanel from "@/app/(admin)/admin/landing-pages/_components/SectionsPanel";
 import { ImageUploader } from "@/components/admin/ImageUploader";
@@ -204,7 +204,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
       const offersChanged = JSON.stringify(draft.offers) !== JSON.stringify(JSON.parse(savedJson).offers);
       let savedOffers: ProductOffer[] | null = null;
       if (offersChanged && lp.product) {
-        const clean = sanitizeOffers(lp.product.id, draft.offers);
+        const clean = draft.offers.length === 0 ? singleBaseOffer(lp.product) : sanitizeOffers(lp.product.id, draft.offers);
         if (clean.length === 0 || clean.some((o) => !(o.price > 0))) {
           setSaveError("سعر كل عرض لازم يكون أكبر من صفر (تاب العروض)");
           return;
