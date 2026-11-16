@@ -7,6 +7,7 @@ import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
 import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
 import { UrgencyBar } from "@/components/shared/UrgencyBar";
+import { StorePopups } from "@/components/shared/StorePopups";
 import {
   ShieldCheck,
   Truck,
@@ -83,6 +84,8 @@ export default async function HomePage() {
       {/* Meta Facebook Pixel */}
       <MetaPixel pixelIds={effectiveMetaPixelIds(settings)} />
       <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settings)} snapPixelIds={effectiveSnapPixelIds(settings)} ga4Id={settings.ga4_measurement_id} gtmId={settings.gtm_container_id} />
+
+      <StorePopups />
 
       {/* Top Flash Urgency Announcement Bar */}
       <UrgencyBar />

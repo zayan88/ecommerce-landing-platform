@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { MessageCircle, Phone, Mail, ShieldCheck } from "lucide-react";
 import { useBrand } from "@/components/brand/BrandProvider";
+import { shippingHint } from "@/lib/commerce";
 import { whatsappUrl, telUrl } from "@/lib/store-contact";
 
 /** Store footer for landing-page mode: brand, contact, policy link and the trust line. */
@@ -57,7 +58,7 @@ export function LandingFooter({ extraBottomSpace = false }: { extraBottomSpace?:
       </div>
 
       <div className="border-t border-slate-700 py-4 px-4 text-center text-xs leading-relaxed space-y-1">
-        <div className="font-bold text-emerald-300">الدفع عند الاستلام • شحن مجاني • معاينة قبل الدفع</div>
+        <div className="font-bold text-emerald-300">الدفع عند الاستلام • {shippingHint(brand.commerce.shipping).text} • معاينة قبل الدفع</div>
         <div>
           © {new Date().getFullYear()} {brand.store_name}. جميع الحقوق محفوظة.
         </div>

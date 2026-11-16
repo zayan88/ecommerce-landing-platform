@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { isThemeColor } from "@/lib/palettes";
+import { sanitizeCoupons, sanitizeDownsell, sanitizePopup, sanitizeShipping } from "@/lib/commerce";
 import { normalizeEgyptPhone } from "@/lib/db/abandoned-repo";
 import { META_PIXEL_RE, TIKTOK_PIXEL_RE, SNAP_PIXEL_RE, GA4_RE, GTM_RE, META_TEST_CODE_RE, cleanIdList } from "@/lib/tracking/tag-ids";
 
@@ -147,6 +148,13 @@ export async function POST(req: NextRequest) {
         }
         toUpdate.home_config = clean;
       }
+    }
+    if ("shipping_config" in toUpdate) toUpdate.shipping_config = sanitizeShipping(toUpdate.shipping_config);
+    if ("coupons" in toUpdate) toUpdate.coupons = sanitizeCoupons(toUpdate.coupons);
+    if ("popup" in toUpdate) toUpdate.popup = sanitizePopup(toUpdate.popup);
+    if ("downsell" in toUpdate) {
+      const known = "coupons" in toUpdate ? toUpdate.coupons : (await dbStore.getSettings()).coupons || [];
+      toUpdate.downsell = sanitizeDownsell(toUpdate.downsell, known);
     }
     if ("payment_methods" in toUpdate) {
       const pm = toUpdate.payment_methods && typeof toUpdate.payment_methods === "object" ? toUpdate.payment_methods : {};

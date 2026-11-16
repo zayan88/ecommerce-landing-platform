@@ -3,6 +3,8 @@
 import React from "react";
 import { ShoppingBagIcon } from "@heroicons/react/24/solid";
 import { Product, ProductOffer } from "@/types";
+import { useBrand } from "@/components/brand/BrandProvider";
+import { shippingHint } from "@/lib/commerce";
 
 interface StickyBuyBarProps {
   product?: Product;
@@ -27,6 +29,7 @@ export function StickyBuyBar({
   onCtaClick = onOrderClick ?? onBuyClick,
   ctaText = "أكّد طلبك الآن 🛒",
 }: StickyBuyBarProps) {
+  const shipHint = shippingHint(useBrand().commerce.shipping);
   const [pastHero, setPastHero] = React.useState(false);
   const [formInView, setFormInView] = React.useState(false);
 
@@ -82,7 +85,7 @@ export function StickyBuyBar({
             )}
           </div>
           <span className="hidden sm:inline-block text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-            ✓ معاينة وفحص قبل الدفع + شحن مجاني
+            ✓ معاينة وفحص قبل الدفع{shipHint.free ? " + شحن مجاني" : ""}
           </span>
           <span className="sm:hidden text-[10px] text-emerald-700 font-bold">✓ معاينة قبل الدفع</span>
         </div>

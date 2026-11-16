@@ -9,6 +9,7 @@ import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
 import type { Order } from "@/types";
 import { markAbandonedConverted } from "@/lib/db/abandoned-repo";
+import { applyCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
 import {
   beginOrder,
   consumeOrderRateLimit,
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
     let unitPrice: number;
     let totalAmount: number;
     let discountAmount = 0;
+    let offerFreeShipping = false;
 
     if (data.offer_id) {
       // An offer id must match one of this product's offers; price AND quantity come from the offer.
@@ -100,6 +102,7 @@ export async function POST(req: NextRequest) {
         );
       }
       quantity = offerQty;
+      offerFreeShipping = Boolean(selectedOffer.free_shipping);
       totalAmount = offerPrice;
       unitPrice = offerPrice / offerQty;
       const originalPrice = Number(selectedOffer.original_price);
@@ -120,7 +123,27 @@ export async function POST(req: NextRequest) {
       totalAmount = basePrice * quantity;
     }
 
-    const finalAmount = totalAmount; // Zero shipping added
+    // Minimum order, coupon and shipping fee: always decided here, never taken from the browser.
+    const commerceSettings = await dbStore.getSettings();
+    const shippingCfg = sanitizeShipping(commerceSettings.shipping_config);
+    if (shippingCfg.min_order > 0 && totalAmount < shippingCfg.min_order) {
+      return NextResponse.json(
+        { success: false, error: `أقل قيمة للطلب ${shippingCfg.min_order} ج.م` },
+        { status: 400 }
+      );
+    }
+    let couponApplied: { code: string; amount: number } | null = null;
+    if (data.coupon_code) {
+      const c = applyCoupon(sanitizeCoupons(commerceSettings.coupons), data.coupon_code, totalAmount);
+      if (!c.ok) {
+        return NextResponse.json({ success: false, error: c.reason || "الكوبون ده مش صحيح أو منتهي" }, { status: 400 });
+      }
+      couponApplied = { code: c.code as string, amount: c.discount };
+      discountAmount += c.discount;
+    }
+    const afterCoupon = totalAmount - (couponApplied?.amount || 0);
+    const shippingFee = computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping });
+    const finalAmount = afterCoupon + shippingFee;
 
     // 4. Resolve client IP and User-Agent for CAPI / rate limiting
     const clientIp = getOrderClientIp(req.headers);
@@ -199,7 +222,7 @@ export async function POST(req: NextRequest) {
         quantity,
         unit_price: unitPrice,
         total_amount: totalAmount,
-        shipping_fee: 0,
+        shipping_fee: shippingFee,
         discount_amount: discountAmount,
         final_amount: finalAmount,
         payment_method: data.payment_method,
@@ -215,6 +238,7 @@ export async function POST(req: NextRequest) {
           fbp: data.fbp || undefined,
           fbc: data.fbc || undefined,
           event_id: eventId,
+          ...(couponApplied ? { coupon: couponApplied } : {}),
           ...(manualMethod
             ? { payment: { method: manualMethod, reference: data.payment_reference || undefined, status: "awaiting" as const } }
             : {}),

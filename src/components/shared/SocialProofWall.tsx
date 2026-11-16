@@ -1,4 +1,8 @@
+"use client";
+
 import React from "react";
+import { useBrand } from "@/components/brand/BrandProvider";
+import { shippingHint } from "@/lib/commerce";
 import { Star, MapPin, BadgeCheck } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
 
@@ -30,7 +34,8 @@ export function SocialProofWall({ rating, reviewsCount, statements, governorates
   const showRating = typeof rating === "number" && rating > 0 && typeof reviewsCount === "number" && reviewsCount > 0;
   const safeRating = showRating ? Math.min(5, Math.max(0, rating as number)) : 0;
   const filledStars = Math.round(safeRating);
-  const stmts = statements && statements.length > 0 ? statements : DEFAULT_PROOF_STATEMENTS;
+  const hint = shippingHint(useBrand().commerce.shipping);
+  const stmts = statements && statements.length > 0 ? statements : DEFAULT_PROOF_STATEMENTS.map((t, i) => (i === 1 && !hint.free ? hint.text : t));
   const places = governorates && governorates.length > 0 ? governorates : DEFAULT_COVERAGE;
 
   return (

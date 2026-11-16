@@ -245,6 +245,7 @@ export interface OrderShipment {
 export interface OrderTrackingMeta {
   shipping?: OrderShipment;
   payment?: OrderPayment;
+  coupon?: { code: string; amount: number };
   id?: string;
   order_id?: string;
   utm_source?: string;
@@ -325,6 +326,11 @@ export interface SystemSettings {
   };
   // Customer reviews on the store home page: written by the merchant himself (none by default, section hidden)
   home_reviews?: { name: string; place?: string; comment: string; rating?: number }[];
+  // Shipping fee / minimum order / coupons / popup / downsell (see lib/commerce.ts)
+  shipping_config?: import("@/lib/commerce").ShippingConfig;
+  coupons?: import("@/lib/commerce").Coupon[];
+  popup?: import("@/lib/commerce").PopupConfig;
+  downsell?: import("@/lib/commerce").DownsellConfig;
   // Manual payment methods shown at checkout next to cash on delivery (numbers are public by design)
   payment_methods?: {
     vodafone_cash?: { enabled: boolean; number: string; holder?: string };
