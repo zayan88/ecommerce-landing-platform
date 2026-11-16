@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Loader2, CheckCircle2, AlertCircle, AlertTriangle, Megaphone, X, Plus, Trash2 } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, AlertTriangle, Megaphone, X, Plus, Trash2, Copy, Check, Rss } from "lucide-react";
 import {
   META_PIXEL_RE,
   TIKTOK_PIXEL_RE,
@@ -11,6 +11,13 @@ import {
   META_TEST_CODE_RE,
   MAX_PIXELS_PER_PLATFORM,
 } from "@/lib/tracking/tag-ids";
+
+interface FeedStatus {
+  urls: { xml: string; csv: string };
+  included: number;
+  skipped: { id: string; title: string; reason: string }[];
+  inactive: number;
+}
 
 interface CapiEntry {
   pixel_id: string;
@@ -100,8 +107,25 @@ export default function TrackingSettingsPage() {
   const [ga4, setGa4] = useState("");
   const [gtm, setGtm] = useState("");
   const [capi, setCapi] = useState<CapiEntry[]>([]);
+  const [feed, setFeed] = useState<FeedStatus | null>(null);
+  const [copied, setCopied] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/feed-status")
+      .then((r) => r.json())
+      .then((j) => j?.success && setFeed(j))
+      .catch(() => {});
+  }, []);
+
+  const copyUrl = async (key: string, url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(key);
+      setTimeout(() => setCopied(""), 2000);
+    } catch {}
+  };
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
@@ -303,6 +327,74 @@ export default function TrackingSettingsPage() {
               </button>
             ))}
           </div>
+        )}
+      </section>
+
+      <section className={card} aria-label="كتالوج المنتجات">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <Rss className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-black text-slate-950">كتالوج المنتجات (Product Feed)</h2>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              رابط بيعرض منتجاتك بشكل جاهز لفيسبوك وإنستجرام وتيك توك وجوجل (إعلانات الكتالوج والمتجر). بيتحدّث تلقائيًا مع منتجاتك، ومفيهوش سعر التكلفة ولا بيانات الموردين.
+            </p>
+          </div>
+        </div>
+
+        {!feed ? (
+          <p className="text-sm text-slate-500">جاري تحميل الرابط...</p>
+        ) : (
+          <>
+            {([
+              ["xml", "رابط الفيد (XML) — الأنسب لفيسبوك وتيك توك وجوجل", feed.urls.xml],
+              ["csv", "نفس البيانات CSV", feed.urls.csv],
+            ] as const).map(([key, label, url]) => (
+              <div key={key}>
+                <label className="block text-sm font-black text-slate-900 mb-1.5">{label}</label>
+                <div className="flex items-center gap-2">
+                  <input readOnly dir="ltr" className={input} value={url} onFocus={(e) => e.currentTarget.select()} />
+                  <button
+                    type="button"
+                    onClick={() => copyUrl(key, url)}
+                    aria-label="نسخ الرابط"
+                    className="min-h-[48px] px-4 rounded-xl border border-slate-300 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer shrink-0"
+                  >
+                    {copied === key ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    {copied === key ? "تم" : "نسخ"}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <p className="text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+              {feed.included} منتج داخل الفيد{feed.inactive > 0 ? ` (${feed.inactive} منتج متوقف مش بيظهر)` : ""}
+            </p>
+
+            {feed.skipped.length > 0 && (
+              <div role="note" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 leading-relaxed">
+                <p className="font-black mb-1">منتجات ناقصة وخارج الفيد:</p>
+                <ul className="space-y-0.5">
+                  {feed.skipped.map((sk) => (
+                    <li key={sk.id}>
+                      • {sk.title || sk.id} — {sk.reason === "no_image" ? "بدون صورة" : sk.reason === "no_price" ? "بدون سعر" : sk.reason}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <details className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-xs text-slate-700 leading-relaxed">
+              <summary className="cursor-pointer font-black text-slate-900 min-h-[36px] flex items-center">إزاي أربطه؟</summary>
+              <ul className="mt-2 space-y-1.5 list-disc pr-4">
+                <li><strong>فيسبوك / إنستجرام:</strong> Commerce Manager ← Catalog ← Data sources ← Add items ← Data feed ← Scheduled feed، الصق رابط الـ XML واختار تحديث يومي.</li>
+                <li><strong>تيك توك:</strong> TikTok Ads Manager ← Assets ← Catalog ← إضافة منتجات عبر رابط (Scheduled).</li>
+                <li><strong>جوجل:</strong> Merchant Center ← Products ← Feeds ← New feed ← Scheduled fetch.</li>
+                <li>الأسعار بالجنيه المصري (EGP). لو منتج مش ظاهر، راجع القائمة الصفرا فوق (صورة أو سعر ناقص).</li>
+              </ul>
+            </details>
+          </>
         )}
       </section>
 
