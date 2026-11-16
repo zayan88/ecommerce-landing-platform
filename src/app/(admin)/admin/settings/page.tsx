@@ -2,19 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, LayoutTemplate, Store } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { PALETTE_KEYS } from "@/lib/palettes";
 import { PaletteSwatches } from "@/components/admin/PaletteSwatches";
 import { ImageUploader } from "@/components/admin/ImageUploader";
-
-type Mode = "landing" | "catalog";
 
 interface BrandForm {
   store_name: string;
   store_tagline: string;
   logo_url: string;
   favicon_url: string;
-  store_mode: Mode;
   brand_primary: string;
   brand_accent: string;
   support_phone: string;
@@ -29,7 +26,6 @@ const EMPTY: BrandForm = {
   store_tagline: "",
   logo_url: "",
   favicon_url: "",
-  store_mode: "landing",
   brand_primary: "emerald",
   brand_accent: "orange",
   support_phone: "",
@@ -71,7 +67,6 @@ export default function BrandPage() {
           store_tagline: s.store_tagline || "",
           logo_url: s.logo_url || "",
           favicon_url: s.favicon_url || "",
-          store_mode: s.store_mode === "catalog" ? "catalog" : "landing",
           brand_primary: PALETTE_KEYS.includes(s.brand_primary) ? s.brand_primary : "emerald",
           brand_accent: PALETTE_KEYS.includes(s.brand_accent) ? s.brand_accent : "orange",
           support_phone: s.support_phone || "",
@@ -125,34 +120,6 @@ export default function BrandPage() {
 
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-6">
         <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3">إعدادات المتجر</h2>
-
-        <Field label="شكل المتجر" hint="تقدر تغيّره في أي وقت. المنتجات والطلبات بتفضل زي ما هي.">
-          <div className="grid sm:grid-cols-2 gap-3" role="radiogroup">
-            {(
-              [
-                { id: "landing", title: "صفحات هبوط", desc: "كل منتج له صفحة هبوط كاملة تساعد على البيع.", Icon: LayoutTemplate },
-                { id: "catalog", title: "متجر عادي", desc: "صفحة رئيسية بكل المنتجات وصفحة منتج بسيطة.", Icon: Store },
-              ] as const
-            ).map(({ id, title, desc, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                role="radio"
-                aria-checked={form.store_mode === id}
-                onClick={() => set("store_mode", id)}
-                className={`text-right rounded-2xl border-2 p-4 min-h-[88px] transition flex gap-3 items-start cursor-pointer ${
-                  form.store_mode === id ? "border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/30" : "border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                <Icon className="w-6 h-6 shrink-0 text-orange-600 mt-0.5" />
-                <span>
-                  <span className="block font-black text-slate-900">{title}</span>
-                  <span className="block text-xs text-slate-600 leading-relaxed mt-1">{desc}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </Field>
 
         <Field label="اسم المتجر">
           <input className={inputCls} value={form.store_name} onChange={(e) => set("store_name", e.target.value)} placeholder="مثال: متجر النور" maxLength={80} />

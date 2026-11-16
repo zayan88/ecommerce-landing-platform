@@ -56,9 +56,7 @@ export async function POST(req: NextRequest) {
     // Brand fields: whitelist + sanitize (never trust the client)
     if ("brand_primary" in toUpdate && !isThemeColor(toUpdate.brand_primary)) delete toUpdate.brand_primary;
     if ("brand_accent" in toUpdate && !isThemeColor(toUpdate.brand_accent)) delete toUpdate.brand_accent;
-    if ("store_mode" in toUpdate && toUpdate.store_mode !== "landing" && toUpdate.store_mode !== "catalog") {
-      delete toUpdate.store_mode;
-    }
+delete (toUpdate as Record<string, unknown>).store_mode;
     for (const f of ["logo_url", "favicon_url", "site_domain"] as const) {
       if (f in toUpdate) {
         const v = typeof toUpdate[f] === "string" ? toUpdate[f].trim() : "";

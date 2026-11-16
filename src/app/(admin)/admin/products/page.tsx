@@ -208,7 +208,7 @@ export default function AdminProductsPage() {
       if (data.success) {
         setIsModalOpen(false);
         // New product in landing-page mode: go straight to the live editor of its page.
-        if (!editingProduct && data.landing_page_id && brand.store_mode !== "catalog") {
+        if (!editingProduct && data.landing_page_id) {
           router.push(`/admin/landing-pages/${data.landing_page_id}/edit`);
           return;
         }

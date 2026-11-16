@@ -11,7 +11,6 @@ import { PauseCircle, PackageX } from "lucide-react";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 import { getBrand } from "@/lib/brand";
 import { CHAT_ENABLED } from "@/lib/features";
-import { SimpleProductPage } from "@/components/store/SimpleProductPage";
 import { absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
 
 export const runtime = "edge";
@@ -87,26 +86,6 @@ export default async function DynamicLandingPage({ params }: PageProps) {
           </div>
         </div>
       </div>
-    );
-  }
-
-  // Regular-store mode: render the simple product page instead of the sales-funnel landing page
-  if ((await getBrand()).store_mode === "catalog") {
-    const settingsC = await dbStore.getSettings();
-    const pixelC = landingPage.meta_pixel_id || settingsC.default_meta_pixel_id;
-    const prodC: any = { ...landingPage.product };
-    for (const f of ["cost_price", "safka_product_id", "safka_property_id", "safka_commission", "safka_raw"]) {
-      delete prodC[f];
-    }
-    const lpC: any = { ...landingPage, product: prodC };
-    delete lpC.meta_capi_token;
-    return (
-      <>
-        <MetaPixel pixelIds={landingPage.meta_pixel_id ? [landingPage.meta_pixel_id] : effectiveMetaPixelIds(settingsC)} />
-        <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settingsC)} snapPixelIds={effectiveSnapPixelIds(settingsC)} ga4Id={settingsC.ga4_measurement_id} gtmId={settingsC.gtm_container_id} />
-        <SimpleProductPage product={prodC} landingPage={lpC} />
-        {CHAT_ENABLED && <FloatingSalesAgent currentProduct={prodC} />}
-      </>
     );
   }
 

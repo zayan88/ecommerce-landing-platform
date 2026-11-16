@@ -3,7 +3,6 @@ import Link from "next/link";
 import { dbStore } from "@/lib/db/store";
 import { getBrand } from "@/lib/brand";
 import { CHAT_ENABLED } from "@/lib/features";
-import { CatalogHome } from "@/components/store/CatalogHome";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
 import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
@@ -34,10 +33,7 @@ import { Metadata } from "next";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 import { HeroSupportButton } from "@/components/chat/HeroSupportButton";
 
-/** The long marketing home below is the owner's demo/portfolio page: shown only when DEMO_MODE=1 in landing mode. */
-const DEMO_HOME = (process.env.DEMO_MODE || "").trim() === "1";
-
-function demoMetadata(name: string): Metadata {
+function homeMetadata(name: string): Metadata {
   return {
     title: `${name} - متجرك الأول للمنتجات الذكية والعصرية في مصر`,
     description: `تسوق أحدث المنتجات مع ${name} في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن لجميع المحافظات.`,
@@ -51,23 +47,12 @@ function demoMetadata(name: string): Metadata {
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrand();
-  if (brand.store_mode !== "catalog" && DEMO_HOME) return demoMetadata(brand.store_name);
-  const title = brand.tagline ? `${brand.store_name} - ${brand.tagline}` : brand.store_name;
-  const description = "منتجات بشحن مجاني لكل المحافظات، والدفع عند الاستلام بعد المعاينة.";
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: "website", siteName: brand.store_name },
-  };
+  return homeMetadata(brand.store_name);
 }
 
-export default async function HomePage({ searchParams }: { searchParams?: { q?: string | string[] } }) {
-  const brandMode = await getBrand();
-  const brandName = brandMode.store_name;
-  if (brandMode.store_mode === "catalog" || !DEMO_HOME) {
-    const q = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
-    return <CatalogHome q={q} />;
-  }
+export default async function HomePage() {
+  const brand = await getBrand();
+  const brandName = brand.store_name;
   const products = await dbStore.getProducts();
   const landingPages = await dbStore.getLandingPages();
   const settings = await dbStore.getSettings();
@@ -107,7 +92,12 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-slate-950 to-indigo-900 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-105 transition">
-              R
+              {brand.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={brand.logo_url} alt={brandName} className="w-full h-full p-1 object-contain rounded-xl bg-white" />
+              ) : (
+                (brandName || "M").trim().charAt(0).toUpperCase()
+              )}
             </div>
             <div>
               <span className="text-2xl font-black font-heading text-slate-900 tracking-tight block">
@@ -126,9 +116,6 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
             </a>
             <a href="#features" className="hover:text-orange-600 transition">
               مميزات التسوق
-            </a>
-            <a href="#reviews" className="hover:text-orange-600 transition">
-              آراء العملاء
             </a>
             <a href="#faq" className="hover:text-orange-600 transition">
               الأسئلة الشائعة
@@ -189,7 +176,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                 className="w-full sm:w-auto py-4 px-8 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-extrabold text-base shadow-xl shadow-orange-500/25 hover:shadow-orange-500/35 active:scale-98 transition flex items-center justify-center gap-2"
               >
                 <ShoppingBag className="w-5 h-5" />
-                <span>شاهد المنتجات الحصرية (خصومات حتى 50%)</span>
+                <span>شاهد منتجاتنا وعروضنا</span>
               </a>
 
               <HeroSupportButton />
@@ -232,7 +219,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                   <Headphones className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-slate-900">خدمة عملاء 24/7</h4>
+                  <h4 className="text-xs font-black text-slate-900">خدمة عملاء بتتابع معاك</h4>
                   <p className="text-[11px] text-gray-500">متابعة هاتفية وتأكيد فوري</p>
                 </div>
               </div>
@@ -282,10 +269,6 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                   </span>
                 </div>
 
-                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-1 shadow-sm">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span>4.9 (تقييمات ممتازة)</span>
-                </div>
               </div>
 
               {/* Product Info */}
@@ -347,7 +330,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
               ضمانات {brandName} الذهبية
             </span>
             <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
-              لماذا يثق بنا آلاف العملاء في مصر؟
+              لماذا تثق بنا؟
             </h2>
             <p className="text-sm text-gray-600">
               تسوق وأنت مطمئن البال بنسبة 100%. نظامنا مبني بالكامل لحماية حق المشتري.
@@ -455,7 +438,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
                 </li>
                 <li className="flex items-start gap-2.5 font-bold">
                   <span className="text-orange-600">✓</span>
-                  <span>ضمان استبدال واسترجاع حقيقي لمدة 14 يوماً مع دعم فني متواصل 24/7.</span>
+                  <span>ضمان استبدال واسترجاع لمدة 14 يوماً مع دعم فني.</span>
                 </li>
                 <li className="flex items-start gap-2.5 font-bold">
                   <span className="text-orange-600">✓</span>
@@ -537,84 +520,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
             <span>•</span>
             <span>✓ معاينة كاملة قبل الدفع</span>
             <span>•</span>
-            <span>✓ دعم فني متواصل 24/7</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Customer Reviews Section */}
-      <section id="reviews" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <span className="text-xs font-black text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-            تجارب حقيقية موثقة
-          </span>
-          <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
-            ماذا يقول عملاؤنا بعد التجربة؟
-          </h2>
-          <p className="text-sm text-gray-600">
-            آراء عملاء حقيقيين استلموا وعاينوا طلباتهم من {brandName} في مختلف المحافظات.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
-            <div className="flex items-center gap-1 text-amber-400">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-amber-400" />
-              ))}
-            </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              "المنتج ممتاز والخامات قوية جداً وتستاهل كل مليم. الأهم إن المندوب استنى لما فتحت الكرتونة واتأكدت بنفسي قبل ما أدفع. شكراً {brandName} على الاحترام والأمانة."
-            </p>
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-sm text-slate-900 block">أحمد الشناوي</span>
-                <span className="text-xs text-gray-500">القاهرة - التجمع الخامس</span>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">
-                مشتري موثق ✓
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
-            <div className="flex items-center gap-1 text-amber-400">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-amber-400" />
-              ))}
-            </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              "الطلب وصلني في ميعاده والتغليف محكم والمنتج شغال بكفاءة عالية جداً، والمندوب كان محترم وانتظرني لما عاينت كل حاجة بنفسي."
-            </p>
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-sm text-slate-900 block">هبة محمود</span>
-                <span className="text-xs text-gray-500">الإسكندرية - سموحة</span>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">
-                مشتري موثق ✓
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
-            <div className="flex items-center gap-1 text-amber-400">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-amber-400" />
-              ))}
-            </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              "خدمة العملاء محترمة جداً، كلموني أكدوا معايا الأوردر وتابعوا معايا لحد ما استلمت. منتجات نضيفة وأسعار أوفر كتير من المحلات."
-            </p>
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-sm text-slate-900 block">طارق فهمي</span>
-                <span className="text-xs text-gray-500">الجيزة - الدقي</span>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 font-bold text-[10px]">
-                مشتري موثق ✓
-              </span>
-            </div>
+            <span>✓ دعم فني</span>
           </div>
         </div>
       </section>
@@ -681,7 +587,12 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 font-black text-xl flex items-center justify-center">
-                R
+                {brand.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={brand.logo_url} alt={brandName} className="w-full h-full p-1 object-contain rounded-xl bg-white" />
+              ) : (
+                (brandName || "M").trim().charAt(0).toUpperCase()
+              )}
               </div>
               <div>
                 <span className="font-black font-heading text-xl text-white">{brandName}</span>

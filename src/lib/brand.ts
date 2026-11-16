@@ -21,7 +21,6 @@ export interface Brand {
   site_domain: string;
   currency: string;
   /** landing = each product has its own landing page; catalog = regular store home listing all products. */
-  store_mode: "landing" | "catalog";
 }
 
 export const BRAND_DEFAULTS: Brand = {
@@ -36,7 +35,6 @@ export const BRAND_DEFAULTS: Brand = {
   support_email: "",
   site_domain: "",
   currency: "ج.م",
-  store_mode: "landing",
 };
 
 /** Subset that is safe to send to the browser (no secrets live in Brand, but keep the intent explicit). */
@@ -69,10 +67,8 @@ export const getBrand = cache(async (): Promise<Brand> => {
     email: (process.env.SUPPORT_EMAIL || "").trim(),
     siteUrl: (process.env.SITE_URL || "").trim(),
     appUrl: (process.env.NEXT_PUBLIC_APP_URL || "").trim(),
-    mode: (process.env.STORE_MODE || "").trim(),
   };
   const logo = (s.logo_url || env.logo) as string;
-  const mode = s.store_mode || env.mode;
   const primary = s.brand_primary || env.primary;
   const accent = s.brand_accent || env.accent;
   return {
@@ -87,6 +83,5 @@ export const getBrand = cache(async (): Promise<Brand> => {
     support_email: (s.support_email || env.email).trim().slice(0, 120),
     site_domain: cleanUrl(s.site_domain) || cleanUrl(env.siteUrl) || cleanUrl(env.appUrl),
     currency: (s.currency_symbol || BRAND_DEFAULTS.currency).trim(),
-    store_mode: mode === "catalog" ? "catalog" : "landing",
   };
 });

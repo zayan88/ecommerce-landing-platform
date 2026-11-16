@@ -371,7 +371,7 @@ await test("public vs admin shapes: visitors never get cost / supplier fields; p
   }
   assert.equal(middleware(request("/api/products")).status, 200, "the public product list stays public");
   const pageSource = fs.readFileSync(path.join(src, "app/(landing)/p/[slug]/page.tsx"), "utf8");
-  assert.equal((pageSource.match(/delete \w+\.meta_capi_token/g) || []).length >= 2, true, "the public page strips the token before rendering");
+  assert.equal((pageSource.match(/delete \w+\.meta_capi_token/g) || []).length >= 1, true, "the public page strips the token before rendering");
 });
 
 await test("same shapes on both backends: a product and its page saved on kv and on d1 read back identically", async () => {

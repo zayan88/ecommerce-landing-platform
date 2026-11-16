@@ -292,7 +292,6 @@ export interface SystemSettings {
   brand_accent?: string; // PaletteKey: buy-button color (orange-*)
   site_domain?: string; // https://shop.example.com
   currency_symbol?: string;
-  store_mode?: "landing" | "catalog"; // landing = one landing page per product; catalog = regular store home with all products
   onboarding_done?: boolean;
   // Catalog-mode home page content (all optional; defaults in lib/home-config.ts)
   home_config?: {
