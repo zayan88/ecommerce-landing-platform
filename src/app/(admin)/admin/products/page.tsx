@@ -24,6 +24,7 @@ import {
   RefreshCw,
   Eye,
   ArrowRight,
+  ChevronDown,
 } from "lucide-react";
 
 export default function AdminProductsPage() {
@@ -52,6 +53,7 @@ export default function AdminProductsPage() {
   const [images, setImages] = useState<string[]>([]);
   const [descriptionAr, setDescriptionAr] = useState("");
   const [productActive, setProductActive] = useState(true);
+  const [upsellOpen, setUpsellOpen] = useState(false);
   // Quantity tiers. Until the merchant touches them they follow the price (defaults).
   const [offers, setOffers] = useState<ProductOffer[]>([]);
   const [offersTouched, setOffersTouched] = useState(false);
@@ -101,6 +103,7 @@ export default function AdminProductsPage() {
     setProductActive(true);
     setOffers([]);
     setOffersTouched(false);
+    setUpsellOpen(false);
     setIsModalOpen(true);
   };
 
@@ -119,6 +122,7 @@ export default function AdminProductsPage() {
     const saved = prod.offers && prod.offers.length > 0;
     setOffers(saved ? JSON.parse(JSON.stringify(prod.offers)) : []);
     setOffersTouched(!!saved);
+    setUpsellOpen(false);
     setIsModalOpen(true);
   };
 
@@ -668,14 +672,21 @@ export default function AdminProductsPage() {
                 </section>
 
                 <section className={cardCls}>
-                  <div>
-                    <h3 className={cardTitle}>عروض الكمية (Upsell)</h3>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      {offersTouched
-                        ? "العروض دي بتظهر في صفحة المنتج. تقدر تقفلها من محرر صفحة الهبوط."
-                        : "عروض تلقائية متبنية من سعر البيع. عدّل أي رقم وهتتثبّت على المنتج."}
-                    </p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setUpsellOpen((v) => !v)}
+                    aria-expanded={upsellOpen}
+                    className="w-full flex items-center justify-between gap-3 text-right cursor-pointer"
+                  >
+                    <span>
+                      <span className={cardTitle + " block"}>عروض الكمية (Upsell)</span>
+                      <span className="block text-xs text-slate-500 mt-1 leading-relaxed">
+                        {effectiveOffers.length} عروض · {offersTouched ? "معدّلة" : "تلقائية من سعر البيع"} — اضغط للعرض والتعديل
+                      </span>
+                    </span>
+                    <ChevronDown className={`w-5 h-5 text-slate-500 shrink-0 transition-transform ${upsellOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {upsellOpen && (
                   <OffersPanel
                     offers={effectiveOffers}
                     currency={brand.currency}
@@ -689,6 +700,7 @@ export default function AdminProductsPage() {
                       setOffersTouched(false);
                     }}
                   />
+                  )}
                 </section>
               </div>
 
