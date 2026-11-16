@@ -301,6 +301,8 @@ export interface SystemSettings {
     hero_subtitle?: string;
     hero_cta?: string;
   };
+  // Customer reviews on the store home page: written by the merchant himself (none by default, section hidden)
+  home_reviews?: { name: string; place?: string; comment: string; rating?: number }[];
   // Optional Safka (Egyptian dropshipping) module
   safka_enabled?: boolean;
   safka_page_id?: string;

@@ -57,6 +57,7 @@ export default async function HomePage() {
   const landingPages = await dbStore.getLandingPages();
   const settings = await dbStore.getSettings();
   const pixelId = settings.default_meta_pixel_id || "";
+  const reviews = Array.isArray(settings.home_reviews) ? settings.home_reviews : [];
 
   // Map each product to its landing page slug
   const productCards = products
@@ -524,6 +525,31 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Customer reviews: written by the merchant in Settings; the section is hidden when there are none */}
+      {reviews.length > 0 && (
+        <section id="reviews" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-3 mb-12">
+            <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">ماذا يقول عملاؤنا؟</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {reviews.map((r, i) => (
+              <div key={i} className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
+                <div className="flex items-center gap-1 text-amber-400" aria-label={`${r.rating || 5} من 5`}>
+                  {[...Array(5)].map((_, k) => (
+                    <Star key={k} className={`w-4 h-4 ${k < (r.rating || 5) ? "fill-amber-400" : "text-slate-300"}`} />
+                  ))}
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">"{r.comment}"</p>
+                <div className="pt-4 border-t border-gray-100">
+                  <span className="font-bold text-sm text-slate-900 block">{r.name}</span>
+                  {r.place && <span className="text-xs text-gray-500">{r.place}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* FAQ Section */}
       <section id="faq" className="py-20 bg-white border-t border-gray-200">

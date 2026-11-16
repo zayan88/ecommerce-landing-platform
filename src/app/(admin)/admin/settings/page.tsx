@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Plus, Trash2 } from "lucide-react";
 import { PALETTE_KEYS } from "@/lib/palettes";
 import { PaletteSwatches } from "@/components/admin/PaletteSwatches";
 import { ImageUploader } from "@/components/admin/ImageUploader";
@@ -19,6 +19,7 @@ interface BrandForm {
   support_email: string;
   site_domain: string;
   currency_symbol: string;
+  home_reviews: { name: string; place: string; comment: string; rating: number }[];
 }
 
 const EMPTY: BrandForm = {
@@ -33,6 +34,7 @@ const EMPTY: BrandForm = {
   support_email: "",
   site_domain: "",
   currency_symbol: "ج.م",
+  home_reviews: [],
 };
 
 const CURRENCIES = ["ج.م", "ر.س", "د.إ", "د.ك", "د.ب", "ر.ع", "ر.ق", "د.أ", "$"];
@@ -74,6 +76,9 @@ export default function BrandPage() {
           support_email: s.support_email || "",
           site_domain: s.site_domain || "",
           currency_symbol: s.currency_symbol || "ج.م",
+          home_reviews: Array.isArray(s.home_reviews)
+            ? s.home_reviews.map((r: any) => ({ name: r.name || "", place: r.place || "", comment: r.comment || "", rating: Number(r.rating) || 5 }))
+            : [],
         });
       })
       .catch(() => setMessage({ ok: false, text: "تعذر تحميل الإعدادات" }))
@@ -176,6 +181,73 @@ export default function BrandPage() {
         <Field label="رابط المتجر" hint="دومين متجرك بعد الربط، مثال: https://yourstore.com">
           <input className={inputCls} dir="ltr" value={form.site_domain} onChange={(e) => set("site_domain", e.target.value)} placeholder="https://yourstore.com" />
         </Field>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-4">
+        <div>
+          <h2 className="text-lg font-black text-slate-900">آراء العملاء في الصفحة الرئيسية</h2>
+          <p className="text-xs text-slate-500 leading-relaxed mt-1">
+            اكتب آراء عملائك الحقيقية بس. القسم بيظهر في الصفحة الرئيسية لو فيه رأي واحد على الأقل، ولو مفيش بيختفي.
+          </p>
+        </div>
+        {form.home_reviews.map((r, i) => (
+          <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
+            <div className="grid sm:grid-cols-2 gap-2.5">
+              <input
+                className={inputCls}
+                placeholder="اسم العميل"
+                maxLength={60}
+                value={r.name}
+                onChange={(e) => set("home_reviews", form.home_reviews.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)))}
+              />
+              <input
+                className={inputCls}
+                placeholder="المحافظة أو المنطقة (اختياري)"
+                maxLength={60}
+                value={r.place}
+                onChange={(e) => set("home_reviews", form.home_reviews.map((x, k) => (k === i ? { ...x, place: e.target.value } : x)))}
+              />
+            </div>
+            <textarea
+              className={inputCls + " leading-relaxed"}
+              rows={3}
+              maxLength={400}
+              placeholder="رأي العميل"
+              value={r.comment}
+              onChange={(e) => set("home_reviews", form.home_reviews.map((x, k) => (k === i ? { ...x, comment: e.target.value } : x)))}
+            />
+            <div className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                التقييم
+                <select
+                  className="h-11 px-2 rounded-xl border border-slate-300 bg-white text-sm"
+                  value={r.rating}
+                  onChange={(e) => set("home_reviews", form.home_reviews.map((x, k) => (k === i ? { ...x, rating: Number(e.target.value) } : x)))}
+                >
+                  {[5, 4, 3, 2, 1].map((n) => (
+                    <option key={n} value={n}>{n} من 5</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={() => set("home_reviews", form.home_reviews.filter((_, k) => k !== i))}
+                className="min-h-[44px] px-3 rounded-xl text-rose-600 hover:bg-rose-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" /> حذف
+              </button>
+            </div>
+          </div>
+        ))}
+        {form.home_reviews.length < 6 && (
+          <button
+            type="button"
+            onClick={() => set("home_reviews", [...form.home_reviews, { name: "", place: "", comment: "", rating: 5 }])}
+            className="min-h-[48px] w-full rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> إضافة رأي
+          </button>
+        )}
       </div>
 
       {message && (

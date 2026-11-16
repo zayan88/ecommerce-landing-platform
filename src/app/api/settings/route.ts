@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     // Brand fields: whitelist + sanitize (never trust the client)
     if ("brand_primary" in toUpdate && !isThemeColor(toUpdate.brand_primary)) delete toUpdate.brand_primary;
     if ("brand_accent" in toUpdate && !isThemeColor(toUpdate.brand_accent)) delete toUpdate.brand_accent;
-delete (toUpdate as Record<string, unknown>).store_mode;
+    delete (toUpdate as Record<string, unknown>).store_mode;
     for (const f of ["logo_url", "favicon_url", "site_domain"] as const) {
       if (f in toUpdate) {
         const v = typeof toUpdate[f] === "string" ? toUpdate[f].trim() : "";
@@ -144,6 +144,19 @@ delete (toUpdate as Record<string, unknown>).store_mode;
         }
         toUpdate.home_config = clean;
       }
+    }
+    if ("home_reviews" in toUpdate) {
+      const list = Array.isArray(toUpdate.home_reviews) ? toUpdate.home_reviews : [];
+      const clean = [];
+      for (const r of list.slice(0, 6)) {
+        const name = typeof r?.name === "string" ? r.name.trim().slice(0, 60) : "";
+        const comment = typeof r?.comment === "string" ? r.comment.trim().slice(0, 400) : "";
+        if (!name || !comment) continue;
+        const place = typeof r?.place === "string" ? r.place.trim().slice(0, 60) : "";
+        const rating = Math.min(5, Math.max(1, Math.round(Number(r?.rating) || 5)));
+        clean.push({ name, comment, rating, ...(place ? { place } : {}) });
+      }
+      toUpdate.home_reviews = clean;
     }
     for (const f of SECRET_FIELDS) {
       if (typeof toUpdate[f] === "string" && toUpdate[f].includes("...")) {
