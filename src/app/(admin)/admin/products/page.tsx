@@ -1,10 +1,11 @@
 "use client";
 
+import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
 import OffersPanel from "@/components/editor/OffersPanel";
-import { buildDefaultOffers, sanitizeOffers } from "@/lib/offers";
+import { buildDefaultOffers, sanitizeOffers, singleBaseOffer } from "@/lib/offers";
 import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
 import TablePagination from "@/components/admin/TablePagination";
 import { Product, ProductOffer } from "@/types";
@@ -29,6 +30,7 @@ import {
 
 export default function AdminProductsPage() {
   const router = useRouter();
+  const confirmAsk = useConfirm();
   const brand = useBrand();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +39,8 @@ export default function AdminProductsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,6 +58,9 @@ export default function AdminProductsPage() {
   const [descriptionAr, setDescriptionAr] = useState("");
   const [productActive, setProductActive] = useState(true);
   const [upsellOpen, setUpsellOpen] = useState(false);
+  // Questions & answers the store chat uses on this product's page (stored in settings.chat_products[id])
+  const [chatFaq, setChatFaq] = useState<{ q: string; keywords: string; answer: string }[]>([]);
+  const [allChatFaq, setAllChatFaq] = useState<Record<string, any[]>>({});
   // Quantity tiers. Until the merchant touches them they follow the price (defaults).
   const [offers, setOffers] = useState<ProductOffer[]>([]);
   const [offersTouched, setOffersTouched] = useState(false);
@@ -104,11 +111,26 @@ export default function AdminProductsPage() {
     setOffers([]);
     setOffersTouched(false);
     setUpsellOpen(false);
+    setChatFaq([]);
+    loadChatFaq();
     setIsModalOpen(true);
+  };
+
+  const loadChatFaq = async () => {
+    try {
+      const j = await (await fetch("/api/settings")).json();
+      const all = (j?.settings?.chat_products || {}) as Record<string, any[]>;
+      setAllChatFaq(all);
+      return all;
+    } catch {
+      return {} as Record<string, any[]>;
+    }
   };
 
   const openEditModal = (prod: Product) => {
     setEditingProduct(prod);
+    setChatFaq([]);
+    loadChatFaq().then((all) => setChatFaq((all[prod.id] || []).map((x: any) => ({ q: x.q, keywords: (x.keywords || []).join("، "), answer: x.answer }))));
     setTitleAr(prod.title_ar || "");
     setSlug(prod.slug || "");
     setSku(prod.sku || "");
@@ -127,10 +149,7 @@ export default function AdminProductsPage() {
   };
 
   const handleDeleteProduct = async (prod: Product) => {
-    const confirmDelete = window.confirm(
-      `هل أنت متأكد من حذف المنتج "${prod.title_ar}"؟\nسيتم حذف المنتج وصفحة الهبوط المرتبطة به فوراً.`
-    );
-    if (!confirmDelete) return;
+    if (!await confirmAsk({ title: "حذف المنتج", message: `هتحذف المنتج "${prod.title_ar}" وصفحة الهبوط المرتبطة بيه. مش هتقدر ترجّعهم.` })) return;
 
     setDeletingId(prod.id);
     try {
@@ -167,7 +186,7 @@ export default function AdminProductsPage() {
       const numStock = Number(stock) || 50;
 
       // Offers: what the merchant edited, or defaults derived from the price (see lib/offers.ts)
-      const finalOffers = sanitizeOffers(editingProduct?.id || "", effectiveOffers);
+      const finalOffers = effectiveOffers.length === 0 ? singleBaseOffer({ id: editingProduct?.id || "", base_price: Number(basePrice) || 0, compare_at_price: Number(comparePrice) || 0 }) : sanitizeOffers(editingProduct?.id || "", effectiveOffers);
       if (finalOffers.some((o) => !(o.price > 0))) {
         alert("سعر كل عرض لازم يكون أكبر من صفر");
         setIsSubmitting(false);
@@ -206,6 +225,13 @@ export default function AdminProductsPage() {
 
       const data = await res.json();
       if (data.success) {
+        const pid = data.product?.id || editingProduct?.id;
+        if (pid) {
+          const next = { ...allChatFaq };
+          if (chatFaq.some((f) => f.q.trim() && f.answer.trim())) next[pid] = chatFaq as any;
+          else delete next[pid];
+          fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_products: next }) }).catch(() => {});
+        }
         setIsModalOpen(false);
         // New product in landing-page mode: go straight to the live editor of its page.
         if (!editingProduct && data.landing_page_id) {
@@ -280,6 +306,53 @@ export default function AdminProductsPage() {
       setTimeout(() => setAlertMessage(null), 4000);
     } finally {
       setDuplicatingId(null);
+    }
+  };
+
+  const toggleOne = (id: string) => setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+  const flashMsg = (type: "success" | "error", text: string) => {
+    setAlertMessage({ type, text });
+    setTimeout(() => setAlertMessage(null), 4000);
+  };
+
+  const bulkDelete = async () => {
+    if (selected.length === 0 || bulkBusy) return;
+    if (!await confirmAsk({ title: "مسح المنتجات", message: `هتمسح ${selected.length} منتج مع صفحات الهبوط بتاعتهم. مش هتقدر ترجّعهم.` })) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/products", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selected }),
+      });
+      const j = await res.json();
+      if (j.success) {
+        setProducts((prev) => prev.filter((x) => !selected.includes(x.id)));
+        setSelected([]);
+        flashMsg("success", `تم مسح ${j.deleted} منتج`);
+      } else flashMsg("error", j.error || "تعذر المسح");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const bulkStatus = async (status: "active" | "draft") => {
+    if (selected.length === 0 || bulkBusy) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selected, status }),
+      });
+      const j = await res.json();
+      if (j.success) {
+        setProducts((prev) => prev.map((x) => (selected.includes(x.id) ? { ...x, status } : x)));
+        setSelected([]);
+        flashMsg("success", status === "active" ? `اتفعّل ${j.updated} منتج` : `اتخبّى ${j.updated} منتج`);
+      } else flashMsg("error", j.error || "تعذر التحديث");
+    } finally {
+      setBulkBusy(false);
     }
   };
 
@@ -384,7 +457,7 @@ export default function AdminProductsPage() {
         type="button"
         onClick={() => handleDeleteProduct(prod)}
         disabled={deletingId === prod.id}
-        className="w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer disabled:opacity-40"
+        className="w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer disabled:opacity-40"
         title="حذف المنتج"
         aria-label="حذف المنتج"
       >
@@ -419,6 +492,12 @@ export default function AdminProductsPage() {
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <a
+            href="/admin/marketing/catalog"
+            className="hidden sm:inline-flex min-h-[44px] px-4 rounded-xl border border-slate-300 hover:bg-slate-100 text-sm font-bold text-slate-700 items-center cursor-pointer"
+          >
+            Product Feed
+          </a>
           <button
             onClick={fetchProducts}
             disabled={loading}
@@ -445,13 +524,13 @@ export default function AdminProductsPage() {
           className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-2.5 shadow-sm ${
             alertMessage.type === "success"
               ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-              : "bg-rose-50 border-rose-200 text-rose-900"
+              : "bg-red-50 border-red-200 text-red-900"
           }`}
         >
           {alertMessage.type === "success" ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
           )}
           <span>{alertMessage.text}</span>
         </div>
@@ -462,6 +541,20 @@ export default function AdminProductsPage() {
         {searchInput(searchQuery, setSearchQuery, "بحث باسم المنتج")}
         {searchInput(skuQuery, setSkuQuery, "بحث بكود المنتج (SKU)")}
       </div>
+
+      {selected.length > 0 && (
+        <div className="rounded-2xl bg-slate-900 text-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span className="text-sm font-bold">تم تحديد {selected.length} منتج</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => bulkStatus("active")} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer disabled:opacity-50">إظهار</button>
+            <button onClick={() => bulkStatus("draft")} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer disabled:opacity-50">إخفاء</button>
+            <button onClick={bulkDelete} disabled={bulkBusy} className="min-h-[40px] px-3 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+              <Trash2 className="w-4 h-4" /> {bulkBusy ? "جاري..." : "مسح المحدد"}
+            </button>
+            <button onClick={() => setSelected([])} className="min-h-[40px] px-3 rounded-lg hover:bg-white/10 text-xs font-bold cursor-pointer">إلغاء التحديد</button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
@@ -475,6 +568,19 @@ export default function AdminProductsPage() {
             <table className="w-full text-sm text-right">
               <thead className="bg-slate-50 text-xs font-bold text-slate-500 border-b border-slate-200">
                 <tr>
+                  <th className="px-4 py-3.5 w-10">
+                    <input
+                      type="checkbox"
+                      aria-label="تحديد كل منتجات الصفحة"
+                      checked={pagedProducts.length > 0 && pagedProducts.every((x) => selected.includes(x.id))}
+                      onChange={(e) =>
+                        setSelected((cur) =>
+                          e.target.checked ? Array.from(new Set([...cur, ...pagedProducts.map((x) => x.id)])) : cur.filter((id) => !pagedProducts.some((x) => x.id === id))
+                        )
+                      }
+                      className="w-4 h-4 cursor-pointer accent-orange-600"
+                    />
+                  </th>
                   <th className="px-5 py-3.5">المنتج</th>
                   <th className="px-4 py-3.5">الحالة</th>
                   <th className="px-4 py-3.5">المخزون</th>
@@ -485,7 +591,10 @@ export default function AdminProductsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pagedProducts.map((prod) => (
-                  <tr key={prod.id} className="h-16 hover:bg-orange-50/30 transition-colors">
+                  <tr key={prod.id} className={`h-16 hover:bg-orange-50/30 transition-colors ${selected.includes(prod.id) ? "bg-orange-50/50" : ""}`}>
+                    <td className="px-4 py-2">
+                      <input type="checkbox" aria-label="تحديد المنتج" checked={selected.includes(prod.id)} onChange={() => toggleOne(prod.id)} className="w-4 h-4 cursor-pointer accent-orange-600" />
+                    </td>
                     <td className="px-5 py-2">
                       <div className="flex items-center gap-3">
                         {thumb(prod)}
@@ -511,8 +620,9 @@ export default function AdminProductsPage() {
           {/* Mobile stacked rows */}
           <div className="lg:hidden space-y-3">
             {pagedProducts.map((prod) => (
-              <div key={prod.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3">
+              <div key={prod.id} className={`bg-white rounded-3xl border shadow-sm p-4 space-y-3 ${selected.includes(prod.id) ? "border-orange-400" : "border-slate-200"}`}>
                 <div className="flex items-center gap-3">
+                  <input type="checkbox" aria-label="تحديد المنتج" checked={selected.includes(prod.id)} onChange={() => toggleOne(prod.id)} className="w-5 h-5 cursor-pointer accent-orange-600 shrink-0" />
                   {thumb(prod)}
                   <div className="min-w-0 flex-1">
                     <div className="font-black text-slate-900 leading-snug">{prod.title_ar}</div>
@@ -701,6 +811,24 @@ export default function AdminProductsPage() {
                       setOffersTouched(false);
                     }}
                   />
+                  )}
+                </section>
+
+                <section className={cardCls}>
+                  <div>
+                    <h3 className={cardTitle}>أسئلة وأجوبة الشات للمنتج ده</h3>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">الشات في صفحة المنتج بيرد منها لوحده من غير أي مصاريف (اكتب الكلمات المفتاحية مفصولة بفاصلة)، وبيقترح على العميل يطلب.</p>
+                  </div>
+                  {chatFaq.map((f, i) => (
+                    <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
+                      <input className={inputCls} maxLength={80} placeholder="السؤال (مثال: بيشتغل بالبطارية؟)" value={f.q} onChange={(e) => setChatFaq((l) => l.map((x, k) => (k === i ? { ...x, q: e.target.value } : x)))} />
+                      <input className={inputCls} placeholder="كلمات مفتاحية: بطارية، شحن" value={f.keywords} onChange={(e) => setChatFaq((l) => l.map((x, k) => (k === i ? { ...x, keywords: e.target.value } : x)))} />
+                      <textarea className={inputCls + " py-3 leading-relaxed"} rows={2} maxLength={600} placeholder="الإجابة" value={f.answer} onChange={(e) => setChatFaq((l) => l.map((x, k) => (k === i ? { ...x, answer: e.target.value } : x)))} />
+                      <button type="button" onClick={async () => { if (await confirmAsk({ title: "حذف السؤال", message: "هتحذف السؤال ده وإجابته." })) setChatFaq((l) => l.filter((_, k) => k !== i)); }} className="min-h-[44px] px-3 rounded-xl text-red-600 hover:bg-red-50 text-sm font-bold cursor-pointer">حذف</button>
+                    </div>
+                  ))}
+                  {chatFaq.length < 15 && (
+                    <button type="button" onClick={() => setChatFaq((l) => [...l, { q: "", keywords: "", answer: "" }])} className="min-h-[48px] w-full rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 text-slate-700 font-bold text-sm cursor-pointer">+ إضافة سؤال</button>
                   )}
                 </section>
               </div>

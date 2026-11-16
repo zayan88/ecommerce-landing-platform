@@ -8,9 +8,9 @@ import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
 import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
 import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
-import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
 import { getBrand } from "@/lib/brand";
-import { CHAT_ENABLED } from "@/lib/features";
+import { ChatProduct } from "@/components/shared/StoreChat";
+import { sanitizeChatProducts } from "@/lib/chat";
 import { absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
 
 export const runtime = "edge";
@@ -125,10 +125,10 @@ export default async function DynamicLandingPage({ params }: PageProps) {
     <>
       <MetaPixel pixelIds={landingPage.meta_pixel_id ? [landingPage.meta_pixel_id] : effectiveMetaPixelIds(settings)} />
       <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settings)} snapPixelIds={effectiveSnapPixelIds(settings)} ga4Id={settings.ga4_measurement_id} gtmId={settings.gtm_container_id} />
+      <ChatProduct name={publicProduct.title_ar || landingPage.title} faq={sanitizeChatProducts((settings as any).chat_products)[publicProduct.id] || []} />
       <Component product={publicProduct} landingPage={publicLandingPage} />
 
       {/* Floating AI Sales Closer Chat Widget */}
-      {CHAT_ENABLED && <FloatingSalesAgent currentProduct={publicProduct} />}
     </>
   );
 }

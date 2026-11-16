@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../_components/confirm";
 import React, { useCallback, useEffect, useState } from "react";
 import { MessageCircle, Phone, Trash2, CheckCircle2, RefreshCw } from "lucide-react";
 
@@ -39,6 +40,7 @@ function timeAgo(ms: number): string {
 
 /** Visitors who typed their name + phone in the checkout but did not place the order. */
 export default function AbandonedList({ onCounts }: { onCounts?: (open: number) => void }) {
+  const confirmAsk = useConfirm();
   const [status, setStatus] = useState<"open" | "contacted" | "converted">("open");
   const [items, setItems] = useState<Item[]>([]);
   const [counts, setCounts] = useState<Counts>({ open: 0, contacted: 0, converted: 0 });
@@ -74,7 +76,7 @@ export default function AbandonedList({ onCounts }: { onCounts?: (open: number) 
     load();
   };
   const remove = async (id: string) => {
-    if (!confirm("حذف الطلب المتروك ده؟")) return;
+    if (!await confirmAsk({ title: "حذف الطلب المفقود", message: "هتحذف الطلب ده من القايمة." })) return;
     await fetch("/api/admin/abandoned", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -155,7 +157,7 @@ export default function AbandonedList({ onCounts }: { onCounts?: (open: number) 
                     <CheckCircle2 className="w-4 h-4" />
                   </button>
                 )}
-                <button type="button" onClick={() => remove(it.id)} aria-label="حذف" className="h-11 w-11 rounded-xl text-rose-500 hover:bg-rose-50 flex items-center justify-center cursor-pointer">
+                <button type="button" onClick={() => remove(it.id)} aria-label="حذف" className="h-11 w-11 rounded-xl text-red-500 hover:bg-red-50 flex items-center justify-center cursor-pointer">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>

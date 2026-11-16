@@ -93,7 +93,7 @@ export function StickyBuyBar({
         <button
           onClick={scrollToForm}
           tabIndex={visible ? 0 : -1}
-          className="flex-1 max-w-[210px] sm:max-w-[260px] min-h-[48px] py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/25 flex items-center justify-center gap-1.5 sm:gap-2 active:scale-95 transition cursor-pointer"
+          className="flex-1 max-w-[210px] sm:max-w-[260px] min-h-[48px] py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/25 flex items-center justify-center gap-1.5 sm:gap-2 active:scale-95 transition cursor-pointer"
         >
           <ShoppingBagIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           <span>{ctaText}</span>

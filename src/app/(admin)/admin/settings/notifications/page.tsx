@@ -262,13 +262,13 @@ export default function AdminNotificationsPage() {
                 className={`p-4 rounded-2xl text-xs font-bold flex items-start gap-2.5 ${
                   testResult.success
                     ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
-                    : "bg-rose-50 border border-rose-200 text-rose-900"
+                    : "bg-red-50 border border-red-200 text-red-900"
                 }`}
               >
                 {testResult.success ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
                 )}
                 <div>
                   <p>{testResult.message}</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Plus, Trash2 } from "lucide-react";
@@ -20,16 +21,6 @@ interface BrandForm {
   site_domain: string;
   currency_symbol: string;
   home_reviews: { name: string; place: string; comment: string; rating: number }[];
-  vodafone_enabled: boolean;
-  vodafone_number: string;
-  vodafone_holder: string;
-  instapay_enabled: boolean;
-  instapay_address: string;
-  instapay_holder: string;
-  shipping_provider: "none" | "bosta";
-  bosta_api_key: string;
-  bosta_location_id: string;
-  bosta_webhook_key: string;
 }
 
 const EMPTY: BrandForm = {
@@ -45,16 +36,6 @@ const EMPTY: BrandForm = {
   site_domain: "",
   currency_symbol: "ج.م",
   home_reviews: [],
-  vodafone_enabled: false,
-  vodafone_number: "",
-  vodafone_holder: "",
-  instapay_enabled: false,
-  instapay_address: "",
-  instapay_holder: "",
-  shipping_provider: "none",
-  bosta_api_key: "",
-  bosta_location_id: "",
-  bosta_webhook_key: "",
 };
 
 const CURRENCIES = ["ج.م", "ر.س", "د.إ", "د.ك", "د.ب", "ر.ع", "ر.ق", "د.أ", "$"];
@@ -73,6 +54,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 export default function BrandPage() {
+  const confirmAsk = useConfirm();
   const router = useRouter();
   const [form, setForm] = useState<BrandForm>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -96,16 +78,6 @@ export default function BrandPage() {
           support_email: s.support_email || "",
           site_domain: s.site_domain || "",
           currency_symbol: s.currency_symbol || "ج.م",
-          vodafone_enabled: Boolean(s.payment_methods?.vodafone_cash?.enabled),
-          vodafone_number: s.payment_methods?.vodafone_cash?.number || "",
-          vodafone_holder: s.payment_methods?.vodafone_cash?.holder || "",
-          instapay_enabled: Boolean(s.payment_methods?.instapay?.enabled),
-          instapay_address: s.payment_methods?.instapay?.address || "",
-          instapay_holder: s.payment_methods?.instapay?.holder || "",
-          shipping_provider: s.shipping_provider === "bosta" ? "bosta" : "none",
-          bosta_api_key: s.bosta_api_key || "",
-          bosta_location_id: s.bosta_location_id || "",
-          bosta_webhook_key: s.bosta_webhook_key || "",
           home_reviews: Array.isArray(s.home_reviews)
             ? s.home_reviews.map((r: any) => ({ name: r.name || "", place: r.place || "", comment: r.comment || "", rating: Number(r.rating) || 5 }))
             : [],
@@ -127,10 +99,6 @@ export default function BrandPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          payment_methods: {
-            vodafone_cash: { enabled: form.vodafone_enabled, number: form.vodafone_number, holder: form.vodafone_holder },
-            instapay: { enabled: form.instapay_enabled, address: form.instapay_address, holder: form.instapay_holder },
-          },
           onboarding_done: true,
         }),
       });
@@ -220,79 +188,6 @@ export default function BrandPage() {
         </Field>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-5">
-        <div>
-          <h2 className="text-lg font-black text-slate-900">طرق الدفع</h2>
-          <p className="text-xs text-slate-500 leading-relaxed mt-1">
-            الدفع عند الاستلام شغال دايماً. فعّل فودافون كاش أو إنستاباي لو عاوز العميل يقدر يحوّل. بتظهر في فورم الطلب، والتاجر بيأكد التحويل من تفاصيل الطلب.
-          </p>
-        </div>
-        <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
-          <span className="text-sm font-black text-slate-900">فودافون كاش</span>
-          <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={form.vodafone_enabled} onChange={(e) => set("vodafone_enabled", e.target.checked)} />
-        </label>
-        {form.vodafone_enabled && (
-          <div className="grid sm:grid-cols-2 gap-3">
-            <input className={inputCls} dir="ltr" inputMode="tel" placeholder="رقم المحفظة 01xxxxxxxxx" value={form.vodafone_number} onChange={(e) => set("vodafone_number", e.target.value)} />
-            <input className={inputCls} placeholder="الاسم المسجل (اختياري)" maxLength={60} value={form.vodafone_holder} onChange={(e) => set("vodafone_holder", e.target.value)} />
-          </div>
-        )}
-        <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
-          <span className="text-sm font-black text-slate-900">إنستاباي</span>
-          <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={form.instapay_enabled} onChange={(e) => set("instapay_enabled", e.target.checked)} />
-        </label>
-        {form.instapay_enabled && (
-          <div className="grid sm:grid-cols-2 gap-3">
-            <input className={inputCls} dir="ltr" placeholder="name@instapay أو رقم موبايل" value={form.instapay_address} onChange={(e) => set("instapay_address", e.target.value)} />
-            <input className={inputCls} placeholder="الاسم المسجل (اختياري)" maxLength={60} value={form.instapay_holder} onChange={(e) => set("instapay_holder", e.target.value)} />
-          </div>
-        )}
-      </div>
-
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-5">
-        <div>
-          <h2 className="text-lg font-black text-slate-900">الشحن</h2>
-          <p className="text-xs text-slate-500 leading-relaxed mt-1">
-            اربط شركة الشحن عشان تبعت الطلبات لها بضغطة وتتابع حالتها تلقائي. من غير ربط، تقدر تنزّل ملف الطلبات وتبعته للشركة.
-          </p>
-        </div>
-        <Field label="شركة الشحن">
-          <select className={inputCls} value={form.shipping_provider} onChange={(e) => set("shipping_provider", e.target.value as "none" | "bosta")}>
-            <option value="none">من غير ربط (ملف تصدير)</option>
-            <option value="bosta">بوسطة (Bosta)</option>
-          </select>
-        </Field>
-        {form.shipping_provider === "bosta" && (
-          <div className="space-y-4">
-            <Field label="مفتاح بوسطة (API Key)" hint="من حسابك في بوسطة: الإعدادات ← تكامل API ← مفتاح بصلاحية Read/Write.">
-              <input className={inputCls} dir="ltr" autoComplete="off" value={form.bosta_api_key} onChange={(e) => set("bosta_api_key", e.target.value.trim())} placeholder="مفتاح بوسطة" />
-            </Field>
-            <Field label="معرّف فرع الاستلام (اختياري)" hint="لو سبته فاضي بوسطة بتستخدم فرعك الافتراضي.">
-              <input className={inputCls} dir="ltr" value={form.bosta_location_id} onChange={(e) => set("bosta_location_id", e.target.value.trim())} placeholder="Business Location ID" />
-            </Field>
-            <Field label="مفتاح تأكيد التحديثات" hint="كلمة سر بنبعتها لبوسطة وترجعها مع كل تحديث حالة، عشان نتأكد إنه منها. اضغط توليد.">
-              <div className="flex gap-2">
-                <input className={inputCls} dir="ltr" autoComplete="off" value={form.bosta_webhook_key} onChange={(e) => set("bosta_webhook_key", e.target.value.trim())} placeholder="اضغط توليد" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const b = new Uint8Array(18);
-                    crypto.getRandomValues(b);
-                    set("bosta_webhook_key", Array.from(b, (x) => x.toString(16).padStart(2, "0")).join(""));
-                  }}
-                  className="min-h-[48px] px-4 rounded-xl bg-slate-900 text-white text-sm font-bold cursor-pointer whitespace-nowrap"
-                >
-                  توليد
-                </button>
-              </div>
-            </Field>
-            <p className="text-xs text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-3">
-              بعد الحفظ، زرار «إرسال للشحن» بيظهر في تفاصيل كل طلب. حالات الشحنة بترجع لوحدها لو الموقع على رابط https.
-            </p>
-          </div>
-        )}
-      </div>
-
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-4">
         <div>
           <h2 className="text-lg font-black text-slate-900">آراء العملاء في الصفحة الرئيسية</h2>
@@ -341,8 +236,8 @@ export default function BrandPage() {
               </label>
               <button
                 type="button"
-                onClick={() => set("home_reviews", form.home_reviews.filter((_, k) => k !== i))}
-                className="min-h-[44px] px-3 rounded-xl text-rose-600 hover:bg-rose-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer"
+                onClick={async () => { if (await confirmAsk({ title: "حذف الرأي", message: "هتحذف الرأي ده." })) set("home_reviews", form.home_reviews.filter((_, k) => k !== i)); }}
+                className="min-h-[44px] px-3 rounded-xl text-red-600 hover:bg-red-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" /> حذف
               </button>

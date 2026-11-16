@@ -253,7 +253,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           </div>
 
           {/* Offer Selector Directly in the Hero */}
-          {!hideOffers && <div className="pt-1">
+          {!hideOffers && availableOffers.length > 1 && <div className="pt-1">
             <HeroOfferSelector
               offers={availableOffers}
               selectedOffer={selectedOffer}

@@ -2,7 +2,6 @@ import React from "react";
 import Link from "next/link";
 import { dbStore } from "@/lib/db/store";
 import { getBrand } from "@/lib/brand";
-import { CHAT_ENABLED } from "@/lib/features";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
 import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
@@ -31,8 +30,7 @@ import {
   Bot,
 } from "lucide-react";
 import { Metadata } from "next";
-import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
-import { HeroSupportButton } from "@/components/chat/HeroSupportButton";
+import { StoreChat } from "@/components/shared/StoreChat";
 
 function homeMetadata(name: string): Metadata {
   return {
@@ -182,8 +180,6 @@ export default async function HomePage() {
                 <ShoppingBag className="w-5 h-5" />
                 <span>شاهد منتجاتنا وعروضنا</span>
               </a>
-
-              <HeroSupportButton />
             </div>
 
             {/* 4 Pillars Trust Row */}
@@ -665,7 +661,7 @@ export default async function HomePage() {
       </footer>
 
       {/* Floating Interactive AI Sales & Customer Support Drawer */}
-      {CHAT_ENABLED && <FloatingSalesAgent />}
+      <StoreChat />
     </div>
   );
 }

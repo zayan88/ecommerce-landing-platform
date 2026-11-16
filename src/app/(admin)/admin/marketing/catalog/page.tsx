@@ -57,7 +57,7 @@ export default function CatalogPage() {
           جاري التحميل...
         </div>
       )}
-      {failed && <p className="text-sm font-bold text-rose-700">تعذر تحميل بيانات الفيد.</p>}
+      {failed && <p className="text-sm font-bold text-red-700">تعذر تحميل بيانات الفيد.</p>}
 
       {feed && (
         <>

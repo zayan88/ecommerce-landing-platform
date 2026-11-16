@@ -1,5 +1,6 @@
 import React from "react";
 import { StorePopups } from "@/components/shared/StorePopups";
+import { StoreChat } from "@/components/shared/StoreChat";
 
 export const runtime = "edge";
 
@@ -9,6 +10,7 @@ export default function LandingGroupLayout({ children }: { children: React.React
     <>
       {children}
       <StorePopups />
+      <StoreChat />
     </>
   );
 }

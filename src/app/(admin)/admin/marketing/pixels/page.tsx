@@ -64,7 +64,7 @@ function ChipInput({
               type="button"
               onClick={() => onChange(values.filter((x) => x !== v))}
               aria-label={`حذف ${v}`}
-              className="w-6 h-6 rounded-md hover:bg-rose-100 hover:text-rose-700 flex items-center justify-center cursor-pointer"
+              className="w-6 h-6 rounded-md hover:bg-red-100 hover:text-red-700 flex items-center justify-center cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -88,7 +88,7 @@ function ChipInput({
           className="flex-1 min-w-[160px] min-h-[36px] bg-transparent outline-none text-sm font-mono px-1"
         />
       </div>
-      <p className="text-xs text-slate-500 leading-relaxed">{err ? <span className="text-rose-700 font-bold">{err}</span> : hint}</p>
+      <p className="text-xs text-slate-500 leading-relaxed">{err ? <span className="text-red-700 font-bold">{err}</span> : hint}</p>
     </div>
   );
 }
@@ -259,7 +259,7 @@ export default function TrackingSettingsPage() {
                 type="button"
                 onClick={() => setCapi((list) => list.filter((x) => x.pixel_id !== c.pixel_id))}
                 aria-label={`حذف Conversion API للبيكسل ${c.pixel_id}`}
-                className="min-h-[36px] min-w-[36px] rounded-lg text-rose-600 hover:bg-rose-50 flex items-center justify-center cursor-pointer"
+                className="min-h-[36px] min-w-[36px] rounded-lg text-red-600 hover:bg-red-50 flex items-center justify-center cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -339,7 +339,7 @@ export default function TrackingSettingsPage() {
             حفظ
           </button>
           {msg && (
-            <p role="status" className={`text-xs font-bold flex items-center gap-1.5 ${msg.ok ? "text-emerald-700" : "text-rose-700"}`}>
+            <p role="status" className={`text-xs font-bold flex items-center gap-1.5 ${msg.ok ? "text-emerald-700" : "text-red-700"}`}>
               {msg.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
               {msg.text}
             </p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../../_components/confirm";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -33,6 +34,7 @@ function previewSlug(raw: string): string {
 }
 
 export default function LandingPageDetailsPage() {
+  const confirmAsk = useConfirm();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = decodeURIComponent(String(params?.id || ""));
@@ -155,7 +157,7 @@ export default function LandingPageDetailsPage() {
   };
 
   const remove = async () => {
-    if (!window.confirm(`هل أنت متأكد من حذف صفحة الهبوط "${lp.title}"؟`)) return;
+    if (!await confirmAsk({ title: "حذف صفحة الهبوط", message: `هتحذف الصفحة "${lp.title}" نهائياً. مش هتقدر ترجّعها.` })) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/landing-pages?id=${lp.id}`, { method: "DELETE" });
@@ -296,7 +298,7 @@ export default function LandingPageDetailsPage() {
             type="button"
             onClick={remove}
             disabled={busy}
-            className="min-h-[44px] px-4 rounded-xl bg-white border border-rose-200 hover:bg-rose-50 text-sm font-bold text-rose-700 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+            className="min-h-[44px] px-4 rounded-xl bg-white border border-red-200 hover:bg-red-50 text-sm font-bold text-red-700 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" /> حذف
           </button>
