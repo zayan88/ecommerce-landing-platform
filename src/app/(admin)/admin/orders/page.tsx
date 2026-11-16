@@ -1,9 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Order, OrderStatus, Product } from "@/types";
 import { EditOrderModal } from "./EditOrderModal";
 import { toCsv, downloadCsv } from "@/lib/csv";
+import { EGYPTIAN_GOVERNORATES } from "@/lib/constants/governorates";
+import {
+  EXPORT_MAX_ROWS,
+  ORDERS_PAGE_SIZES,
+  fetchOrdersForExport,
+  hasActiveFilter,
+  nextPulseDelayMs,
+  ordersPageUrl,
+  type OrdersFilter,
+} from "@/lib/admin/orders-client";
 import {
   Download,
   Search,
@@ -46,7 +56,32 @@ export default function AdminOrdersPage() {
 
   const [syncingSafka, setSyncingSafka] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [lastOrdersCount, setLastOrdersCount] = useState<number | null>(null);
+  // Server-side pagination + filters
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [govFilter, setGovFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(ORDERS_PAGE_SIZES[0]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [totalCapped, setTotalCapped] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [pendingCount, setPendingCount] = useState<{ n: number; capped: boolean } | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const requestSeq = useRef(0);
+  const totalRef = useRef<number | null>(null);
+
+  const currentFilter: OrdersFilter = {
+    status: statusFilter,
+    search: appliedSearch,
+    governorate: govFilter,
+    from: dateFrom,
+    to: dateTo,
+  };
+  const flash = (message: string, ms = 4000) => {
+    setActionMessage(message);
+    setTimeout(() => setActionMessage(null), ms);
+  };
 
   // Play satisfying cash-register sound when a new order drops
   const playChaChing = () => {
@@ -81,34 +116,62 @@ export default function AdminOrdersPage() {
     } catch {}
   };
 
-  const fetchOrders = async (sync = false, isBackground = false) => {
+  /**
+   * Loads ONE page. `withTotal` asks the server to count (only on filter changes / manual refresh);
+   * `detectNew` (KV backend refresh) rings when the total grew since the previous load.
+   */
+  const fetchOrders = async (
+    opts: { page?: number; sync?: boolean; background?: boolean; withTotal?: boolean; detectNew?: boolean } = {}
+  ) => {
+    const target = opts.page ?? page;
+    const seq = ++requestSeq.current;
     try {
-      if (!isBackground) setLoading(true);
-      if (sync) setSyncingSafka(true);
-      let url = "/api/orders";
-      const params = new URLSearchParams();
-      if (statusFilter !== "all") params.append("status", statusFilter);
-      if (search.trim()) params.append("q", search.trim());
-      if (sync) params.append("sync", "true");
-      if (params.toString()) url += `?${params.toString()}`;
-
-      const res = await fetch(url);
+      if (!opts.background) setLoading(true);
+      if (opts.sync) setSyncingSafka(true);
+      const res = await fetch(
+        ordersPageUrl(currentFilter, { page: target, pageSize, withTotal: opts.withTotal === true, sync: opts.sync }),
+        { cache: "no-store" }
+      );
       const json = await res.json();
+      if (seq !== requestSeq.current) return; // a newer request superseded this one
       if (json.success && Array.isArray(json.orders)) {
-        if (lastOrdersCount !== null && json.orders.length > lastOrdersCount) {
-          playChaChing();
-          setActionMessage("🎉 وصل أوردر جديد حالاً في المتجر!");
-          setTimeout(() => setActionMessage(null), 5000);
+        if (json.orders.length === 0 && target > 0) {
+          // the page emptied (deletes): step back
+          setPage(target - 1);
+          fetchOrders({ ...opts, page: target - 1 });
+          return;
         }
-        setLastOrdersCount(json.orders.length);
+        if (typeof json.total === "number") {
+          if (opts.detectNew && totalRef.current !== null && json.total > totalRef.current) {
+            playChaChing();
+            flash("🎉 وصل أوردر جديد حالاً في المتجر!", 5000);
+          }
+          totalRef.current = json.total;
+          setTotal(json.total);
+          setTotalCapped(Boolean(json.total_capped));
+        } else if (opts.withTotal) {
+          totalRef.current = null;
+          setTotal(null);
+          setTotalCapped(false);
+        }
+        setHasMore(Boolean(json.has_more));
         setOrders(json.orders);
       }
     } catch (err) {
       console.error(err);
     } finally {
-      if (!isBackground) setLoading(false);
-      setSyncingSafka(false);
+      if (seq === requestSeq.current) {
+        if (!opts.background) setLoading(false);
+        setSyncingSafka(false);
+      }
     }
+  };
+
+  const goToPage = (p: number) => {
+    const next = Math.max(0, p);
+    setPage(next);
+    setSelectedOrderIds([]);
+    fetchOrders({ page: next });
   };
 
   const fetchProducts = async () => {
@@ -123,21 +186,96 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Any filter / page-size change: back to the first page, with a fresh total.
   useEffect(() => {
-    fetchOrders();
-  }, [statusFilter]);
+    setPage(0);
+    setSelectedOrderIds([]);
+    fetchOrders({ page: 0, withTotal: true });
+  }, [statusFilter, appliedSearch, govFilter, dateFrom, dateTo, pageSize]);
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // Background polling every 15s to trigger cash-register sound when new orders drop
+  /**
+   * New-order "pulse" instead of re-downloading the list: every 60 s (the server names the interval)
+   * one tiny request, only while this tab is visible; paused when hidden; backs off on errors.
+   * D1: /api/admin/orders-pulse says how many orders arrived since the last pulse. KV: the pulse is
+   * not supported (it would cost a KV list per poll), so the first page is refreshed every 5 minutes.
+   */
+  const live = useRef({ onNewOrders: (_n: number) => {}, kvRefresh: () => {} });
+  live.current = {
+    onNewOrders: (n: number) => {
+      playChaChing();
+      flash(n > 1 ? `🎉 وصل ${n} أوردر جديد حالاً في المتجر!` : "🎉 وصل أوردر جديد حالاً في المتجر!", 5000);
+      if (!hasActiveFilter(currentFilter) && totalRef.current !== null) {
+        totalRef.current += n;
+        setTotal(totalRef.current);
+      }
+      if (page === 0) fetchOrders({ page: 0, background: true }); // first page only, no COUNT
+    },
+    kvRefresh: () => {
+      if (page === 0) fetchOrders({ page: 0, background: true, withTotal: true, detectNew: true });
+    },
+  };
+
   useEffect(() => {
-    const timer = setInterval(() => {
-      fetchOrders(false, true);
-    }, 15000);
-    return () => clearInterval(timer);
-  }, [lastOrdersCount, soundEnabled]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let stopped = false;
+    let baseMs = 60000;
+    let failures = 0;
+    let since: number | null = null;
+    let supported = true;
+    let lastRun = 0;
+    let running = false;
+
+    const schedule = (ms: number) => {
+      if (timer) clearTimeout(timer);
+      if (!stopped && document.visibilityState === "visible") timer = setTimeout(tick, ms);
+    };
+    const tick = async () => {
+      if (stopped || running || document.visibilityState !== "visible") return;
+      running = true;
+      lastRun = Date.now();
+      try {
+        if (supported) {
+          const res = await fetch(`/api/admin/orders-pulse${since !== null ? `?since=${since}` : ""}`, { cache: "no-store" });
+          const json = await res.json().catch(() => null);
+          if (!res.ok || !json?.success) throw new Error("pulse failed");
+          baseMs = (Number(json.poll_interval_sec) || 60) * 1000;
+          if (json.supported === false) {
+            supported = false;
+          } else {
+            setPendingCount({ n: Number(json.pending_count) || 0, capped: Boolean(json.pending_capped) });
+            if (since !== null && Number(json.new_count) > 0) live.current.onNewOrders(Number(json.new_count));
+            since = Math.max(since ?? 0, Number(json.latest_created_ms) || 0, 1);
+          }
+        } else {
+          live.current.kvRefresh();
+        }
+        failures = 0;
+      } catch {
+        failures++;
+      } finally {
+        running = false;
+      }
+      schedule(nextPulseDelayMs(baseMs, failures));
+    };
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") {
+        if (timer) clearTimeout(timer); // hidden tab: no requests at all
+        return;
+      }
+      schedule(Math.max(0, lastRun + nextPulseDelayMs(baseMs, failures) - Date.now()));
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    tick();
+    return () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
 
   const handleOrderUpdated = (updatedOrder: Order) => {
     setOrders((prev) =>
@@ -152,7 +290,8 @@ export default function AdminOrdersPage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchOrders();
+    if (search.trim() === appliedSearch) fetchOrders({ page: 0, withTotal: true });
+    else setAppliedSearch(search.trim()); // the filter effect loads page 1
   };
 
   const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
@@ -204,6 +343,8 @@ export default function AdminOrdersPage() {
       if (data.success) {
         setOrders((prev) => prev.filter((o) => o.id !== orderId));
         setSelectedOrderIds((prev) => prev.filter((id) => id !== orderId));
+        if (totalRef.current !== null) setTotal((totalRef.current = Math.max(0, totalRef.current - 1)));
+        fetchOrders({ background: true });
         if (selectedOrder?.id === orderId) setSelectedOrder(null);
         setActionMessage(`✓ تم حذف الطلب (${orderNumber}) بنجاح`);
         setTimeout(() => setActionMessage(null), 3500);
@@ -240,6 +381,8 @@ export default function AdminOrdersPage() {
         setOrders((prev) => prev.filter((o) => !deletedSet.has(o.id)));
         const count = selectedOrderIds.length;
         setSelectedOrderIds([]);
+        if (totalRef.current !== null) setTotal((totalRef.current = Math.max(0, totalRef.current - count)));
+        fetchOrders({ background: true });
         setActionMessage(`✓ تم مسح (${count}) طلبات بنجاح`);
         setTimeout(() => setActionMessage(null), 3500);
       } else {
@@ -262,9 +405,26 @@ export default function AdminOrdersPage() {
     returned: "مرتجع",
   };
 
-  // Excel/CSV export of the orders currently listed (respects the active search/status filter)
-  const exportOrdersCsv = () => {
-    const list = selectedOrderIds.length > 0 ? orders.filter((o) => selectedOrderIds.includes(o.id)) : orders;
+  // Excel/CSV export: the selected rows, or EVERY order of the current filter (all pages, fetched
+  // sequentially, at most EXPORT_MAX_ROWS).
+  const exportOrdersCsv = async () => {
+    let list: Order[];
+    let capped = false;
+    if (selectedOrderIds.length > 0) {
+      list = orders.filter((o) => selectedOrderIds.includes(o.id));
+    } else {
+      try {
+        setExporting(true);
+        const res = await fetchOrdersForExport((url, init) => fetch(url, init), currentFilter);
+        list = res.orders;
+        capped = res.capped;
+      } catch (err: any) {
+        alert(err?.message || "تعذر تحميل الطلبات للتصدير");
+        return;
+      } finally {
+        setExporting(false);
+      }
+    }
     if (list.length === 0) {
       alert("لا توجد طلبات للتصدير");
       return;
@@ -293,6 +453,13 @@ export default function AdminOrdersPage() {
     ]);
     const day = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
     downloadCsv(`orders-${day}.csv`, toCsv(headers, rows));
+    if (capped) {
+      alert(
+        `تم تصدير أول ${EXPORT_MAX_ROWS.toLocaleString("en-US")} طلب فقط (الحد الأقصى للتصدير الواحد).\nلتصدير الباقي ضيّق الفلتر (التاريخ أو الحالة أو المحافظة) ثم صدّر مرة أخرى.`
+      );
+    } else {
+      flash(`✓ تم تصدير ${list.length.toLocaleString("en-US")} طلب`);
+    }
   };
 
   const toggleSelectAll = () => {
@@ -367,7 +534,11 @@ export default function AdminOrdersPage() {
           </button>
 
           <button
-            onClick={() => fetchOrders(true)}
+            onClick={() => {
+              setPage(0);
+              setSelectedOrderIds([]);
+              fetchOrders({ page: 0, sync: true, withTotal: true });
+            }}
             disabled={syncingSafka}
             className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
@@ -377,15 +548,16 @@ export default function AdminOrdersPage() {
 
           <button
             onClick={exportOrdersCsv}
-            title="تصدير الطلبات المعروضة (أو المحددة) إلى ملف Excel"
+            disabled={exporting}
+            title="تصدير كل طلبات الفلتر الحالي (أو الطلبات المحددة) إلى ملف Excel"
             className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>تصدير Excel</span>
+            <span>{exporting ? "جاري التصدير..." : "تصدير Excel"}</span>
           </button>
 
           <button
-            onClick={() => fetchOrders(false)}
+            onClick={() => fetchOrders({ withTotal: true })}
             className="py-2 px-3.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading && !syncingSafka ? "animate-spin" : ""}`} />
@@ -467,6 +639,66 @@ export default function AdminOrdersPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex flex-wrap items-end gap-3 text-xs font-bold text-gray-600">
+        <label className="flex flex-col gap-1 w-full sm:w-auto">
+          <span>المحافظة</span>
+          <select
+            value={govFilter}
+            onChange={(e) => setGovFilter(e.target.value)}
+            className="h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="">كل المحافظات</option>
+            {EGYPTIAN_GOVERNORATES.map((g) => (
+              <option key={g.nameAr} value={g.nameAr}>
+                {g.nameAr}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 flex-1 min-w-[9rem] sm:flex-none">
+          <span>من تاريخ</span>
+          <input
+            type="date"
+            value={dateFrom}
+            max={dateTo || undefined}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-11 px-3 rounded-xl border border-gray-200 text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+        </label>
+        <label className="flex flex-col gap-1 flex-1 min-w-[9rem] sm:flex-none">
+          <span>إلى تاريخ</span>
+          <input
+            type="date"
+            value={dateTo}
+            min={dateFrom || undefined}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-11 px-3 rounded-xl border border-gray-200 text-sm font-normal text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+        </label>
+        {(govFilter || dateFrom || dateTo) && (
+          <button
+            type="button"
+            onClick={() => {
+              setGovFilter("");
+              setDateFrom("");
+              setDateTo("");
+            }}
+            className="h-11 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition cursor-pointer"
+          >
+            مسح الفلاتر
+          </button>
+        )}
+        {pendingCount && pendingCount.n > 0 && (
+          <span className="h-11 inline-flex items-center gap-1.5 px-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 sm:mr-auto">
+            <Clock className="w-3.5 h-3.5" />
+            <span>
+              قيد المراجعة: {pendingCount.n.toLocaleString("en-US")}
+              {pendingCount.capped ? "+" : ""}
+            </span>
+          </span>
+        )}
       </div>
 
       {/* Orders Table */}
@@ -681,6 +913,54 @@ export default function AdminOrdersPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pager (server-side pagination) */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 text-xs font-bold text-gray-600">
+          <div className="flex items-center gap-3">
+            <span>
+              {orders.length === 0
+                ? "لا توجد نتائج"
+                : `عرض ${(page * pageSize + 1).toLocaleString("en-US")}–${(page * pageSize + orders.length).toLocaleString("en-US")}` +
+                  (total !== null ? ` من ${total.toLocaleString("en-US")}${totalCapped ? "+" : ""} طلب` : "")}
+            </span>
+            <label className="flex items-center gap-1.5">
+              <span>في الصفحة</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="h-11 px-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 outline-none"
+              >
+                {ORDERS_PAGE_SIZES.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => goToPage(page - 1)}
+              disabled={page === 0 || loading}
+              className="h-11 min-w-[5.5rem] px-4 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              السابق
+            </button>
+            <span className="px-2 whitespace-nowrap">
+              صفحة {(page + 1).toLocaleString("en-US")}
+              {total !== null && !totalCapped ? ` من ${Math.max(1, Math.ceil(total / pageSize)).toLocaleString("en-US")}` : ""}
+            </span>
+            <button
+              type="button"
+              onClick={() => goToPage(page + 1)}
+              disabled={!hasMore || loading}
+              className="h-11 min-w-[5.5rem] px-4 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              التالي
+            </button>
+          </div>
         </div>
       </div>
 
