@@ -336,7 +336,14 @@ export async function GET(req: NextRequest) {
     const isExport = searchParams.get("export") === "1";
 
     let orders: Order[];
-    let page: { total: number | null; total_capped: boolean; has_more: boolean; limit: number; offset: number } | null = null;
+    let page: {
+      total: number | null;
+      total_capped: boolean;
+      has_more: boolean;
+      limit: number;
+      offset: number;
+      status_counts?: Record<string, number>;
+    } | null = null;
     if (limit !== undefined) {
       // Paginated (admin orders page): `limit` rows, whether a next page exists, and a capped total.
       // `total=0` skips the COUNT (page flips reuse the total they already have).
@@ -348,7 +355,7 @@ export async function GET(req: NextRequest) {
         relations: !isExport,
       });
       orders = res.orders;
-      page = { total: res.total, total_capped: res.total_capped, has_more: res.has_more, limit: pageLimit, offset };
+      page = { total: res.total, total_capped: res.total_capped, has_more: res.has_more, limit: pageLimit, offset, status_counts: res.status_counts };
     } else {
       // No `limit`: the full list, as before (kept for compatibility; the admin UI no longer uses it).
       orders = await dbStore.getOrders({ ...filters, offset: intParam("offset") });
