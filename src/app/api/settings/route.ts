@@ -26,6 +26,7 @@ function maskSecret(v: unknown): string {
 function maskSettings(settings: any) {
   const masked: any = { ...settings };
   for (const f of SECRET_FIELDS) masked[f] = maskSecret(settings?.[f]);
+  delete masked.mcp_token_hash; // never leaves the server (the MCP tab reads /api/admin/mcp)
   // Conversions API tokens inside the per-pixel entries are secrets too
   if (Array.isArray(settings?.meta_capi_entries)) {
     masked.meta_capi_entries = settings.meta_capi_entries.map((e: any) => ({
@@ -150,6 +151,7 @@ export async function POST(req: NextRequest) {
       }
     }
     delete (toUpdate as Record<string, unknown>).coupon_usage;
+    for (const f of ["mcp_enabled", "mcp_token_hash", "mcp_token_created_at"]) delete (toUpdate as Record<string, unknown>)[f];
     if ("shipping_config" in toUpdate) toUpdate.shipping_config = sanitizeShipping(toUpdate.shipping_config);
     if ("coupons" in toUpdate) toUpdate.coupons = sanitizeCoupons(toUpdate.coupons);
     if ("popup" in toUpdate) toUpdate.popup = sanitizePopup(toUpdate.popup);

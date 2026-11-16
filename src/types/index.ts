@@ -338,6 +338,10 @@ export interface SystemSettings {
     vodafone_cash?: { enabled: boolean; number: string; holder?: string };
     instapay?: { enabled: boolean; address: string; holder?: string };
   };
+  // MCP: lets an AI assistant the merchant connects manage the store (token is stored hashed; see /api/mcp)
+  mcp_enabled?: boolean;
+  mcp_token_hash?: string;
+  mcp_token_created_at?: string;
   // Shipping: which courier is connected ("none" = ship by file export) and its credentials
   shipping_provider?: "none" | "bosta";
   bosta_api_key?: string; // secret

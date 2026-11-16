@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, Bell, Globe, Truck } from "lucide-react";
+import { Store, Bell, Globe, Truck, Plug } from "lucide-react";
 
 /** Settings area: one entry in the sidebar, sections as tabs at the top (like the reference admin). */
 const SETTINGS_TABS = [
@@ -11,6 +11,7 @@ const SETTINGS_TABS = [
   { href: "/admin/settings/commerce", label: "الشحن والعروض", icon: Truck },
   { href: "/admin/settings/domain", label: "الدومين", icon: Globe },
   { href: "/admin/settings/notifications", label: "إشعارات المبيعات", icon: Bell },
+  { href: "/admin/settings/mcp", label: "MCP", icon: Plug },
 ] as const;
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
