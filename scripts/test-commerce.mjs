@@ -175,8 +175,10 @@ await test("automatic discounts: the best one wins; a public flag tells the page
   assert.equal(lib.bestAutoCoupon(cs, { subtotal: 450 }).code, "AUTO50", "10% of 450 = 45 loses to a flat 50");
   assert.equal(lib.bestAutoCoupon(cs, { subtotal: 300 }).ok, false, "below the minimum");
   assert.equal(lib.bestAutoCoupon([cs[2]], { subtotal: 600 }).ok, false, "a coupon that needs a code is never automatic");
-  assert.equal(lib.publicCommerce({ coupons: cs }).has_auto, true);
-  assert.equal(lib.publicCommerce({ coupons: [cs[2]] }).has_auto, undefined);
+  const pub = lib.publicCommerce({ coupons: cs });
+  assert.deepEqual(pub.auto_coupons.map((c) => c.code).sort(), ["AUTO10", "AUTO50"], "only automatic ones are public");
+  assert.ok(!JSON.stringify(pub).includes("TYPED"));
+  assert.equal(lib.publicCommerce({ coupons: [cs[2]] }).auto_coupons, undefined);
 });
 
 await test("orders: automatic discount, free-shipping coupon, usage count and limit work end to end", async () => {

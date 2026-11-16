@@ -228,8 +228,8 @@ export function shippingHint(cfg: ShippingConfig): { free: boolean; text: string
 
 export interface PublicCommerce {
   shipping: ShippingConfig;
-  /** There is at least one active automatic discount (the checkout asks the server for it). */
-  has_auto?: boolean;
+  /** Active automatic discounts. They apply without a code, so they are public by nature; the page computes them locally (no request). */
+  auto_coupons?: Coupon[];
   popup?: PopupConfig;
   downsell?: { code: string; message: string; delay_seconds: number; on_exit: boolean; auto: boolean };
 }
@@ -238,7 +238,8 @@ export interface PublicCommerce {
 export function publicCommerce(s: any): PublicCommerce {
   const shipping = sanitizeShipping(s?.shipping_config);
   const out: PublicCommerce = { shipping };
-  if (sanitizeCoupons(s?.coupons).some((c) => c.auto && c.enabled)) out.has_auto = true;
+  const autos = sanitizeCoupons(s?.coupons).filter((c) => c.auto && c.enabled);
+  if (autos.length > 0) out.auto_coupons = autos;
   const popup = s?.popup ? sanitizePopup(s.popup) : null;
   if (popup && popup.enabled && (popup.title || popup.body)) out.popup = popup;
   const coupons = sanitizeCoupons(s?.coupons);
