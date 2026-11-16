@@ -5,6 +5,8 @@ import { getBrand } from "@/lib/brand";
 import { CHAT_ENABLED } from "@/lib/features";
 import { CatalogHome } from "@/components/store/CatalogHome";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
+import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
+import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
 import { UrgencyBar } from "@/components/shared/UrgencyBar";
 import {
   ShieldCheck,
@@ -93,7 +95,8 @@ export default async function HomePage({ searchParams }: { searchParams?: { q?: 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-orange-500 selection:text-white font-sans" dir="rtl">
       {/* Meta Facebook Pixel */}
-      <MetaPixel pixelId={pixelId} />
+      <MetaPixel pixelIds={effectiveMetaPixelIds(settings)} />
+      <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settings)} snapPixelIds={effectiveSnapPixelIds(settings)} ga4Id={settings.ga4_measurement_id} gtmId={settings.gtm_container_id} />
 
       {/* Top Flash Urgency Announcement Bar */}
       <UrgencyBar />

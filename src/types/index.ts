@@ -260,6 +260,14 @@ export interface SystemSettings {
   default_meta_pixel_id: string;
   default_meta_capi_token: string;
   meta_test_event_code?: string;
+  // Other marketing tags (validated server-side; empty = off)
+  tiktok_pixel_id?: string; // legacy single id
+  meta_pixel_ids?: string[]; // up to 5 pixels per platform
+  tiktok_pixel_ids?: string[];
+  snap_pixel_ids?: string[];
+  meta_capi_entries?: { pixel_id: string; token: string; test_code?: string }[]; // token is a secret (masked in the admin API)
+  ga4_measurement_id?: string; // G-XXXXXXXXXX
+  gtm_container_id?: string; // GTM-XXXXXXX
   store_name: string;
   support_phone: string;
   support_whatsapp: string;

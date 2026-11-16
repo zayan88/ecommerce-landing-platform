@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { dbStore } from "@/lib/db/store";
 import { getLandingPageComponent } from "@/landing-pages/registry";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
+import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
+import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
 import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
 import { FloatingSalesAgent } from "@/components/chat/FloatingSalesAgent";
@@ -100,7 +102,8 @@ export default async function DynamicLandingPage({ params }: PageProps) {
     delete lpC.meta_capi_token;
     return (
       <>
-        <MetaPixel pixelId={pixelC} />
+        <MetaPixel pixelIds={landingPage.meta_pixel_id ? [landingPage.meta_pixel_id] : effectiveMetaPixelIds(settingsC)} />
+        <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settingsC)} snapPixelIds={effectiveSnapPixelIds(settingsC)} ga4Id={settingsC.ga4_measurement_id} gtmId={settingsC.gtm_container_id} />
         <SimpleProductPage product={prodC} landingPage={lpC} />
         {CHAT_ENABLED && <FloatingSalesAgent currentProduct={prodC} />}
       </>
@@ -141,7 +144,8 @@ export default async function DynamicLandingPage({ params }: PageProps) {
 
   return (
     <>
-      <MetaPixel pixelId={pixelId} />
+      <MetaPixel pixelIds={landingPage.meta_pixel_id ? [landingPage.meta_pixel_id] : effectiveMetaPixelIds(settings)} />
+      <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settings)} snapPixelIds={effectiveSnapPixelIds(settings)} ga4Id={settings.ga4_measurement_id} gtmId={settings.gtm_container_id} />
       <Component product={publicProduct} landingPage={publicLandingPage} />
 
       {/* Floating AI Sales Closer Chat Widget */}

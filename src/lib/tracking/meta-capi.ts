@@ -1,3 +1,4 @@
+import { capiTargets } from "./pixel-config";
 import { sha256 } from "@/lib/crypto/sha256";
 import { Order } from "@/types";
 import { dbStore } from "../db/store";
@@ -34,11 +35,13 @@ export class MetaCapiClient {
   static async sendEvent(payload: CapiEventPayload): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
       const settings = await dbStore.getSettings();
-      const pixelId = settings.default_meta_pixel_id || process.env.NEXT_PUBLIC_META_PIXEL_ID;
-      const accessToken = settings.default_meta_capi_token || process.env.META_CAPI_ACCESS_TOKEN;
-      const testEventCode = settings.meta_test_event_code || process.env.META_TEST_EVENT_CODE;
+      const targets = capiTargets(settings, {
+        pixel: process.env.NEXT_PUBLIC_META_PIXEL_ID,
+        token: process.env.META_CAPI_ACCESS_TOKEN,
+        test: process.env.META_TEST_EVENT_CODE,
+      }).filter((t) => !t.token.startsWith("MOCK"));
 
-      if (!pixelId || !accessToken || accessToken.startsWith("MOCK")) {
+      if (targets.length === 0) {
         // Mock mode logging
         console.log(`[Meta CAPI Simulation] ${payload.event_name} dispatched with event_id: ${payload.event_id}`);
         return {
@@ -83,28 +86,27 @@ export class MetaCapiClient {
         },
       };
 
-      const bodyPayload: any = {
-        data: [eventData],
-      };
-
-      if (testEventCode) {
-        bodyPayload.test_event_code = testEventCode;
+      // One request per configured pixel. The token goes in the body, never in the URL (URLs end up in logs).
+      const results = await Promise.allSettled(
+        targets.map(async (t) => {
+          const bodyPayload: any = { data: [eventData], access_token: t.token };
+          if (t.test_code) bodyPayload.test_event_code = t.test_code;
+          const response = await fetch(`https://graph.facebook.com/v19.0/${t.pixel_id}/events`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(bodyPayload),
+          });
+          const resJson = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(resJson.error?.message || `CAPI Error ${response.status}`);
+          return resJson;
+        })
+      );
+      const ok = results.filter((r) => r.status === "fulfilled") as PromiseFulfilledResult<any>[];
+      if (ok.length === 0) {
+        const firstErr = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
+        throw new Error(firstErr?.reason?.message || "CAPI failed");
       }
-
-      const response = await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bodyPayload),
-      });
-
-      const resJson = await response.json();
-      if (!response.ok) {
-        throw new Error(resJson.error?.message || `CAPI Error ${response.status}`);
-      }
-
-      return { success: true, data: resJson };
+      return { success: true, data: ok.length === 1 ? ok[0].value : { sent: ok.length, failed: results.length - ok.length } };
     } catch (err: any) {
       console.error("[MetaCapiClient Error]", err.message);
       return { success: false, error: err.message };

@@ -2,6 +2,7 @@
 
 import Script from "next/script";
 import React from "react";
+import { validMetaPixel } from "./tag-ids";
 
 declare global {
   interface Window {
@@ -12,10 +13,15 @@ declare global {
 
 interface MetaPixelProps {
   pixelId?: string;
+  /** Several pixels can be installed at once (each one is initialised; events go to all of them). */
+  pixelIds?: string[];
 }
 
-export function MetaPixel({ pixelId }: MetaPixelProps) {
-  if (!pixelId) return null;
+export function MetaPixel({ pixelId, pixelIds }: MetaPixelProps) {
+  // The ids go into an inline script: only numeric Meta pixel ids are accepted.
+  const ids = Array.from(new Set((pixelIds && pixelIds.length ? pixelIds : [pixelId]).filter(validMetaPixel)));
+  if (ids.length === 0) return null;
+  const pixelId0 = ids[0];
 
   return (
     <>
@@ -32,7 +38,7 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${pixelId}');
+            ${ids.map((id) => `fbq('init', '${id}');`).join("")}
             fbq('track', 'PageView');
           `,
         }}
@@ -42,7 +48,7 @@ export function MetaPixel({ pixelId }: MetaPixelProps) {
           height="1"
           width="1"
           style={{ display: "none" }}
-          src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
+          src={`https://www.facebook.com/tr?id=${pixelId0}&ev=PageView&noscript=1`}
           alt=""
         />
       </noscript>

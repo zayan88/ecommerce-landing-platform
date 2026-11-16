@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { isPaletteKey } from "@/lib/palettes";
+import { META_PIXEL_RE, TIKTOK_PIXEL_RE, SNAP_PIXEL_RE, GA4_RE, GTM_RE, META_TEST_CODE_RE, cleanIdList } from "@/lib/tracking/tag-ids";
 
 export const runtime = "edge";
 
@@ -21,6 +22,14 @@ function maskSecret(v: unknown): string {
 function maskSettings(settings: any) {
   const masked: any = { ...settings };
   for (const f of SECRET_FIELDS) masked[f] = maskSecret(settings?.[f]);
+  // Conversions API tokens inside the per-pixel entries are secrets too
+  if (Array.isArray(settings?.meta_capi_entries)) {
+    masked.meta_capi_entries = settings.meta_capi_entries.map((e: any) => ({
+      pixel_id: e?.pixel_id,
+      test_code: e?.test_code || "",
+      token: maskSecret(e?.token),
+    }));
+  }
   return masked;
 }
 
@@ -56,6 +65,47 @@ export async function POST(req: NextRequest) {
         const okUrl = /^https?:\/\/[^\s]+$/i.test(v) || ((f === "logo_url" || f === "favicon_url") && /^\/[^\s]*$/.test(v));
         if (v === "" || okUrl) toUpdate[f] = v;
         else delete toUpdate[f];
+      }
+    }
+    // Multi-pixel lists + per-pixel Conversions API entries (ids/tokens validated; masked tokens keep the stored one)
+    for (const [f, re] of [
+      ["meta_pixel_ids", META_PIXEL_RE],
+      ["tiktok_pixel_ids", TIKTOK_PIXEL_RE],
+      ["snap_pixel_ids", SNAP_PIXEL_RE],
+    ] as const) {
+      if (f in toUpdate) toUpdate[f] = cleanIdList(toUpdate[f], re);
+    }
+    if ("meta_pixel_ids" in toUpdate) toUpdate.default_meta_pixel_id = toUpdate.meta_pixel_ids[0] || ""; // legacy field follows the first pixel
+    if ("tiktok_pixel_ids" in toUpdate) toUpdate.tiktok_pixel_id = toUpdate.tiktok_pixel_ids[0] || "";
+    if ("meta_capi_entries" in toUpdate) {
+      const existing: any[] = ((await dbStore.getSettings()) as any).meta_capi_entries || [];
+      const list = Array.isArray(toUpdate.meta_capi_entries) ? toUpdate.meta_capi_entries : [];
+      const clean: { pixel_id: string; token: string; test_code?: string }[] = [];
+      for (const e of list.slice(0, 5)) {
+        const pixel_id = typeof e?.pixel_id === "string" ? e.pixel_id.trim() : "";
+        if (!META_PIXEL_RE.test(pixel_id) || clean.some((c) => c.pixel_id === pixel_id)) continue;
+        let token = typeof e?.token === "string" ? e.token.trim().slice(0, 600) : "";
+        if (token.includes("...") || token === "") token = existing.find((x) => x?.pixel_id === pixel_id)?.token || "";
+        const test = typeof e?.test_code === "string" ? e.test_code.trim() : "";
+        if (!token) continue;
+        clean.push({ pixel_id, token, ...(META_TEST_CODE_RE.test(test) ? { test_code: test } : {}) });
+      }
+      toUpdate.meta_capi_entries = clean;
+    }
+    // Marketing tag ids: strict formats (they end up in inline scripts); empty clears the tag.
+    for (const [f, re] of [
+      ["default_meta_pixel_id", META_PIXEL_RE],
+      ["tiktok_pixel_id", TIKTOK_PIXEL_RE],
+      ["ga4_measurement_id", GA4_RE],
+      ["gtm_container_id", GTM_RE],
+      ["meta_test_event_code", META_TEST_CODE_RE],
+    ] as const) {
+      if (f in toUpdate) {
+        const v = typeof toUpdate[f] === "string" ? toUpdate[f].trim() : "";
+        if (v === "" || re.test(v)) toUpdate[f] = v;
+        else {
+          return NextResponse.json({ success: false, error: "صيغة معرّف التتبع غير صحيحة: " + f }, { status: 400 });
+        }
       }
     }
     for (const f of ["support_phone", "support_whatsapp"] as const) {

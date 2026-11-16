@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { EGYPTIAN_GOVERNORATES } from "@/lib/constants/governorates";
 import { captureUtmParams, generateEventId } from "@/lib/tracking/utm";
 import { trackMetaEvent } from "@/lib/tracking/meta-pixel";
+import { trackMarketingEvent } from "@/lib/tracking/marketing-pixels";
 import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
 import {
@@ -109,6 +110,7 @@ export function EgyptianCheckoutForm({
         value: totalAmount,
         num_items: quantity,
       });
+      trackMarketingEvent("InitiateCheckout", { content_name: product.title_ar, content_ids: [product.id], currency: "EGP", value: totalAmount });
     }
   };
 
@@ -200,6 +202,13 @@ export function EgyptianCheckoutForm({
         },
         eventId
       );
+      trackMarketingEvent("Purchase", {
+        content_name: product.title_ar,
+        content_ids: [product.id],
+        currency: "EGP",
+        value: data.order?.final_amount || totalAmount,
+        transaction_id: data.order?.order_number,
+      });
 
       // Save order summary to sessionStorage for thank-you page
       try {
