@@ -1,9 +1,9 @@
 "use client";
 
+import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useRef, useState } from "react";
 import { Order, OrderStatus, Product } from "@/types";
 import { EditOrderModal } from "./EditOrderModal";
-import AbandonedList from "./AbandonedList";
 import { toCsv, downloadCsv } from "@/lib/csv";
 import { SAFKA_ENABLED } from "@/lib/features";
 import { EGYPTIAN_GOVERNORATES } from "@/lib/constants/governorates";
@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 
 export default function AdminOrdersPage() {
+  const confirmAsk = useConfirm();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -73,10 +74,8 @@ export default function AdminOrdersPage() {
   const [statusCounts, setStatusCounts] = useState<Record<string, number> | null>(null);
   const [bulkStatusBusy, setBulkStatusBusy] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [abandonedOpen, setAbandonedOpen] = useState<number | null>(null);
   const [shipProvider, setShipProvider] = useState<"none" | "bosta">("none");
   const [shipBusy, setShipBusy] = useState(false);
-  const isAbandonedTab = statusFilter === "abandoned";
   const requestSeq = useRef(0);
   const totalRef = useRef<number | null>(null);
 
@@ -132,7 +131,6 @@ export default function AdminOrdersPage() {
   const fetchOrders = async (
     opts: { page?: number; sync?: boolean; background?: boolean; withTotal?: boolean; detectNew?: boolean } = {}
   ) => {
-    if (statusFilter === "abandoned") return;
     const target = opts.page ?? page;
     const seq = ++requestSeq.current;
     try {
@@ -209,10 +207,6 @@ export default function AdminOrdersPage() {
     fetch("/api/admin/shipping", { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => j?.success && j.configured && setShipProvider(j.provider === "bosta" ? "bosta" : "none"))
-      .catch(() => {});
-    fetch("/api/admin/abandoned?status=open&limit=1", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((j) => j?.success && j.supported !== false && setAbandonedOpen(j.counts?.open ?? 0))
       .catch(() => {});
   }, []);
 
@@ -352,7 +346,7 @@ export default function AdminOrdersPage() {
   };
 
   const handleDeleteOrder = async (orderId: string, orderNumber: string) => {
-    if (!confirm(`هل أنت متأكد من حذف الطلب (${orderNumber}) نهائياً من النظام؟\nلا يمكن التراجع عن هذا الإجراء.`)) {
+    if (!await confirmAsk({ title: "حذف الطلب", message: `هتحذف الطلب (${orderNumber}) نهائياً. مش هتقدر ترجّعه.` })) {
       return;
     }
     try {
@@ -422,7 +416,7 @@ export default function AdminOrdersPage() {
 
   const handleBulkStatus = async (status: OrderStatus) => {
     if (selectedOrderIds.length === 0) return;
-    if (!confirm("تغيير حالة (" + selectedOrderIds.length + ") طلب إلى «" + STATUS_AR[status] + "»؟")) return;
+    if (!await confirmAsk({ title: "تغيير الحالة", tone: "neutral", confirmText: "تغيير", message: "تغيير حالة (" + selectedOrderIds.length + ") طلب إلى «" + STATUS_AR[status] + "»؟" })) return;
     setBulkStatusBusy(true);
     let ok = 0;
     try {
@@ -445,11 +439,7 @@ export default function AdminOrdersPage() {
 
   const handleBulkDelete = async () => {
     if (selectedOrderIds.length === 0) return;
-    if (
-      !confirm(
-        `هل أنت متأكد من مسح (${selectedOrderIds.length}) طلبات محددة نهائياً من النظام؟`
-      )
-    ) {
+    if (!await confirmAsk({ title: "مسح الطلبات", message: `هتمسح ${selectedOrderIds.length} طلب نهائياً. مش هتقدر ترجّعهم.` })) {
       return;
     }
     try {
@@ -584,10 +574,8 @@ export default function AdminOrdersPage() {
     { id: "shipped", label: "تم الشحن" },
     { id: "delivered", label: "تم التوصيل" },
     { id: "cancelled", label: "ملغي" },
-    { id: "abandoned", label: "متروكة" },
   ];
   const tabCount = (id: string): number | null => {
-    if (id === "abandoned") return abandonedOpen;
     if (!statusCounts) return null;
     if (id === "all") return Object.values(statusCounts).reduce((x, y) => x + y, 0);
     return statusCounts[id] ?? 0;
@@ -679,7 +667,7 @@ export default function AdminOrdersPage() {
           })}
         </div>
 
-        {!isAbandonedTab && (<div className="p-3 sm:p-4 flex flex-col sm:flex-row gap-2.5">
+        <div className="p-3 sm:p-4 flex flex-col sm:flex-row gap-2.5">
           <form onSubmit={handleSearchSubmit} className="relative flex-1">
             <input
               type="text"
@@ -704,9 +692,9 @@ export default function AdminOrdersPage() {
               <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-black inline-flex items-center justify-center">{activeFilters}</span>
             )}
           </button>
-        </div>)}
+        </div>
 
-        {!isAbandonedTab && (showFilters || activeFilters > 0) && (
+        {(showFilters || activeFilters > 0) && (
           <div className="px-3 sm:px-4 pb-4 flex flex-wrap items-end gap-3 text-xs font-bold text-gray-600">
             <label className="flex flex-col gap-1 w-full sm:w-auto">
               <span>المحافظة</span>
@@ -746,7 +734,7 @@ export default function AdminOrdersPage() {
         )}
 
         {/* Bulk actions bar */}
-        {!isAbandonedTab && selectedOrderIds.length > 0 && (
+        {selectedOrderIds.length > 0 && (
           <div className="mx-3 sm:mx-4 mb-4 p-3 rounded-xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span className="text-xs font-bold">تم تحديد {selectedOrderIds.length} طلب</span>
             <div className="flex flex-wrap items-center gap-2">
@@ -788,10 +776,7 @@ export default function AdminOrdersPage() {
         )}
       </div>
 
-      {isAbandonedTab && <AbandonedList onCounts={setAbandonedOpen} />}
-
       {/* Orders Table */}
-      {!isAbandonedTab && (
       <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
         {/* Mobile: one card per order */}
         <div className="md:hidden divide-y divide-gray-100">
@@ -1133,8 +1118,6 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       </div>
-
-      )}
 
       {/* Order Details Drawer / Modal */}
       {selectedOrder && (

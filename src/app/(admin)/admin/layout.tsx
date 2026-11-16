@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { cssVarsFor } from "@/lib/palettes";
+import { ConfirmProvider } from "./_components/confirm";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
@@ -27,6 +28,7 @@ import {
   Link2,
   Crosshair,
   Ticket,
+  PhoneMissed,
   PanelTop,
   Store,
   Globe,
@@ -50,7 +52,15 @@ interface NavItem {
 
 const allNavigationItems: NavItem[] = [
   { name: "الرئيسية", href: "/admin", icon: LayoutDashboard },
-  { name: "الطلبات", href: "/admin/orders", icon: ShoppingBag },
+  {
+    name: "الطلبات",
+    href: "/admin/orders",
+    icon: ShoppingBag,
+    children: [
+      { name: "كل الطلبات", href: "/admin/orders", icon: ShoppingBag },
+      { name: "الطلبات المفقودة", href: "/admin/orders/abandoned", icon: PhoneMissed },
+    ],
+  },
   {
     name: "المنتجات",
     href: "/admin/catalog-group",
@@ -132,6 +142,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
+    <ConfirmProvider>
     <div style={ADMIN_THEME} className="min-h-screen bg-slate-100 flex flex-col md:flex-row text-right font-sans" dir="rtl">
       {/* Mobile Header Bar */}
       <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
@@ -203,7 +214,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {navigationItems.map((item) => {
               const Icon = item.icon;
               if (item.children) {
-                const isChildActive = (href: string) => pathname === href || (href !== "/admin/settings" && pathname.startsWith(href + "/"));
+                const isChildActive = (href: string) => pathname === href || (href !== item.href && pathname.startsWith(href + "/"));
                 const groupActive = item.children.some((c) => isChildActive(c.href));
                 const open = groupActive || openGroups[item.href];
                 return (
@@ -218,6 +229,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     >
                       <Icon className={`w-5 h-5 flex-shrink-0 ${groupActive ? "text-emerald-400" : "text-slate-400"}`} />
                       <span className="flex-1 text-right">{item.name}</span>
+                      {item.href === "/admin/orders" && pendingBadge > 0 && (
+                        <span className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-orange-500 text-white text-[11px] font-black flex items-center justify-center" aria-label={`${pendingBadge} طلب جديد`}>
+                          {pendingBadge > 99 ? "99+" : pendingBadge}
+                        </span>
+                      )}
                       <ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
                     </button>
                     {open && (
@@ -323,5 +339,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto">{children}</main>
       </div>
     </div>
+    </ConfirmProvider>
   );
 }

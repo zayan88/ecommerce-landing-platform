@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Plus, Trash2 } from "lucide-react";
@@ -53,6 +54,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 export default function BrandPage() {
+  const confirmAsk = useConfirm();
   const router = useRouter();
   const [form, setForm] = useState<BrandForm>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -234,8 +236,8 @@ export default function BrandPage() {
               </label>
               <button
                 type="button"
-                onClick={() => set("home_reviews", form.home_reviews.filter((_, k) => k !== i))}
-                className="min-h-[44px] px-3 rounded-xl text-rose-600 hover:bg-rose-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer"
+                onClick={async () => { if (await confirmAsk({ title: "حذف الرأي", message: "هتحذف الرأي ده." })) set("home_reviews", form.home_reviews.filter((_, k) => k !== i)); }}
+                className="min-h-[44px] px-3 rounded-xl text-red-600 hover:bg-red-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" /> حذف
               </button>

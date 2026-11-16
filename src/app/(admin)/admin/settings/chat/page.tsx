@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { Check, Loader2, Plus, Trash2 } from "lucide-react";
 import type { ChatConfig } from "@/lib/chat";
@@ -25,6 +26,7 @@ interface FaqRow {
 }
 
 export default function ChatSettingsPage() {
+  const confirmAsk = useConfirm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -136,7 +138,7 @@ export default function ChatSettingsPage() {
             <input className={inputCls} placeholder="السؤال (مثال: الشحن بكام؟)" maxLength={80} value={f.q} onChange={(e) => setRow(i, { q: e.target.value })} />
             <input className={inputCls} placeholder="كلمات مفتاحية: شحن، توصيل، مصاريف" value={f.keywords} onChange={(e) => setRow(i, { keywords: e.target.value })} />
             <textarea className={inputCls + " py-3 leading-relaxed"} rows={3} maxLength={600} placeholder="الإجابة" value={f.answer} onChange={(e) => setRow(i, { answer: e.target.value })} />
-            <button type="button" onClick={() => setFaq((l) => l.filter((_, k) => k !== i))} className="min-h-[44px] px-3 rounded-xl text-rose-600 hover:bg-rose-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer">
+            <button type="button" onClick={async () => { if (await confirmAsk({ title: "حذف السؤال", message: "هتحذف السؤال ده وإجابته." })) setFaq((l) => l.filter((_, k) => k !== i)); }} className="min-h-[44px] px-3 rounded-xl text-red-600 hover:bg-red-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer">
               <Trash2 className="w-4 h-4" /> حذف
             </button>
           </div>

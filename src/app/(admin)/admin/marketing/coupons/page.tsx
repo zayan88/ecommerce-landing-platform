@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../../_components/confirm";
 import React, { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { Coupon } from "@/lib/commerce";
@@ -13,6 +14,7 @@ interface Prod {
 const num = (v: string) => (v === "" ? 0 : Math.max(0, Math.round(Number(v)) || 0));
 
 export default function CouponsPage() {
+  const confirmAsk = useConfirm();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [usage, setUsage] = useState<Record<string, number>>({});
   const [products, setProducts] = useState<Prod[]>([]);
@@ -112,7 +114,7 @@ export default function CouponsPage() {
               <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer min-h-[44px]">
                 <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={c.enabled} onChange={(e) => setCoupon(i, { enabled: e.target.checked })} /> شغّال
               </label>
-              <button type="button" onClick={() => setCoupons((l) => l.filter((_, k) => k !== i))} className="min-h-[44px] px-3 rounded-xl text-rose-600 hover:bg-rose-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer">
+              <button type="button" onClick={async () => { if (await confirmAsk({ title: "حذف الكوبون", message: `هتحذف الكوبون ${c.code || "ده"}.` })) setCoupons((l) => l.filter((_, k) => k !== i)); }} className="min-h-[44px] px-3 rounded-xl text-red-600 hover:bg-red-50 text-sm font-bold flex items-center gap-1.5 cursor-pointer">
                 <Trash2 className="w-4 h-4" /> حذف
               </button>
             </div>

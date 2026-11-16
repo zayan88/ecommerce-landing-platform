@@ -255,7 +255,7 @@ const STATUS_CHIP: Record<string, { label: string; cls: string }> = {
   confirmed: { label: "تم التأكيد", cls: "bg-sky-50 text-sky-800 border-sky-200" },
   shipped: { label: "تم الشحن", cls: "bg-violet-50 text-violet-800 border-violet-200" },
   delivered: { label: "تم التوصيل", cls: "bg-emerald-50 text-emerald-800 border-emerald-200" },
-  cancelled: { label: "ملغي", cls: "bg-rose-50 text-rose-800 border-rose-200" },
+  cancelled: { label: "ملغي", cls: "bg-red-50 text-red-800 border-red-200" },
   returned: { label: "مرتجع", cls: "bg-slate-100 text-slate-700 border-slate-200" },
 };
 
@@ -273,7 +273,7 @@ function Delta({ now, before }: { now: number; before: number | null }) {
   if (Math.abs(p) < 0.5) return <span className="text-[11px] font-bold text-slate-400">بدون تغيير</span>;
   const up = p > 0;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${up ? "text-emerald-700" : "text-rose-600"}`}>
+    <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${up ? "text-emerald-700" : "text-red-600"}`}>
       {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
       {Math.abs(Math.round(p))}%
     </span>
@@ -342,7 +342,7 @@ function AttentionCard({
 }) {
   const cls = {
     amber: "border-amber-200 bg-amber-50/70 text-amber-900",
-    rose: "border-rose-200 bg-rose-50/70 text-rose-900",
+    rose: "border-red-200 bg-red-50/70 text-red-900",
     slate: "border-slate-200 bg-white text-slate-800",
   }[tone];
   return (
@@ -556,12 +556,12 @@ export default function AdminOverviewPage() {
       </Card>
 
       {error && (
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 text-rose-900 p-4 flex items-center justify-between gap-3">
+        <div className="rounded-3xl border border-red-200 bg-red-50 text-red-900 p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-bold">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
-          <button onClick={() => load(range.from, range.to)} className="min-h-11 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold shrink-0 cursor-pointer">
+          <button onClick={() => load(range.from, range.to)} className="min-h-11 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold shrink-0 cursor-pointer">
             إعادة المحاولة
           </button>
         </div>
@@ -681,7 +681,7 @@ export default function AdminOverviewPage() {
                   <Link href="/admin/products" className="flex items-center gap-3 py-2.5 min-h-11">
                     <Thumb src={p.image} />
                     <span className="flex-1 min-w-0 text-sm font-bold text-slate-900 truncate">{p.title}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 ${p.stock <= 0 ? "bg-rose-50 text-rose-900 border border-rose-200" : "bg-amber-100 text-amber-900"}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 ${p.stock <= 0 ? "bg-red-50 text-red-900 border border-red-200" : "bg-amber-100 text-amber-900"}`}>
                       {p.stock <= 0 ? "نفد" : `متبقي ${nf(p.stock)}`}
                     </span>
                   </Link>
@@ -734,7 +734,7 @@ export default function AdminOverviewPage() {
             <Kpi label="صافي الربح" value={t ? money(t.netProfit) : ""} tone="text-emerald-700" note={profitNote} loading={showSkeleton} />
             <Kpi label="مرات بدء الشراء" value={t ? nf(t.checkoutStarts) : ""} note="تقريبي" loading={showSkeleton} />
             <Kpi label="الطلبات الجديدة" value={t ? nf(t.newOrders) : ""} tone="text-orange-600" loading={showSkeleton} />
-            <Kpi label="الطلبات المفقودة" value={t ? nf(t.lostOrders) : ""} tone="text-rose-600" loading={showSkeleton} />
+            <Kpi label="الطلبات المفقودة" value={t ? nf(t.lostOrders) : ""} tone="text-red-600" loading={showSkeleton} />
           </div>
         )}
       </section>

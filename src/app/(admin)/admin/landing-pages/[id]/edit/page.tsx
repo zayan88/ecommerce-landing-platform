@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../../../_components/confirm";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -19,6 +20,7 @@ import StarterEditor from "@/components/editor/StarterEditor";
 import { getLandingPageComponent, landingPageRegistry } from "@/landing-pages/registry";
 
 export default function LandingPageDetailPage() {
+  const confirmAsk = useConfirm();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = decodeURIComponent(String(params?.id || ""));
@@ -92,7 +94,7 @@ export default function LandingPageDetailPage() {
 
   const handleDelete = async () => {
     if (!lp) return;
-    if (!window.confirm(`هل أنت متأكد من رغبتك في حذف صفحة الهبوط "${lp.title}"؟`)) return;
+    if (!await confirmAsk({ title: "حذف صفحة الهبوط", message: `هتحذف الصفحة "${lp.title}" نهائياً. مش هتقدر ترجّعها.` })) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/landing-pages?id=${lp.id}`, { method: "DELETE" });
@@ -171,9 +173,12 @@ export default function LandingPageDetailPage() {
   const handleConvert = async () => {
     if (!lp) return;
     if (
-      !window.confirm(
-        "هيتحوّل شكل الصفحة للقالب الجديد القابل للتعديل المباشر، وهتاخد بيانات المنتج (الاسم والوصف والصور والعروض). تكمل؟"
-      )
+      !(await confirmAsk({
+        title: "تحويل الصفحة",
+        tone: "neutral",
+        confirmText: "تحويل",
+        message: "هيتحوّل شكل الصفحة للقالب الجديد القابل للتعديل المباشر، وهتاخد بيانات المنتج (الاسم والوصف والصور والعروض). تكمل؟",
+      }))
     )
       return;
     setBusy(true);

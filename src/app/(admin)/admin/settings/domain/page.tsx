@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../../_components/confirm";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Link2, Copy, Check, RefreshCw, Trash2, CheckCircle2, AlertCircle, Clock, Star, HelpCircle, ChevronDown } from "lucide-react";
 import { dnsInstruction, normalizeHostname } from "@/lib/domains/cf-domains";
@@ -36,7 +37,7 @@ function StatePill({ state }: { state: DomainRow["state"] }) {
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-red-800 border border-red-200">
       <AlertCircle className="w-3 h-3" /> محتاج مراجعة
     </span>
   );
@@ -102,6 +103,7 @@ function RecordBox({ dns, title }: { dns: Dns; title?: string }) {
 }
 
 export default function DomainSettingsPage() {
+  const confirmAsk = useConfirm();
   const [configured, setConfigured] = useState(true);
   const [target, setTarget] = useState("");
   const [domains, setDomains] = useState<DomainRow[]>([]);
@@ -198,8 +200,8 @@ export default function DomainSettingsPage() {
     }
   };
 
-  const remove = (name: string) => {
-    if (!window.confirm(`إزالة الدومين ${name} من المتجر؟ الموقع هيفضل شغال على الرابط الأساسي.`)) return;
+  const remove = async (name: string) => {
+    if (!await confirmAsk({ title: "إزالة الدومين", message: `هتشيل الدومين ${name} من المتجر. الموقع هيفضل شغال على الرابط الأساسي.` })) return;
     call("rm:" + name, () => fetch(`/api/admin/domain?domain=${encodeURIComponent(name)}`, { method: "DELETE" }), "اتشال الدومين.");
   };
 
@@ -282,10 +284,10 @@ export default function DomainSettingsPage() {
               <p className="text-xs text-slate-500 leading-relaxed">
                 ادخل الدومين الأساسي بدون www، أو ادخل sub domain في حالة إنك عايز تربط sub domain مثل <span dir="ltr">shop.yourdomain.com</span>
               </p>
-              {draft.trim() && !typed.ok && <p className="text-xs font-bold text-rose-700">{typed.error}</p>}
+              {draft.trim() && !typed.ok && <p className="text-xs font-bold text-red-700">{typed.error}</p>}
             </form>
             {msg && (
-              <p role="status" className={`text-xs font-bold flex items-start gap-1.5 ${msg.ok ? "text-emerald-700" : "text-rose-700"}`}>
+              <p role="status" className={`text-xs font-bold flex items-start gap-1.5 ${msg.ok ? "text-emerald-700" : "text-red-700"}`}>
                 {msg.ok ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
                 {msg.text}
               </p>
@@ -315,7 +317,7 @@ export default function DomainSettingsPage() {
                 <div className="space-y-3">
                   <RecordBox dns={d.dns} title="السجل المطلوب إضافته عند مزوّد النطاق:" />
                   <p className="text-xs text-slate-600 leading-relaxed">الصفحة بتتحقق لوحدها كل نص دقيقة وإنت فاتحها، وتقدر تدوس «تحقق الآن» في أي وقت.</p>
-                  {d.state === "failed" && d.error && <p className="text-xs font-bold text-rose-700 leading-relaxed">ملاحظة من النظام: {d.error}</p>}
+                  {d.state === "failed" && d.error && <p className="text-xs font-bold text-red-700 leading-relaxed">ملاحظة من النظام: {d.error}</p>}
                 </div>
               )}
 
@@ -357,7 +359,7 @@ export default function DomainSettingsPage() {
                   type="button"
                   onClick={() => remove(d.name)}
                   disabled={busy === "rm:" + d.name}
-                  className="min-h-[44px] px-4 rounded-xl border border-rose-200 text-rose-700 text-sm font-bold hover:bg-rose-50 flex items-center gap-2 cursor-pointer disabled:opacity-50 mr-auto"
+                  className="min-h-[44px] px-4 rounded-xl border border-red-200 text-red-700 text-sm font-bold hover:bg-red-50 flex items-center gap-2 cursor-pointer disabled:opacity-50 mr-auto"
                 >
                   <Trash2 className="w-4 h-4" />
                   إزالة

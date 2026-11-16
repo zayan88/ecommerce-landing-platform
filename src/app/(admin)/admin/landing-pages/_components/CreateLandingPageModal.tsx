@@ -503,8 +503,8 @@ export default function CreateLandingPageModal({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div className="p-2.5 rounded-xl bg-rose-50/70 border border-rose-200 space-y-1.5">
-                        <span className="block font-bold text-rose-800">3 عيوب للمنتجات التقليدية:</span>
+                      <div className="p-2.5 rounded-xl bg-red-50/70 border border-red-200 space-y-1.5">
+                        <span className="block font-bold text-red-800">3 عيوب للمنتجات التقليدية:</span>
                         {[0, 1, 2].map((idx) => (
                           <input
                             key={idx}
@@ -521,7 +521,7 @@ export default function CreateLandingPageModal({
                               });
                             }}
                             placeholder={`عيب رقم ${idx + 1}`}
-                            className="w-full px-2.5 py-1 rounded-md border border-rose-200 text-rose-900 text-xs bg-white outline-none"
+                            className="w-full px-2.5 py-1 rounded-md border border-red-200 text-red-900 text-xs bg-white outline-none"
                           />
                         ))}
                       </div>

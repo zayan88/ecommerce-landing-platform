@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
@@ -29,6 +30,7 @@ import {
 
 export default function AdminProductsPage() {
   const router = useRouter();
+  const confirmAsk = useConfirm();
   const brand = useBrand();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,10 +131,7 @@ export default function AdminProductsPage() {
   };
 
   const handleDeleteProduct = async (prod: Product) => {
-    const confirmDelete = window.confirm(
-      `هل أنت متأكد من حذف المنتج "${prod.title_ar}"؟\nسيتم حذف المنتج وصفحة الهبوط المرتبطة به فوراً.`
-    );
-    if (!confirmDelete) return;
+    if (!await confirmAsk({ title: "حذف المنتج", message: `هتحذف المنتج "${prod.title_ar}" وصفحة الهبوط المرتبطة بيه. مش هتقدر ترجّعهم.` })) return;
 
     setDeletingId(prod.id);
     try {
@@ -293,7 +292,7 @@ export default function AdminProductsPage() {
 
   const bulkDelete = async () => {
     if (selected.length === 0 || bulkBusy) return;
-    if (!window.confirm(`مسح ${selected.length} منتج نهائياً مع صفحات الهبوط بتاعتهم؟\nمش هتقدر ترجّعهم.`)) return;
+    if (!await confirmAsk({ title: "مسح المنتجات", message: `هتمسح ${selected.length} منتج مع صفحات الهبوط بتاعتهم. مش هتقدر ترجّعهم.` })) return;
     setBulkBusy(true);
     try {
       const res = await fetch("/api/products", {
@@ -433,7 +432,7 @@ export default function AdminProductsPage() {
         type="button"
         onClick={() => handleDeleteProduct(prod)}
         disabled={deletingId === prod.id}
-        className="w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer disabled:opacity-40"
+        className="w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer disabled:opacity-40"
         title="حذف المنتج"
         aria-label="حذف المنتج"
       >
@@ -500,13 +499,13 @@ export default function AdminProductsPage() {
           className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-2.5 shadow-sm ${
             alertMessage.type === "success"
               ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-              : "bg-rose-50 border-rose-200 text-rose-900"
+              : "bg-red-50 border-red-200 text-red-900"
           }`}
         >
           {alertMessage.type === "success" ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
           )}
           <span>{alertMessage.text}</span>
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LandingPage, Product, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS } from "@/types";
@@ -8,6 +9,7 @@ import TablePagination from "@/components/admin/TablePagination";
 import CreateLandingPageModal from "./_components/CreateLandingPageModal";
 
 export default function AdminLandingPagesPage() {
+  const confirmAsk = useConfirm();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [landingPages, setLandingPages] = useState<LandingPage[]>([]);
@@ -359,7 +361,7 @@ export default function AdminLandingPagesPage() {
 
   const bulkDelete = async () => {
     if (selected.length === 0 || bulkBusy) return;
-    if (!window.confirm(`مسح ${selected.length} صفحة هبوط نهائياً؟\nمش هتقدر ترجّعهم.`)) return;
+    if (!await confirmAsk({ title: "مسح صفحات الهبوط", message: `هتمسح ${selected.length} صفحة هبوط نهائياً. مش هتقدر ترجّعهم.` })) return;
     setBulkBusy(true);
     try {
       const res = await fetch("/api/landing-pages", {
@@ -506,7 +508,7 @@ export default function AdminLandingPagesPage() {
           className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-bold shadow-lg border ${
             toast.type === "success"
               ? "bg-emerald-50 text-emerald-900 border-emerald-200"
-              : "bg-rose-50 text-rose-900 border-rose-200"
+              : "bg-red-50 text-red-900 border-red-200"
           }`}
         >
           {toast.text}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "../../_components/confirm";
 import React, { useCallback, useEffect, useState } from "react";
 import { Check, Copy, Loader2, ShieldAlert } from "lucide-react";
 
@@ -13,6 +14,7 @@ interface McpStatus {
 const card = "bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-4";
 
 export default function McpSettingsPage() {
+  const confirmAsk = useConfirm();
   const [status, setStatus] = useState<McpStatus | null>(null);
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
@@ -124,7 +126,7 @@ export default function McpSettingsPage() {
             type="button"
             disabled={busy}
             onClick={async () => {
-              if (status.has_token && !window.confirm("التوكن القديم هيبطل يشتغل فوراً. تكمّل؟")) return;
+              if (status.has_token && !(await confirmAsk({ title: "توكن جديد", tone: "neutral", confirmText: "توليد", message: "التوكن القديم هيبطل يشتغل فوراً. تكمّل؟" }))) return;
               const j = await call("POST");
               if (j?.token) setToken(j.token);
             }}
@@ -137,17 +139,17 @@ export default function McpSettingsPage() {
               type="button"
               disabled={busy}
               onClick={async () => {
-                if (!window.confirm("إلغاء التوكن؟ كل المساعدين المتصلين هيتفصلوا.")) return;
+                if (!(await confirmAsk({ title: "إلغاء التوكن", message: "كل المساعدين المتصلين هيتفصلوا فوراً.", confirmText: "إلغاء التوكن" }))) return;
                 setToken("");
                 await call("DELETE");
               }}
-              className="min-h-[48px] px-5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 font-bold text-sm cursor-pointer disabled:opacity-60"
+              className="min-h-[48px] px-5 rounded-xl border border-red-300 text-red-700 hover:bg-red-50 font-bold text-sm cursor-pointer disabled:opacity-60"
             >
               إلغاء التوكن
             </button>
           )}
         </div>
-        {error && <p className="text-sm font-bold text-rose-700">{error}</p>}
+        {error && <p className="text-sm font-bold text-red-700">{error}</p>}
       </section>
 
       <section className={card}>
