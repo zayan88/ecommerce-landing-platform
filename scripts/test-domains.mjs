@@ -152,5 +152,17 @@ await test("unreachable Cloudflare: clean error, no crash", async () => {
   await assert.rejects(() => lib.listDomains({ ...env, apiBase: "http://127.0.0.1:1" }), /تعذر الاتصال/);
 });
 
+await test("api base override works only for a local fake (a remote host is ignored, so the token can never be sent elsewhere)", () => {
+  const saved = { ...process.env };
+  process.env.CF_PAGES_API_TOKEN = "t"; process.env.CF_ACCOUNT_ID = ACC; process.env.CF_PAGES_PROJECT = "p";
+  process.env.CF_API_BASE = "http://127.0.0.1:3197";
+  assert.equal(lib.readDomainEnv().apiBase, "http://127.0.0.1:3197");
+  for (const evil of ["https://evil.example.com", "http://evil.com", "http://127.0.0.1.evil.com", "http://localhost@evil.com", "ftp://127.0.0.1"]) {
+    process.env.CF_API_BASE = evil;
+    assert.equal(lib.readDomainEnv().apiBase, "https://api.cloudflare.com/client/v4", `must ignore ${evil}`);
+  }
+  Object.assign(process.env, saved);
+});
+
 server.close();
 console.log(`\n${n}/${n} passed`);

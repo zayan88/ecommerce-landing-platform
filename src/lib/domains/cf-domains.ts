@@ -42,7 +42,10 @@ export function readDomainEnv(): DomainEnv | null {
   const accountId = (process.env.CF_ACCOUNT_ID || "").trim();
   const project = (process.env.CF_PAGES_PROJECT || "").trim();
   if (!token || !/^[0-9a-f]{32}$/i.test(accountId) || !/^[a-z0-9-]{1,58}$/i.test(project)) return null;
-  return { token, accountId, project, apiBase: CF_API };
+  // Local testing only: a fake Cloudflare on 127.0.0.1 may replace the real API (any other value is ignored)
+  const override = (process.env.CF_API_BASE || "").trim();
+  const apiBase = /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(override) ? override : CF_API;
+  return { token, accountId, project, apiBase };
 }
 
 // ───────────────────────── hostname validation ─────────────────────────
