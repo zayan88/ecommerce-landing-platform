@@ -82,6 +82,23 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(availableOffers)]);
 
+  // Ad links: ?offer=<offer id> pre-selects that tier, ?go=checkout scrolls to the order form.
+  // Only picks among this product's own offers (the price always comes from the offer, never from the URL).
+  useEffect(() => {
+    if (editMode) return;
+    const q = new URLSearchParams(window.location.search);
+    const wanted = q.get("offer");
+    if (wanted) {
+      const o = availableOffers.find((x) => x.id === wanted);
+      if (o) setSelectedOffer(o);
+    }
+    if (q.get("go") === "checkout") {
+      // instant on purpose: someone arriving from an ad should land on the form, not watch a long animation
+      setTimeout(() => document.getElementById("order-form-section")?.scrollIntoView({ behavior: "auto" }), 600);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const images = product.images && product.images.length > 0 ? product.images : ["/landing-pages/mesh-nebulizer/images/hero.webp"];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
