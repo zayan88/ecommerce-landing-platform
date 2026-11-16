@@ -98,6 +98,9 @@ export interface LandingPageContentConfig {
   hide_checkout_trust?: boolean;
   /** One flat price instead of the 1/2/3-piece offer tiers. */
   hide_offers?: boolean;
+  /** Mobile sticky buy bar off, and a custom text for the order button. */
+  hide_sticky_bar?: boolean;
+  cta_text?: string;
   hero_headline?: string;
   hero_subheadline?: string;
   hero_badge?: string;

@@ -392,6 +392,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
               ["hide_hero_trust", "أيقونات الثقة تحت صور المنتج"],
               ["hide_checkout_trust", "أيقونات الضمان تحت فورم الطلب"],
               ["hide_offers", "باقات العروض (٢ و٣ قطع) — لو قفلتها يظهر سعر واحد بس"],
+              ["hide_sticky_bar", "زر الشراء الثابت أسفل الشاشة (موبايل)"],
             ] as const).map(([key, label]) => {
               const on = !draft.content[key];
               return (
@@ -406,6 +407,18 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
                 </label>
               );
             })}
+            <div>
+              <label className="block text-sm font-bold text-slate-800 mb-1.5" htmlFor="cta-text">النص المكتوب على زر الشراء</label>
+              <input
+                id="cta-text"
+                type="text"
+                maxLength={40}
+                value={draft.content.cta_text || ""}
+                onChange={(e) => apply((d) => ({ ...d, content: { ...d.content, cta_text: e.target.value || undefined } }))}
+                placeholder="أكّد طلبي.. وهدفع عند الاستلام 🛒"
+                className="w-full min-h-[48px] px-3.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
           </div>
           <SectionsPanel
             customSections={draft.sections}

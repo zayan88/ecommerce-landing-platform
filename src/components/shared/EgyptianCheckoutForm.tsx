@@ -30,6 +30,8 @@ interface EgyptianCheckoutFormProps {
   hideOffers?: boolean;
   /** Merchant turned the repeated trust icons off. */
   hideTrust?: boolean;
+  /** Custom text of the order button (merchant setting). */
+  ctaText?: string;
 }
 
 export function EgyptianCheckoutForm({
@@ -43,6 +45,7 @@ export function EgyptianCheckoutForm({
   previewOnly = false,
   hideOffers = false,
   hideTrust = false,
+  ctaText,
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
 
@@ -411,7 +414,7 @@ export function EgyptianCheckoutForm({
           ) : (
             <>
               <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span>أكّد طلبي.. وهدفع عند الاستلام 🛒</span>
+              <span>{ctaText?.trim() || "أكّد طلبي.. وهدفع عند الاستلام 🛒"}</span>
             </>
           )}
         </button>

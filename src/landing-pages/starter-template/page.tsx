@@ -514,6 +514,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         previewOnly={editMode}
         hideOffers={hideOffers}
         hideTrust={!!c?.hide_checkout_trust}
+        ctaText={c?.cta_text}
       />
     </div>
   );
@@ -583,8 +584,9 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       <LandingFooter extraBottomSpace={!editMode} />
 
       {/* Sticky Buy Bar */}
-      {!editMode && (
+      {!editMode && !c?.hide_sticky_bar && (
         <StickyBuyBar
+          ctaText={c?.cta_text?.trim() || undefined}
           product={product}
           selectedOffer={selectedOffer}
           onBuyClick={scrollToCheckout}
