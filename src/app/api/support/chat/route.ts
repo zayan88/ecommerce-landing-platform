@@ -52,11 +52,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const [products, settings, orders] = await Promise.all([
-      dbStore.getProducts(),
-      dbStore.getSettings(),
-      dbStore.getOrders(),
-    ]);
+    const [products, settings] = await Promise.all([dbStore.getProducts(), dbStore.getSettings()]);
 
     const activeProducts = products.filter((p) => p.status === "active");
 
@@ -76,6 +72,13 @@ export async function POST(req: NextRequest) {
     ) {
       const searchPhone = phoneMatch ? phoneMatch[0] : null;
       const searchOrder = orderNumberMatch ? orderNumberMatch[0].toUpperCase() : null;
+
+      // Only the orders that can match are loaded (indexed lookup on D1) — never the whole order list:
+      // this endpoint is public, so its cost per message must stay small.
+      const orders =
+        searchPhone || searchOrder
+          ? await dbStore.findOrdersForLookup({ keys: searchOrder ? [searchOrder] : [], phone: searchPhone })
+          : [];
 
       // Exact matching only (no partial phone matches)
       const phoneEq = (ord: any) =>

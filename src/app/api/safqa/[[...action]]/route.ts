@@ -224,7 +224,11 @@ export async function POST(req: NextRequest, { params }: RouteProps) {
       const rawStatus = (payload.status || payload.data?.status || "").toLowerCase();
 
       if (safkaOrderId) {
-        const orders = await dbStore.getOrders();
+        // Targeted lookup (indexed on D1) instead of loading every order on each webhook call.
+        const orders = await dbStore.findOrdersForLookup({
+          keys: [String(safkaOrderId)],
+          phone: typeof payload.client_phone1 === "string" ? payload.client_phone1 : null,
+        });
         const matched = orders.find(
           (o) =>
             o.safqa_invoice_id === safkaOrderId ||
