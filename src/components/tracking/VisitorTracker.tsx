@@ -10,6 +10,43 @@ declare global {
   }
 }
 
+// Events are queued and sent together (one Worker invocation instead of one per event):
+// after 15 s, when the queue holds 12, when the tab is hidden / closed, and on route change.
+let queue: Record<string, any>[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | undefined;
+let listenersAdded = false;
+
+function flushQueue() {
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = undefined;
+  }
+  if (queue.length === 0) return;
+  const body = JSON.stringify({ events: queue.slice(0, 20) });
+  queue = queue.slice(20);
+  try {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon("/api/analytics", new Blob([body], { type: "application/json" }));
+    } else {
+      fetch("/api/analytics", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+    }
+  } catch {
+    // tracking must never break the page
+  }
+  if (queue.length > 0) flushQueue();
+}
+
+function enqueue(payload: Record<string, any>) {
+  queue.push(payload);
+  if (queue.length >= 12) flushQueue();
+  else if (!flushTimer) flushTimer = setTimeout(flushQueue, 15000);
+  if (!listenersAdded && typeof window !== "undefined") {
+    listenersAdded = true;
+    document.addEventListener("visibilitychange", () => document.visibilityState === "hidden" && flushQueue());
+    window.addEventListener("pagehide", flushQueue);
+  }
+}
+
 export function VisitorTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -76,18 +113,7 @@ export function VisitorTracker() {
           created_at: new Date().toISOString(),
         };
 
-        const jsonString = JSON.stringify(payload);
-        if (navigator.sendBeacon) {
-          const blob = new Blob([jsonString], { type: "application/json" });
-          navigator.sendBeacon("/api/analytics", blob);
-        } else {
-          fetch("/api/analytics", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: jsonString,
-            keepalive: true,
-          }).catch(() => {});
-        }
+        enqueue(payload);
       } catch (err) {
         // Silent catch for resilience
       }
@@ -168,6 +194,7 @@ export function VisitorTracker() {
       window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("click", handleClick);
       document.removeEventListener("focusin", handleFocusIn);
+      flushQueue(); // leaving the page / route: send what is queued
     };
   }, [pathname, searchParams]);
 
