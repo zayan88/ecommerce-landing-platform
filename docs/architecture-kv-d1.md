@@ -217,3 +217,166 @@ Tests: `node scripts/test-orders-admin.mjs` (16 tests; shared harness in `script
 - Write latency from Egypt to the D1 primary region, cold starts, behaviour under real concurrency.
 - That next-on-pages exposes `DB` on the request context the same way it exposes `STORE_KV`.
 - The import against production-size KV data (paging keeps each call inside the limits on paper).
+
+---
+
+# Catalog on D1: products, offers, landing pages, settings (branch `feature/d1-orders`)
+
+**Default behaviour is unchanged: `CATALOG_BACKEND` defaults to `kv`.** This supersedes the "KV" row of the
+split table at the top for a deployment that sets `CATALOG_BACKEND=d1`: KV then only holds uploaded images
+(`/api/media`), the login rate limit and (while `ORDERS_BACKEND=kv`) orders.
+
+Why: on KV one product save costs 6 writes (3 for the product: id key, slug key, list; 3 for its landing
+page) and every public page view reads KV 3 to 4 times. The free plan allows 1,000 KV writes a day, so an
+Excel import of a few hundred products is impossible there. On D1 the same save is one transaction and
+bulk work is a matter of batches.
+
+## What was built
+
+| Piece | File |
+|---|---|
+| Schema: `products`, `product_offers`, `landing_pages`, `settings` (`store_id` on every table) | `migrations/0004_catalog.sql` |
+| Catalog repository (interface + D1 implementation), backend switch, per-isolate read cache | `src/lib/db/catalog-repo.ts` |
+| dbStore product / landing page / settings functions routed by backend | `src/lib/db/store.ts` |
+| Product save + landing page sync as one call | `dbStore.saveProductWithLandingPage`, used by `src/app/api/products/route.ts` |
+| KV to D1 import (library + admin endpoint) | `src/lib/db/catalog-import.ts`, `src/app/api/admin/catalog-import/route.ts` |
+| Tests (24) | `scripts/test-catalog-repo.mjs` |
+
+Tables:
+
+- `products`: every `Product` field; `images` as a JSON array of URLs; `extra` JSON keeps fields without a
+  column (lossless import, e.g. `safka_*`); `track_stock` / `stock_set_at` are reserved for stock tracking
+  (not used yet); unique `(store_id, slug)`; index `(store_id, status, created_ms)`.
+- `product_offers`: primary key `(store_id, product_id, id)` (offer ids are only unique inside a product);
+  `position` keeps the saved order.
+- `landing_pages`: every `LandingPage` field; `content_config` and `sections_config` as JSON;
+  `meta_capi_token` is a secret (see Security); unique `(store_id, slug)`; indexes on `product_id` and `status`.
+- `settings`: one row per overridden settings field (`key`, JSON `value`), i.e. the content of the KV key
+  `system_settings_overrides` (brand fields, tracking ids, `meta_capi_entries`, Telegram, Safka...).
+
+API routes, response shapes and sanitizers are untouched: `/api/products`, `/api/landing-pages`,
+`/api/settings`, `/p/[slug]` and `getBrand()` all go through `dbStore` as before.
+
+## What it costs
+
+| Operation | KV backend | D1 backend |
+|---|---|---|
+| Product save (with its landing page) | 6 KV writes, 2 KV reads | **0 KV**, 1 D1 batch (product row, offers replaced, page row) |
+| Landing page content / sections save | 3 KV writes, 2 to 3 KV reads | **0 KV**, 1 D1 query |
+| Settings save | 1 KV write (whole object, read-modify-write) | **0 KV**, 1 D1 batch (one row per changed field) |
+| Public page view (`/p/<slug>`) | 3 to 4 KV reads | **0 KV**; cold isolate: 3 indexed D1 queries (page, product + offers in one join, settings); warm: none |
+
+All of these are asserted by the tests with a KV emulator that counts every operation and a counter on
+the D1 emulator. D1 rows written per product save: roughly 3 for the product (row + 2 indexes), 2 per offer
+(delete + insert) and 4 for the page; a few hundred product saves a day are well under 1% of the allowance.
+
+## Behaviour notes (same API, a few deliberate differences on D1)
+
+- **Slug uniqueness** is a unique index per store. A product save that takes the slug of another product
+  replaces that product (and its offers) in the same transaction; this is what KV did implicitly (the slug
+  key and the list entry were overwritten). `updateLandingPageMeta` still refuses a slug used by another
+  page or product, and `normalizeSlug` is unchanged.
+- **Offers** are replaced as a set inside the product transaction (delete + inserts). A save without
+  `offers` clears them, as on KV.
+- **Product edit keeps the page.** On KV, `PUT /api/products` re-saves the landing page from scratch, which
+  resets its content, sections, component key and pixel settings unless the caller sends `skip_lp_sync`
+  (only the page editor does). On D1 the sync only refreshes title, product, status and URL of an existing
+  page. This is a fix, not parity; the KV behaviour was left alone.
+- **Product delete** also deletes the product's landing pages (the API message already said so; on KV the
+  page keys stayed behind).
+- `offer.product_id` is the real product id on D1 (KV returned the empty string it had been sent).
+- Demo seed products / pages (code, `DEMO_MODE=1`) are merged into lists exactly as before; they are not
+  rows. Editing a demo page on D1 stores it as a row.
+- If D1 is selected but unavailable, saves and product / page reads fail (HTTP 500); nothing is written to
+  KV. Settings reads fall back to env / built-in defaults so the site shell still renders.
+
+## Read cache and its trade-off
+
+`cachedCatalogRead` keeps product, landing page, list and settings reads in memory per isolate for
+`CATALOG_CACHE_TTL_SECONDS` (default 30, 0 disables, max 3600). Misses ("no such slug") are cached too, and
+the cache is capped at 500 entries, so unknown URLs cannot hammer D1.
+
+- A catalog or settings write clears the cache of the isolate that performed it, at once.
+- **Other isolates keep their copy until the TTL ends**: after an admin save, a visitor served by another
+  isolate can see the previous price or text for up to 30 s. The checkout computes prices server-side from
+  the same (possibly cached) product, so a price change takes up to one TTL to apply everywhere. Set the
+  TTL to 0 for instant consistency at the cost of 3 D1 queries per page view.
+- Admin screens are not affected: the admin GET handlers (`/api/products` with an admin session,
+  `/api/landing-pages`, `/api/settings`) drop the isolate's cache before reading, so the editor always
+  loads the latest save.
+- Rows read: a cold page view reads about 2 rows plus the offers; with the cache a busy isolate reads
+  them once per TTL.
+
+## Security
+
+- Every statement is prepared with bound parameters. Dynamic SQL text is limited to column names from
+  constant lists in `catalog-repo.ts` and generated `?` lists. Setting names must match
+  `^[a-z][a-z0-9_]{0,63}$`; patchable page columns are a fixed map (`sections_config`, `content_config`, `status`).
+- `landing_pages.meta_capi_token` and secret settings (Telegram token, Safka tokens, `meta_capi_entries[].token`)
+  are stored as they were in KV. Nothing new exposes them: `/p/[slug]` still deletes the page token before
+  rendering, `/api/settings` still masks every secret and keeps the stored value when a masked one is sent
+  back, and `/api/landing-pages`, `/api/settings`, `/api/admin/catalog-import` are not in the middleware's
+  public allow-list (asserted by the tests). The import endpoint returns counts and ids only.
+- Existing sanitizers in `/api/settings` (palette keys, URLs, pixel id formats, phone digits, home config)
+  run before `updateSettings` on both backends.
+
+## Environment variables
+
+| Variable | Values | Meaning |
+|---|---|---|
+| `CATALOG_BACKEND` | `kv` (default) / `d1` | Where products, offers, landing pages and settings live. Anything but `d1` means KV. |
+| `CATALOG_KV_MIRROR` | empty / `1` | With `d1`: also copy every catalog / settings write to the KV keys the KV backend reads (the old KV writes again). Verification period only. |
+| `CATALOG_CACHE_TTL_SECONDS` | default `30` | Per-isolate read cache TTL for the D1 catalog. `0` disables. |
+
+`CATALOG_BACKEND` and `ORDERS_BACKEND` are independent; both use the same `DB` binding and `STORE_ID`.
+
+## Run it locally
+
+Same emulators as for orders (`node scripts/dev-kv-server.mjs 3199`, `node scripts/dev-d1-server.mjs 3198`;
+the D1 emulator applies `migrations/*.sql`, including 0004, on start). Start Next with
+`D1_REST_BASE_URL=http://127.0.0.1:3198` and `CATALOG_BACKEND=d1`, then import the local KV content with
+`POST /api/admin/catalog-import` (see below). Tests: `node scripts/test-catalog-repo.mjs`.
+
+## Enable it on Cloudflare (nothing below has been run)
+
+1. `npx.cmd wrangler d1 migrations apply DB --remote` (applies `0003_orders_safqa_idx.sql` and
+   `0004_catalog.sql`; both are additive).
+2. Deploy with `CATALOG_BACKEND` still unset (KV). Logged in as admin, check `GET /api/admin/catalog-import`:
+   it must show `d1.available: true` and the KV totals (`kv.products`, `kv.landing_pages`, `kv.settings_keys`).
+3. Import, from the browser console of the admin panel:
+   ```js
+   let offset = 0, r;
+   do {
+     r = (await (await fetch("/api/admin/catalog-import", { method: "POST", body: JSON.stringify({ offset, limit: 40 }) })).json()).report;
+     console.log(r); offset = r.next_offset;
+   } while (!r.done);
+   ```
+   `{ dry_run: true }` reports the source counts without writing. After the loop compare
+   `r.d1.products` with `r.source.products`, `r.d1.landing_pages` with `r.source.landing_pages` and
+   `r.d1.settings` with `r.source.settings_keys`; look at `conflicts` (ids whose slug belongs to another
+   id; nothing is overwritten) and `failed_reads`.
+   - Source of truth = the admin lists (`custom_products_all`, `custom_lps_all`); for each entry the
+     per-key record (`prod:<id>`, `lp:<id>`) wins when it is newer.
+   - `orphan_product_keys` / `orphan_landing_page_keys` count keys that are in no list (old slugs,
+     deleted products whose slug key was left behind, demo pages edited in place). They are NOT imported
+     by default, because that could bring deleted products back. Review them, then import them with
+     `{ include_orphans: true }` if they are wanted (stale copies of listed items are skipped).
+   - The import can be repeated at any time: unchanged items are skipped, a newer KV copy updates the D1
+     row, a newer D1 row is kept. Settings already in D1 are kept unless `{ overwrite_settings: true }`.
+4. Set `CATALOG_BACKEND=d1` and `CATALOG_KV_MIRROR=1` in the Pages project variables, redeploy, run the
+   import once more (edits made between step 3 and the switch), then verify: open a landing page, edit a
+   product and its offers, edit page content, change a setting and the brand, place an order.
+5. When satisfied, remove `CATALOG_KV_MIRROR` (KV writes drop to zero for catalog edits).
+
+**Rollback**: set `CATALOG_BACKEND=kv` (or remove it) and redeploy. With the mirror on, KV has every
+write. Without the mirror, edits made while on D1 exist only in D1; there is no D1 to KV export yet.
+
+## Not verified (catalog)
+
+- Real D1: the native binding path was only type-checked; all tests run through the node:sqlite emulator.
+  Statements that deserve a look on real D1: upserts with `ON CONFLICT (store_id, slug) DO UPDATE ...
+  RETURNING *`, `INSERT OR REPLACE`, the product + offers `LEFT JOIN` with a scalar sub-select.
+- Cache staleness across real isolates (how many isolates serve a small store, how long they live) and the
+  real latency of a cold page view (3 sequential D1 queries from the edge to the EEUR primary).
+- The import against the real KV content (number of orphan keys, lists that lag behind their per-key records).
+- `GET /api/analytics` (admin tracking page) still loads all landing pages, products and orders.

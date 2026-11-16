@@ -6,7 +6,7 @@ applied anywhere: add the next number (`0002_...sql`) instead.
 | Where | How | Tracking |
 |---|---|---|
 | Local dev (`next dev`) | `node scripts/dev-d1-server.mjs 3198` applies pending files on start (data in `.dev-d1.sqlite`) | table `d1_migrations` |
-| Tests | `node scripts/test-orders-repo.mjs`, `node scripts/test-orders-admin.mjs` apply them to an in-memory database | — |
+| Tests | `node scripts/test-orders-repo.mjs`, `test-orders-admin.mjs`, `test-catalog-repo.mjs` apply them to an in-memory database | — |
 | Local wrangler preview | `npx.cmd wrangler d1 migrations apply DB --local` | table `d1_migrations` |
 | Real Cloudflare | `npx.cmd wrangler d1 migrations apply DB --remote` | table `d1_migrations` |
 

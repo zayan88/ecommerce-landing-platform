@@ -35,6 +35,7 @@ function maskSettings(settings: any) {
 
 export async function GET() {
   try {
+    dbStore.refreshCatalogCache(); // admin-only route: always the latest saved settings
     const settings = await dbStore.getSettings();
     return NextResponse.json({ success: true, settings: maskSettings(settings) });
   } catch (err: any) {

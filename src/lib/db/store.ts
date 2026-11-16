@@ -3,6 +3,7 @@ import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
 import { generateOrderId, generateOrderNumber, generateUniqueOrderNumber } from "@/lib/orders/guard";
 import { getOrdersRepo, ordersBackend, ordersKvMirrorEnabled, type OrdersPulse } from "./orders-repo";
+import { cachedCatalogRead, catalogBackend, catalogKvMirrorEnabled, getCatalogRepo, invalidateCatalogCache } from "./catalog-repo";
 
 /** Upper bound of the "total" shown by the orders pager (bounds the D1 rows read by the COUNT). */
 export const ORDERS_TOTAL_CAP = 5000;
@@ -598,6 +599,15 @@ function envSettingDefaults(): Partial<SystemSettings> {
 }
 
 async function readSettingsOverrides(): Promise<Partial<SystemSettings>> {
+  if (catalogOnD1()) {
+    try {
+      return (await cachedCatalogRead("settings", () => getCatalogRepo().getSettingsOverrides())) as Partial<SystemSettings>;
+    } catch (e) {
+      // Same resilience as the KV read below: env / built-in defaults keep the site rendering.
+      console.error("[settings] D1 read failed, using defaults:", (e as Error)?.message);
+      return {};
+    }
+  }
   try {
     const stored = await kvStore.get<Partial<SystemSettings>>(SETTINGS_KV_KEY);
     return stored && typeof stored === "object" ? stored : {};
@@ -762,6 +772,139 @@ function saveToFile() {
 
 loadFromFile();
 
+// ── Catalog (products / offers / landing pages / settings): KV or D1 ────────
+// CATALOG_BACKEND=d1 routes these reads and writes to ./catalog-repo (D1 + a short per-isolate
+// read cache). Default "kv": everything below behaves exactly as before.
+
+/** Products, landing pages and settings live in D1 for this request. */
+const catalogOnD1 = (): boolean => catalogBackend() === "d1";
+/** KV is written by catalog saves on the KV backend, and on D1 only during the mirror period. */
+const catalogWritesKv = (): boolean => !catalogOnD1() || catalogKvMirrorEnabled();
+
+/** The stored shape of a product save (defaults included). Shared by both backends. */
+function buildProduct(productData: Partial<Product> & { offers?: Partial<ProductOffer>[] }): Product & { offers: ProductOffer[] } {
+  const id = productData.id || `prod-${Date.now()}`;
+  return {
+    id,
+    title_ar: productData.title_ar || "منتج جديد",
+    title_en: productData.title_en || "",
+    slug: productData.slug || `prod-${Date.now()}`,
+    sku: productData.sku || `SKU-${Date.now()}`,
+    base_price: Number(productData.base_price) || 0,
+    compare_at_price: Number(productData.compare_at_price) || 0,
+    cost_price: Number(productData.cost_price) || 0,
+    images: productData.images || [],
+    description_ar: productData.description_ar || "",
+    stock_quantity: Number(productData.stock_quantity) || 50,
+    status: productData.status || "active",
+    created_at: productData.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    offers: (productData.offers as ProductOffer[]) || [],
+  };
+}
+
+/** The stored shape of a landing page save (defaults included). Shared by both backends. */
+function buildLandingPage(data: Partial<LandingPage>): LandingPage {
+  return {
+    id: data.id || `lp-${Date.now()}`,
+    product_id: data.product_id || memoryProducts[0]?.id || "",
+    title: data.title || "صفحة هبوط جديدة",
+    slug: data.slug || `page-${Date.now()}`,
+    component_key: data.component_key || data.slug || "starter-template",
+    custom_domain: data.custom_domain,
+    status: data.status || "active",
+    meta_pixel_id: data.meta_pixel_id || memorySettings.default_meta_pixel_id,
+    meta_capi_token: data.meta_capi_token || memorySettings.default_meta_capi_token,
+    head_scripts: data.head_scripts,
+    custom_css: data.custom_css,
+    deployment_url: data.deployment_url || `/p/${data.slug}`,
+    deployment_status: data.deployment_status || "published",
+    sections_config: data.sections_config || DEFAULT_LANDING_PAGE_SECTIONS,
+    content_config: data.content_config,
+    last_published_at: new Date().toISOString(),
+    created_at: data.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+/** The landing page that follows a product (created with it, refreshed when its title / slug change). */
+function landingPageDataForProduct(product: Product): Partial<LandingPage> {
+  return {
+    product_id: product.id,
+    title: product.title_ar,
+    slug: product.slug,
+    component_key: "starter-template",
+    status: product.status === "active" ? "active" : "paused",
+    deployment_url: `/p/${product.slug}`,
+    deployment_status: "published",
+  };
+}
+
+/** KV copy of a product: its id key, its slug key and the list (3 writes + 1 read). */
+async function kvWriteProduct(newProduct: Product): Promise<void> {
+  try {
+    await kvStore.put(`prod:${newProduct.id}`, newProduct);
+    await kvStore.put(`prod:${newProduct.slug}`, newProduct);
+    const currentCustom = (await kvStore.get<Product[]>("custom_products_all")) || [];
+    const existIdx = currentCustom.findIndex((p) => p.id === newProduct.id || p.slug === newProduct.slug);
+    if (existIdx >= 0) {
+      currentCustom[existIdx] = newProduct;
+    } else {
+      currentCustom.unshift(newProduct);
+    }
+    await kvStore.put("custom_products_all", currentCustom);
+  } catch (e) {
+    console.warn("[KV saveProduct Error]", e);
+  }
+}
+
+/** KV copy of a landing page: its slug key, its id key and the list (3 writes + 1 read). */
+async function kvWriteLandingPage(newLp: LandingPage): Promise<void> {
+  try {
+    await kvStore.put(`lp:${newLp.slug}`, newLp);
+    await kvStore.put(`lp:${newLp.id}`, newLp);
+    const currentCustomLps = (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
+    const existIdx = currentCustomLps.findIndex((l) => l.id === newLp.id || l.slug === newLp.slug);
+    if (existIdx >= 0) {
+      currentCustomLps[existIdx] = newLp;
+    } else {
+      currentCustomLps.unshift(newLp);
+    }
+    await kvStore.put("custom_lps_all", currentCustomLps);
+  } catch (e) {
+    console.warn("[KV saveLandingPage Error]", e);
+  }
+}
+
+/** What dbStore returns for a page saved in D1: the stored row with the same defaults a KV save carries. */
+function withLandingPageDefaults(saved: LandingPage): LandingPage {
+  return {
+    ...saved,
+    meta_pixel_id: saved.meta_pixel_id || memorySettings.default_meta_pixel_id,
+    meta_capi_token: saved.meta_capi_token || memorySettings.default_meta_capi_token,
+    sections_config: saved.sections_config || DEFAULT_LANDING_PAGE_SECTIONS,
+  };
+}
+
+/** D1: change sections / content / status of a page (a demo page that only exists in memory is stored first). */
+async function patchLandingPageOnD1(
+  id: string,
+  patch: Partial<Pick<LandingPage, "sections_config" | "content_config" | "status">>
+): Promise<LandingPage | null> {
+  const repo = getCatalogRepo();
+  let saved = await repo.patchLandingPage(id, patch);
+  if (!saved) {
+    const mem = memoryLandingPages.find((p) => p.id === id || p.slug === id);
+    if (mem) {
+      const { product: _product, ...rest } = mem;
+      saved = await repo.saveLandingPage({ ...rest, ...patch, updated_at: new Date().toISOString() }, true);
+    }
+  }
+  invalidateCatalogCache();
+  if (saved && catalogKvMirrorEnabled()) await kvWriteLandingPage(saved);
+  return saved;
+}
+
 export const dbStore = {
   // PRODUCTS
   async getProducts(): Promise<Product[]> {
@@ -774,7 +917,9 @@ export const dbStore = {
         .order("created_at", { ascending: false });
       if (!error && data) return data;
     }
-    const custom = (await kvStore.get<Product[]>("custom_products_all")) || [];
+    const custom = catalogOnD1()
+      ? await cachedCatalogRead("products", () => getCatalogRepo().listProducts())
+      : (await kvStore.get<Product[]>("custom_products_all")) || [];
     const merged = [...custom];
     for (const p of memoryProducts) {
       if (!merged.some((m) => m.id === p.id || m.slug === p.slug)) {
@@ -795,33 +940,50 @@ export const dbStore = {
         .single();
       if (!error && data) return data;
     }
-    const fromKv = await kvStore.get<Product>(`prod:${idOrSlug}`);
+    // D1: one indexed query (product row joined with its offers), cached per isolate. No KV traffic.
+    const fromKv = catalogOnD1()
+      ? await cachedCatalogRead(`product:${idOrSlug}`, () => getCatalogRepo().getProduct(idOrSlug))
+      : await kvStore.get<Product>(`prod:${idOrSlug}`);
     if (fromKv) return fromKv;
 
     const found = memoryProducts.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
     return found || null;
   },
 
+  /**
+   * Saves a product and, when `syncLandingPage` is set, creates / refreshes its landing page.
+   * D1: ONE transaction (product row, offers replacement, landing page). KV: the two saves in turn,
+   * exactly as the products API did before.
+   */
+  async saveProductWithLandingPage(
+    productData: Partial<Product> & { offers?: Partial<ProductOffer>[] },
+    syncLandingPage: boolean
+  ): Promise<{ product: Product; landingPage: LandingPage | null }> {
+    if (!catalogOnD1() || getSupabaseAdmin()) {
+      const product = await this.saveProduct(productData);
+      const landingPage = syncLandingPage ? await this.saveLandingPage(landingPageDataForProduct(product)) : null;
+      return { product, landingPage };
+    }
+    const product = buildProduct(productData);
+    const lp = syncLandingPage ? buildLandingPage(landingPageDataForProduct(product)) : undefined;
+    // Optional fields the sync does not set stay NULL, so an existing page keeps its own values.
+    const res = await getCatalogRepo().saveProduct(
+      product,
+      lp && { ...lp, meta_pixel_id: undefined, meta_capi_token: undefined, sections_config: undefined }
+    );
+    invalidateCatalogCache();
+    const landingPage = res.landingPage ? withLandingPageDefaults(res.landingPage) : null;
+    if (catalogKvMirrorEnabled()) {
+      await kvWriteProduct(product);
+      if (res.landingPage) await kvWriteLandingPage(landingPage as LandingPage);
+    }
+    return { product, landingPage };
+  },
+
   async saveProduct(productData: Partial<Product> & { offers?: Partial<ProductOffer>[] }): Promise<Product> {
     const admin = getSupabaseAdmin();
-    const id = productData.id || `prod-${Date.now()}`;
-    const newProduct: Product & { offers: ProductOffer[] } = {
-      id,
-      title_ar: productData.title_ar || "منتج جديد",
-      title_en: productData.title_en || "",
-      slug: productData.slug || `prod-${Date.now()}`,
-      sku: productData.sku || `SKU-${Date.now()}`,
-      base_price: Number(productData.base_price) || 0,
-      compare_at_price: Number(productData.compare_at_price) || 0,
-      cost_price: Number(productData.cost_price) || 0,
-      images: productData.images || [],
-      description_ar: productData.description_ar || "",
-      stock_quantity: Number(productData.stock_quantity) || 50,
-      status: productData.status || "active",
-      created_at: productData.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      offers: (productData.offers as ProductOffer[]) || [],
-    };
+    const newProduct = buildProduct(productData);
+    const id = newProduct.id;
 
     if (admin) {
       await admin.from("products").upsert({
@@ -849,28 +1011,21 @@ export const dbStore = {
       }
     }
 
-    const idx = memoryProducts.findIndex((p) => p.id === id);
-    if (idx >= 0) {
-      memoryProducts[idx] = newProduct;
+    if (catalogOnD1()) {
+      // D1: product row + offers replacement in one transaction; zero KV writes (unless mirroring).
+      await getCatalogRepo().saveProduct(newProduct);
+      invalidateCatalogCache();
     } else {
-      memoryProducts.unshift(newProduct);
-    }
-    saveToFile();
-
-    try {
-      await kvStore.put(`prod:${newProduct.id}`, newProduct);
-      await kvStore.put(`prod:${newProduct.slug}`, newProduct);
-      const currentCustom = (await kvStore.get<Product[]>("custom_products_all")) || [];
-      const existIdx = currentCustom.findIndex((p) => p.id === newProduct.id || p.slug === newProduct.slug);
-      if (existIdx >= 0) {
-        currentCustom[existIdx] = newProduct;
+      const idx = memoryProducts.findIndex((p) => p.id === id);
+      if (idx >= 0) {
+        memoryProducts[idx] = newProduct;
       } else {
-        currentCustom.unshift(newProduct);
+        memoryProducts.unshift(newProduct);
       }
-      await kvStore.put("custom_products_all", currentCustom);
-    } catch (e) {
-      console.warn("[KV saveProduct Error]", e);
+      saveToFile();
     }
+
+    if (catalogWritesKv()) await kvWriteProduct(newProduct);
 
     return newProduct;
   },
@@ -881,6 +1036,11 @@ export const dbStore = {
       await admin.from("product_offers").delete().eq("product_id", id);
       await admin.from("landing_pages").delete().eq("product_id", id);
       await admin.from("products").delete().eq("id", id);
+    }
+    if (catalogOnD1()) {
+      // D1: the product, its offers and its landing pages, in one transaction.
+      await getCatalogRepo().deleteProduct(id);
+      invalidateCatalogCache();
     }
     const idx = memoryProducts.findIndex((p) => p.id === id || p.slug === id);
     if (idx >= 0) {
@@ -894,6 +1054,7 @@ export const dbStore = {
       saveToFile();
     }
 
+    if (!catalogWritesKv()) return true;
     try {
       await kvStore.delete(`prod:${id}`);
       const currentCustom = (await kvStore.get<Product[]>("custom_products_all")) || [];
@@ -914,7 +1075,9 @@ export const dbStore = {
         .order("created_at", { ascending: false });
       if (!error && data) return data;
     }
-    const customLps = (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
+    const customLps = catalogOnD1()
+      ? await cachedCatalogRead("landing_pages", () => getCatalogRepo().listLandingPages())
+      : (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
     const allLps = [...customLps];
     for (const mlp of memoryLandingPages) {
       if (!allLps.some((l) => l.id === mlp.id || l.slug === mlp.slug)) {
@@ -941,7 +1104,10 @@ export const dbStore = {
       if (!error && data) return data;
     }
 
-    let lp = await kvStore.get<LandingPage>(`lp:${slug}`);
+    // D1: one indexed query (slug or id), cached per isolate. No KV traffic.
+    let lp = catalogOnD1()
+      ? await cachedCatalogRead(`landing_page:${slug}`, () => getCatalogRepo().getLandingPage(slug))
+      : await kvStore.get<LandingPage>(`lp:${slug}`);
     if (!lp) {
       lp = memoryLandingPages.find((p) => p.slug === slug || p.id === slug) || null;
     }
@@ -982,27 +1148,8 @@ export const dbStore = {
 
   async saveLandingPage(data: Partial<LandingPage>): Promise<LandingPage> {
     const admin = getSupabaseAdmin();
-    const id = data.id || `lp-${Date.now()}`;
-    const newLp: LandingPage = {
-      id,
-      product_id: data.product_id || memoryProducts[0]?.id || "",
-      title: data.title || "صفحة هبوط جديدة",
-      slug: data.slug || `page-${Date.now()}`,
-      component_key: data.component_key || data.slug || "starter-template",
-      custom_domain: data.custom_domain,
-      status: data.status || "active",
-      meta_pixel_id: data.meta_pixel_id || memorySettings.default_meta_pixel_id,
-      meta_capi_token: data.meta_capi_token || memorySettings.default_meta_capi_token,
-      head_scripts: data.head_scripts,
-      custom_css: data.custom_css,
-      deployment_url: data.deployment_url || `/p/${data.slug}`,
-      deployment_status: data.deployment_status || "published",
-      sections_config: data.sections_config || DEFAULT_LANDING_PAGE_SECTIONS,
-      content_config: data.content_config,
-      last_published_at: new Date().toISOString(),
-      created_at: data.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    const newLp = buildLandingPage(data);
+    const id = newLp.id;
 
     if (admin) {
       await admin.from("landing_pages").upsert({
@@ -1022,6 +1169,24 @@ export const dbStore = {
       });
     }
 
+    if (catalogOnD1()) {
+      // With an id: full replace of that page. Without one: upsert on the slug — a page that already
+      // has this slug keeps its id, creation date and every optional field the caller did not send.
+      const idProvided = Boolean(data.id);
+      const forD1: LandingPage = idProvided
+        ? newLp
+        : {
+            ...newLp,
+            meta_pixel_id: data.meta_pixel_id || undefined,
+            meta_capi_token: data.meta_capi_token || undefined,
+            sections_config: data.sections_config,
+          };
+      const saved = withLandingPageDefaults(await getCatalogRepo().saveLandingPage(forD1, idProvided));
+      invalidateCatalogCache();
+      if (catalogKvMirrorEnabled()) await kvWriteLandingPage(saved);
+      return saved;
+    }
+
     const idx = memoryLandingPages.findIndex((p) => p.id === id);
     if (idx >= 0) {
       memoryLandingPages[idx] = newLp;
@@ -1030,20 +1195,7 @@ export const dbStore = {
     }
     saveToFile();
 
-    try {
-      await kvStore.put(`lp:${newLp.slug}`, newLp);
-      await kvStore.put(`lp:${newLp.id}`, newLp);
-      const currentCustomLps = (await kvStore.get<LandingPage[]>("custom_lps_all")) || [];
-      const existIdx = currentCustomLps.findIndex((l) => l.id === newLp.id || l.slug === newLp.slug);
-      if (existIdx >= 0) {
-        currentCustomLps[existIdx] = newLp;
-      } else {
-        currentCustomLps.unshift(newLp);
-      }
-      await kvStore.put("custom_lps_all", currentCustomLps);
-    } catch (e) {
-      console.warn("[KV saveLandingPage Error]", e);
-    }
+    await kvWriteLandingPage(newLp);
 
     return newLp;
   },
@@ -1055,6 +1207,8 @@ export const dbStore = {
         await admin.from("landing_pages").update({ updated_at: new Date().toISOString() }).eq("id", id);
       } catch {}
     }
+
+    if (catalogOnD1()) return patchLandingPageOnD1(id, { sections_config });
 
     let lp = memoryLandingPages.find((p) => p.id === id || p.slug === id);
     if (lp) {
@@ -1098,6 +1252,8 @@ export const dbStore = {
       } catch {}
     }
 
+    if (catalogOnD1()) return patchLandingPageOnD1(id, { content_config });
+
     let lp = memoryLandingPages.find((p) => p.id === id || p.slug === id);
     if (lp) {
       lp.content_config = content_config;
@@ -1136,6 +1292,10 @@ export const dbStore = {
     const admin = getSupabaseAdmin();
     if (admin) {
       await admin.from("landing_pages").update({ status }).eq("id", id);
+    }
+    if (catalogOnD1()) {
+      await patchLandingPageOnD1(id, { status });
+      return true;
     }
     const found = memoryLandingPages.find((p) => p.id === id || p.slug === id);
     if (found) {
@@ -1207,9 +1367,11 @@ export const dbStore = {
     });
 
     if (slug !== current.slug) {
-      try {
-        await kvStore.delete(`lp:${current.slug}`);
-      } catch {}
+      if (catalogWritesKv()) {
+        try {
+          await kvStore.delete(`lp:${current.slug}`);
+        } catch {}
+      }
       const mi = memoryLandingPages.findIndex((p) => p.id === current.id);
       if (mi >= 0) memoryLandingPages[mi] = { ...memoryLandingPages[mi], title, slug };
     }
@@ -1221,13 +1383,30 @@ export const dbStore = {
     if (admin) {
       await admin.from("landing_pages").delete().eq("id", id);
     }
+    let removedFromD1: LandingPage | null = null;
+    if (catalogOnD1()) {
+      const repo = getCatalogRepo();
+      if (catalogKvMirrorEnabled()) removedFromD1 = await repo.getLandingPage(id); // its KV keys are named after slug and id
+      await repo.deleteLandingPage(id);
+      invalidateCatalogCache();
+    }
+    const kvOn = catalogWritesKv();
     const idx = memoryLandingPages.findIndex((p) => p.id === id || p.slug === id);
     if (idx >= 0) {
       const removed = memoryLandingPages.splice(idx, 1)[0];
       saveToFile();
+      if (kvOn) {
+        try {
+          await kvStore.delete(`lp:${removed.slug}`);
+          await kvStore.delete(`lp:${removed.id}`);
+        } catch {}
+      }
+    }
+    if (!kvOn) return true;
+    if (removedFromD1) {
       try {
-        await kvStore.delete(`lp:${removed.slug}`);
-        await kvStore.delete(`lp:${removed.id}`);
+        await kvStore.delete(`lp:${removedFromD1.slug}`);
+        await kvStore.delete(`lp:${removedFromD1.id}`);
       } catch {}
     }
 
@@ -2108,6 +2287,15 @@ export const dbStore = {
     return fullEvent;
   },
 
+  /**
+   * Admin reads must see the latest save even when it was made through another isolate: admin GET
+   * handlers call this first, so they read D1 directly (and refresh this isolate's cache for visitors).
+   * No-op on the KV backend.
+   */
+  refreshCatalogCache(): void {
+    if (catalogOnD1()) invalidateCatalogCache();
+  },
+
   // SETTINGS
   async getSettings(): Promise<SystemSettings> {
     const overrides = await readSettingsOverrides();
@@ -2122,6 +2310,21 @@ export const dbStore = {
 
   async updateSettings(newSettings: Partial<SystemSettings>): Promise<SystemSettings> {
     // Persist only the admin overrides (never the env-filled secrets)
+    if (catalogOnD1()) {
+      // D1: one row per changed field, one transaction; zero KV writes (unless mirroring).
+      const repo = getCatalogRepo();
+      await repo.setSettings(newSettings as Record<string, any>);
+      invalidateCatalogCache();
+      memorySettings = { ...memorySettings, ...newSettings };
+      if (catalogKvMirrorEnabled()) {
+        try {
+          await kvStore.put(SETTINGS_KV_KEY, await repo.getSettingsOverrides());
+        } catch (e) {
+          console.warn("[KV settings mirror error]", e);
+        }
+      }
+      return this.getSettings();
+    }
     const overrides = { ...(await readSettingsOverrides()), ...newSettings };
     memorySettings = { ...memorySettings, ...newSettings };
     await kvStore.put(SETTINGS_KV_KEY, overrides);

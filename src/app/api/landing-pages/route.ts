@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     // Single page, read from the same source the public page uses (always the latest saved content)
     const id = new URL(req.url).searchParams.get("id");
+    dbStore.refreshCatalogCache(); // admin-only route: never serve the editor a cached copy
     if (id) {
       const landingPage = await dbStore.getLandingPage(id);
       return NextResponse.json({ success: !!landingPage, landingPage });

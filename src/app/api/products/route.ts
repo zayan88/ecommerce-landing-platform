@@ -15,8 +15,10 @@ const PRIVATE_PRODUCT_FIELDS = [
 
 export async function GET(req: NextRequest) {
   try {
+    const isAdmin = isAdminRequest(req);
+    if (isAdmin) dbStore.refreshCatalogCache(); // the admin list always shows the latest save
     const products = await dbStore.getProducts();
-    if (isAdminRequest(req)) {
+    if (isAdmin) {
       return NextResponse.json({ success: true, products });
     }
     const publicProducts = products.map((p) => {
@@ -37,18 +39,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "اسم المنتج مطلوب" }, { status: 400 });
     }
 
-    const product = await dbStore.saveProduct(body);
-
-    // Auto-create or ensure landing page exists for the product
-    const lp = await dbStore.saveLandingPage({
-      product_id: product.id,
-      title: product.title_ar,
-      slug: product.slug,
-      component_key: "starter-template",
-      status: product.status === "active" ? "active" : "paused",
-      deployment_url: `/p/${product.slug}`,
-      deployment_status: "published",
-    });
+    // Saves the product and auto-creates (or ensures) its landing page.
+    // On the D1 catalog backend both happen in ONE transaction.
+    const { product, landingPage: lp } = await dbStore.saveProductWithLandingPage(body, true);
 
     return NextResponse.json({
       success: true,
@@ -69,20 +62,11 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, error: "معرف المنتج مطلوب للتعديل" }, { status: 400 });
     }
 
-    const product = await dbStore.saveProduct(body);
-
-    // Sync landing page title and slug if updated
-    if ((body.title_ar || body.slug) && !body.skip_lp_sync) {
-      await dbStore.saveLandingPage({
-        product_id: product.id,
-        title: product.title_ar,
-        slug: product.slug,
-        component_key: "starter-template",
-        status: product.status === "active" ? "active" : "paused",
-        deployment_url: `/p/${product.slug}`,
-        deployment_status: "published",
-      });
-    }
+    // Sync landing page title and slug if updated (one transaction with the product on the D1 backend)
+    const { product } = await dbStore.saveProductWithLandingPage(
+      body,
+      Boolean((body.title_ar || body.slug) && !body.skip_lp_sync)
+    );
 
     return NextResponse.json({
       success: true,
