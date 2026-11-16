@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSections } from "@/types";
-import { cssVarsFor, isPaletteKey } from "@/lib/palettes";
+import { cssVarsFor, isThemeColor } from "@/lib/palettes";
 import { buildDefaultOffers } from "@/lib/offers";
 import { LandingFooter } from "@/components/shared/LandingFooter";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
@@ -151,8 +151,8 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   // Optional per-page colors (only emitted when the merchant picked them; otherwise the store brand applies
   // and the rendered markup has no style attribute at all).
   const pageTheme: React.CSSProperties | undefined = (() => {
-    const p = isPaletteKey(c?.theme_primary) ? c?.theme_primary : null;
-    const a = isPaletteKey(c?.theme_accent) ? c?.theme_accent : null;
+    const p = isThemeColor(c?.theme_primary) ? c?.theme_primary : null;
+    const a = isThemeColor(c?.theme_accent) ? c?.theme_accent : null;
     if (!p && !a) return undefined;
     return { ...(p ? cssVarsFor("primary", p) : {}), ...(a ? cssVarsFor("accent", a) : {}) } as React.CSSProperties;
   })();

@@ -150,9 +150,72 @@ export function isPaletteKey(v: unknown): v is PaletteKey {
   return typeof v === "string" && (PALETTE_KEYS as readonly string[]).includes(v);
 }
 
-/** CSS variables for one theme role, e.g. cssVarsFor("primary", "emerald") -> { "--c-primary-500": "16 185 129", ... } */
-export function cssVarsFor(role: "primary" | "accent", key: PaletteKey): Record<string, string> {
+/** Any color the merchant picked: "#rrggbb" (strictly validated, it ends up in a style attribute). */
+export function isHexColor(v: unknown): v is string {
+  return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v);
+}
+
+/** A palette key or a custom hex color. */
+export function isThemeColor(v: unknown): v is string {
+  return isPaletteKey(v) || isHexColor(v);
+}
+
+function hexToHsl(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return [0, 0, l * 100];
+  const sat = d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (max === r) h = ((g - b) / d) % 6;
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  return [(h * 60 + 360) % 360, sat * 100, l * 100];
+}
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  const sat = s / 100;
+  const lig = l / 100;
+  const c = (1 - Math.abs(2 * lig - 1)) * sat;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = lig - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+
+/** Builds the 11-step scale from one picked color; the picked color itself is the 600 step (buttons, icons). */
+export function scaleFromHex(hex: string): Record<(typeof PALETTE_STEPS)[number], string> {
+  const [h, s, l] = hexToHsl(hex);
+  const light = (t: number) => hslToRgb(h, s, l + (97 - l) * t).join(" ");
+  const dark = (u: number) => hslToRgb(h, s, l * (1 - u)).join(" ");
+  return {
+    "50": light(1),
+    "100": light(0.9),
+    "200": light(0.78),
+    "300": light(0.55),
+    "400": light(0.35),
+    "500": light(0.15),
+    "600": hslToRgb(h, s, l).join(" "),
+    "700": dark(0.18),
+    "800": dark(0.34),
+    "900": dark(0.5),
+    "950": dark(0.65),
+  };
+}
+
+/** RGB triplet of the "main" shade, for swatches and previews. */
+export function themeSwatchRgb(v: string): string {
+  return isHexColor(v) ? scaleFromHex(v)["600"] : PALETTES[(isPaletteKey(v) ? v : "emerald") as PaletteKey]["500"];
+}
+
+/** CSS variables for one theme role, e.g. cssVarsFor("primary", "emerald") or cssVarsFor("accent", "#d4145a"). */
+export function cssVarsFor(role: "primary" | "accent", key: string): Record<string, string> {
+  const scale = isHexColor(key) ? scaleFromHex(key) : PALETTES[(isPaletteKey(key) ? key : "emerald") as PaletteKey];
   const vars: Record<string, string> = {};
-  for (const s of PALETTE_STEPS) vars[`--c-${role}-${s}`] = PALETTES[key][s];
+  for (const s of PALETTE_STEPS) vars[`--c-${role}-${s}`] = scale[s];
   return vars;
 }

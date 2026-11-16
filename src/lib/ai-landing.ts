@@ -1,5 +1,5 @@
 import type { LandingPageContentConfig } from "@/types";
-import { PALETTE_KEYS, isPaletteKey } from "@/lib/palettes";
+import { PALETTE_KEYS, isThemeColor } from "@/lib/palettes";
 
 /**
  * AI-assisted page content: the merchant copies a prompt into any AI chat, pastes the JSON
@@ -171,7 +171,7 @@ export function parseAiContent(text: string): AiParseResult {
   }
 
   for (const k of ["theme_primary", "theme_accent"] as const) {
-    if (isPaletteKey(r[k])) put(k, r[k] as string);
+    if (isThemeColor(r[k])) put(k, r[k] as string);
   }
 
   if (applied.length === 0) {

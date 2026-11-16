@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { getSiteUrl } from "@/lib/seo";
 import { getBrand } from "@/lib/brand";
-import { PALETTES, cssVarsFor } from "@/lib/palettes";
+import { cssVarsFor } from "@/lib/palettes";
 import { BrandProvider } from "@/components/brand/BrandProvider";
 import { Suspense } from "react";
 // Fonts are bundled from npm packages (no download from Google at build or run time):
@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export async function generateViewport(): Promise<Viewport> {
   const brand = await getBrand();
   // Browser theme color follows the merchant's accent (CTA) color
-  const accent = PALETTES[brand.accent]["600"].split(" ").map(Number);
+  const accent = cssVarsFor("accent", brand.accent)["--c-accent-600"].split(" ").map(Number);
   const hex = "#" + accent.map((n) => n.toString(16).padStart(2, "0")).join("");
   return { width: "device-width", initialScale: 1, themeColor: hex };
 }

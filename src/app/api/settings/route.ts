@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
-import { isPaletteKey } from "@/lib/palettes";
+import { isThemeColor } from "@/lib/palettes";
 import { META_PIXEL_RE, TIKTOK_PIXEL_RE, SNAP_PIXEL_RE, GA4_RE, GTM_RE, META_TEST_CODE_RE, cleanIdList } from "@/lib/tracking/tag-ids";
 
 export const runtime = "edge";
@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
     const toUpdate: any = { ...body };
 
     // Brand fields: whitelist + sanitize (never trust the client)
-    if ("brand_primary" in toUpdate && !isPaletteKey(toUpdate.brand_primary)) delete toUpdate.brand_primary;
-    if ("brand_accent" in toUpdate && !isPaletteKey(toUpdate.brand_accent)) delete toUpdate.brand_accent;
+    if ("brand_primary" in toUpdate && !isThemeColor(toUpdate.brand_primary)) delete toUpdate.brand_primary;
+    if ("brand_accent" in toUpdate && !isThemeColor(toUpdate.brand_accent)) delete toUpdate.brand_accent;
     if ("store_mode" in toUpdate && toUpdate.store_mode !== "landing" && toUpdate.store_mode !== "catalog") {
       delete toUpdate.store_mode;
     }
