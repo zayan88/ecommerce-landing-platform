@@ -59,6 +59,28 @@ export function EgyptianCheckoutForm({
   const brand = useBrand();
   const [payMethod, setPayMethod] = useState<"cod" | "vodafone_cash" | "instapay">("cod");
   const [payRef, setPayRef] = useState("");
+  const [copied, setCopied] = useState(false);
+  const copyPayTarget = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // old browsers: select the text in a temporary field and use the legacy command
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        return;
+      }
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   // Honeypot: hidden from humans; bots that fill it get a fake success server-side
   const [website, setWebsite] = useState("");
 
@@ -470,9 +492,23 @@ export function EgyptianCheckoutForm({
                 <p className="font-bold text-slate-800">
                   حوّل <span className="font-mono">{Number(totalAmount).toLocaleString("en-US")}</span> {brand.currency} على:
                 </p>
-                <p className="font-mono text-base font-black text-slate-950 select-all" dir="ltr">
-                  {payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.number : brand.payments.instapay?.address}
-                </p>
+                {(() => {
+                  const target = (payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.number : brand.payments.instapay?.address) || "";
+                  return (
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-white border border-slate-200 px-3 py-2">
+                      <span className="font-mono text-base font-black text-slate-950" dir="ltr">{target}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyPayTarget(target)}
+                        className={`min-h-[44px] px-4 rounded-xl text-sm font-black cursor-pointer transition ${
+                          copied ? "bg-emerald-600 text-white" : "bg-slate-900 text-white hover:bg-slate-800"
+                        }`}
+                      >
+                        {copied ? "تم النسخ ✓" : "نسخ الرقم"}
+                      </button>
+                    </div>
+                  );
+                })()}
                 {(payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.holder : brand.payments.instapay?.holder) && (
                   <p className="text-xs text-slate-600">
                     باسم: {payMethod === "vodafone_cash" ? brand.payments.vodafone_cash?.holder : brand.payments.instapay?.holder}
