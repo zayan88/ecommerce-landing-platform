@@ -40,6 +40,7 @@ import { buildDefaultOffers, sanitizeOffers } from "@/lib/offers";
 import StarterLandingPage from "@/landing-pages/starter-template/page";
 import SectionsPanel from "@/app/(admin)/admin/landing-pages/_components/SectionsPanel";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { MAX_PAGE_IMAGES, pageImageCount, wouldExceedImageLimit } from "@/lib/page-images";
 import { PaletteSwatches } from "@/components/admin/PaletteSwatches";
 import { isThemeColor } from "@/lib/palettes";
 import { useBrand } from "@/components/brand/BrandProvider";
@@ -304,6 +305,9 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
       ? String(getByPath(draft.content, selected.field))
       : selected?.value || "";
 
+  const [imageLimitMsg, setImageLimitMsg] = useState("");
+  const imageCount = pageImageCount(lp.product?.images, draft.content);
+
   const panel = (
     <div className="flex flex-col h-full min-h-0" dir="rtl">
       <div className="flex gap-1.5 p-2 border-b border-slate-200 bg-white shrink-0" role="tablist">
@@ -432,6 +436,14 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
           </div>
         ) : (
           <>
+            <div
+              className={`flex items-center justify-between gap-2 p-3 rounded-2xl border text-xs font-bold ${
+                imageCount > MAX_PAGE_IMAGES ? "bg-rose-50 border-rose-200 text-rose-900" : imageCount === MAX_PAGE_IMAGES ? "bg-amber-50 border-amber-200 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
+              }`}
+            >
+              <span>الصور في الصفحة</span>
+              <span className="font-mono text-sm">{imageCount} / {MAX_PAGE_IMAGES}</span>
+            </div>
             <div className="flex items-start gap-2 p-3 rounded-2xl bg-sky-50 border border-sky-200 text-sky-900 text-xs font-bold leading-relaxed">
               <MousePointerClick className="w-4 h-4 shrink-0 mt-0.5 text-sky-600" />
               <span>اضغط على أي نص أو صورة في الصفحة لتعديله</span>
@@ -451,11 +463,21 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
                   </button>
                 </div>
                 {selected.kind === "image" ? (
-                  <ImageUploader
-                    value={selectedCurrent}
-                    onChange={(url) => setField(selected.field, url)}
-                    heightClass="h-48"
-                  />
+                  <>
+                    <ImageUploader
+                      value={selectedCurrent}
+                      onChange={(url) => {
+                        if (wouldExceedImageLimit(lp.product?.images, draft.content, selected.field, url)) {
+                          setImageLimitMsg(`الصفحة وصلت للحد الأقصى (${MAX_PAGE_IMAGES} صور). شيل صورة أو استخدم واحدة من صور المنتج.`);
+                          return;
+                        }
+                        setImageLimitMsg("");
+                        setField(selected.field, url);
+                      }}
+                      heightClass="h-48"
+                    />
+                    {imageLimitMsg && <p className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-2.5 leading-relaxed">{imageLimitMsg}</p>}
+                  </>
                 ) : (
                   <textarea
                     key={selected.field}
