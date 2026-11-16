@@ -58,8 +58,8 @@ export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
   { id: "social_proof", name_ar: "شريط الثقة والتقييم وتغطية الشحن", enabled: false },
 ];
 
-/** Previous default order (order form before the FAQ). Pages still on it are moved to the new default. */
-const LEGACY_SECTION_ORDER = "hero,social_proof,comparison,box_contents,how_to_use,reviews,guarantees,order_form,faq";
+/** Earlier default order (FAQ before the order form). Pages still on it are moved to the current default: order form, then FAQ. */
+const LEGACY_SECTION_ORDER = "hero,social_proof,comparison,box_contents,how_to_use,reviews,guarantees,faq,order_form";
 
 /**
  * Pages saved in KV keep their own sections_config, so newly introduced default
@@ -73,7 +73,7 @@ export function mergeSections(
   if (!Array.isArray(saved) || saved.length === 0) return defaults;
   // Drop invalid entries and duplicate ids (a duplicate would render a section twice)
   const result = saved.filter((s, i, arr) => s?.id && arr.findIndex((x) => x?.id === s.id) === i);
-  // Untouched pages (still on the old default order): questions now come before the order form.
+  // Untouched pages (still on the previous default order): the order form comes first, then the questions.
   if (defaults === DEFAULT_LANDING_PAGE_SECTIONS && result.map((s) => s.id).join(",") === LEGACY_SECTION_ORDER) {
     const o = result.findIndex((s) => s.id === "order_form");
     const f = result.findIndex((s) => s.id === "faq");
