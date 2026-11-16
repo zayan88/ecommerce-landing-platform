@@ -23,6 +23,7 @@ import {
   AlertCircle,
   RefreshCw,
   Eye,
+  ArrowRight,
 } from "lucide-react";
 
 export default function AdminProductsPage() {
@@ -50,6 +51,7 @@ export default function AdminProductsPage() {
   const [stock, setStock] = useState<number | string>(100);
   const [images, setImages] = useState<string[]>([]);
   const [descriptionAr, setDescriptionAr] = useState("");
+  const [productActive, setProductActive] = useState(true);
   // Quantity tiers. Until the merchant touches them they follow the price (defaults).
   const [offers, setOffers] = useState<ProductOffer[]>([]);
   const [offersTouched, setOffersTouched] = useState(false);
@@ -96,6 +98,7 @@ export default function AdminProductsPage() {
     setStock(100);
     setImages([]);
     setDescriptionAr("");
+    setProductActive(true);
     setOffers([]);
     setOffersTouched(false);
     setIsModalOpen(true);
@@ -112,6 +115,7 @@ export default function AdminProductsPage() {
     setStock(prod.stock_quantity || 100);
     setImages(prod.images || []);
     setDescriptionAr(prod.description_ar || "");
+    setProductActive(prod.status === "active");
     const saved = prod.offers && prod.offers.length > 0;
     setOffers(saved ? JSON.parse(JSON.stringify(prod.offers)) : []);
     setOffersTouched(!!saved);
@@ -185,7 +189,7 @@ export default function AdminProductsPage() {
         cost_price: numCost,
         stock_quantity: numStock,
         description_ar: descriptionAr.trim(),
-        status: "active",
+        status: productActive ? "active" : "draft",
         images: imagesArray,
         offers: finalOffers,
       };
@@ -292,6 +296,12 @@ export default function AdminProductsPage() {
     const d = new Date(iso);
     return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" });
   };
+
+  const cardCls = "bg-white rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-6 space-y-4";
+  const cardTitle = "text-base font-black text-slate-950 font-heading";
+  const lbl = "block text-sm font-bold text-slate-800 mb-1.5";
+  const inputCls =
+    "w-full min-h-[48px] px-3.5 rounded-xl border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-orange-500 text-sm text-slate-900";
 
   const iconBtn =
     "w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed";
@@ -539,187 +549,183 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {/* Modal: Add or Edit Product */}
+      {/* Full-page product editor (opens over the list) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-100 space-y-5 my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Tag className="w-5 h-5 text-orange-600" />
-                <h3 className="text-lg font-black text-slate-900 font-heading">
-                  {editingProduct ? "تعديل المنتج والأسعار" : "إضافة منتج جديد"}
-                </h3>
+        <div className="fixed inset-0 z-50 bg-slate-50 overflow-y-auto" role="dialog" aria-label="محرر المنتج">
+          <form id="product-form" onSubmit={handleSaveProduct} className="min-h-full text-right font-sans" dir="rtl">
+            {/* Sticky top bar */}
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-slate-200">
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    aria-label="رجوع"
+                    className="w-11 h-11 shrink-0 rounded-xl border border-slate-200 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                  >
+                    <ArrowRight className="w-5 h-5 text-slate-700" />
+                  </button>
+                  <h2 className="text-base sm:text-lg font-black text-slate-950 font-heading truncate">
+                    {editingProduct ? titleAr || "تعديل المنتج" : "منتج جديد"}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="hidden sm:block min-h-[44px] px-4 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-sm font-bold cursor-pointer"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="min-h-[44px] px-6 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-black shadow-md shadow-orange-600/20 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>جاري الحفظ...</span>
+                      </>
+                    ) : (
+                      <span>{editingProduct ? "حفظ" : "إضافة المنتج"}</span>
+                    )}
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="space-y-4 text-xs font-sans">
-              {/* Product Title */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">اسم المنتج بالعربية *</label>
-                <input
-                  type="text"
-                  required
-                  value={titleAr}
-                  onChange={(e) => setTitleAr(e.target.value)}
-                  placeholder="مثال: مسدس مساج فليكس برو الكهربائي"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-bold text-slate-900 text-sm"
-                />
-              </div>
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+              {/* Main column */}
+              <div className="lg:col-span-2 space-y-5">
+                <section className={cardCls}>
+                  <h3 className={cardTitle}>بيانات المنتج الأساسية</h3>
+                  <div>
+                    <label className={lbl}>اسم المنتج *</label>
+                    <input
+                      type="text"
+                      required
+                      value={titleAr}
+                      onChange={(e) => setTitleAr(e.target.value)}
+                      placeholder="مثال: مسدس مساج فليكس برو الكهربائي"
+                      className={inputCls + " font-bold"}
+                    />
+                  </div>
+                  <div>
+                    <label className={lbl}>وصف ومميزات المنتج</label>
+                    <textarea
+                      rows={5}
+                      value={descriptionAr}
+                      onChange={(e) => setDescriptionAr(e.target.value)}
+                      placeholder="اكتب نقاط القوة والمميزات الرئيسية اللي هتظهر في صفحة المنتج..."
+                      className={inputCls + " py-3 leading-relaxed"}
+                    />
+                  </div>
+                </section>
 
-              {/* Prices Row: Base, Compare, Cost */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">سعر البيع (ج.م) *</label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={basePrice}
-                    onChange={(e) => setBasePrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono font-bold text-slate-900 text-sm"
-                  />
-                </div>
+                <section className={cardCls}>
+                  <h3 className={cardTitle}>الصور</h3>
+                  <ImageGalleryEditor label="صور المنتج (الأولى هي الصورة الرئيسية)" value={images} onChange={setImages} />
+                </section>
 
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">سعر المقارنة / الشطب</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={comparePrice}
-                    onChange={(e) => setComparePrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">سعر التكلفة (ج.م)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={costPrice}
-                    onChange={(e) => setCostPrice(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Slug & SKU */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">رابط صفحة الهبوط (Slug)</label>
-                  <input
-                    type="text"
-                    dir="ltr"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    placeholder="massage-gun"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
-                  />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
-                    الرابط سيكون: /p/{slug || "example-product"}
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">كود المنتج (SKU)</label>
-                  <input
-                    type="text"
-                    dir="ltr"
-                    value={sku}
-                    onChange={(e) => setSku(e.target.value)}
-                    placeholder="REX-PROD-01"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs text-left"
-                  />
-                </div>
-              </div>
-
-              {/* Product images (uploaded from the merchant device; first = main image) */}
-              <ImageGalleryEditor label="صور المنتج (الأولى هي الصورة الرئيسية)" value={images} onChange={setImages} />
-
-              {/* Stock */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">الكمية بالمخزن</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={stock}
-                    onChange={(e) => setStock(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 font-mono text-slate-900 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Quantity offers (upsell ladder) */}
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 space-y-2">
-                <p className="font-black text-slate-900 text-sm">عروض الكمية (الـ Upsell)</p>
-                {!offersTouched && (
-                  <p className="text-[11px] text-slate-500">
-                    دي عروض تلقائية بتتبني من سعر البيع. عدّل أي رقم وهتتثبّت على المنتج.
-                  </p>
-                )}
-                <OffersPanel
-                  offers={effectiveOffers}
-                  currency={brand.currency}
-                  hint="بتتحفظ مع المنتج وبتظهر في صفحة الهبوط."
-                  onChange={(next) => {
-                    setOffers(next);
-                    setOffersTouched(true);
-                  }}
-                  onReset={() => {
-                    setOffers([]);
-                    setOffersTouched(false);
-                  }}
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">وصف ومميزات المنتج</label>
-                <textarea
-                  rows={3}
-                  value={descriptionAr}
-                  onChange={(e) => setDescriptionAr(e.target.value)}
-                  placeholder="اكتب نقاط القوة والمميزات الرئيسية التي ستظهر في صفحة الهبوط..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-orange-500 text-slate-900 text-xs leading-relaxed"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold transition cursor-pointer"
-                >
-                  إلغاء
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="py-2.5 px-6 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black shadow-md shadow-orange-600/20 transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>جاري الحفظ...</span>
-                    </>
-                  ) : (
-                    <span>{editingProduct ? "حفظ التعديلات" : "إضافة المنتج وتوليد الصفحة"}</span>
+                <section className={cardCls}>
+                  <h3 className={cardTitle}>التسعير</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className={lbl}>سعر البيع (ج.م) *</label>
+                      <input type="number" required min={1} value={basePrice} onChange={(e) => setBasePrice(e.target.value)} className={inputCls + " font-mono font-bold"} />
+                    </div>
+                    <div>
+                      <label className={lbl}>سعر قبل الخصم (المشطوب)</label>
+                      <input type="number" min={0} value={comparePrice} onChange={(e) => setComparePrice(e.target.value)} className={inputCls + " font-mono"} />
+                    </div>
+                    <div>
+                      <label className={lbl}>تكلفة المنتج</label>
+                      <input type="number" min={0} value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className={inputCls + " font-mono"} />
+                    </div>
+                  </div>
+                  {Number(basePrice) > 0 && Number(costPrice) > 0 && (
+                    <p className="text-xs text-slate-500">
+                      الربح للقطعة:{" "}
+                      <span className="font-mono font-black text-emerald-700">{(Number(basePrice) - Number(costPrice)).toLocaleString("en-US")} ج.م</span>
+                    </p>
                   )}
-                </button>
+                </section>
+
+                <section className={cardCls}>
+                  <h3 className={cardTitle}>الظهور في محركات البحث</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className={lbl}>رابط الصفحة (Slug)</label>
+                      <input type="text" dir="ltr" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="massage-gun" className={inputCls + " font-mono text-left"} />
+                      <span className="text-[11px] text-slate-400 mt-1 block" dir="ltr">/p/{slug || "example-product"}</span>
+                    </div>
+                    <div>
+                      <label className={lbl}>كود المنتج (SKU)</label>
+                      <input type="text" dir="ltr" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="REX-PROD-01" className={inputCls + " font-mono text-left"} />
+                    </div>
+                  </div>
+                </section>
+
+                <section className={cardCls}>
+                  <div>
+                    <h3 className={cardTitle}>عروض الكمية (Upsell)</h3>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      {offersTouched
+                        ? "العروض دي بتظهر في صفحة المنتج. تقدر تقفلها من محرر صفحة الهبوط."
+                        : "عروض تلقائية متبنية من سعر البيع. عدّل أي رقم وهتتثبّت على المنتج."}
+                    </p>
+                  </div>
+                  <OffersPanel
+                    offers={effectiveOffers}
+                    currency={brand.currency}
+                    hint="بتتحفظ مع المنتج وبتظهر في صفحة الهبوط."
+                    onChange={(next) => {
+                      setOffers(next);
+                      setOffersTouched(true);
+                    }}
+                    onReset={() => {
+                      setOffers([]);
+                      setOffersTouched(false);
+                    }}
+                  />
+                </section>
               </div>
-            </form>
-          </div>
+
+              {/* Side column */}
+              <div className="space-y-5 lg:sticky lg:top-24">
+                <section className={cardCls}>
+                  <h3 className={cardTitle}>التنظيم</h3>
+                  <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
+                    <span>
+                      <span className="block text-sm font-bold text-slate-900">المنتج ظاهر للعملاء</span>
+                      <span className="block text-xs text-slate-500 mt-0.5">لو قفلته المنتج بيتخفي من المتجر وصفحته تقفل.</span>
+                    </span>
+                    <input type="checkbox" checked={productActive} onChange={(e) => setProductActive(e.target.checked)} className="w-5 h-5 accent-emerald-600 shrink-0" />
+                  </label>
+                </section>
+
+                <section className={cardCls}>
+                  <h3 className={cardTitle}>المخزون</h3>
+                  <div>
+                    <label className={lbl}>الكمية المتاحة</label>
+                    <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls + " font-mono"} />
+                  </div>
+                </section>
+
+                {editingProduct?.slug && (
+                  <a
+                    href={`/p/${editingProduct.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[48px] rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-bold text-slate-800 flex items-center justify-center gap-2"
+                  >
+                    <Eye className="w-4 h-4" /> معاينة صفحة المنتج
+                  </a>
+                )}
+              </div>
+            </div>
+          </form>
         </div>
       )}
     </div>
