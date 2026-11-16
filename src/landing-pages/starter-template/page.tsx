@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSections } from "@/types";
 import { cssVarsFor, isPaletteKey } from "@/lib/palettes";
 import { buildDefaultOffers } from "@/lib/offers";
+import { LandingFooter } from "@/components/shared/LandingFooter";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
 import { SocialProofWall } from "@/components/shared/SocialProofWall";
@@ -554,6 +555,9 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           return <React.Fragment key={sec.id}>{renderSection(sec.id)}</React.Fragment>;
         })}
       </div>
+
+      {/* Store footer */}
+      <LandingFooter extraBottomSpace={!editMode} />
 
       {/* Sticky Buy Bar */}
       {!editMode && (

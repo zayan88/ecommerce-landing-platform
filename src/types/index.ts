@@ -53,9 +53,12 @@ export const DEFAULT_LANDING_PAGE_SECTIONS: LandingPageSectionConfig[] = [
   { id: "how_to_use", name_ar: "طريقة الاستخدام السهلة (3 خطوات)", enabled: true },
   { id: "reviews", name_ar: "آراء وتجارب العملاء الواقعية", enabled: true },
   { id: "guarantees", name_ar: "الضمانات الثلاثة الذهبية", enabled: true },
-  { id: "order_form", name_ar: "فورم الطلب السريع وباقات العروض والدفع عند الاستلام", enabled: true },
   { id: "faq", name_ar: "الأسئلة الشائعة (كسر الاعتراضات)", enabled: true },
+  { id: "order_form", name_ar: "فورم الطلب السريع وباقات العروض والدفع عند الاستلام", enabled: true },
 ];
+
+/** Previous default order (order form before the FAQ). Pages still on it are moved to the new default. */
+const LEGACY_SECTION_ORDER = "hero,social_proof,comparison,box_contents,how_to_use,reviews,guarantees,order_form,faq";
 
 /**
  * Pages saved in KV keep their own sections_config, so newly introduced default
@@ -69,6 +72,12 @@ export function mergeSections(
   if (!Array.isArray(saved) || saved.length === 0) return defaults;
   // Drop invalid entries and duplicate ids (a duplicate would render a section twice)
   const result = saved.filter((s, i, arr) => s?.id && arr.findIndex((x) => x?.id === s.id) === i);
+  // Untouched pages (still on the old default order): questions now come before the order form.
+  if (defaults === DEFAULT_LANDING_PAGE_SECTIONS && result.map((s) => s.id).join(",") === LEGACY_SECTION_ORDER) {
+    const o = result.findIndex((s) => s.id === "order_form");
+    const f = result.findIndex((s) => s.id === "faq");
+    [result[o], result[f]] = [result[f], result[o]];
+  }
   defaults.forEach((def, index) => {
     if (result.some((s) => s.id === def.id)) return;
     // Insert right after the default section that precedes it, so it still lands sensibly
