@@ -170,11 +170,44 @@ Sources: developers.cloudflare.com/d1/platform/pricing, /d1/platform/limits, /kv
 Budget for 250 orders/day with 3 status changes each: 250 x 14 + 750 x 5 = about 7,300 rows written
 (7% of the free allowance), zero KV writes.
 
-**The reads budget is the one to watch.** The admin orders page and the dashboard summary load the
-whole order list; on D1 every row returned or scanned is a row read. With 20,000 stored orders a
-single full listing is 20,000 rows read, so about 250 full listings a day would reach 5M. The stats
-route was changed to load only its date range; the orders page should move to `limit` / `offset`
-(already supported by the API) before the order history gets large.
+**The reads budget is the one to watch.** On D1 every row returned or scanned is a row read. With
+20,000 stored orders a single full listing is 20,000 rows read, so about 250 full listings a day would
+reach 5M. The admin UI no longer loads full lists: see "Admin orders UI: pulse and pagination" below.
+
+## Admin orders UI: pulse and pagination
+
+Before: the orders page re-downloaded the FULL order list every 15 s while the tab was open. On KV that
+is one list operation per poll (1,000/day allowed: an open tab used the day's allowance in about 4 hours);
+on D1 it read every order row on every poll.
+
+Now:
+
+| Piece | What it does | Cost |
+|---|---|---|
+| `GET /api/admin/orders-pulse[?since=<ms>]` (admin-only) | `{ latest_created_at, latest_created_ms, new_count, pending_count, pending_capped, count, count_capped, poll_interval_sec }` | D1: ONE batch of 3 index-only statements. Rows read per poll: 1 (latest) + pending rows (at most 201) + orders created after `since` (at most 500). Only the first call (no `since`) counts the total, capped at 10,001 index rows. KV: `supported: false`, nothing is read |
+| Orders page polling | Calls the pulse every 60 s (the server names the interval), only while `document.visibilityState === "visible"`; a hidden tab makes no requests; errors double the delay up to 15 min. New orders: cha-ching + refresh of the first page only (if the user is on it) | 1 request / minute / visible tab |
+| KV backend | No pulse. The first page is refreshed every 5 minutes while visible (new orders are detected by the total) | at most 12 list ops / hour / visible tab, was 240 |
+| `GET /api/orders?limit=&offset=` | One page (25 or 50 in the UI; server clamps to 100). Response adds `total`, `total_capped`, `has_more`, `limit`, `offset`. Filters: `status`, `q`, `gov`, `from`, `to`, `lp` | D1: `limit + 1` rows, plus a COUNT capped at 5,000 rows only when the filter changes (`total=0` skips it; page flips, background refreshes and text searches never count; the last page knows the total for free) |
+| CSV export | Selected rows, or every order of the current filter: pages of 500 with `export=1` (no product relation in the payload, server clamps to 1,000), fetched sequentially, at most 5,000 rows, with a message when capped | D1: the exported rows. KV: one list op per 500 rows |
+| `GET /api/orders` without `limit` | Unchanged full list (compatibility); the admin UI does not use it any more | full scan |
+
+Other full-list loads removed on the D1 backend (KV behaviour unchanged):
+
+- `POST /api/support/chat` (PUBLIC) loaded every order on every chat message. It now looks up only the phone /
+  order number found in the message (`dbStore.findOrdersForLookup`, indexed), and only for tracking questions.
+- Safka status webhook (`/api/safqa/orders`) loaded every order per call; now the same targeted lookup.
+- "Sync with Safka" de-duplicates through `dbStore.findKnownOrderTokens` (indexed) instead of the listed orders.
+- Migration `0003_orders_safqa_idx.sql`: partial index on `(store_id, safqa_invoice_id)` for those lookups
+  (only orders that have a Safka serial pay the extra index row).
+- Dashboard (`/admin`) only calls `/api/admin/stats`, which already loads just its date range.
+
+Still a full scan (on demand, not polled): `GET /api/analytics` (tracking page summary, all-time totals),
+a text search (`q`: `instr()` cannot use an index), `GET /api/orders` without `limit`.
+
+Worst case for one visible admin tab for 24 h on D1 with a 200+ pending backlog: 1,440 polls x about 205 rows
+= about 295,000 rows read (6% of the free allowance); typical (20 pending) is about 30,000.
+
+Tests: `node scripts/test-orders-admin.mjs` (16 tests; shared harness in `scripts/lib/test-kit.mjs`).
 
 ## Not verified (needs the real Cloudflare run)
 
