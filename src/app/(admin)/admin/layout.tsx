@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { cssVarsFor } from "@/lib/palettes";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
@@ -12,7 +13,6 @@ import {
   Tag,
   Target,
   CreditCard,
-  Bot,
   ExternalLink,
   Menu,
   X,
@@ -26,6 +26,14 @@ import {
   Rss,
   Link2,
   Crosshair,
+  Ticket,
+  PanelTop,
+  Store,
+  Globe,
+  Bell,
+  Truck,
+  MessageCircle,
+  Plug,
 } from "lucide-react";
 
 interface NavChild {
@@ -60,11 +68,30 @@ const allNavigationItems: NavItem[] = [
       { name: "إعدادات البيكسل", href: "/admin/marketing/pixels", icon: Crosshair },
       { name: "كتالوج المنتجات", href: "/admin/marketing/catalog", icon: Rss },
       { name: "روابط الإعلانات", href: "/admin/marketing/links", icon: Link2 },
+      { name: "الكوبونات", href: "/admin/marketing/coupons", icon: Ticket },
+      { name: "كوبون المغادرة (Downsell)", href: "/admin/marketing/downsell", icon: LogOut },
+      { name: "النافذة المنبثقة (Popup)", href: "/admin/marketing/popup", icon: PanelTop },
     ],
   },
   { name: "دروبشيبينغ صفقة (Safka)", href: "/admin/safqa", icon: ShoppingBag },
-  { name: "الإعدادات", href: "/admin/settings", icon: Settings },
+  {
+    name: "الإعدادات",
+    href: "/admin/settings",
+    icon: Settings,
+    children: [
+      { name: "إعدادات المتجر", href: "/admin/settings", icon: Store },
+      { name: "الدومين", href: "/admin/settings/domain", icon: Globe },
+      { name: "إشعارات المبيعات", href: "/admin/settings/notifications", icon: Bell },
+      { name: "طرق الدفع", href: "/admin/settings/payments", icon: CreditCard },
+      { name: "الشحن", href: "/admin/settings/shipping", icon: Truck },
+      { name: "الشات", href: "/admin/settings/chat", icon: MessageCircle },
+      { name: "MCP", href: "/admin/settings/mcp", icon: Plug },
+    ],
+  },
 ];
+
+/** The admin keeps the default palette (green = success, orange = actions) whatever colors the store uses. */
+const ADMIN_THEME = { ...cssVarsFor("primary", "emerald"), ...cssVarsFor("accent", "orange") } as React.CSSProperties;
 
 const navigationItems = allNavigationItems.filter((item) => SAFKA_ENABLED || item.href !== "/admin/safqa");
 
@@ -105,7 +132,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row text-right font-sans" dir="rtl">
+    <div style={ADMIN_THEME} className="min-h-screen bg-slate-100 flex flex-col md:flex-row text-right font-sans" dir="rtl">
       {/* Mobile Header Bar */}
       <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
         <div className="flex items-center gap-2.5">
@@ -176,7 +203,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {navigationItems.map((item) => {
               const Icon = item.icon;
               if (item.children) {
-                const groupActive = item.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/"));
+                const isChildActive = (href: string) => pathname === href || (href !== "/admin/settings" && pathname.startsWith(href + "/"));
+                const groupActive = item.children.some((c) => isChildActive(c.href));
                 const open = groupActive || openGroups[item.href];
                 return (
                   <div key={item.href}>
@@ -195,7 +223,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {open && (
                       <div className="mt-1 mr-5 pr-3 border-r border-slate-700/70 space-y-1">
                         {item.children.map((child) => {
-                          const childActive = pathname === child.href;
+                          const childActive = isChildActive(child.href);
                           const ChildIcon = child.icon;
                           return (
                             <Link
