@@ -83,6 +83,26 @@ export default function ChatSettingsPage() {
     }
   };
 
+  const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  useEffect(() => {
+    fetch("/api/admin/chat-webhook").then((r) => r.json()).then((j) => setConnected(Boolean(j?.connected))).catch(() => {});
+  }, []);
+  const connect = async () => {
+    if (!(await save())) return;
+    setConnecting(true);
+    try {
+      const r = await fetch("/api/admin/chat-webhook", { method: "POST" });
+      const j = await r.json();
+      if (j.success) {
+        setConnected(true);
+        setMessage({ ok: true, text: "اتربط. أي Reply على رسالة عميل في تليجرام هيوصله في الشات." });
+      } else setMessage({ ok: false, text: j.error || "تعذر الربط" });
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   const test = async () => {
     if (!(await save())) return;
     setTesting(true);
@@ -187,6 +207,14 @@ export default function ChatSettingsPage() {
         <button type="button" onClick={test} disabled={testing || saving} className="min-h-[48px] px-5 rounded-xl bg-slate-900 text-white font-bold text-sm cursor-pointer disabled:opacity-60">
           {testing ? "جاري الإرسال..." : "حفظ وإرسال رسالة تجربة"}
         </button>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
+          <p className="text-sm font-black text-slate-900">الرد من تليجرام يوصل للعميل في الشات</p>
+          <p className="text-xs text-slate-500 leading-relaxed">اضغط «ربط الرد» مرة واحدة بعد ما تنشر الموقع. بعدها لما تعمل Reply على رسالة عميل في تليجرام، ردّك بيظهر في نافذة الشات عنده. (محتاج الموقع المنشور وقاعدة D1.)</p>
+          <button type="button" onClick={connect} disabled={connecting || saving} className="min-h-[48px] px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm cursor-pointer disabled:opacity-60">
+            {connecting ? "جاري الربط..." : connected ? "إعادة ربط الرد" : "ربط الرد"}
+          </button>
+          {connected && <p className="text-xs font-bold text-emerald-700">✓ مربوط</p>}
+        </div>
       </section>
 
       <section className={card}>

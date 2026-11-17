@@ -15,7 +15,7 @@ globalThis.fetch = async (input, init) => {
   const url = String(typeof input === "string" || input instanceof URL ? input : input.url);
   if (url.startsWith("https://api.telegram.org/")) {
     sent.telegram.push({ url, body: JSON.parse(init.body) });
-    return new Response(JSON.stringify({ ok: telegramOk }), { status: telegramOk ? 200 : 400 });
+    return new Response(JSON.stringify({ ok: telegramOk, result: { message_id: 1000 + sent.telegram.length } }), { status: telegramOk ? 200 : 400 });
   }
   if (url.startsWith("https://llm.example.com/")) {
     sent.llm.push({ url, headers: init.headers, body: JSON.parse(init.body) });
@@ -26,6 +26,8 @@ globalThis.fetch = async (input, init) => {
 
 const lib = await mod("lib/chat.ts");
 const chatRoute = await mod("app/api/chat/route.ts");
+const webhookRoute = await mod("app/api/chat/webhook/route.ts");
+const adminWebhook = await mod("app/api/admin/chat-webhook/route.ts");
 const settingsRoute = await mod("app/api/settings/route.ts");
 const { dbStore } = await mod("lib/db/store.ts");
 const { middleware } = await mod("middleware.ts");
@@ -71,7 +73,10 @@ await test("the public view needs the chat enabled and never carries the LLM key
 
 await test("middleware: /api/chat is public POST only; the admin test route is closed", () => {
   assert.notEqual(middleware(request("/api/chat", { method: "POST" })).status, 401);
-  assert.equal(middleware(request("/api/chat")).status, 401);
+  assert.notEqual(middleware(request("/api/chat")).status, 401, "GET = the customer poll");
+  assert.notEqual(middleware(request("/api/chat/webhook", { method: "POST" })).status, 401, "Telegram webhook authenticates itself");
+  assert.equal(middleware(request("/api/chat/webhook")).status, 401);
+  assert.equal(middleware(request("/api/admin/chat-webhook", { method: "POST" })).status, 401);
   assert.equal(middleware(request("/api/admin/chat-test", { method: "POST" })).status, 401);
 });
 
@@ -175,6 +180,57 @@ await test("per-product Q&A and nudges are sanitized and saved; the public chat 
   assert.deepEqual(Object.keys(st.chat_products), ["p-1"]);
   assert.deepEqual(lib.publicChat(st).nudges, ["اطلب الآن"]);
   assert.equal(lib.publicChat(st).nudge_seconds, 30);
+});
+
+await test("live chat: Telegram Reply comes back to the customer, follow-ups go to Telegram, only the merchant's chat counts", async () => {
+  await save({ chat: { enabled: true, faq: FAQ }, support_bot_token: BOT, support_chat_id: "123456789" });
+  await dbStore.updateSettings({ support_webhook_secret: "wh-secret-123" });
+  const cid = "a1b2c3d4e5f60718293a4b5c";
+  const before = sent.telegram.length;
+  const h = await chat({ message: "عايز أسأل عن الضمان", name: "منى", phone: "01012345678", cid, page: "/p/x" });
+  assert.equal(h.body.live, true);
+  assert.ok(sent.telegram[before].body.text.includes("Reply"), "tells the merchant to Reply");
+  const tgId = 1000 + before + 1; // the mocked Telegram message id of the hand-off
+
+  const poll = (c, after = 0) => call(chatRoute.GET, `/api/chat?cid=${c}&after=${after}`, { method: "GET" });
+  let p = await poll(cid);
+  assert.deepEqual(p.body.lines.map((l) => l.who), ["me"]);
+
+  const hook = (update, secret = "wh-secret-123") => call(webhookRoute.POST, "/api/chat/webhook", { method: "POST", body: update, headers: secret ? { "x-telegram-bot-api-secret-token": secret } : {} });
+  assert.equal((await hook({ message: { text: "x", chat: { id: 123456789 }, reply_to_message: { message_id: tgId } } }, "")).status, 401);
+  assert.equal((await hook({ message: { text: "x", chat: { id: 123456789 }, reply_to_message: { message_id: tgId } } }, "wrong")).status, 401);
+  // a stranger's chat is ignored
+  await hook({ message: { text: "مزيف", chat: { id: 555 }, reply_to_message: { message_id: tgId } } });
+  // not a reply: ignored
+  await hook({ message: { text: "بدون reply", chat: { id: 123456789 } } });
+  p = await poll(cid);
+  assert.equal(p.body.lines.length, 1);
+  // the merchant's real reply
+  assert.equal((await hook({ message: { text: "الضمان سنة كاملة", chat: { id: 123456789 }, reply_to_message: { message_id: tgId } } })).status, 200);
+  p = await poll(cid, p.body.lines[0].id);
+  assert.deepEqual(p.body.lines.map((l) => [l.who, l.text]), [["shop", "الضمان سنة كاملة"]]);
+
+  // a follow-up from the customer reaches Telegram again, and a Reply to it also finds the customer
+  const n = sent.telegram.length;
+  const f = await chat({ message: "ينفع أستبدل؟", cid });
+  assert.equal(f.body.sent, true);
+  assert.equal(sent.telegram.length, n + 1);
+  await hook({ message: { text: "أكيد", chat: { id: 123456789 }, reply_to_message: { message_id: 1000 + n + 1 } } });
+  p = await poll(cid, 0);
+  assert.deepEqual(p.body.lines.map((l) => l.who), ["me", "shop", "me", "shop"]);
+
+  // another conversation never sees these lines; a malformed id is refused
+  assert.deepEqual((await poll("ffffffffffffffffffffffff")).body.lines, []);
+  assert.equal((await poll("../x")).status, 400);
+
+  // the secret never leaves the server and cannot be written from the browser
+  await save({ support_webhook_secret: "hacked" });
+  assert.equal((await dbStore.getSettings()).support_webhook_secret, "wh-secret-123");
+  const g = await call(settingsRoute.GET, "/api/settings", { method: "GET", admin: true });
+  assert.ok(!JSON.stringify(g.body).includes("wh-secret-123"));
+  // connecting needs https
+  assert.equal((await call(adminWebhook.POST, "/api/admin/chat-webhook", { method: "POST", admin: true })).status, 400);
+  assert.equal((await call(adminWebhook.POST, "/api/admin/chat-webhook", { method: "POST" })).status, 401);
 });
 
 globalThis.fetch = realFetch;
