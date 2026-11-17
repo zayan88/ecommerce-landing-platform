@@ -51,3 +51,5 @@ ORDERS_BACKEND = "d1"
 CATALOG_BACKEND = "d1"
 BRAND_NAME = "RexRack (preview)"
 DEMO_MODE = "1"
+# TEMPORARY (load test): per-address order budget on the preview only. Remove after the test.
+ORDER_RATE_MAX = "100000"
