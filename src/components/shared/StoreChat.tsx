@@ -80,6 +80,8 @@ export function StoreChat() {
   const [live, setLive] = useState(false); // a conversation with the merchant is open: his replies come back here
   const lastId = useRef(0);
   const [unread, setUnread] = useState(false);
+  // a live question the merchant has not answered yet: after the wait time the chat asks for a phone number
+  const [waiting, setWaiting] = useState<{ text: string; since: number } | null>(null);
   const nudgesOff = useRef(false);
   const nudgeCount = useRef(0);
   const onProductPage = pathname.startsWith("/p/");
@@ -126,7 +128,10 @@ export function StoreChat() {
             const mine = lines.filter((l) => !(l.who === "me" && m.some((x) => x.from === "me" && x.text === l.text)));
             return [...m, ...mine.map((l) => ({ from: (l.who === "me" ? "me" : "bot") as "me" | "bot", text: l.text }))];
           });
-          if (lines.some((l) => l.who === "shop")) setUnread(true);
+          if (lines.some((l) => l.who === "shop")) {
+            setUnread(true);
+            setWaiting(null);
+          }
         } else if (first) {
           return; // no conversation: do not keep polling
         }
@@ -141,6 +146,15 @@ export function StoreChat() {
       if (timer) clearTimeout(timer);
     };
   }, [chat, open, live]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!waiting || !chat) return;
+    const t = setTimeout(() => {
+      setPending(waiting.text);
+      setWaiting(null);
+      setMsgs((m) => [...m, { from: "bot", text: "لسه محدش قدر يرد دلوقتي. سيب اسمك ورقمك وهنرد عليك على واتساب في أقرب وقت." }]);
+    }, Math.max(60, chat.reply_wait_seconds) * 1000);
+    return () => clearTimeout(t);
+  }, [waiting, chat]);
   useEffect(() => {
     if (open) setUnread(false);
   }, [open]);
@@ -189,6 +203,22 @@ export function StoreChat() {
       } finally {
         setBusy(false);
       }
+    }
+    // nothing answered it: ping the merchant live first; ask for a number only if nobody replies in time
+    setBusy(true);
+    try {
+      const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, cid: getCid(), live_start: true, page: window.location.pathname }) });
+      const j = await res.json();
+      if (res.status === 429) return bot(j.error || "جرّب بعد شوية");
+      if (j.waiting) {
+        setLive(true);
+        setWaiting({ text, since: Date.now() });
+        return bot("وصلت رسالتك لفريق الدعم، هيرد عليك هنا في الشات. استنى دقايق...");
+      }
+    } catch {
+      // fall through to the phone form
+    } finally {
+      setBusy(false);
     }
     setPending(text);
     bot(chat.fallback);

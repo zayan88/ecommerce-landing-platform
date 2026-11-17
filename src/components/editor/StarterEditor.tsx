@@ -117,7 +117,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
       content: lp.content_config || {},
       sections: JSON.parse(JSON.stringify(mergeSections(lp.sections_config))),
       offers: JSON.parse(
-        JSON.stringify(lp.product?.offers && lp.product.offers.length > 0 ? lp.product.offers : buildDefaultOffers(lp.product!))
+        JSON.stringify(lp.product?.offers && lp.product.offers.length > 0 ? lp.product.offers : singleBaseOffer(lp.product!))
       ),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

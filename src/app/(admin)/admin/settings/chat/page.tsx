@@ -33,7 +33,7 @@ export default function ChatSettingsPage() {
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [cfg, setCfg] = useState<Omit<ChatConfig, "faq">>({
-    enabled: false, title: "اسألنا", welcome: "", fallback: "", llm_enabled: false, llm_base_url: "https://api.openai.com/v1", llm_model: "", llm_prompt: "", nudges: [], nudge_seconds: 25,
+    enabled: false, title: "اسألنا", welcome: "", fallback: "", llm_enabled: false, llm_base_url: "https://api.openai.com/v1", llm_model: "", llm_prompt: "", nudges: [], nudge_seconds: 25, reply_wait_seconds: 300,
   });
   const [faq, setFaq] = useState<FaqRow[]>([]);
   const [botToken, setBotToken] = useState("");
@@ -204,6 +204,9 @@ export default function ChatSettingsPage() {
         </Field>
         <Field label="معرّف الشات (Chat ID)">
           <input className={inputCls} dir="ltr" inputMode="numeric" value={chatId} onChange={(e) => setChatId(e.target.value.trim())} placeholder="123456789 أو -100..." />
+        </Field>
+        <Field label="مدة انتظار ردك (بالدقايق)" hint="لما العميل يسأل سؤال ملوش إجابة، الرسالة بتوصلك على تليجرام فوراً وهو بيستنى ردك في الشات. لو محدش رد في المدة دي، الشات بيطلب منه اسمه ورقمه. من 1 لـ 30 دقيقة.">
+          <input className={inputCls} type="number" min={1} max={30} value={Math.round(cfg.reply_wait_seconds / 60)} onChange={(e) => setCfg({ ...cfg, reply_wait_seconds: Math.min(30, Math.max(1, Number(e.target.value) || 5)) * 60 })} />
         </Field>
         <button type="button" onClick={test} disabled={testing || saving} className="min-h-[48px] px-5 rounded-xl bg-slate-900 text-white font-bold text-sm cursor-pointer disabled:opacity-60">
           {testing ? "جاري الإرسال..." : "حفظ وإرسال رسالة تجربة"}

@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
 import OffersPanel from "@/components/editor/OffersPanel";
+import DescriptionAiHelper from "@/components/admin/DescriptionAiHelper";
 import { buildDefaultOffers, sanitizeOffers, singleBaseOffer } from "@/lib/offers";
 import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
 import TablePagination from "@/components/admin/TablePagination";
@@ -59,6 +60,8 @@ export default function AdminProductsPage() {
   const [descriptionAr, setDescriptionAr] = useState("");
   const [productActive, setProductActive] = useState(true);
   const [upsellOpen, setUpsellOpen] = useState(false);
+  // Quantity offers (Upsell) on/off. Off = the page sells ONE piece at the base price with a plain form (no package boxes).
+  const [upsellEnabled, setUpsellEnabled] = useState(false);
   // Questions & answers the store chat uses on this product's page (stored in settings.chat_products[id])
   const [chatFaq, setChatFaq] = useState<{ q: string; keywords: string; answer: string }[]>([]);
   const [allChatFaq, setAllChatFaq] = useState<Record<string, any[]>>({});
@@ -112,6 +115,7 @@ export default function AdminProductsPage() {
     setOffers([]);
     setOffersTouched(false);
     setUpsellOpen(false);
+    setUpsellEnabled(false);
     setChatFaq([]);
     loadChatFaq();
     setIsModalOpen(true);
@@ -145,6 +149,7 @@ export default function AdminProductsPage() {
     const saved = prod.offers && prod.offers.length > 0;
     setOffers(saved ? JSON.parse(JSON.stringify(prod.offers)) : []);
     setOffersTouched(!!saved);
+    setUpsellEnabled(Boolean(prod.offers && prod.offers.length > 1));
     setUpsellOpen(false);
     setIsModalOpen(true);
   };
@@ -187,7 +192,7 @@ export default function AdminProductsPage() {
       const numStock = Number(stock) || 50;
 
       // Offers: what the merchant edited, or defaults derived from the price (see lib/offers.ts)
-      const finalOffers = effectiveOffers.length === 0 ? singleBaseOffer({ id: editingProduct?.id || "", base_price: Number(basePrice) || 0, compare_at_price: Number(comparePrice) || 0 }) : sanitizeOffers(editingProduct?.id || "", effectiveOffers);
+      const finalOffers = !upsellEnabled || effectiveOffers.length === 0 ? singleBaseOffer({ id: editingProduct?.id || "", base_price: Number(basePrice) || 0, compare_at_price: Number(comparePrice) || 0 }) : sanitizeOffers(editingProduct?.id || "", effectiveOffers);
       if (finalOffers.some((o) => !(o.price > 0))) {
         alert("سعر كل عرض لازم يكون أكبر من صفر");
         setIsSubmitting(false);
@@ -720,6 +725,13 @@ export default function AdminProductsPage() {
                       className={inputCls + " py-3 leading-relaxed"}
                     />
                   </div>
+                  <DescriptionAiHelper
+                    title={titleAr}
+                    price={Number(basePrice) || undefined}
+                    brandName={brand.store_name}
+                    notes={descriptionAr}
+                    onApply={(text) => setDescriptionAr(text)}
+                  />
                 </section>
 
                 <section className={cardCls}>
@@ -768,21 +780,38 @@ export default function AdminProductsPage() {
                 </section>
 
                 <section className={cardCls}>
-                  <button
-                    type="button"
-                    onClick={() => setUpsellOpen((v) => !v)}
-                    aria-expanded={upsellOpen}
-                    className="w-full flex items-center justify-between gap-3 text-right cursor-pointer"
-                  >
+                  <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
                     <span>
                       <span className={cardTitle + " block"}>عروض الكمية (Upsell)</span>
                       <span className="block text-xs text-slate-500 mt-1 leading-relaxed">
-                        {effectiveOffers.length} عروض · {offersTouched ? "معدّلة" : "تلقائية من سعر البيع"} — اضغط للعرض والتعديل
+                        {upsellEnabled
+                          ? `مفعّل: ${effectiveOffers.length} باقات بتظهر للعميل`
+                          : "مقفول: صفحة المنتج بتعرض قطعة واحدة بسعرها، وفورم عادي من غير باقات"}
                       </span>
                     </span>
-                    <ChevronDown className={`w-5 h-5 text-slate-500 shrink-0 transition-transform ${upsellOpen ? "rotate-180" : ""}`} />
-                  </button>
-                  {upsellOpen && (
+                    <input
+                      type="checkbox"
+                      checked={upsellEnabled}
+                      onChange={(e) => {
+                        setUpsellEnabled(e.target.checked);
+                        setUpsellOpen(e.target.checked);
+                      }}
+                      className="w-5 h-5 accent-emerald-600 shrink-0"
+                      aria-label="تفعيل عروض الكمية"
+                    />
+                  </label>
+                  {upsellEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => setUpsellOpen((v) => !v)}
+                      aria-expanded={upsellOpen}
+                      className="w-full flex items-center justify-between gap-3 text-right cursor-pointer min-h-[44px] rounded-xl bg-slate-50 border border-slate-200 px-3"
+                    >
+                      <span className="text-sm font-bold text-slate-800">{upsellOpen ? "إخفاء الباقات" : "عرض وتعديل الباقات"}</span>
+                      <ChevronDown className={`w-5 h-5 text-slate-500 shrink-0 transition-transform ${upsellOpen ? "rotate-180" : ""}`} />
+                    </button>
+                  )}
+                  {upsellEnabled && upsellOpen && (
                   <OffersPanel
                     offers={effectiveOffers}
                     currency={brand.currency}
