@@ -32,6 +32,7 @@ import {
 import { Metadata } from "next";
 import { StoreChat } from "@/components/shared/StoreChat";
 import { LangProvider } from "@/components/i18n/LangProvider";
+import DynamicLandingPage, { generateMetadata as landingMetadata } from "@/app/(landing)/p/[slug]/page";
 
 function homeMetadata(name: string): Metadata {
   return {
@@ -45,12 +46,25 @@ function homeMetadata(name: string): Metadata {
   };
 }
 
+/** The landing page the merchant made the home page (live and not paused), or null for the built-in home. */
+async function chosenHomeSlug(): Promise<string | null> {
+  const settings: any = await dbStore.getSettings();
+  const slug = typeof settings.home_page_slug === "string" ? settings.home_page_slug : "";
+  if (!slug) return null;
+  const lp = await dbStore.getLandingPage(slug);
+  return lp && lp.product && lp.status !== "paused" ? slug : null;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
+  const slug = await chosenHomeSlug();
+  if (slug) return landingMetadata({ params: { slug } });
   const brand = await getBrand();
   return homeMetadata(brand.store_name);
 }
 
 export default async function HomePage() {
+  const homeSlug = await chosenHomeSlug();
+  if (homeSlug) return DynamicLandingPage({ params: { slug: homeSlug } });
   const brand = await getBrand();
   const brandName = brand.store_name;
   const products = await dbStore.getProducts();
