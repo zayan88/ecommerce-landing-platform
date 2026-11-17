@@ -50,14 +50,13 @@ export default async function HomePage() {
   const { lang, settings, hc } = await loadHomeContent();
   const en = lang === "en";
   const products = await dbStore.getProducts();
-  const landingPages = await dbStore.getLandingPages();
+  const landingSlugs = await dbStore.getLandingSlugs();
   const reviews = Array.isArray(settings.home_reviews) ? settings.home_reviews : [];
 
   // Each active product → its landing page
   const cards: HomeProduct[] = products
     .filter((p) => p.status === "active")
     .map((product) => {
-      const lp = landingPages.find((l) => l.product_id === product.id);
       const discount = product.compare_at_price
         ? Math.round(((product.compare_at_price - product.base_price) / product.compare_at_price) * 100)
         : 0;
@@ -68,7 +67,7 @@ export default async function HomePage() {
         image: product.images?.[0] || "",
         price: product.base_price,
         compare_at_price: product.compare_at_price || 0,
-        landingSlug: lp?.slug || product.slug,
+        landingSlug: landingSlugs[product.id] || product.slug,
         discountPercentage: discount,
       };
     });
