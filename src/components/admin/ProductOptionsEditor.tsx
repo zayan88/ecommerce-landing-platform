@@ -119,6 +119,16 @@ export default function ProductOptionsEditor({ value, onChange }: { value: Optio
             );
           })}
 
+          {value.rows.length === 0 && (
+            <button
+              type="button"
+              onClick={() => onChange({ ...value, enabled: true, rows: [{ name: "اللون", values: "", colors: {}, showColors: true }, { name: "المقاس", values: "", colors: {}, showColors: false }] })}
+              className="w-full min-h-[48px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-black cursor-pointer"
+            >
+              ابدأ بـ لون ومقاس
+            </button>
+          )}
+
           {value.rows.length < MAX_OPTIONS && (
             <div className="flex flex-wrap gap-2">
               {[

@@ -834,6 +834,10 @@ function buildProduct(productData: Partial<Product> & { offers?: Partial<Product
     created_at: productData.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
     offers: (productData.offers as ProductOffer[]) || [],
+    // Color / size options (kept with the product): without these lines a save would silently drop them
+    ...(Array.isArray(productData.options) ? { options: productData.options } : {}),
+    ...(productData.options_enabled === false ? { options_enabled: false } : {}),
+    ...(Array.isArray(productData.variants_off) && productData.variants_off.length ? { variants_off: productData.variants_off } : {}),
   };
 }
 

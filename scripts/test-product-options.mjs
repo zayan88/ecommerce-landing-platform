@@ -122,4 +122,16 @@ await test("a color only comes in its own sizes: picking a color drops a size it
   assert.deepEqual(picks, { اللون: "أزرق", المقاس: "S" });
 });
 
+await test("saving a product keeps its options, the on/off switch and the sold-out list", async () => {
+  const saved = await dbStore.saveProductWithLandingPage(
+    { id: "prod-keep", title_ar: "منتج بخيارات", slug: "keep-opts", sku: "KEEP", base_price: 100, options: [{ name: "المقاس", values: ["S", "M"] }], options_enabled: false, variants_off: ["S"] },
+    true
+  );
+  assert.deepEqual(saved.product.options, [{ name: "المقاس", values: ["S", "M"] }]);
+  const back = await dbStore.getProduct("prod-keep");
+  assert.deepEqual(back.options, [{ name: "المقاس", values: ["S", "M"] }], "read back from the store");
+  assert.equal(back.options_enabled, false);
+  assert.deepEqual(back.variants_off, ["S"]);
+});
+
 finish();
