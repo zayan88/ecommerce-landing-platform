@@ -136,6 +136,7 @@ function ThankYouContent({ slug }: { slug: string }) {
         {/* Back Link */}
         <div className="pt-2">
           <Link
+            prefetch={false}
             href={`/p/${slug}`}
             className="text-sm font-bold text-gray-500 hover:text-emerald-700 inline-flex items-center gap-1.5 transition"
           >

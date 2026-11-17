@@ -52,7 +52,7 @@ const FEATURE_ICONS = [ShieldCheck, Truck, RotateCcw];
 // Links do nothing inside the editor
 function Lk({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
   const { editMode } = useEdit();
-  return editMode ? <span className={className}>{children}</span> : <Link href={href} className={className}>{children}</Link>;
+  return editMode ? <span className={className}>{children}</span> : <Link prefetch={false} href={href} className={className}>{children}</Link>;
 }
 function Anchor({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
   const { editMode } = useEdit();
