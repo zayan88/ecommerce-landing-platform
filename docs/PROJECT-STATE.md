@@ -1,6 +1,7 @@
 # RexRack Platform: حالة المشروع (توثيق ما اتعمل)
 
-آخر تحديث: 2026-11-17 · الفرع الشغّال: `feature/d1-orders` · الفرع المنشور (Cloudflare Pages production): `release`.
+**النسخة النهائية v1.0** (2026-11-17): ده المرجع الثابت للمشروع، وأي تطوير جاي بيتبني عليه وأي تغيير بيتسجّل كإضافة تحته.
+الفرع الشغّال: `feature/d1-orders` · الفرع المنشور (Cloudflare Pages production): `release`.
 الملف ده بيوثّق **اللي اتبنى فعلاً فقط**. الإضافات الجديدة بتتناقش بعد التوثيق. المستندات القديمة `docs/ARCHITECTURE.md` و`docs/DEPLOYMENT.md` (Vercel/Supabase) **قديمة**، المرجع هو الملف ده و`docs/architecture-kv-d1.md` و`docs/domain-tab.md`.
 
 ---
