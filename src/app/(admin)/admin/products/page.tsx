@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
 import OffersPanel from "@/components/editor/OffersPanel";
+import DescriptionAiHelper from "@/components/admin/DescriptionAiHelper";
 import { buildDefaultOffers, sanitizeOffers, singleBaseOffer } from "@/lib/offers";
 import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
 import TablePagination from "@/components/admin/TablePagination";
@@ -724,6 +725,13 @@ export default function AdminProductsPage() {
                       className={inputCls + " py-3 leading-relaxed"}
                     />
                   </div>
+                  <DescriptionAiHelper
+                    title={titleAr}
+                    price={Number(basePrice) || undefined}
+                    brandName={brand.store_name}
+                    notes={descriptionAr}
+                    onApply={(text) => setDescriptionAr(text)}
+                  />
                 </section>
 
                 <section className={cardCls}>
