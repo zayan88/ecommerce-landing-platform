@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader, Toast } from "../_components/toast";
 import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -123,8 +124,8 @@ export default function BrandPage() {
 
   return (
     <form onSubmit={save} className="max-w-2xl mx-auto p-4 sm:p-6 space-y-5 text-right" dir="rtl">
+      <PageHeader title="الإعدادات" saving={saving} />
       <div>
-        <h1 className="text-2xl font-black text-slate-900 font-heading">الإعدادات</h1>
         <p className="text-sm text-slate-600 mt-1">تحكم في متجرك: الاسم، الشكل، الألوان، اللوجو وبيانات التواصل.</p>
       </div>
 
@@ -255,27 +256,8 @@ export default function BrandPage() {
         )}
       </div>
 
-      {message && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-xl text-sm font-bold border ${
-            message.ok ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-700"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
+      <Toast message={message} onClose={() => setMessage(null)} />
 
-      <div className="sticky bottom-3 z-10">
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full sm:w-auto min-h-[48px] px-8 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base shadow-lg shadow-orange-500/25 disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
-        >
-          {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-          حفظ
-        </button>
-      </div>
     </form>
   );
 }

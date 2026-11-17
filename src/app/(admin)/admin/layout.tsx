@@ -309,7 +309,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Desktop Bar */}
         <header className="hidden md:flex bg-white border-b border-gray-200 py-3.5 px-8 items-center justify-between sticky top-0 z-30 shadow-sm">
           <div />

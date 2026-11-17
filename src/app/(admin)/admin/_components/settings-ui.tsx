@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
+import { PageHeader, Toast } from "./toast";
 
 /** Shared look of the admin settings pages (one page per topic, each saves only its own fields). */
 export const inputCls =
@@ -108,32 +109,10 @@ export function SettingsShell({
 
   return (
     <form onSubmit={save} className="max-w-2xl mx-auto p-4 sm:p-6 space-y-5 text-right" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 font-heading">{title}</h1>
-        {description && <p className="text-sm text-slate-600 mt-1 leading-relaxed">{description}</p>}
-      </div>
+      <PageHeader title={title} saving={saving} />
+      {description && <p className="text-sm text-slate-600 leading-relaxed">{description}</p>}
       {children}
-      {message && (
-        <div
-          role="status"
-          className={`p-3.5 rounded-xl text-sm font-bold border flex items-center gap-2 ${
-            message.ok ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-700"
-          }`}
-        >
-          {message.ok && <Check className="w-4 h-4 shrink-0" />}
-          {message.text}
-        </div>
-      )}
-      <div className="sticky bottom-3 z-10">
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full sm:w-auto min-h-[48px] px-8 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base shadow-lg shadow-orange-500/25 disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
-        >
-          {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-          حفظ
-        </button>
-      </div>
+      <Toast message={message} onClose={() => setMessage(null)} />
     </form>
   );
 }
