@@ -32,10 +32,8 @@ import {
   X,
   MousePointerClick,
   Sparkles,
-  Tags,
 } from "lucide-react";
 import AiPanel from "./AiPanel";
-import OffersPanel from "./OffersPanel";
 import { buildDefaultOffers, sanitizeOffers, singleBaseOffer } from "@/lib/offers";
 import StarterLandingPage from "@/landing-pages/starter-template/page";
 import SectionsPanel from "@/app/(admin)/admin/landing-pages/_components/SectionsPanel";
@@ -133,7 +131,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
   const [saveError, setSaveError] = useState("");
   const [device, setDevice] = useState<"mobile" | "desktop">("mobile");
   const [panelOpen, setPanelOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
-  const [tab, setTab] = useState<"sections" | "content" | "colors" | "offers" | "ai">("content");
+  const [tab, setTab] = useState<"sections" | "content" | "colors" | "ai">("content");
   const [menuOpen, setMenuOpen] = useState(false);
   const [selected, setSelected] = useState<EditSelection | null>(null);
   const lastEdit = useRef<{ key: string; t: number } | null>(null);
@@ -316,7 +314,6 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
             ["content", "المحتوى", Type],
             ["sections", "الأقسام", Layers],
             ["colors", "الألوان", Palette],
-            ["offers", "العروض", Tags],
             ["ai", "AI", Sparkles],
           ] as const
         ).map(([key, label, Icon]) => (
@@ -337,14 +334,7 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
-        {tab === "offers" ? (
-          <OffersPanel
-            offers={draft.offers}
-            currency={brand.currency}
-            onChange={(offers) => apply((d) => ({ ...d, offers }), "offers")}
-            onReset={() => apply((d) => ({ ...d, offers: buildDefaultOffers(lp.product!) }))}
-          />
-        ) : tab === "ai" ? (
+        {tab === "ai" ? (
           <AiPanel
             title={lp.title}
             brandName={brand.store_name}
@@ -395,7 +385,6 @@ export default function StarterEditor({ lp, onSaved, copied, busy, onCopyUrl, on
               ["hide_announcement", "شريط الإعلان العلوي"],
               ["hide_hero_trust", "أيقونات الثقة تحت صور المنتج"],
               ["hide_checkout_trust", "أيقونات الضمان تحت فورم الطلب"],
-              ["hide_offers", "باقات العروض (٢ و٣ قطع) — لو قفلتها يظهر سعر واحد بس"],
               ["hide_sticky_bar", "زر الشراء الثابت أسفل الشاشة (موبايل)"],
             ] as const).map(([key, label]) => {
               const on = !draft.content[key];

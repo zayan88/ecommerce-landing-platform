@@ -3,7 +3,8 @@ import { dbStore } from "@/lib/db/store";
 import { normalizeEgyptPhone } from "@/lib/db/abandoned-repo";
 import { getOrdersRepo } from "@/lib/db/orders-repo";
 import { sanitizeChat } from "@/lib/chat";
-import { askLlm, sendSupportHandoff } from "@/lib/chat-server";
+import { askLlm, sendSupportFollowUp, sendSupportHandoff } from "@/lib/chat-server";
+import { CID_RE, addLine, chatLiveAvailable, getConv, listLines, mapTelegramMessage, upsertConv } from "@/lib/db/chat-repo";
 
 export const runtime = "edge";
 
@@ -56,16 +57,49 @@ export async function POST(req: NextRequest) {
     if (!phone) return NextResponse.json({ ok: false, error: "اكتب رقم موبايل صحيح (11 رقم يبدأ بـ 01)" }, { status: 400, headers: noStore });
     const name = typeof body.name === "string" ? body.name.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 60) : "";
     const page = typeof body.page === "string" ? body.page.slice(0, 200) : "";
-    const sent = await sendSupportHandoff(settings, { name, phone, message, page, storeName: settings.store_name || "المتجر" });
+    const cid = typeof body.cid === "string" && CID_RE.test(body.cid) ? body.cid : "";
+    const live = Boolean(cid) && chatLiveAvailable() && Boolean(settings.support_webhook_secret);
+    const sent = await sendSupportHandoff(settings, { name, phone, message, page, storeName: settings.store_name || "المتجر", live });
+    if (sent.ok && live) {
+      try {
+        await upsertConv({ cid, name, phone, page });
+        await addLine(cid, "me", message);
+        if (sent.messageId) await mapTelegramMessage(sent.messageId, cid);
+      } catch {
+        // the message already reached Telegram; the live reply just will not work for this one
+      }
+    }
     return NextResponse.json(
-      sent
-        ? { ok: true, handoff: true, reply: "وصلت رسالتك ✅ هنرد عليك على واتساب في أقرب وقت." }
+      sent.ok
+        ? { ok: true, handoff: true, live, reply: live ? "وصلت رسالتك ✅ هنرد عليك هنا في الشات في أقرب وقت (وممكن نكلمك على واتساب)." : "وصلت رسالتك ✅ هنرد عليك على واتساب في أقرب وقت." }
         : { ok: true, handoff: false, reply: "تعذر إرسال الرسالة دلوقتي. كلمنا على واتساب مباشرة.", whatsapp: true },
       { headers: noStore }
     );
   }
 
+  // 1b) Follow-up inside an ongoing live conversation: forward to Telegram again (same customer)
+  if (typeof body?.cid === "string" && CID_RE.test(body.cid)) {
+    const conv = await getConv(body.cid);
+    if (conv) {
+      const id = await sendSupportFollowUp(settings, { name: conv.name, phone: conv.phone, text: message });
+      if (id) {
+        await addLine(conv.cid, "me", message);
+        await mapTelegramMessage(id, conv.cid);
+      }
+      return NextResponse.json({ ok: true, live: true, sent: Boolean(id) }, { headers: noStore });
+    }
+  }
+
   // 2) Ask the merchant's LLM (only when connected); otherwise the page shows the hand-off form
   const answer = await askLlm(settings, message);
   return NextResponse.json(answer ? { ok: true, reply: answer } : { ok: true, need_contact: true, reply: cfg.fallback }, { headers: noStore });
+}
+
+/** Poll for the conversation's messages after an id (the customer's browser, every few seconds while the chat is open). */
+export async function GET(req: NextRequest) {
+  const cid = req.nextUrl.searchParams.get("cid") || "";
+  const after = Number(req.nextUrl.searchParams.get("after") || 0);
+  if (!CID_RE.test(cid)) return NextResponse.json({ ok: false }, { status: 400, headers: noStore });
+  const lines = await listLines(cid, after);
+  return NextResponse.json({ ok: true, lines: lines || [] }, { headers: noStore });
 }

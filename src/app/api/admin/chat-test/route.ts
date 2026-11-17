@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!settings.support_bot_token || !settings.support_chat_id) {
     return NextResponse.json({ success: false, error: "احفظ توكن البوت ومعرّف الشات الأول" }, { status: 400 });
   }
-  const ok = await sendSupportHandoff(settings, {
+  const { ok } = await sendSupportHandoff(settings, {
     name: "رسالة تجربة",
     phone: "01000000000",
     message: "دي رسالة تجربة من إعدادات الشات. لو وصلتلك يبقى بوت الدعم شغال ✅",

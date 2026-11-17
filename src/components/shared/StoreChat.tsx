@@ -46,6 +46,20 @@ export function ChatProduct({ name, faq }: ProductCtx) {
 }
 
 const MAX_NUDGES = 4;
+const CID_KEY = "store_chat_cid";
+
+function getCid(): string {
+  try {
+    let v = localStorage.getItem(CID_KEY);
+    if (!v || !/^[a-f0-9]{24,40}$/.test(v)) {
+      v = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+      localStorage.setItem(CID_KEY, v);
+    }
+    return v;
+  } catch {
+    return "";
+  }
+}
 
 export function StoreChat() {
   const brand = useBrand();
@@ -63,6 +77,9 @@ export function StoreChat() {
   const endRef = useRef<HTMLDivElement>(null);
   const product = useSyncExternalStore(subscribe, () => productCtx, () => null);
   const [nudge, setNudge] = useState<string | null>(null);
+  const [live, setLive] = useState(false); // a conversation with the merchant is open: his replies come back here
+  const lastId = useRef(0);
+  const [unread, setUnread] = useState(false);
   const nudgesOff = useRef(false);
   const nudgeCount = useRef(0);
   const onProductPage = pathname.startsWith("/p/");
@@ -89,6 +106,44 @@ export function StoreChat() {
   useEffect(() => {
     if (open && msgs.length === 0 && chat) setMsgs([{ from: "bot", text: chat.welcome }]);
   }, [open, chat, msgs.length]);
+  // Restore an earlier conversation, then poll for the merchant's replies (only while a conversation is open)
+  useEffect(() => {
+    if (!chat) return;
+    let stop = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cid = getCid();
+    if (!cid) return;
+    const tick = async (first: boolean) => {
+      try {
+        const r = await fetch(`/api/chat?cid=${cid}&after=${lastId.current}`, { cache: "no-store" });
+        const j = await r.json();
+        const lines: { id: number; who: "me" | "shop"; text: string }[] = j.lines || [];
+        if (lines.length) {
+          lastId.current = lines[lines.length - 1].id;
+          setLive(true);
+          if (first) setMsgs((m) => (m.length > 1 ? m : [{ from: "bot", text: chat.welcome }]));
+          setMsgs((m) => {
+            const mine = lines.filter((l) => !(l.who === "me" && m.some((x) => x.from === "me" && x.text === l.text)));
+            return [...m, ...mine.map((l) => ({ from: (l.who === "me" ? "me" : "bot") as "me" | "bot", text: l.text }))];
+          });
+          if (lines.some((l) => l.who === "shop")) setUnread(true);
+        } else if (first) {
+          return; // no conversation: do not keep polling
+        }
+      } catch {
+        /* try again next time */
+      }
+      if (!stop && (live || !first)) timer = setTimeout(() => tick(false), open ? 8000 : 45000);
+    };
+    if (live || open) tick(!live && lastId.current === 0);
+    return () => {
+      stop = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [chat, open, live]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (open) setUnread(false);
+  }, [open]);
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [msgs, pending, open]);
@@ -110,6 +165,17 @@ export function StoreChat() {
     setMsgs((m) => [...m, { from: "me", text }]);
     const hit = matchFaq(faqAll, text);
     if (hit) return bot(hit.answer, onProductPage);
+    if (live) {
+      try {
+        const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, cid: getCid() }) });
+        const j = await res.json();
+        if (res.status === 429) return bot(j.error || "جرّب بعد شوية");
+        if (!j.sent) bot("تعذر الإرسال دلوقتي، جرّب تاني.");
+      } catch {
+        bot("تعذر الإرسال دلوقتي، جرّب تاني.");
+      }
+      return;
+    }
     // no ready answer: the server (LLM if connected), else straight to the hand-off form
     if (chat.ask_server) {
       setBusy(true);
@@ -137,7 +203,7 @@ export function StoreChat() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: pending, name, phone, page: window.location.pathname }),
+        body: JSON.stringify({ message: pending, name, phone, page: window.location.pathname, cid: getCid() }),
       });
       const j = await res.json();
       if (!res.ok) {
@@ -146,6 +212,7 @@ export function StoreChat() {
       }
       setPending(null);
       setShowWhatsapp(Boolean(j.whatsapp));
+      if (j.live) setLive(true);
       bot(j.reply);
     } catch {
       setFormError("تعذر الإرسال، جرّب تاني");
@@ -247,9 +314,10 @@ export function StoreChat() {
         onClick={() => { setNudge(null); setOpen((v) => !v); }}
         aria-label={chat.title}
         aria-expanded={open}
-        className="w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-xl shadow-orange-600/30 flex items-center justify-center cursor-pointer"
+        className="relative w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-xl shadow-orange-600/30 flex items-center justify-center cursor-pointer"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+        {!open && unread && <span className="absolute top-0 right-0 w-4 h-4 rounded-full bg-red-500 border-2 border-white" aria-label="رد جديد" />}
       </button>
     </div>
   );
