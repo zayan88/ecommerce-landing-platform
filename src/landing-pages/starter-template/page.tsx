@@ -611,7 +611,6 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   return (
     <main style={pageTheme} className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir={dir}>
-      <div className="fixed top-3 left-3 z-40"><LanguageSwitcher /></div>
       {/* 1. Announcement Bar */}
       {!c?.hide_announcement && (
       <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-slate-500/20">
@@ -619,6 +618,8 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         <EText field="announcement_bar" as="span" value={announcementText} />
       </div>
       )}
+
+      <LanguageSwitcher strip />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {sections.map((sec) => {

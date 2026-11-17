@@ -12,6 +12,7 @@ const nextConfig = {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
   reactStrictMode: true,
+  poweredByHeader: false,
   eslint: {
     ignoreDuringBuilds: true,
   },

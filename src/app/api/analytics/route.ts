@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { generateEventId } from "@/lib/tracking/utm";
 import { recordStat } from "@/lib/stats";
+import { allowPublic, clientIp } from "@/lib/public-rate-limit";
 
 export const runtime = "edge";
 
@@ -16,6 +17,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // a normal visitor sends a handful of batches; 300 per minute per address is far above that
+    if (!(await allowPublic("analytics", clientIp(req), 60 * 1000, 300, false))) {
+      return NextResponse.json({ success: false }, { status: 429 });
+    }
     let body: any = {};
     const contentType = req.headers.get("content-type") || "";
 

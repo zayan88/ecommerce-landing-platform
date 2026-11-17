@@ -498,6 +498,8 @@ export function EgyptianCheckoutForm({
           </label>
           <input
             type="text"
+            name="name"
+            autoComplete="name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -516,6 +518,9 @@ export function EgyptianCheckoutForm({
           </div>
           <input
             type="tel"
+            name="phone"
+            autoComplete="tel"
+            inputMode="tel"
             required
             dir="ltr"
             value={phone}
@@ -531,6 +536,8 @@ export function EgyptianCheckoutForm({
             {t("co.gov")} <span className="text-red-500">*</span>
           </label>
           <select
+            name="governorate"
+            autoComplete="address-level1"
             value={governorate}
             onChange={(e) => setGovernorate(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 text-sm outline-none transition bg-white"
@@ -550,6 +557,8 @@ export function EgyptianCheckoutForm({
           </label>
           <input
             type="text"
+            name="address"
+            autoComplete="street-address"
             required
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -564,6 +573,8 @@ export function EgyptianCheckoutForm({
             {t("co.note")} <span className="text-slate-400 font-normal">{t("co.optional")}</span>
           </label>
           <textarea
+            name="notes"
+            autoComplete="off"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
