@@ -4,7 +4,7 @@
  * never logged or echoed back. Edge-safe: fetch only.
  */
 import { escapeTelegramHtml } from "@/lib/notifications/telegram";
-import { llmSystemPrompt, safeLlmBaseUrl, sanitizeChat } from "@/lib/chat";
+import { leaksSecrets, llmSystemPrompt, looksLikeInjection, safeLlmBaseUrl, sanitizeChat } from "@/lib/chat";
 
 export interface HandoffInput {
   name: string;
@@ -99,6 +99,7 @@ export async function askLlm(settings: any, message: string): Promise<string | n
   const key = typeof settings.llm_api_key === "string" ? settings.llm_api_key : "";
   const base = safeLlmBaseUrl(cfg.llm_base_url);
   if (!cfg.llm_enabled || !key || !base || !cfg.llm_model) return null;
+  if (looksLikeInjection(message)) return null; // steering / extraction attempts go to the merchant, never to the model
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 12000);
   try {
@@ -107,7 +108,7 @@ export async function askLlm(settings: any, message: string): Promise<string | n
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
         model: cfg.llm_model,
-        max_tokens: 300,
+        max_tokens: 250,
         temperature: 0.3,
         messages: [
           { role: "system", content: llmSystemPrompt(settings.store_name || "المتجر", cfg.llm_prompt) },
@@ -120,7 +121,9 @@ export async function askLlm(settings: any, message: string): Promise<string | n
     const j: any = await res.json().catch(() => null);
     const text = typeof j?.choices?.[0]?.message?.content === "string" ? j.choices[0].message.content.trim() : "";
     if (!text || /^handoff\b/i.test(text)) return null;
-    return text.slice(0, 800);
+    // never let a secret or the prompt itself out, whatever the model produced
+    if (leaksSecrets(text, [key, typeof settings.support_bot_token === "string" ? settings.support_bot_token : "", typeof settings.telegram_bot_token === "string" ? settings.telegram_bot_token : ""])) return null;
+    return text.slice(0, 600);
   } catch {
     return null;
   } finally {
