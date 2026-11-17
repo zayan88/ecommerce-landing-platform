@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
-import { FloatingSave, Toast } from "./toast";
+import { PageHeader, Toast } from "./toast";
 
 /** Shared look of the admin settings pages (one page per topic, each saves only its own fields). */
 export const inputCls =
@@ -109,13 +109,10 @@ export function SettingsShell({
 
   return (
     <form onSubmit={save} className="max-w-2xl mx-auto p-4 sm:p-6 space-y-5 text-right" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 font-heading">{title}</h1>
-        {description && <p className="text-sm text-slate-600 mt-1 leading-relaxed">{description}</p>}
-      </div>
+      <PageHeader title={title} saving={saving} />
+      {description && <p className="text-sm text-slate-600 leading-relaxed">{description}</p>}
       {children}
       <Toast message={message} onClose={() => setMessage(null)} />
-      <FloatingSave saving={saving} />
     </form>
   );
 }

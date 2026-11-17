@@ -1,6 +1,6 @@
 "use client";
 
-import { FloatingSave, Toast } from "../_components/toast";
+import { PageHeader, Toast } from "../_components/toast";
 import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -124,8 +124,8 @@ export default function BrandPage() {
 
   return (
     <form onSubmit={save} className="max-w-2xl mx-auto p-4 sm:p-6 space-y-5 text-right" dir="rtl">
+      <PageHeader title="الإعدادات" saving={saving} />
       <div>
-        <h1 className="text-2xl font-black text-slate-900 font-heading">الإعدادات</h1>
         <p className="text-sm text-slate-600 mt-1">تحكم في متجرك: الاسم، الشكل، الألوان، اللوجو وبيانات التواصل.</p>
       </div>
 
@@ -258,7 +258,6 @@ export default function BrandPage() {
 
       <Toast message={message} onClose={() => setMessage(null)} />
 
-      <FloatingSave saving={saving} />
     </form>
   );
 }

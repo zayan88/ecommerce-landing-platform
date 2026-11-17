@@ -39,16 +39,22 @@ export function Toast({ message, onClose }: { message: ToastMessage | null; onCl
   );
 }
 
-/** The save button: fixed in the top corner so it is always in reach, however far the page is scrolled. */
-export function FloatingSave({ saving, label = "حفظ" }: { saving: boolean; label?: string }) {
+/**
+ * Page title + Save button on ONE sticky bar: they stay together at the top while the page scrolls.
+ * (Sits just under the admin's own top bar.)
+ */
+export function PageHeader({ title, saving, label = "حفظ" }: { title: string; saving: boolean; label?: string }) {
   return (
-    <button
-      type="submit"
-      disabled={saving}
-      className="fixed top-[76px] left-4 z-30 min-h-[48px] px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base shadow-xl shadow-orange-500/30 disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
-    >
-      {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-      {label}
-    </button>
+    <div className="sticky top-[66px] md:top-[58px] z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-slate-100/95 backdrop-blur border-b border-slate-200 flex items-center justify-between gap-3">
+      <h1 className="text-xl sm:text-2xl font-black text-slate-900 font-heading truncate">{title}</h1>
+      <button
+        type="submit"
+        disabled={saving}
+        className="shrink-0 min-h-[44px] px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base shadow-lg shadow-orange-500/25 disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+      >
+        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+        {label}
+      </button>
+    </div>
   );
 }

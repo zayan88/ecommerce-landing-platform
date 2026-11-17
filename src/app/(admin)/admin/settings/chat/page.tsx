@@ -1,6 +1,6 @@
 "use client";
 
-import { FloatingSave, Toast } from "../../_components/toast";
+import { PageHeader, Toast } from "../../_components/toast";
 import { useConfirm } from "../../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { Check, Loader2, Plus, Trash2 } from "lucide-react";
@@ -128,8 +128,8 @@ export default function ChatSettingsPage() {
 
   return (
     <form onSubmit={save} className="max-w-2xl mx-auto p-4 sm:p-6 space-y-5 text-right" dir="rtl">
+      <PageHeader title="الشات" saving={saving} />
       <div>
-        <h1 className="text-2xl font-black text-slate-900 font-heading">الشات</h1>
         <p className="text-sm text-slate-600 mt-1 leading-relaxed">فقاعة شات بتظهر في كل صفحات المتجر. بترد من الأسئلة اللي تكتبها، ولو معرفتش بتحوّل الرسالة ليك على تليجرام وانت ترد على واتساب.</p>
       </div>
 
@@ -249,7 +249,6 @@ export default function ChatSettingsPage() {
 
       <Toast message={message} onClose={() => setMessage(null)} />
 
-      <FloatingSave saving={saving} />
     </form>
   );
 }
