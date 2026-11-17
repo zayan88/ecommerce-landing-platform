@@ -70,4 +70,18 @@ await test("shipping text follows the product's own fee (0 = free even when the 
   assert.equal(commerce.shippingHint(cfg, "zzz").free, false);
 });
 
+await test("order: a one-price product can be ordered in several pieces (price x pieces, capped at 10)", async () => {
+  const P = { ...PRODUCT, id: "prod-o2", slug: "o-two", sku: "O2", options: [], offers: [{ id: "o2-one", product_id: "prod-o2", title_ar: "قطعة", quantity: 1, price: 200, original_price: 250, sort_order: 1 }] };
+  kvSeed("prod:prod-o2", P);
+  kvSeed("custom_products_all", [PRODUCT, P]);
+  const three = await place({ product_id: "prod-o2", landing_page_slug: "o-two", offer_id: "o2-one", quantity: 3 });
+  assert.equal(three.status, 200, JSON.stringify(three.body));
+  assert.equal(three.body.order.final_amount, 600, "3 pieces x 200, shipping free");
+  const noOffer = await place({ product_id: "prod-o2", landing_page_slug: "o-two", quantity: 2 });
+  assert.equal(noOffer.status, 200);
+  assert.equal(noOffer.body.order.final_amount, 600, "no offer id: base price (300) x 2 pieces");
+  const many = await place({ product_id: "prod-o2", landing_page_slug: "o-two", offer_id: "o2-one", quantity: 11 });
+  assert.equal(many.status, 400);
+});
+
 finish();

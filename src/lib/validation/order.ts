@@ -136,11 +136,11 @@ export const orderFormSchema = z
         message: "يرجى كتابة العنوان بالتفصيل (الشارع / المنطقة / رقم المنزل)",
       });
     }
-    if (!data.offer_id && data.quantity > 5) {
+    if (data.quantity > 10) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["quantity"],
-        message: "الحد الأقصى للكمية في الطلب الواحد 5 قطع",
+        message: "الحد الأقصى للكمية في الطلب الواحد 10 قطع",
       });
     }
   });

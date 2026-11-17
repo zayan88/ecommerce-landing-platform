@@ -41,6 +41,8 @@ interface EgyptianCheckoutFormProps {
   ctaText?: string;
 }
 
+const MAX_PIECES = 10;
+
 export function EgyptianCheckoutForm({
   product,
   landingPageSlug,
@@ -55,7 +57,7 @@ export function EgyptianCheckoutForm({
   ctaText,
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
-  const { t, dir } = useLang();
+  const { t, dir, lang } = useLang();
 
   // Simplified Form fields (Name, Phone once, Governorate, Address, Notes/Details)
   const [name, setName] = useState("");
@@ -174,8 +176,12 @@ export function EgyptianCheckoutForm({
     }
   };
 
-  const quantity = activeOffer?.quantity || 1;
-  const totalAmount = activeOffer?.price || product.base_price || 0;
+  // No 2 / 3-piece offers (one price only): the customer can still raise the number of pieces. Price = the single-piece price x pieces.
+  const showQty = hideOffers || (product.offers?.length ?? 0) <= 1;
+  const [pieces, setPieces] = useState(1);
+  const extraPieces = showQty && (activeOffer?.quantity || 1) === 1 ? pieces : 1;
+  const quantity = (activeOffer?.quantity || 1) * extraPieces;
+  const totalAmount = (activeOffer?.price || product.base_price || 0) * extraPieces;
 
   // Shipping fee / minimum order / coupon: the numbers shown here mirror what /api/orders decides on the server
   const shipCfg = brand.commerce?.shipping;
@@ -187,7 +193,7 @@ export function EgyptianCheckoutForm({
   const offerFree = Boolean(activeOffer?.free_shipping);
   // the merchant's automatic discount is computed here from the public list (no request); the server re-decides
   const autoRes = brand.commerce?.auto_coupons
-    ? bestAutoCoupon(brand.commerce.auto_coupons, { subtotal: totalAmount, quantity: activeOffer?.quantity || 1, productId: product.id })
+    ? bestAutoCoupon(brand.commerce.auto_coupons, { subtotal: totalAmount, quantity, productId: product.id })
     : null;
   const autoCoupon =
     autoRes && autoRes.ok
@@ -667,6 +673,18 @@ export function EgyptianCheckoutForm({
             </div>
           )}
         </div>
+
+        {/* Quantity: only when the product has no multi-piece offers */}
+        {showQty && (activeOffer?.quantity || 1) === 1 && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+            <span className="text-sm font-bold text-slate-800">{lang === "en" ? "Quantity" : "الكمية"}</span>
+            <div className="flex items-center gap-1" role="group" aria-label={lang === "en" ? "Quantity" : "الكمية"}>
+              <button type="button" aria-label="-" disabled={pieces <= 1} onClick={() => setPieces((n) => Math.max(1, n - 1))} className="w-12 h-12 rounded-xl border border-slate-300 bg-white text-xl font-black text-slate-800 disabled:opacity-40 cursor-pointer">−</button>
+              <span className="w-12 text-center text-lg font-black font-mono text-slate-950" aria-live="polite">{pieces}</span>
+              <button type="button" aria-label="+" disabled={pieces >= MAX_PIECES} onClick={() => setPieces((n) => Math.min(MAX_PIECES, n + 1))} className="w-12 h-12 rounded-xl border border-slate-300 bg-white text-xl font-black text-slate-800 disabled:opacity-40 cursor-pointer">+</button>
+            </div>
+          </div>
+        )}
 
         {/* Pricing Summary */}
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2 text-xs sm:text-sm">

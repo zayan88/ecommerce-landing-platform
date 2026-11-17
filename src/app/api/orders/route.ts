@@ -108,13 +108,16 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      quantity = offerQty;
+      // A single-piece offer can be ordered several times (the customer raised the number of pieces): price = offer price x pieces.
+      // Multi-piece offers keep their own fixed quantity and price.
+      const pieces = offerQty === 1 ? data.quantity : 1;
+      quantity = offerQty * pieces;
       offerFreeShipping = Boolean(selectedOffer.free_shipping);
-      totalAmount = offerPrice;
+      totalAmount = offerPrice * pieces;
       unitPrice = offerPrice / offerQty;
       const originalPrice = Number(selectedOffer.original_price);
       if (Number.isFinite(originalPrice) && originalPrice > offerPrice) {
-        discountAmount = originalPrice - offerPrice;
+        discountAmount = (originalPrice - offerPrice) * pieces;
       }
     } else {
       // No offer: base price × quantity (quantity already limited to 1..5 by the schema).
