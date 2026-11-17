@@ -11,6 +11,8 @@ import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
 import { SocialProofWall } from "@/components/shared/SocialProofWall";
 import { ShippingScope } from "@/components/shared/ShippingScope";
+import { OptionsPicker } from "@/components/shared/OptionsPicker";
+import { effectiveOptions, sanitizeVariantsOff } from "@/lib/product-options";
 import { shippingHint } from "@/lib/commerce";
 import { useBrand } from "@/components/brand/BrandProvider";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
@@ -133,6 +135,10 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   const c = landingPage.content_config;
   const hid = (k: string) => !!c?.hidden?.[k];
+  // Color / size the merchant defined: chosen in the hero and in the order form (same picks)
+  const productOptions = effectiveOptions(product);
+  const variantsOff = sanitizeVariantsOff((product as any).variants_off);
+  const [pickedOptions, setPickedOptions] = useState<Record<string, string>>({});
   // Editor only: list items get a relative box so their delete button can sit on them
   const rel = editMode ? " relative" : "";
   const shipHint = shippingHint(useBrand().commerce.shipping, product.id);
@@ -307,6 +313,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               accentColor="emerald"
             />
           </div>}
+
+          {/* Color / size */}
+          {productOptions.length > 0 && (
+            <OptionsPicker options={productOptions} off={variantsOff} picked={pickedOptions} onPick={(name, v) => setPickedOptions((p) => ({ ...p, [name]: v }))} compact />
+          )}
 
           {/* Price Display */}
           <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
@@ -596,6 +607,8 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         hideOffers={hideOffers}
         hideTrust={!!c?.hide_checkout_trust}
         ctaText={c?.cta_text}
+        pickedOptions={pickedOptions}
+        onPickedOptionsChange={setPickedOptions}
       />
     </div>
   );

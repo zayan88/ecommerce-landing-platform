@@ -9,7 +9,8 @@ import { trackMarketingEvent } from "@/lib/tracking/marketing-pixels";
 import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { comboAvailable, effectiveOptions, sanitizeVariantsOff, valueHasStock } from "@/lib/product-options";
+import { comboAvailable, effectiveOptions, sanitizeVariantsOff } from "@/lib/product-options";
+import { OptionsPicker } from "@/components/shared/OptionsPicker";
 import { useLang } from "@/components/i18n/LangProvider";
 import { compressImage } from "@/lib/image-compress";
 import { InstapayMark, VodafoneMark } from "./PayMarks";
@@ -39,6 +40,9 @@ interface EgyptianCheckoutFormProps {
   hideTrust?: boolean;
   /** Custom text of the order button (merchant setting). */
   ctaText?: string;
+  /** Color / size picks kept by the page, so the hero and the form show the same choice. */
+  pickedOptions?: Record<string, string>;
+  onPickedOptionsChange?: (v: Record<string, string>) => void;
 }
 
 const MAX_PIECES = 10;
@@ -54,6 +58,8 @@ export function EgyptianCheckoutForm({
   previewOnly = false,
   hideOffers = false,
   hideTrust = false,
+  pickedOptions,
+  onPickedOptionsChange,
   ctaText,
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
@@ -68,7 +74,13 @@ export function EgyptianCheckoutForm({
   // Color / size etc. the merchant defined on the product: the customer must pick each one
   const productOptions = effectiveOptions(product);
   const variantsOff = sanitizeVariantsOff((product as any).variants_off);
-  const [picked, setPicked] = useState<Record<string, string>>({});
+  const [pickedInner, setPickedInner] = useState<Record<string, string>>({});
+  const picked = pickedOptions ?? pickedInner;
+  const setPicked = (fn: (p: Record<string, string>) => Record<string, string>) => {
+    const next = fn(picked);
+    if (onPickedOptionsChange) onPickedOptionsChange(next);
+    else setPickedInner(next);
+  };
   const brand = useBrand();
   const [payMethod, setPayMethod] = useState<"cod" | "vodafone_cash" | "instapay">("cod");
   const [payRef, setPayRef] = useState("");
@@ -511,34 +523,7 @@ export function EgyptianCheckoutForm({
         )}
 
         {/* Product options: color / size ... */}
-        {productOptions.map((o) => (
-          <div key={o.name} role="group" aria-label={o.name}>
-            <p className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">
-              {o.name} <span className="text-red-500">*</span>
-              {picked[o.name] ? <span className="text-emerald-700 font-black"> : {picked[o.name]}</span> : null}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {o.values.map((v) => {
-                const on = picked[o.name] === v;
-                const inStock = valueHasStock(productOptions, variantsOff, picked, o.name, v);
-                const dot = o.swatches?.[v];
-                return (
-                  <button
-                    key={v}
-                    type="button"
-                    aria-pressed={on}
-                    disabled={!inStock}
-                    onClick={() => setPicked((p) => ({ ...p, [o.name]: v }))}
-                    className={`min-h-[44px] min-w-[56px] px-4 rounded-xl text-sm font-bold border-2 transition inline-flex items-center justify-center gap-2 ${inStock ? "cursor-pointer" : "cursor-not-allowed opacity-45 line-through"} ${on ? "border-orange-500 bg-orange-50 text-orange-900 ring-2 ring-orange-500/30" : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"}`}
-                  >
-                    {dot && <span aria-hidden="true" className="w-4 h-4 rounded-full border border-slate-300 shrink-0" style={{ backgroundColor: dot }} />}
-                    {v}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <OptionsPicker options={productOptions} off={variantsOff} picked={picked} onPick={(name, v) => setPicked((p) => ({ ...p, [name]: v }))} />
 
         {/* Honeypot (invisible to humans and screen readers) */}
         <div aria-hidden="true" className="sr-only">
