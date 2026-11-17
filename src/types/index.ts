@@ -95,6 +95,10 @@ export interface LandingPageContentConfig {
   announcement_bar?: string;
   /** Optional page extras the merchant can switch off (shown by default so existing pages do not change). */
   hide_announcement?: boolean;
+  /** Elements the merchant removed in the page editor (key = element id; deleting sets true, restoring clears it). */
+  hidden?: Record<string, boolean>;
+  /** Extra images the merchant added between sections: shown right after the section `after` (a section id). */
+  image_blocks?: { url: string; after: string }[];
   hide_hero_trust?: boolean;
   hide_checkout_trust?: boolean;
   /** One flat price instead of the 1/2/3-piece offer tiers. */

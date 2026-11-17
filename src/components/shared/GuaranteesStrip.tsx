@@ -5,6 +5,7 @@ import { useBrand } from "@/components/brand/BrandProvider";
 import { shippingHint } from "@/lib/commerce";
 import { ShieldCheck, RefreshCw, Truck } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
+import { Removable } from "@/components/editor/EditTools";
 import { useLang } from "@/components/i18n/LangProvider";
 
 export interface GuaranteeItem {
@@ -27,9 +28,11 @@ interface GuaranteesStripProps {
   items?: GuaranteeItem[];
   /** Bind texts to content_config paths for the live editor (no effect on the public render). */
   editable?: boolean;
+  /** The merchant deleted the title in the editor. */
+  hideTitle?: boolean;
 }
 
-export function GuaranteesStrip({ title, items, editable }: GuaranteesStripProps) {
+export function GuaranteesStrip({ title, items, editable, hideTitle }: GuaranteesStripProps) {
   const hint = shippingHint(useBrand().commerce.shipping);
   const { t, dir } = useLang();
   const base: GuaranteeItem[] = [
@@ -44,9 +47,13 @@ export function GuaranteesStrip({ title, items, editable }: GuaranteesStripProps
 
   return (
     <section dir={dir} aria-label={title || t("guar.aria")} className="bg-emerald-50 rounded-3xl border border-emerald-200 p-4 sm:p-6">
-      {title && (
-        <EText field={editable ? "guarantees_title" : undefined} as="h2" className="text-lg sm:text-xl font-black text-emerald-900 font-heading text-center mb-3 leading-relaxed" value={title} />
-      )}
+      {title && (editable ? (
+        <Removable flag="hidden.guarantees_title" hidden={!!hideTitle} label="العنوان">
+          <EText field="guarantees_title" as="h2" className="text-lg sm:text-xl font-black text-emerald-900 font-heading text-center mb-3 leading-relaxed" value={title} />
+        </Removable>
+      ) : (
+        <EText field={undefined} as="h2" className="text-lg sm:text-xl font-black text-emerald-900 font-heading text-center mb-3 leading-relaxed" value={title} />
+      ))}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {list.map((g, idx) => {
           const Icon = ICONS[g.icon] || ShieldCheck;

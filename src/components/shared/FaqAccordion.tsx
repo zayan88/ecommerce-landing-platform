@@ -5,6 +5,8 @@ import { useBrand } from "@/components/brand/BrandProvider";
 import { shippingHint } from "@/lib/commerce";
 import { ChevronDown } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
+import { Removable, ItemRemove, ItemAdd } from "@/components/editor/EditTools";
+import { useEdit } from "@/components/editor/EditContext";
 import { useLang } from "@/components/i18n/LangProvider";
 
 export interface FaqItem {
@@ -46,9 +48,13 @@ interface FaqAccordionProps {
   defaultOpenIndex?: number;
   /** Bind texts to content_config paths for the live editor (no effect on the public render). */
   editable?: boolean;
+  /** The merchant deleted the title in the editor. */
+  hideTitle?: boolean;
 }
 
-export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable }: FaqAccordionProps) {
+export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable, hideTitle }: FaqAccordionProps) {
+  const { editMode } = useEdit();
+  const rel = editable && editMode ? " relative" : "";
   const titleId = React.useId();
   const hint = shippingHint(useBrand().commerce.shipping);
   const { t, dir } = useLang();
@@ -66,15 +72,22 @@ export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable }: F
   };
 
   return (
-    <section dir={dir} aria-labelledby={titleId} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm sm:shadow-md p-4 sm:p-6">
-      <EText field={editable ? "faq_title" : undefined} id={titleId} as="h2" className="text-xl sm:text-2xl font-black text-slate-900 font-heading text-center mb-4 leading-relaxed" value={title || t("faq.title")} />
+    <section dir={dir} aria-labelledby={hideTitle ? undefined : titleId} aria-label={hideTitle ? t("faq.title") : undefined} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm sm:shadow-md p-4 sm:p-6">
+      {editable ? (
+        <Removable flag="hidden.faq_title" hidden={!!hideTitle} label="العنوان">
+          <EText field="faq_title" id={titleId} as="h2" className="text-xl sm:text-2xl font-black text-slate-900 font-heading text-center mb-4 leading-relaxed" value={title || t("faq.title")} />
+        </Removable>
+      ) : (
+        <EText field={undefined} id={titleId} as="h2" className="text-xl sm:text-2xl font-black text-slate-900 font-heading text-center mb-4 leading-relaxed" value={title || t("faq.title")} />
+      )}
       <div className="space-y-2.5">
         {list.map((item, idx) => (
           <details
             key={idx}
             open={idx === defaultOpenIndex}
-            className="group rounded-2xl border border-slate-200 bg-slate-50/60 open:bg-white open:border-emerald-200 transition"
+            className={"group rounded-2xl border border-slate-200 bg-slate-50/60 open:bg-white open:border-emerald-200 transition" + rel}
           >
+            {editable && <ItemRemove field="faq_items" items={list} index={idx} />}
             <summary className="flex items-center justify-between gap-3 min-h-[52px] p-3 sm:p-4 cursor-pointer list-none font-bold text-slate-900 text-sm sm:text-base leading-relaxed [&::-webkit-details-marker]:hidden">
               <EText field={editable ? `faq_items.${idx}.q` : undefined} base={list} as="span" value={item.q} />
               <ChevronDown className="w-5 h-5 shrink-0 text-emerald-600 transition-transform group-open:rotate-180" aria-hidden="true" />
@@ -83,6 +96,7 @@ export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable }: F
           </details>
         ))}
       </div>
+      {editable && <ItemAdd field="faq_items" items={list} make={() => ({ q: "سؤال جديد؟", a: "اكتب الإجابة هنا" })} label="إضافة سؤال" max={15} />}
       {/* "<" is escaped so admin/AI-written text can never close the script tag */}
       <script
         type="application/ld+json"

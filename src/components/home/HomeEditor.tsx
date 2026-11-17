@@ -15,6 +15,7 @@ import {
   RotateCcw,
   Save,
   Smartphone,
+  Sparkles,
   Type,
   Undo2,
 } from "lucide-react";
@@ -23,6 +24,8 @@ import { EditProvider, applyFieldEdit, getByPath, type EditSelection } from "@/c
 import { HomeView, type HomeProduct, type HomeReview } from "./HomeView";
 import { HOME_SECTIONS, type HomeContent, type HomeSection } from "@/lib/home-content";
 import { useConfirm } from "@/app/(admin)/admin/_components/confirm";
+import { useBrand } from "@/components/brand/BrandProvider";
+import AiHomePanel from "./AiHomePanel";
 
 const SECTION_LABELS: Record<HomeSection, string> = {
   trust: "شريط الثقة (تحت العنوان)",
@@ -55,6 +58,7 @@ export interface HomeEditorProps {
 /** Live editor of the store's home page: the real page, editable in place (click a text to type, red × to delete). */
 export default function HomeEditor({ initial, defaults, products, reviews, onSave }: HomeEditorProps) {
   const confirmAsk = useConfirm();
+  const brand = useBrand();
   const [hist, setHist] = useState<Hist>({ past: [], present: initial, future: [] });
   const [savedJson, setSavedJson] = useState(() => JSON.stringify(initial));
   const [saving, setSaving] = useState(false);
@@ -62,7 +66,7 @@ export default function HomeEditor({ initial, defaults, products, reviews, onSav
   const [error, setError] = useState("");
   const [device, setDevice] = useState<"mobile" | "desktop">("desktop");
   const [panelOpen, setPanelOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
-  const [tab, setTab] = useState<"content" | "sections">("content");
+  const [tab, setTab] = useState<"content" | "sections" | "ai">("content");
   const [selected, setSelected] = useState<EditSelection | null>(null);
   const lastEdit = useRef<{ key: string; t: number } | null>(null);
 
@@ -159,6 +163,7 @@ export default function HomeEditor({ initial, defaults, products, reviews, onSav
           [
             ["content", "المحتوى", Type],
             ["sections", "الأقسام", Layers],
+            ["ai", "اكتب بالذكاء", Sparkles],
           ] as const
         ).map(([key, label, Icon]) => (
           <button
@@ -176,7 +181,14 @@ export default function HomeEditor({ initial, defaults, products, reviews, onSav
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
-        {tab === "sections" ? (
+        {tab === "ai" ? (
+          <AiHomePanel
+            brandName={brand.store_name || ""}
+            productNames={products.map((p) => p.title)}
+            defaultLang={/[؀-ۿ]/.test(hc.hero_title || hc.tagline || "") ? "ar" : "en"}
+            onApply={(content) => apply((d) => ({ ...d, ...content }))}
+          />
+        ) : tab === "sections" ? (
           <>
             <div className="bg-white rounded-2xl border border-slate-200 p-3 space-y-1">
               <p className="text-sm font-black text-slate-900 mb-1">الأقسام الظاهرة</p>
