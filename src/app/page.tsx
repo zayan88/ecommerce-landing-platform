@@ -1,12 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { dbStore } from "@/lib/db/store";
-import { getBrand } from "@/lib/brand";
-import { MetaPixel } from "@/lib/tracking/meta-pixel";
-import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
-import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
-import { UrgencyBar } from "@/components/shared/UrgencyBar";
-import { StorePopups } from "@/components/shared/StorePopups";
+import { Metadata } from "next";
 import {
   ShieldCheck,
   Truck,
@@ -18,33 +12,27 @@ import {
   ArrowLeft,
   Lock,
   Sparkles,
-  PhoneCall,
-  Clock,
   BadgePercent,
   Check,
   X,
-  ChevronLeft,
   HelpCircle,
-  Flame,
   HeartHandshake,
-  Bot,
 } from "lucide-react";
-import { Metadata } from "next";
+import { dbStore } from "@/lib/db/store";
+import { getBrand } from "@/lib/brand";
+import { MetaPixel } from "@/lib/tracking/meta-pixel";
+import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
+import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
+import { UrgencyBar } from "@/components/shared/UrgencyBar";
+import { StorePopups } from "@/components/shared/StorePopups";
 import { StoreChat } from "@/components/shared/StoreChat";
-import { LangProvider } from "@/components/i18n/LangProvider";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import DynamicLandingPage, { generateMetadata as landingMetadata } from "@/app/(landing)/p/[slug]/page";
+import { getLang } from "@/lib/i18n-server";
+import { dirOf, currencyEn } from "@/lib/i18n";
+import { defaultHomeContent, mergeHomeContent } from "@/lib/home-content";
 
-function homeMetadata(name: string): Metadata {
-  return {
-    title: `${name} - متجرك الأول للمنتجات الذكية والعصرية في مصر`,
-    description: `تسوق أحدث المنتجات مع ${name} في مصر. دفع عند الاستلام، معاينة الشحنة قبل الدفع، وشحن لجميع المحافظات.`,
-    openGraph: {
-      title: `${name} - عروض حصرية في مصر`,
-      description: "معاينة مجانية قبل الدفع + دفع عند الاستلام + ضمان 14 يوم",
-      type: "website",
-    },
-  };
-}
+export const runtime = "edge";
 
 /** The landing page the merchant made the home page (live and not paused), or null for the built-in home. */
 async function chosenHomeSlug(): Promise<string | null> {
@@ -55,61 +43,71 @@ async function chosenHomeSlug(): Promise<string | null> {
   return lp && lp.product && lp.status !== "paused" ? slug : null;
 }
 
+async function loadHomeContent() {
+  const brand = await getBrand();
+  const lang = await getLang();
+  const settings: any = await dbStore.getSettings();
+  return { brand, lang, settings, hc: mergeHomeContent(defaultHomeContent(lang, brand.store_name), settings.home_content) };
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const slug = await chosenHomeSlug();
   if (slug) return landingMetadata({ params: { slug } });
-  const brand = await getBrand();
-  return homeMetadata(brand.store_name);
+  const { brand, hc } = await loadHomeContent();
+  const name = brand.store_name;
+  return {
+    title: brand.tagline ? `${name} - ${brand.tagline}` : `${name} - ${hc.tagline}`,
+    description: hc.hero_text.slice(0, 160),
+    openGraph: { title: name, description: hc.hero_text.slice(0, 160), type: "website" },
+  };
 }
+
+const TRUST_ICONS = [ShieldCheck, Truck, RotateCcw, Headphones];
+const TRUST_TINTS = ["bg-orange-50 text-orange-600", "bg-blue-50 text-blue-600", "bg-amber-50 text-amber-600", "bg-purple-50 text-purple-600"];
+const FEATURE_TINTS = ["bg-emerald-100 text-orange-700", "bg-blue-100 text-blue-700", "bg-amber-100 text-amber-700"];
+const FEATURE_ICONS = [ShieldCheck, Truck, RotateCcw];
 
 export default async function HomePage() {
   const homeSlug = await chosenHomeSlug();
   if (homeSlug) return DynamicLandingPage({ params: { slug: homeSlug } });
-  const brand = await getBrand();
+
+  const { brand, lang, settings, hc } = await loadHomeContent();
   const brandName = brand.store_name;
+  const en = lang === "en";
+  const dir = dirOf(lang);
+  const cur = en ? currencyEn(brand.currency) : brand.currency;
   const products = await dbStore.getProducts();
   const landingPages = await dbStore.getLandingPages();
-  const settings = await dbStore.getSettings();
-  const pixelId = settings.default_meta_pixel_id || "";
   const reviews = Array.isArray(settings.home_reviews) ? settings.home_reviews : [];
 
-  // Map each product to its landing page slug
+  // Each active product → its landing page
   const productCards = products
     .filter((p) => p.status === "active")
     .map((product) => {
-      const lp = landingPages.find((l) => l.product_id === product.id) || {
-        slug: product.slug,
-        title: product.title_ar,
-      };
+      const lp = landingPages.find((l) => l.product_id === product.id);
       const discount = product.compare_at_price
         ? Math.round(((product.compare_at_price - product.base_price) / product.compare_at_price) * 100)
         : 0;
-
-      return {
-        ...product,
-        landingSlug: lp.slug,
-        discountPercentage: discount,
-      };
+      return { ...product, landingSlug: lp?.slug || product.slug, discountPercentage: discount };
     });
 
+  const hide = hc.hide || {};
+  const L = (ar: string, e: string) => (en ? e : ar);
+  const sectionTitle = "text-2xl sm:text-4xl font-black font-heading text-slate-900";
+  const badgeCls = "inline-flex items-center gap-1.5 text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200";
+
   return (
-    <LangProvider initial="ar" locked>
-    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-orange-500 selection:text-white font-sans" dir="rtl">
-      {/* Meta Facebook Pixel */}
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-orange-500 selection:text-white font-sans" dir={dir}>
       <MetaPixel pixelIds={effectiveMetaPixelIds(settings)} />
       <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settings)} snapPixelIds={effectiveSnapPixelIds(settings)} ga4Id={settings.ga4_measurement_id} gtmId={settings.gtm_container_id} />
-
       <StorePopups />
-
-      {/* Top Flash Urgency Announcement Bar */}
       <UrgencyBar />
 
-      {/* Main Header / Navigation */}
+      {/* Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-slate-950 to-indigo-900 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-105 transition">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-3 group min-w-0">
+            <div className="w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-tr from-slate-950 to-indigo-900 text-white font-black text-2xl flex items-center justify-center shadow-lg overflow-hidden">
               {brand.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={brand.logo_url} alt={brandName} className="w-full h-full p-1 object-contain rounded-xl bg-white" />
@@ -117,219 +115,127 @@ export default async function HomePage() {
                 (brandName || "M").trim().charAt(0).toUpperCase()
               )}
             </div>
-            <div>
-              <span className="text-2xl font-black font-heading text-slate-900 tracking-tight block">
-                {brandName}
-              </span>
-              <span className="text-[11px] font-bold text-gray-500 block -mt-0.5">
-                الجودة والابتكار في مكان واحد 🇪🇬
-              </span>
+            <div className="min-w-0">
+              <span className="text-xl sm:text-2xl font-black font-heading text-slate-900 tracking-tight block truncate">{brandName}</span>
+              <span className="text-[11px] font-bold text-gray-500 block -mt-0.5 truncate">{hc.tagline}</span>
             </div>
           </Link>
 
-          {/* Quick Nav Anchors */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-bold text-gray-600">
-            <a href="#products" className="hover:text-orange-600 transition">
-              المنتجات والعروض
-            </a>
-            <a href="#features" className="hover:text-orange-600 transition">
-              مميزات التسوق
-            </a>
-            <a href="#faq" className="hover:text-orange-600 transition">
-              الأسئلة الشائعة
-            </a>
-            <Link
-              href="/support"
-              className="flex items-center gap-1.5 text-orange-600 hover:text-orange-700 font-extrabold transition bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-200"
-            >
-              <Bot className="w-4 h-4" />
-              <span>خدمة العملاء الذكية</span>
-            </Link>
+            <a href="#products" className="hover:text-orange-600 transition">{L("المنتجات والعروض", "Products & offers")}</a>
+            {!hide.features && <a href="#features" className="hover:text-orange-600 transition">{L("لماذا نحن", "Why us")}</a>}
+            {!hide.faq && <a href="#faq" className="hover:text-orange-600 transition">{L("الأسئلة الشائعة", "FAQ")}</a>}
           </nav>
 
-          {/* Direct CTA */}
-          <div className="flex items-center gap-3">
-            <a
-              href="#products"
-              className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-extrabold text-sm shadow-md shadow-orange-500/25 transition flex items-center gap-2 active:scale-95"
-            >
+          <div className="flex items-center gap-2 shrink-0">
+            <LanguageSwitcher />
+            <a href="#products" className="py-2.5 px-4 sm:px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-sm shadow-md shadow-orange-500/25 flex items-center gap-2 transition">
               <ShoppingBag className="w-4 h-4" />
-              <span>تصفح المنتجات</span>
+              <span>{L("تصفح المنتجات", "Browse products")}</span>
             </a>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-orange-50/20 py-16 md:py-24 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
-            {/* Tag badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-orange-200 shadow-sm">
-              <Sparkles className="w-4 h-4 text-orange-600" />
-              <span>المتجر المصري المعتمد للمنتجات العصرية الذكية</span>
-            </div>
-
-            {/* Main Headline */}
+            {hc.hero_badge && (
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold border border-emerald-200">
+                <Sparkles className="w-4 h-4 text-orange-600" />
+                <span>{hc.hero_badge}</span>
+              </div>
+            )}
+            {hc.hero_image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={hc.hero_image} alt={brandName} className="mx-auto w-full max-w-xl max-h-80 object-contain rounded-3xl" />
+            )}
             <h1 className="text-3xl sm:text-4xl md:text-6xl font-black font-heading text-slate-900 leading-tight tracking-tight">
-              تسوق أرقى المنتجات الذكية{" "}
-              <span className="bg-gradient-to-r from-slate-950 via-indigo-950 to-orange-600 bg-clip-text text-transparent">
-                بأعلى جودة وأفضل سعر
-              </span>
+              {hc.hero_title}
+              {hc.hero_highlight && (
+                <>
+                  {" "}
+                  <span className="bg-gradient-to-r from-slate-950 via-indigo-950 to-orange-600 bg-clip-text text-transparent">{hc.hero_highlight}</span>
+                </>
+              )}
             </h1>
-
-            {/* Description */}
-            <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
-              في {brandName}، راحتك وأمانك هما أولويتنا: نوفر لك إمكانية{" "}
-              <span className="font-bold text-slate-900 underline decoration-orange-500 decoration-2">
-                معاينة وفحص المنتج بنفسك أمام مندوب الشحن قبل دفع أي مليم
-              </span>
-              ، مع الدفع عند الاستلام وضمان استبدال مجاني 14 يوماً.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <a
-                href="#products"
-                className="w-full sm:w-auto py-4 px-8 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-extrabold text-base shadow-xl shadow-orange-500/25 hover:shadow-orange-500/35 active:scale-98 transition flex items-center justify-center gap-2"
-              >
-                <ShoppingBag className="w-5 h-5" />
-                <span>شاهد منتجاتنا وعروضنا</span>
-              </a>
-            </div>
-
-            {/* 4 Pillars Trust Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 text-right">
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">معاينة قبل الدفع</h4>
-                  <p className="text-[11px] text-gray-500">افحص طلبك براحتك</p>
-                </div>
+            {hc.hero_text && <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">{hc.hero_text}</p>}
+            {hc.hero_cta && (
+              <div className="flex justify-center pt-2">
+                <a href="#products" className="w-full sm:w-auto py-4 px-8 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition">
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>{hc.hero_cta}</span>
+                </a>
               </div>
+            )}
 
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                  <Truck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">شحن لجميع المحافظات</h4>
-                  <p className="text-[11px] text-gray-500">لكافة المحافظات المصرية</p>
-                </div>
+            {!hide.trust && hc.trust.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 text-start">
+                {hc.trust.map((t, i) => {
+                  const Icon = TRUST_ICONS[i % 4];
+                  return (
+                    <div key={i} className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${TRUST_TINTS[i % 4]}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900">{t.title}</h4>
+                        <p className="text-[11px] text-gray-500">{t.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
-                  <RotateCcw className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">استبدال 14 يوماً</h4>
-                  <p className="text-[11px] text-gray-500">ضمان ذهبي بدون تعقيد</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
-                  <Headphones className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">خدمة عملاء بتتابع معاك</h4>
-                  <p className="text-[11px] text-gray-500">متابعة هاتفية وتأكيد فوري</p>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Products Showcase Section */}
+      {/* Products */}
       <section id="products" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
-          <div className="inline-flex items-center gap-1.5 text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
-            <BadgePercent className="w-4 h-4" /> العروض والمنتجات المتاحة الآن
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
-            اختر منتجك واستمتع بأقوى العروض
-          </h2>
-          <p className="text-sm text-gray-600">
-            جميع المنتجات متوفرة وجاهزة للشحن الفوري لباب بيتك مع خيار الدفع عند الاستلام.
-          </p>
+          {hc.products_badge && (
+            <div className={badgeCls}>
+              <BadgePercent className="w-4 h-4" /> {hc.products_badge}
+            </div>
+          )}
+          <h2 className={sectionTitle}>{hc.products_title}</h2>
+          {hc.products_sub && <p className="text-sm text-gray-600">{hc.products_sub}</p>}
         </div>
 
-        {/* Product Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {productCards.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white rounded-3xl border border-gray-200/90 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group"
-            >
-              {/* Product Image Container (1:1 Square) */}
-              <div className="relative aspect-square w-full bg-slate-100 overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
-                <img
-                  src={product.images[0]}
-                  alt={product.title_ar}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-
-                {/* Badges */}
-                <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
-                  {product.discountPercentage > 0 && (
-                    <span className="px-3 py-1 rounded-full bg-red-600 text-white font-black text-xs shadow-md">
-                      خصم {product.discountPercentage}%
-                    </span>
-                  )}
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white font-bold text-[10px]">
-                    معاينة قبل الدفع
+            <div key={product.id} className="bg-white rounded-3xl border border-gray-200/90 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
+              <div className="relative w-full h-64 sm:h-72 bg-slate-100 overflow-hidden">
+                {product.images[0] && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={product.images[0]} alt={product.title_ar} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                )}
+                {product.discountPercentage > 0 && (
+                  <span className="absolute top-3 end-3 px-3 py-1 rounded-full bg-red-600 text-white font-black text-xs shadow-md">
+                    {L("خصم", "Save")} {product.discountPercentage}%
                   </span>
-                </div>
-
+                )}
               </div>
-
-              {/* Product Info */}
               <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                 <div>
                   <h3 className="font-heading font-black text-lg text-slate-900 leading-snug group-hover:text-orange-600 transition">
-                    {product.title_ar}
+                    {en && product.title_en ? product.title_en : product.title_ar}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">
-                    {product.description_ar}
-                  </p>
+                  {product.description_ar && <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">{product.description_ar}</p>}
                 </div>
-
-                {/* Offers Highlight */}
-                <div className="bg-slate-50 rounded-2xl p-3 border border-gray-100 space-y-1.5 text-xs">
-                  <div className="flex items-center gap-1.5 text-orange-700 font-bold">
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                    <span>متوفر في المخزن - شحن فوري اليوم</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-gray-600">
-                    <Truck className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <span>شحن مجاني متوفر عند طلب قطعتين</span>
-                  </div>
-                </div>
-
-                {/* Price & Action */}
-                <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-3">
                   <div>
-                    <span className="text-xs text-gray-400 block line-through">
-                      {product.compare_at_price} ج.م
-                    </span>
+                    {product.compare_at_price ? <span className="text-xs text-gray-400 block line-through">{product.compare_at_price} {cur}</span> : null}
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-black font-heading text-orange-600">
-                        {product.base_price}
-                      </span>
-                      <span className="text-xs font-bold text-gray-600">جنيه مصري</span>
+                      <span className="text-2xl font-black font-heading text-orange-600">{product.base_price}</span>
+                      <span className="text-xs font-bold text-gray-600">{cur}</span>
                     </div>
                   </div>
-
-                  <Link
-                    href={`/p/${product.landingSlug}`}
-                    className="py-3 px-5 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white font-extrabold text-sm shadow-md transition flex items-center gap-1.5 active:scale-95 group/btn"
-                  >
-                    <span>طلب المنتج الآن</span>
-                    <ArrowLeft className="w-4 h-4 group-hover/btn:-translate-x-1 transition" />
+                  <Link href={`/p/${product.landingSlug}`} className="py-3 px-5 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white font-extrabold text-sm shadow-md transition flex items-center gap-2">
+                    <span>{L("اطلب الآن", "Order now")}</span>
+                    <ArrowLeft className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
                   </Link>
                 </div>
               </div>
@@ -338,219 +244,121 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Why {brandName} Section */}
-      <section id="features" className="py-20 bg-white border-y border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
-              ضمانات {brandName} الذهبية
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
-              لماذا تثق بنا؟
-            </h2>
-            <p className="text-sm text-gray-600">
-              تسوق وأنت مطمئن البال بنسبة 100%. نظامنا مبني بالكامل لحماية حق المشتري.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-3xl bg-slate-50 border border-gray-200/80 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-orange-700 flex items-center justify-center">
-                <ShieldCheck className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-black font-heading text-slate-900">
-                1. فحص الشحنة قبل الاستلام
-              </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                لك كامل الحق في فتح الطرد ومعاينة المنتج والتأكد من مطابقته للمواصفات المعروضة قبل تسليم أي مبلغ للمندوب.
-              </p>
+      {/* Why us */}
+      {!hide.features && hc.features.length > 0 && (
+        <section id="features" className="py-20 bg-white border-y border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+              {hc.features_badge && <span className={badgeCls}>{hc.features_badge}</span>}
+              <h2 className={sectionTitle}>{hc.features_title}</h2>
+              {hc.features_sub && <p className="text-sm text-gray-600">{hc.features_sub}</p>}
             </div>
-
-            <div className="p-8 rounded-3xl bg-slate-50 border border-gray-200/80 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
-                <Truck className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-black font-heading text-slate-900">
-                2. شحن مباشر لجميع المحافظات
-              </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                نتعامل مع كبرى شركات الشحن المصرية لضمان وصول طلبك لباب بيتك خلال 5 إلى 7 أيام أينما كنت في محافظات مصر.
-              </p>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-slate-50 border border-gray-200/80 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center">
-                <RotateCcw className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-black font-heading text-slate-900">
-                3. استبدال واسترجاع 14 يوم
-              </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                في حال وجود أي عيب صناعة أو عدم مطابقة، نوفر لك استبدالاً فورياً مجانياً أو استرداد كامل أموالك دون أي تعقيد.
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {hc.features.map((f, i) => {
+                const Icon = FEATURE_ICONS[i % 3];
+                return (
+                  <div key={i} className="bg-slate-50 p-8 rounded-3xl border border-gray-200 space-y-4">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${FEATURE_TINTS[i % 3]}`}>
+                      <Icon className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-lg font-black font-heading text-slate-900">{f.title}</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">{f.desc}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Problem vs {brandName} Solution Section (Lovable / High-Converting Pattern) */}
-      <section className="py-16 bg-slate-50 border-b border-gray-200 px-4">
-        <div className="max-w-5xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-black text-orange-700 bg-emerald-100/60 px-3.5 py-1 rounded-full border border-orange-200">
-              المقارنة الحقيقية
-            </span>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
-              لماذا {brandName} أفضل بمراحل من المنتجات التقليدية؟
-            </h2>
-            <p className="text-sm text-gray-600">
-              شاهد الفرق العملي بين الشراء من السوق التقليدي والشراء من {brandName} المعتمد
-            </p>
+      {/* Comparison */}
+      {!hide.compare && (hc.compare_old.length > 0 || hc.compare_new.length > 0) && (
+        <section className="py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
+            {hc.compare_badge && <span className={badgeCls}>{hc.compare_badge}</span>}
+            <h2 className={sectionTitle}>{hc.compare_title}</h2>
+            {hc.compare_sub && <p className="text-sm text-gray-600">{hc.compare_sub}</p>}
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* The Old / Conventional Way */}
-            <div className="p-6 md:p-8 rounded-3xl bg-red-50/60 border border-red-200 space-y-4">
-              <div className="flex items-center gap-2.5 text-red-600 font-black text-lg font-heading">
-                <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center">
-                  <X className="w-5 h-5 stroke-[3]" />
-                </div>
-                <span>المنتجات العادية في السوق</span>
-              </div>
-
-              <ul className="space-y-3 text-sm text-gray-700">
-                <li className="flex items-start gap-2.5">
-                  <span className="text-red-500 font-bold">✕</span>
-                  <span>خامات بلاستيكية ومقلدة تتلف وتنكسر سريعاً بعد أيام قليلة.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-red-500 font-bold">✕</span>
-                  <span>لا يوجد أي ضمان حقيقي ولا خدمة ما بعد البيع إذا ظهر عيب بالمنتج.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-red-500 font-bold">✕</span>
-                  <span>مندوب الشحن يجبرك على دفع الحساب قبل أن تفتح وتفحص محتويات الطرد.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-red-500 font-bold">✕</span>
-                  <span>تأخير طويل في التوصيل لعدة أسابيع دون أي تواصل أو متابعة.</span>
-                </li>
+            <div className="bg-white p-6 rounded-3xl border border-red-200 shadow-sm space-y-4">
+              <h3 className="font-black font-heading text-red-700 flex items-center gap-2">
+                <X className="w-5 h-5" /> {hc.compare_old_title}
+              </h3>
+              <ul className="space-y-3 text-sm text-gray-700 leading-relaxed">
+                {hc.compare_old.map((p, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <X className="w-4 h-4 text-red-500 mt-1 shrink-0" />
+                    <span>{p}</span>
+                  </li>
+                ))}
               </ul>
             </div>
-
-            {/* The {brandName} Way */}
-            <div className="p-6 md:p-8 rounded-3xl bg-orange-50/80 border-2 border-emerald-500 space-y-4 shadow-lg shadow-emerald-500/10">
-              <div className="flex items-center gap-2.5 text-orange-700 font-black text-lg font-heading">
-                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
-                  <Check className="w-5 h-5 stroke-[3]" />
-                </div>
-                <span>حلول {brandName} الأصلية المعتمدة</span>
-              </div>
-
-              <ul className="space-y-3 text-sm text-gray-800">
-                <li className="flex items-start gap-2.5 font-bold">
-                  <span className="text-orange-600">✓</span>
-                  <span>خامات فاخرة متينة ومختبرة بأعلى معايير الجودة لتتحمل الاستخدام الشاق.</span>
-                </li>
-                <li className="flex items-start gap-2.5 font-bold">
-                  <span className="text-orange-600">✓</span>
-                  <span>ضمان استبدال واسترجاع لمدة 14 يوماً مع دعم فني.</span>
-                </li>
-                <li className="flex items-start gap-2.5 font-bold">
-                  <span className="text-orange-600">✓</span>
-                  <span>حقك الكامل في فتح الطرد ومعاينة المنتج أمام المندوب قبل دفع مليم واحد.</span>
-                </li>
-                <li className="flex items-start gap-2.5 font-bold">
-                  <span className="text-orange-600">✓</span>
-                  <span>شحن لجميع محافظات مصر الـ 27 خلال 5 إلى 7 أيام لباب بيتك.</span>
-                </li>
+            <div className="bg-white p-6 rounded-3xl border-2 border-emerald-300 shadow-md space-y-4">
+              <h3 className="font-black font-heading text-emerald-700 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5" /> {hc.compare_new_title}
+              </h3>
+              <ul className="space-y-3 text-sm text-gray-700 leading-relaxed">
+                {hc.compare_new.map((p, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-emerald-600 mt-1 shrink-0" />
+                    <span>{p}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* 3-Step Simple Order Section */}
-      <section className="py-16 bg-white border-b border-gray-200 px-4">
-        <div className="max-w-5xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-black text-orange-700 bg-orange-50 px-3.5 py-1 rounded-full border border-orange-200">
-              تجربة تسوق مريحة
-            </span>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-900 font-heading">
-              كيف تتسوق من {brandName} في 3 خطوات بسيطة؟
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-orange-700 font-black text-xl flex items-center justify-center mx-auto">
-                1
-              </div>
-              <h3 className="font-heading font-black text-base text-slate-900">اختر منتجك</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                تصفح العروض واضغط على زر "طلب المنتج" ثم اكتب بياناتك في أقل من 30 ثانية.
-              </p>
+      {/* Steps */}
+      {!hide.steps && hc.steps.length > 0 && (
+        <section className="py-20 bg-white border-y border-gray-200">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              {hc.steps_badge && <span className={badgeCls}>{hc.steps_badge}</span>}
+              <h2 className={sectionTitle}>{hc.steps_title}</h2>
             </div>
-
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 font-black text-xl flex items-center justify-center mx-auto">
-                2
-              </div>
-              <h3 className="font-heading font-black text-base text-slate-900">تأكيد وشحن فوري</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                يتصل بك فريق المبيعات هاتفياً لتأكيد الأوردر ومراجعة العنوان ويتم الشحن في نفس اليوم.
-              </p>
-            </div>
-
-            <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 font-black text-xl flex items-center justify-center mx-auto">
-                3
-              </div>
-              <h3 className="font-heading font-black text-base text-slate-900">معاينة واستلام</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                عاين طلبك وافحصه وتأكد من جودته أمام مندوب شركة الشحن، ثم ادفع نقداً أو بمحفظة.
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {hc.steps.map((s, i) => (
+                <div key={i} className="bg-slate-50 p-6 rounded-3xl border border-gray-200 shadow-sm text-center space-y-3">
+                  <div className="w-12 h-12 mx-auto rounded-full bg-slate-900 text-white font-black text-lg flex items-center justify-center">{i + 1}</div>
+                  <h3 className="font-heading font-black text-base text-slate-900">{s.title}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">{s.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Golden Guarantee Certificate */}
-      <section className="py-14 px-4 max-w-4xl mx-auto">
-        <div className="p-8 rounded-3xl bg-gradient-to-br from-amber-50 via-white to-amber-50/40 border-2 border-amber-300 shadow-lg text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-md">
-            <HeartHandshake className="w-8 h-8" />
+      {/* Warranty */}
+      {!hide.warranty && hc.warranty_title && (
+        <section className="py-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="p-8 rounded-3xl bg-gradient-to-br from-amber-50 via-white to-amber-50/40 border-2 border-amber-300 shadow-lg text-center space-y-4">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+              <HeartHandshake className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-slate-900">{hc.warranty_title}</h2>
+            {hc.warranty_text && <p className="text-sm sm:text-base text-gray-700 leading-relaxed max-w-2xl mx-auto">{hc.warranty_text}</p>}
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-emerald-800">
+              {hc.warranty_chips.map((c, i) => (
+                <span key={i} className="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">{c}</span>
+              ))}
+            </div>
           </div>
+        </section>
+      )}
 
-          <h3 className="text-2xl font-black font-heading text-amber-950">
-            شهادة ضمان {brandName} الذهبية 100%
-          </h3>
-
-          <p className="text-sm text-gray-700 max-w-2xl mx-auto leading-relaxed">
-            نحن واثقون تماماً من جودة وفائدة منتجاتنا. لذلك نمنحك ضماناً حقيقياً لمدة 14 يوماً كاملاً: إذا وجدت أي عيب صناعة أو لم يكن المنتج مطابقاً تماماً لما رأيته، سنقوم باستبداله فوراً مجاناً أو استرداد كامل المبلغ دون أي تعقيد.
-          </p>
-
-          <div className="pt-2 flex items-center justify-center gap-6 text-xs font-bold text-amber-900">
-            <span>✓ ضمان استبدال 14 يوم</span>
-            <span>•</span>
-            <span>✓ معاينة كاملة قبل الدفع</span>
-            <span>•</span>
-            <span>✓ دعم فني</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Customer reviews: written by the merchant in Settings; the section is hidden when there are none */}
-      {reviews.length > 0 && (
+      {/* Customer reviews: written by the merchant in Settings; hidden when there are none */}
+      {!hide.reviews && reviews.length > 0 && (
         <section id="reviews" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-3 mb-12">
-            <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">ماذا يقول عملاؤنا؟</h2>
+            <h2 className={sectionTitle}>{hc.reviews_title}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {reviews.map((r, i) => (
+            {reviews.map((r: any, i: number) => (
               <div key={i} className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
-                <div className="flex items-center gap-1 text-amber-400" aria-label={`${r.rating || 5} من 5`}>
+                <div className="flex items-center gap-1 text-amber-400" aria-label={`${r.rating || 5} / 5`}>
                   {[...Array(5)].map((_, k) => (
                     <Star key={k} className={`w-4 h-4 ${k < (r.rating || 5) ? "fill-amber-400" : "text-slate-300"}`} />
                   ))}
@@ -566,119 +374,76 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-white border-t border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
-              إجابات سريعة
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black font-heading text-slate-900">
-              الأسئلة الأكثر شيوعاً
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
-              <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
-                <span>هل مسموح لي بفتح الشحنة وفحصها قبل الدفع؟</span>
-              </h4>
-              <p className="text-sm text-gray-600 pr-7 leading-relaxed">
-                نعم بكل تأكيد! يحق لك فحص ومعاينة المنتج والتأكد من جودته ومطابقته التامة أمام مندوب شركة الشحن قبل دفع أي مبالغ نقدية.
-              </p>
+      {/* FAQ */}
+      {!hide.faq && hc.faq.length > 0 && (
+        <section id="faq" className="py-20 bg-white border-t border-gray-200">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="text-center space-y-3">
+              {hc.faq_badge && (
+                <span className={badgeCls}>
+                  <HelpCircle className="w-4 h-4" /> {hc.faq_badge}
+                </span>
+              )}
+              <h2 className={sectionTitle}>{hc.faq_title}</h2>
             </div>
-
-            <div className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
-              <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
-                <span>متى سيصلني الطلب بعد تأكيده؟</span>
-              </h4>
-              <p className="text-sm text-gray-600 pr-7 leading-relaxed">
-                يصل الطلب خلال 5 إلى 7 أيام لجميع محافظات مصر.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
-              <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
-                <span>ما هي طرق الدفع المتاحة في المتجر؟</span>
-              </h4>
-              <p className="text-sm text-gray-600 pr-7 leading-relaxed">
-                نوفر خيار الدفع نقداً عند الاستلام (COD) وهو الأكثر شيوعاً، بالإضافة إلى الدفع الإلكتروني بالبطاقات البنكية والمحافظ الإلكترونية عبر بوابة دفع صفقة (Safqa) المشفرة والآمنة.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
-              <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
-                <span>ماذا لو أردت استبدال أو إرجاع المنتج؟</span>
-              </h4>
-              <p className="text-sm text-gray-600 pr-7 leading-relaxed">
-                نقدم ضمان استبدال واسترجاع لمدة 14 يوماً. ما عليك سوى التحدث مع خدمة العملاء الذكية وسيتولى مندوبنا استبدال الشحنة حتى باب منزلك.
-              </p>
+            <div className="space-y-4">
+              {hc.faq.map((f, i) => (
+                <div key={i} className="p-6 rounded-2xl bg-slate-50 border border-gray-200 space-y-2">
+                  <h3 className="font-heading font-black text-slate-900">{f.q}</h3>
+                  <p className="text-sm text-gray-700 leading-relaxed">{f.a}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="bg-slate-950 text-white py-14 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 font-black text-xl flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 font-black text-xl flex items-center justify-center overflow-hidden">
                 {brand.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={brand.logo_url} alt={brandName} className="w-full h-full p-1 object-contain rounded-xl bg-white" />
-              ) : (
-                (brandName || "M").trim().charAt(0).toUpperCase()
-              )}
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={brand.logo_url} alt={brandName} className="w-full h-full p-1 object-contain rounded-xl bg-white" />
+                ) : (
+                  (brandName || "M").trim().charAt(0).toUpperCase()
+                )}
               </div>
               <div>
                 <span className="font-black font-heading text-xl text-white">{brandName}</span>
-                <p className="text-xs text-slate-400">منصة التجارة الإلكترونية الموثوقة في مصر</p>
+                {hc.footer_text && <p className="text-xs text-slate-400">{hc.footer_text}</p>}
               </div>
             </div>
-
-            <div className="flex items-center gap-4 text-xs text-slate-400 font-bold">
-              <span>🇪🇬 شحن لـ 27 محافظة</span>
-              <span>•</span>
-              <span>💵 الدفع عند الاستلام</span>
-              <span>•</span>
-              <span>🔄 ضمان 14 يوم</span>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-400 font-bold">
+              {hc.footer_chips.map((c, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <span>•</span>}
+                  <span>{c}</span>
+                </React.Fragment>
+              ))}
             </div>
           </div>
-
           <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-            <p>© {new Date().getFullYear()} {brandName} - جميع الحقوق محفوظة.</p>
-
+            <p>
+              © {new Date().getFullYear()} {brandName}. {L("جميع الحقوق محفوظة.", "All rights reserved.")}
+            </p>
             <div className="flex items-center gap-4">
-              <Link
-                href="/support"
-                className="text-orange-400 hover:text-orange-300 flex items-center gap-1.5 transition text-xs font-bold"
-              >
-                <Bot className="w-3.5 h-3.5" />
-                <span>خدمة العملاء الذكية</span>
+              <Link href="/policy" className="text-slate-400 hover:text-white transition text-xs font-bold">
+                {L("سياسة الاستبدال والاسترجاع", "Exchange & return policy")}
               </Link>
               <span className="text-slate-700">•</span>
-              {/* Discreet Admin Login Link for the Owner */}
-              <Link
-                href="/admin"
-                className="text-slate-600 hover:text-slate-400 flex items-center gap-1 transition text-[11px]"
-                title="دخول المسؤول"
-              >
+              <Link href="/admin" className="text-slate-600 hover:text-slate-400 flex items-center gap-1 transition text-[11px]" title={L("دخول المسؤول", "Admin login")}>
                 <Lock className="w-3 h-3" />
-                <span>لوحة التحكم المركزية</span>
+                <span>{L("لوحة التحكم", "Dashboard")}</span>
               </Link>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Floating Interactive AI Sales & Customer Support Drawer */}
       <StoreChat />
     </div>
-    </LangProvider>
   );
 }

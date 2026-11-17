@@ -38,6 +38,7 @@ import {
   Truck,
   MessageCircle,
   Plug,
+  LayoutTemplate,
 } from "lucide-react";
 
 interface NavChild {
@@ -96,6 +97,7 @@ const allNavigationItems: NavItem[] = [
       { name: "إشعارات المبيعات", href: "/admin/settings/notifications", icon: Bell },
       { name: "طرق الدفع", href: "/admin/settings/payments", icon: CreditCard },
       { name: "الشحن", href: "/admin/settings/shipping", icon: Truck },
+      { name: "الصفحة الرئيسية", href: "/admin/settings/home", icon: LayoutTemplate },
       { name: "الشات", href: "/admin/settings/chat", icon: MessageCircle },
       { name: "MCP", href: "/admin/settings/mcp", icon: Plug },
     ],
