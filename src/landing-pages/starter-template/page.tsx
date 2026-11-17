@@ -17,6 +17,8 @@ import { StickyBuyBar } from "@/components/shared/StickyBuyBar";
 import { HeroOfferSelector } from "@/components/shared/HeroOfferSelector";
 import { EText, EImage } from "@/components/editor/Editable";
 import { useEdit } from "@/components/editor/EditContext";
+import { Removable, ItemRemove, ItemAdd } from "@/components/editor/EditTools";
+import { ImageBlocks } from "@/components/editor/ImageBlocks";
 import {
   Star,
   ShieldCheck,
@@ -129,6 +131,9 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     .slice(0, 4);
 
   const c = landingPage.content_config;
+  const hid = (k: string) => !!c?.hidden?.[k];
+  // Editor only: list items get a relative box so their delete button can sit on them
+  const rel = editMode ? " relative" : "";
   const shipHint = shippingHint(useBrand().commerce.shipping);
 
   const announcementText =
@@ -181,6 +186,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {/* Gallery Column */}
         <div className="space-y-3">
+          <Removable flag="hidden.hero_image" hidden={hid("hero_image")} label="الصورة الرئيسية">
           <div className="relative w-full h-72 md:h-auto md:aspect-square rounded-2xl overflow-hidden bg-slate-50">
             <Image
               src={heroImageSrc}
@@ -191,6 +197,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             />
             <EImage field="hero_image" value={heroImageSrc} />
           </div>
+          </Removable>
 
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
@@ -256,31 +263,39 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           </div>
 
           <div>
+            <Removable flag="hidden.hero_headline" hidden={hid("hero_headline")} label="العنوان">
             <EText
               field="hero_headline"
               as="h1"
               className="text-xl sm:text-2xl font-black font-heading text-slate-950 leading-snug"
               value={heroTitle}
             />
+            </Removable>
+            <Removable flag="hidden.hero_sub" hidden={hid("hero_sub")} label="الوصف تحت العنوان">
             <EText
               field="hero_subheadline"
               as="p"
               className="text-xs sm:text-sm text-slate-900 font-semibold mt-1.5 leading-relaxed bg-slate-50/70 p-2.5 rounded-xl border border-slate-200"
               value={heroSubtitle}
             />
+            </Removable>
           </div>
 
           {/* Core Features List */}
+          <Removable flag="hidden.hero_bullets" hidden={hid("hero_bullets")} label="قائمة المميزات">
           <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-2.5 text-xs sm:text-sm">
             {features.map((feat, idx) => (
-              <div key={idx} className="flex items-start gap-2.5">
+              <div key={idx} className={"flex items-start gap-2.5" + rel}>
+                <ItemRemove field="hero_bullets" items={features} index={idx} />
                 <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
                 </div>
                 <EText field={`hero_bullets.${idx}`} base={features} as="span" className="text-slate-700 font-medium leading-relaxed" value={feat} />
               </div>
             ))}
+            <ItemAdd field="hero_bullets" items={features} make={() => L("ميزة جديدة", "New feature")} label="إضافة ميزة" />
           </div>
+          </Removable>
 
           {/* Offer Selector Directly in the Hero */}
           {!hideOffers && availableOffers.length > 1 && <div className="pt-1">
@@ -327,9 +342,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 2. COMPARISON SECTION
   const renderComparison = () => {
-    const comparisonImage =
-      c?.comparison_image ||
-      (product.images && product.images.length > 1 ? product.images[1] : null);
+    const comparisonImage = hid("comparison_image") && !editMode ? null : (c?.comparison_image || (product.images && product.images.length > 1 ? product.images[1] : null));
     const comparisonTitle = c?.comparison_title || L("الفرق بين المنتج التقليدي والمنتج الأصلي", "Ordinary product vs the genuine product");
     const oldTitle = c?.comparison_old_title || L("المنتجات والبدائل التقليدية", "Ordinary alternatives");
     const oldPoints = c?.comparison_old_points || [
@@ -347,18 +360,22 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     return (
       <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-center">
         <div>
+          <Removable flag="hidden.comparison_badge" hidden={hid("comparison_badge")} label="الشارة" className="inline-block">
           <EText
             field="comparison_badge"
             as="span"
             className="text-xs font-bold text-emerald-800 bg-slate-50 px-3 py-1 rounded-full border border-slate-200"
             value={c?.comparison_badge || L("ليه ده أفضل اختيار؟", "Why is this the best choice?")}
           />
+          </Removable>
+          <Removable flag="hidden.comparison_title" hidden={hid("comparison_title")} label="العنوان">
           <EText
             field="comparison_title"
             as="h2"
             className="text-lg sm:text-xl font-black text-slate-950 mt-2 font-heading"
             value={comparisonTitle}
           />
+          </Removable>
         </div>
 
         <div className={`grid grid-cols-1 ${comparisonImage ? "md:grid-cols-12" : "sm:grid-cols-2"} gap-4 text-right pt-1 items-center`}>
@@ -370,9 +387,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               </div>
               <ul className="text-xs text-rose-900 space-y-1.5 pr-2">
                 {oldPoints.map((pt, i) => (
-                  <EText key={i} field={`comparison_old_points.${i}`} base={oldPoints} as="li" prefix="• " value={pt} />
+                  <li key={i} className={rel.trim()}>
+                    <ItemRemove field="comparison_old_points" items={oldPoints} index={i} />
+                    <EText field={`comparison_old_points.${i}`} base={oldPoints} as="span" prefix="• " value={pt} />
+                  </li>
                 ))}
               </ul>
+              <ItemAdd field="comparison_old_points" items={oldPoints} make={() => L("عيب جديد", "New drawback")} label="إضافة نقطة" />
             </div>
 
             <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
@@ -382,13 +403,18 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               </div>
               <ul className="text-xs text-emerald-900 space-y-1.5 pr-2">
                 {newPoints.map((pt, i) => (
-                  <EText key={i} field={`comparison_new_points.${i}`} base={newPoints} as="li" prefix="• " value={pt} />
+                  <li key={i} className={rel.trim()}>
+                    <ItemRemove field="comparison_new_points" items={newPoints} index={i} />
+                    <EText field={`comparison_new_points.${i}`} base={newPoints} as="span" prefix="• " value={pt} />
+                  </li>
                 ))}
               </ul>
+              <ItemAdd field="comparison_new_points" items={newPoints} make={() => L("ميزة جديدة", "New advantage")} label="إضافة نقطة" />
             </div>
           </div>
 
           {comparisonImage && (
+            <Removable flag="hidden.comparison_image" hidden={hid("comparison_image")} label="الصورة" className="md:col-span-5 w-full">
             <div className="md:col-span-5 w-full">
               <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
                 <Image
@@ -401,6 +427,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
                 <EImage field="comparison_image" value={comparisonImage} />
               </div>
             </div>
+            </Removable>
           )}
         </div>
       </div>
@@ -409,9 +436,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 3. BOX CONTENTS
   const renderBoxContents = () => {
-    const boxImage =
-      c?.box_image ||
-      (product.images && product.images.length > 2 ? product.images[2] : null);
+    const boxImage = hid("box_image") && !editMode ? null : (c?.box_image || (product.images && product.images.length > 2 ? product.images[2] : null));
     const boxTitle = c?.box_title || L("محتويات الشحنة الأصلية:", "What is in the box:");
     const boxItems = c?.box_items || [
       L("المنتج الأصلي بكافة ملحقاته المعتمدة ومغلف بعناية.", "The original product with all approved accessories, carefully packed."),
@@ -423,11 +448,14 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-4 text-right">
         <div className="flex items-center gap-2 text-slate-900 font-black text-base font-heading">
           <Package className="w-5 h-5 text-emerald-700" />
-          <EText field="box_title" as="span" value={boxTitle} />
+          <Removable flag="hidden.box_title" hidden={hid("box_title")} label="العنوان" className="inline-block">
+            <EText field="box_title" as="span" value={boxTitle} />
+          </Removable>
         </div>
 
         <div className={`grid grid-cols-1 ${boxImage ? "md:grid-cols-12" : ""} gap-4 items-center pt-1`}>
           {boxImage && (
+            <Removable flag="hidden.box_image" hidden={hid("box_image")} label="الصورة" className="md:col-span-5 order-2 md:order-1 w-full">
             <div className="md:col-span-5 order-2 md:order-1 w-full">
               <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
                 <Image
@@ -440,17 +468,20 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
                 <EImage field="box_image" value={boxImage} />
               </div>
             </div>
+            </Removable>
           )}
 
           <div className={`${boxImage ? "md:col-span-7 order-1 md:order-2" : ""} space-y-2`}>
             <ul className="text-xs sm:text-sm text-slate-700 space-y-2.5 pr-1">
               {boxItems.map((item, idx) => (
-                <li key={idx} className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <li key={idx} className={"flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100" + rel}>
+                  <ItemRemove field="box_items" items={boxItems} index={idx} />
                   <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
                   <EText field={`box_items.${idx}`} base={boxItems} as="span" className="text-slate-800 leading-relaxed" value={item} />
                 </li>
               ))}
             </ul>
+            <ItemAdd field="box_items" items={boxItems} make={() => L("عنصر جديد", "New item")} label="إضافة عنصر" />
           </div>
         </div>
       </div>
@@ -464,19 +495,23 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-3 text-right">
         <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
           <Zap className="w-5 h-5 text-amber-600" />
+          <Removable flag="hidden.how_to_title" hidden={hid("how_to_title")} label="العنوان" className="inline-block">
           <EText
             field="how_to_use_title"
             as="span"
             value={c?.how_to_use_title || L("طريقة الاستخدام والطلب في خطوات بسيطة:", "How to order, in simple steps:")}
           />
+          </Removable>
         </div>
         <div className="space-y-2 text-xs sm:text-sm text-slate-700 pr-1">
           {steps.map((step, i) => (
-            <div key={i} className="flex items-start gap-2.5">
+            <div key={i} className={"flex items-start gap-2.5" + rel}>
+              <ItemRemove field="how_to_use_steps" items={steps} index={i} map={(rest) => rest.map((s, k) => ({ ...s, step_num: k + 1 }))} />
               <span className="w-5 h-5 rounded-full bg-slate-200 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
               <EText field={`how_to_use_steps.${i}.desc`} base={steps} as="span" value={step.desc} />
             </div>
           ))}
+          <ItemAdd field="how_to_use_steps" items={steps} make={(n) => ({ step_num: n + 1, title: "", desc: L("خطوة جديدة", "New step") })} label="إضافة خطوة" max={8} />
         </div>
       </div>
     );
@@ -510,7 +545,9 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         <div className="flex items-center justify-between">
           <h3 className="text-base font-black text-slate-900 font-heading flex items-center gap-2">
             <ThumbsUp className="w-4 h-4 text-emerald-600" />
-            <EText field="reviews_title" as="span" value={c?.reviews_title || L("تجارب حقيقية لعملائنا في مصر:", "Experiences from our customers:")} />
+            <Removable flag="hidden.reviews_title" hidden={hid("reviews_title")} label="العنوان" className="inline-block">
+              <EText field="reviews_title" as="span" value={c?.reviews_title || L("تجارب حقيقية لعملائنا في مصر:", "Experiences from our customers:")} />
+            </Removable>
           </h3>
           <div className="flex text-amber-400">
             {[...Array(5)].map((_, i) => (
@@ -521,7 +558,8 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {reviews.map((rv, i) => (
-            <div key={i} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
+            <div key={i} className={"p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs" + rel}>
+              {!isSample && <ItemRemove field="reviews" items={reviewsBase} index={i} />}
               <div className="flex items-center justify-between">
                 <EText field={`reviews.${i}.name`} base={reviewsBase} as="strong" className="text-slate-900 font-bold" value={rv.name} />
                 <span className="text-[10px] text-emerald-600 font-semibold">{rv.badge}</span>
@@ -538,6 +576,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               />
             </div>
           ))}
+          {!isSample && <ItemAdd field="reviews" items={reviewsBase} make={() => ({ name: L("اسم العميل", "Customer name"), location: "", comment: L("اكتب رأي العميل هنا", "Write the customer review here"), rating: 5 })} label="إضافة رأي" max={9} />}
         </div>
       </div>
     );
@@ -562,7 +601,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 7. GUARANTEES FOOTER
   const renderGuarantees = () => (
-    <GuaranteesStrip title={c?.guarantees_title || L("ضماناتنا ليك", "Our guarantees to you")} items={c?.guarantees} editable />
+    <GuaranteesStrip title={c?.guarantees_title || L("ضماناتنا ليك", "Our guarantees to you")} items={c?.guarantees} editable hideTitle={hid("guarantees_title")} />
   );
 
   // 8. TRUST STRIP (stage 2) — only real rating/count are shown, never invented
@@ -579,18 +618,22 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   // 10. FINAL CALL TO ACTION: one more button at the end of the page
   const renderFinalCta = () => (
     <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 text-center space-y-3">
+      <Removable flag="hidden.final_cta_title" hidden={hid("final_cta_title")} label="العنوان">
       <EText
         field="final_cta_title"
         as="h2"
         className="text-xl sm:text-2xl font-black font-heading text-slate-950 leading-snug"
         value={c?.final_cta_title || heroTitle}
       />
+      </Removable>
+      <Removable flag="hidden.final_cta_desc" hidden={hid("final_cta_desc")} label="النص">
       <EText
         field="final_cta_desc"
         as="p"
         className="text-sm text-slate-600 leading-relaxed"
         value={c?.final_cta_desc || L("اطلب دلوقتي وادفع لما يوصلك، وافتح الشحنة وجرّبها قبل ما تدفع.", "Order now and pay when it arrives. Open the parcel and try it before you pay.")}
       />
+      </Removable>
       <button
         type="button"
         onClick={scrollToCheckout}
@@ -602,7 +645,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   );
 
   // 9. FAQ (stage 9)
-  const renderFaq = () => <FaqAccordion title={c?.faq_title} items={c?.faq_items} editable />;
+  const renderFaq = () => <FaqAccordion title={c?.faq_title} items={c?.faq_items} editable hideTitle={hid("faq_title")} />;
 
   const renderSection = (id: string) => {
     switch (id) {
@@ -634,17 +677,22 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   return (
     <main style={pageTheme} className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir={dir}>
       {/* 1. Announcement Bar */}
-      {!c?.hide_announcement && (
+      <Removable flag="hide_announcement" hidden={!!c?.hide_announcement} label="شريط الإعلان">
       <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-slate-500/20">
         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
         <EText field="announcement_bar" as="span" value={announcementText} />
       </div>
-      )}
+      </Removable>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {sections.map((sec) => {
           if (!sec.enabled) return null;
-          return <React.Fragment key={sec.id}>{renderSection(sec.id)}</React.Fragment>;
+          return (
+            <React.Fragment key={sec.id}>
+              {renderSection(sec.id)}
+              <ImageBlocks after={sec.id} blocks={c?.image_blocks} />
+            </React.Fragment>
+          );
         })}
       </div>
 
