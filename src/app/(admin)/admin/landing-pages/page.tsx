@@ -4,7 +4,7 @@ import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LandingPage, Product, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS } from "@/types";
-import { Plus, Copy, Check, Search, RefreshCw, FileText, Eye, Pencil } from "lucide-react";
+import { Plus, Copy, Check, Search, RefreshCw, FileText, Eye, Pencil, Home } from "lucide-react";
 import TablePagination from "@/components/admin/TablePagination";
 import CreateLandingPageModal from "./_components/CreateLandingPageModal";
 
@@ -97,9 +97,14 @@ export default function AdminLandingPagesPage() {
     };
   };
 
+  // The landing page that is the store's home page ("" = the built-in home)
+  const [homeSlug, setHomeSlug] = useState("");
+  const [homeBusy, setHomeBusy] = useState(false);
+
   const fetchData = async () => {
     try {
       setLoading(true);
+      fetch("/api/settings").then((r) => r.json()).then((j) => setHomeSlug(j?.settings?.home_page_slug || "")).catch(() => {});
       const [lpRes, prodRes] = await Promise.all([
         fetch("/api/landing-pages"),
         fetch("/api/products"),
@@ -305,6 +310,21 @@ export default function AdminLandingPagesPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
+  const setHome = async (slug: string) => {
+    setHomeBusy(true);
+    try {
+      const res = await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ home_page_slug: slug }) });
+      const j = await res.json();
+      if (!res.ok || !j.success) throw new Error(j.error || "تعذر الحفظ");
+      setHomeSlug(slug);
+      showToast("success", slug ? "الصفحة دي بقت الصفحة الرئيسية للمتجر" : "رجعت الصفحة الرئيسية الافتراضية");
+    } catch (e: any) {
+      showToast("error", e.message || "تعذر الحفظ");
+    } finally {
+      setHomeBusy(false);
+    }
+  };
+
   const handleCopyCode = (id: string) => {
     try {
       navigator.clipboard.writeText(id);
@@ -461,6 +481,27 @@ export default function AdminLandingPagesPage() {
     </button>
   );
 
+  const homeBtn = (lp: LandingPage) => {
+    const isHome = homeSlug === lp.slug;
+    return (
+      <button
+        type="button"
+        disabled={homeBusy}
+        onClick={(e) => {
+          e.stopPropagation();
+          setHome(isHome ? "" : lp.slug);
+        }}
+        onKeyDown={(e) => e.stopPropagation()}
+        className={`${iconBtn} ${isHome ? "text-emerald-700 bg-emerald-50 border-emerald-300" : ""}`}
+        title={isHome ? "دي الصفحة الرئيسية (اضغط للرجوع للافتراضية)" : "اجعلها الصفحة الرئيسية للمتجر"}
+        aria-label={isHome ? "الصفحة الرئيسية الحالية" : "اجعلها الصفحة الرئيسية"}
+        aria-pressed={isHome}
+      >
+        <Home className="w-4 h-4" />
+      </button>
+    );
+  };
+
   const cloneBtn = (lp: LandingPage) => (
     <button
       type="button"
@@ -573,6 +614,7 @@ export default function AdminLandingPagesPage() {
                   <th className="px-2 py-3.5 text-center">مشاهدة</th>
                   <th className="px-2 py-3.5 text-center">تعديل</th>
                   <th className="px-2 py-3.5 text-center">استنساخ</th>
+                  <th className="px-2 py-3.5 text-center">الرئيسية</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -604,6 +646,7 @@ export default function AdminLandingPagesPage() {
                     <td className="px-2 py-2 text-center">{viewBtn(lp)}</td>
                     <td className="px-2 py-2 text-center">{editBtn(lp, true)}</td>
                     <td className="px-2 py-2 text-center">{cloneBtn(lp)}</td>
+                    <td className="px-2 py-2 text-center">{homeBtn(lp)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -642,6 +685,7 @@ export default function AdminLandingPagesPage() {
                     {viewBtn(lp)}
                     {editBtn(lp, false)}
                     {cloneBtn(lp)}
+                    {homeBtn(lp)}
                   </div>
                 </div>
               </div>

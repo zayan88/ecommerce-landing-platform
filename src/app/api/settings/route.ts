@@ -156,6 +156,10 @@ export async function POST(req: NextRequest) {
     }
     delete (toUpdate as Record<string, unknown>).coupon_usage;
     for (const f of ["mcp_enabled", "mcp_token_hash", "mcp_token_created_at", "support_webhook_secret"]) delete (toUpdate as Record<string, unknown>)[f];
+    if ("home_page_slug" in toUpdate) {
+      const v = typeof (toUpdate as Record<string, unknown>).home_page_slug === "string" ? ((toUpdate as Record<string, unknown>).home_page_slug as string).trim() : "";
+      (toUpdate as Record<string, unknown>).home_page_slug = /^[A-Za-z0-9][A-Za-z0-9_-]{0,100}$/.test(v) ? v : "";
+    }
     if ("lang_switch" in toUpdate) (toUpdate as Record<string, unknown>).lang_switch = (toUpdate as Record<string, unknown>).lang_switch !== false;
     if ("lang_default" in toUpdate) (toUpdate as Record<string, unknown>).lang_default = (toUpdate as Record<string, unknown>).lang_default === "en" ? "en" : "ar";
     if ("chat" in toUpdate) toUpdate.chat = sanitizeChat(toUpdate.chat);
