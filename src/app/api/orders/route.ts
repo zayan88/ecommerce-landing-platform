@@ -10,7 +10,7 @@ import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
 import type { Order } from "@/types";
 import { markAbandonedConverted } from "@/lib/db/abandoned-repo";
-import { formatOptionsNote, sanitizeProductOptions } from "@/lib/product-options";
+import { effectiveOptions, formatOptionsNote, sanitizeVariantsOff } from "@/lib/product-options";
 import { applyCoupon, bestAutoCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
 import {
   beginOrder,
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     const finalGov = data.governorate || data.shipping_governorate || "القاهرة";
     const finalAddress = data.address || data.shipping_address || "العنوان بالتفصيل";
     // Color / size etc.: required when the product has options, checked against the product itself, then written into the notes
-    const optionsCheck = formatOptionsNote(sanitizeProductOptions((product as any).options), data.options);
+    const optionsCheck = formatOptionsNote(effectiveOptions(product), data.options, sanitizeVariantsOff((product as any).variants_off));
     if (optionsCheck.error) {
       return NextResponse.json({ success: false, error: optionsCheck.error }, { status: 400 });
     }

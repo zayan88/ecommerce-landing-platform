@@ -186,7 +186,7 @@ export function buildProductInfo(products: any[], page = "", maxChars = 3500): s
     const parts = [`- ${line(p.title_ar, 100)}${p.slug === slugDecoded ? " (الصفحة الحالية)" : ""}: السعر ${Number(p.base_price) || 0} جنيه`];
     const offers = (Array.isArray(p.offers) ? p.offers : []).slice(0, 5).map((o: any) => `${Number(o.quantity) || 1} قطعة بـ ${Number(o.price) || 0} جنيه`);
     if (offers.length > 1) parts.push(`العروض: ${offers.join("، ")}`);
-    const opts = (Array.isArray(p.options) ? p.options : []).slice(0, 3).map((o: any) => `${line(o?.name, 30)}: ${(Array.isArray(o?.values) ? o.values : []).slice(0, 12).map((v: unknown) => line(v, 40)).join(" / ")}`);
+    const opts = (p.options_enabled === false || !Array.isArray(p.options) ? [] : p.options).slice(0, 3).map((o: any) => `${line(o?.name, 30)}: ${(Array.isArray(o?.values) ? o.values : []).slice(0, 12).map((v: unknown) => line(v, 40)).join(" / ")}`);
     if (opts.length) parts.push(`الخيارات المتاحة: ${opts.join("، ")}`);
     const desc = line(p.description_ar, 350);
     if (desc) parts.push(`الوصف: ${desc}`);

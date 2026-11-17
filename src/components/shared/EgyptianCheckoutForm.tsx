@@ -9,7 +9,7 @@ import { trackMarketingEvent } from "@/lib/tracking/marketing-pixels";
 import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { sanitizeProductOptions } from "@/lib/product-options";
+import { comboAvailable, effectiveOptions, sanitizeVariantsOff, valueHasStock } from "@/lib/product-options";
 import { useLang } from "@/components/i18n/LangProvider";
 import { compressImage } from "@/lib/image-compress";
 import { InstapayMark, VodafoneMark } from "./PayMarks";
@@ -66,7 +66,8 @@ export function EgyptianCheckoutForm({
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   // Color / size etc. the merchant defined on the product: the customer must pick each one
-  const productOptions = sanitizeProductOptions((product as any).options);
+  const productOptions = effectiveOptions(product);
+  const variantsOff = sanitizeVariantsOff((product as any).variants_off);
   const [picked, setPicked] = useState<Record<string, string>>({});
   const brand = useBrand();
   const [payMethod, setPayMethod] = useState<"cod" | "vodafone_cash" | "instapay">("cod");
@@ -321,6 +322,7 @@ export function EgyptianCheckoutForm({
     for (const o of productOptions) {
       if (!picked[o.name]) return `اختار ${o.name} الأول`;
     }
+    if (productOptions.length > 0 && !comboAvailable(productOptions, variantsOff, picked)) return "الاختيار ده خلص من المخزون، اختار حاجة تانية";
     if (!name.trim()) return t("co.v_name");
     const cleanedPhone = phone.trim().replace(/\s+/g, "");
     const egPhoneRegex = /^01[0125][0-9]{8}$/;
@@ -518,14 +520,18 @@ export function EgyptianCheckoutForm({
             <div className="flex flex-wrap gap-2">
               {o.values.map((v) => {
                 const on = picked[o.name] === v;
+                const inStock = valueHasStock(productOptions, variantsOff, picked, o.name, v);
+                const dot = o.swatches?.[v];
                 return (
                   <button
                     key={v}
                     type="button"
                     aria-pressed={on}
+                    disabled={!inStock}
                     onClick={() => setPicked((p) => ({ ...p, [o.name]: v }))}
-                    className={`min-h-[44px] min-w-[56px] px-4 rounded-xl text-sm font-bold border-2 transition cursor-pointer ${on ? "border-orange-500 bg-orange-50 text-orange-900 ring-2 ring-orange-500/30" : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"}`}
+                    className={`min-h-[44px] min-w-[56px] px-4 rounded-xl text-sm font-bold border-2 transition inline-flex items-center justify-center gap-2 ${inStock ? "cursor-pointer" : "cursor-not-allowed opacity-45 line-through"} ${on ? "border-orange-500 bg-orange-50 text-orange-900 ring-2 ring-orange-500/30" : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"}`}
                   >
+                    {dot && <span aria-hidden="true" className="w-4 h-4 rounded-full border border-slate-300 shrink-0" style={{ backgroundColor: dot }} />}
                     {v}
                   </button>
                 );

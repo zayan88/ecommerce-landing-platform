@@ -84,4 +84,30 @@ await test("order: a one-price product can be ordered in several pieces (price x
   assert.equal(many.status, 400);
 });
 
+await test("swatches, the on/off switch and sold-out combinations", async () => {
+  const o = opt.sanitizeProductOptions([{ name: "اللون", values: ["أحمر", "أزرق"], swatches: { "أحمر": "#FF0000", "أزرق": "javascript:x", "غريب": "#00ff00" } }]);
+  assert.deepEqual(o[0].swatches, { "أحمر": "#ff0000" }, "only valid hex colors of existing values");
+  assert.equal(opt.effectiveOptions({ options: PRODUCT.options, options_enabled: false }).length, 0);
+  assert.equal(opt.effectiveOptions({ options: PRODUCT.options }).length, 2);
+  const off = ["أحمر / M"];
+  assert.ok(opt.formatOptionsNote(PRODUCT.options, { اللون: "أحمر", المقاس: "M" }, off).error, "a sold-out combination");
+  assert.ok(!opt.formatOptionsNote(PRODUCT.options, { اللون: "أحمر", المقاس: "L" }, off).error);
+  assert.equal(opt.valueHasStock(PRODUCT.options, off, { اللون: "أحمر" }, "المقاس", "M"), false);
+  assert.equal(opt.valueHasStock(PRODUCT.options, off, { اللون: "أزرق" }, "المقاس", "M"), true);
+  assert.equal(opt.allCombos(PRODUCT.options).length, 4);
+  // through the order route
+  const P = { ...PRODUCT, id: "prod-o3", slug: "o-three", sku: "O3", variants_off: ["أحمر / M"] };
+  kvSeed("prod:prod-o3", P);
+  kvSeed("custom_products_all", [PRODUCT, P]);
+  const soldOut = await place({ product_id: "prod-o3", landing_page_slug: "o-three", options: { اللون: "أحمر", المقاس: "M" } });
+  assert.equal(soldOut.status, 400);
+  const fine = await place({ product_id: "prod-o3", landing_page_slug: "o-three", options: { اللون: "أحمر", المقاس: "L" } });
+  assert.equal(fine.status, 200);
+  const P2 = { ...PRODUCT, id: "prod-o4", slug: "o-four", sku: "O4", options_enabled: false };
+  kvSeed("prod:prod-o4", P2);
+  kvSeed("custom_products_all", [PRODUCT, P, P2]);
+  const off2 = await place({ product_id: "prod-o4", landing_page_slug: "o-four" });
+  assert.equal(off2.status, 200, "options switched off: the order needs no picks");
+});
+
 finish();

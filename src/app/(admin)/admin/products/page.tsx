@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
 import OffersPanel from "@/components/editor/OffersPanel";
 import DescriptionAiHelper from "@/components/admin/DescriptionAiHelper";
-import { sanitizeProductOptions, MAX_OPTIONS } from "@/lib/product-options";
+import ProductOptionsEditor, { EMPTY_OPTIONS, optionsPayload, optionsStateFromProduct, type OptionsState } from "@/components/admin/ProductOptionsEditor";
 import { buildDefaultOffers, sanitizeOffers, singleBaseOffer } from "@/lib/offers";
 import { ImageGalleryEditor } from "@/components/admin/ImageUploader";
 import TablePagination from "@/components/admin/TablePagination";
@@ -65,7 +65,7 @@ export default function AdminProductsPage() {
   const [upsellEnabled, setUpsellEnabled] = useState(false);
   // Questions & answers the store chat uses on this product's page (stored in settings.chat_products[id])
   // Color / size ... (values typed separated by commas)
-  const [optionRows, setOptionRows] = useState<{ name: string; values: string }[]>([]);
+  const [optionsState, setOptionsState] = useState<OptionsState>(EMPTY_OPTIONS);
   const [chatFaq, setChatFaq] = useState<{ q: string; keywords: string; answer: string }[]>([]);
   const [allChatFaq, setAllChatFaq] = useState<Record<string, any[]>>({});
   // This product's own shipping fee (empty = the store's governorate / default fee). Kept in settings.shipping_config.product_fees.
@@ -122,7 +122,7 @@ export default function AdminProductsPage() {
     setOffersTouched(false);
     setUpsellOpen(false);
     setUpsellEnabled(false);
-    setOptionRows([]);
+    setOptionsState(EMPTY_OPTIONS);
     setChatFaq([]);
     setProductShipFee("");
     loadChatFaq();
@@ -145,7 +145,7 @@ export default function AdminProductsPage() {
 
   const openEditModal = (prod: Product) => {
     setEditingProduct(prod);
-    setOptionRows(sanitizeProductOptions((prod as any).options).map((o) => ({ name: o.name, values: o.values.join("، ") })));
+    setOptionsState(optionsStateFromProduct(prod));
     setChatFaq([]);
     setProductShipFee("");
     loadChatFaq().then(({ all, ship }) => {
@@ -238,7 +238,7 @@ export default function AdminProductsPage() {
         status: productActive ? "active" : "draft",
         images: imagesArray,
         offers: finalOffers,
-        options: sanitizeProductOptions(optionRows),
+        ...optionsPayload(optionsState),
       };
 
       const res = await fetch("/api/products", {
@@ -779,26 +779,7 @@ export default function AdminProductsPage() {
                   />
                 </section>
 
-                <section className={cardCls}>
-                  <h3 className={cardTitle}>الخيارات (اللون / المقاس)</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">اختياري. العميل لازم يختار كل خيار قبل ما يطلب، والاختيار بيتكتب في ملاحظات الأوردر وفي إشعار تيليجرام.</p>
-                  {optionRows.map((row, i) => (
-                    <div key={i} className="grid grid-cols-1 sm:grid-cols-[160px_1fr_auto] gap-2 items-center">
-                      <input type="text" value={row.name} maxLength={30} onChange={(e) => setOptionRows((r) => r.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)))} placeholder="الاسم (اللون)" className={inputCls} />
-                      <input type="text" value={row.values} onChange={(e) => setOptionRows((r) => r.map((x, k) => (k === i ? { ...x, values: e.target.value } : x)))} placeholder="القيم مفصولة بفاصلة: أحمر، أزرق، أسود" className={inputCls} />
-                      <button type="button" onClick={() => setOptionRows((r) => r.filter((_, k) => k !== i))} className="min-h-[44px] px-3 rounded-xl border border-red-200 text-red-700 text-sm font-bold hover:bg-red-50 cursor-pointer">حذف</button>
-                    </div>
-                  ))}
-                  {optionRows.length < MAX_OPTIONS && (
-                    <div className="flex flex-wrap gap-2">
-                      {[["اللون", "أحمر، أزرق، أسود"], ["المقاس", "S، M، L، XL"], ["", ""]].map(([n, v], k) => (
-                        <button key={k} type="button" onClick={() => setOptionRows((r) => [...r, { name: n, values: v }])} className="min-h-[40px] px-3 rounded-xl border-2 border-dashed border-sky-400 text-sky-700 hover:bg-sky-50 text-xs font-bold cursor-pointer">
-                          {n ? `+ ${n}` : "+ خيار آخر"}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </section>
+                <ProductOptionsEditor value={optionsState} onChange={setOptionsState} />
 
                 <section className={cardCls}>
                   <h3 className={cardTitle}>الصور</h3>
