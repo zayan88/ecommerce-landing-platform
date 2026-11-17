@@ -73,6 +73,12 @@ export function getOrderClientIp(headers: Headers): string {
 export const ORDER_RATE_WINDOW_MS = 10 * 60 * 1000;
 export const ORDER_RATE_MAX = 5;
 
+/** Load tests on a preview deployment can raise the per-address budget with the env var ORDER_RATE_MAX (never set in production: the default 5 applies). */
+function rateMax(): number {
+  const v = Number(process.env.ORDER_RATE_MAX);
+  return Number.isInteger(v) && v > ORDER_RATE_MAX ? Math.min(v, 100000) : ORDER_RATE_MAX;
+}
+
 type RateEntry = { count: number; first: number };
 const rateMem = new Map<string, RateEntry>();
 
@@ -105,9 +111,9 @@ export async function consumeOrderRateLimit(
       try {
         // One atomic upsert: counts this attempt and returns the window (correct across isolates).
         const repo = getOrdersRepo();
-        const res = await repo.consumeRateLimit(key, now, ORDER_RATE_WINDOW_MS, ORDER_RATE_MAX);
+        const res = await repo.consumeRateLimit(key, now, ORDER_RATE_WINDOW_MS, rateMax());
         if (Math.random() < 0.02) await repo.pruneExpired(now).catch(() => {});
-        if (res.count > ORDER_RATE_MAX) {
+        if (res.count > rateMax()) {
           return {
             allowed: false,
             retryAfterSec: Math.max(1, Math.ceil((res.windowStart + ORDER_RATE_WINDOW_MS - now) / 1000)),
@@ -139,7 +145,7 @@ export async function consumeOrderRateLimit(
     if (memNow && (!entry || memNow.count > entry.count)) entry = memNow;
     if (entry && now - entry.first > ORDER_RATE_WINDOW_MS) entry = null;
 
-    if (entry && entry.count >= ORDER_RATE_MAX) {
+    if (entry && entry.count >= rateMax()) {
       return {
         allowed: false,
         retryAfterSec: Math.max(1, Math.ceil((entry.first + ORDER_RATE_WINDOW_MS - now) / 1000)),

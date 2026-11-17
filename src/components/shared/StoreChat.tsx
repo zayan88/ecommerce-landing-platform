@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { getProductCtx, subscribeProductCtx } from "./chat-product";
 import { usePathname } from "next/navigation";
 import { MessageCircle, Send, ShoppingBag, X } from "lucide-react";
 import { useBrand } from "@/components/brand/BrandProvider";
@@ -17,33 +18,6 @@ interface Msg {
   text: string;
   /** Offer the "order now" button under this message. */
   order?: boolean;
-}
-
-/** The product page tells the chat which product it is on, so the chat can answer that product's own Q&A. */
-interface ProductCtx {
-  name: string;
-  faq: ChatFaq[];
-}
-let productCtx: ProductCtx | null = null;
-const listeners = new Set<() => void>();
-const setProductCtx = (c: ProductCtx | null) => {
-  productCtx = c;
-  listeners.forEach((l) => l());
-};
-const subscribe = (l: () => void) => {
-  listeners.add(l);
-  return () => {
-    listeners.delete(l);
-  };
-};
-
-/** Rendered by the product page (renders nothing). */
-export function ChatProduct({ name, faq }: ProductCtx) {
-  useEffect(() => {
-    setProductCtx({ name, faq });
-    return () => setProductCtx(null);
-  }, [name, JSON.stringify(faq)]); // eslint-disable-line react-hooks/exhaustive-deps
-  return null;
 }
 
 const MAX_NUDGES = 4;
@@ -77,7 +51,7 @@ export function StoreChat() {
   const [formError, setFormError] = useState("");
   const [showWhatsapp, setShowWhatsapp] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
-  const product = useSyncExternalStore(subscribe, () => productCtx, () => null);
+  const product = useSyncExternalStore(subscribeProductCtx, getProductCtx, () => null);
   const [nudge, setNudge] = useState<string | null>(null);
   const [live, setLive] = useState(false); // a conversation with the merchant is open: his replies come back here
   const lastId = useRef(0);

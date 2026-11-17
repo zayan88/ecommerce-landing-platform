@@ -2,8 +2,8 @@ import React from "react";
 import type { Metadata } from "next";
 import { getBrand } from "@/lib/brand";
 import { getLang } from "@/lib/i18n-server";
-import { StorePopups } from "@/components/shared/StorePopups";
-import { StoreChat } from "@/components/shared/StoreChat";
+import { LazyStorePopups, LazyStoreChat } from "@/components/shared/LazyExtras";
+import { StoreHeader } from "@/components/shared/StoreHeader";
 
 export const runtime = "edge";
 export const metadata: Metadata = { title: "سياسة الاستبدال والاسترجاع" };
@@ -31,6 +31,7 @@ export default async function PolicyPage() {
   const sections = en ? SECTIONS_EN : SECTIONS;
   return (
     <>
+    <StoreHeader />
     <main dir={en ? "ltr" : "rtl"} className="bg-white min-h-[60vh]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
         <h1 className="font-heading text-2xl sm:text-3xl font-black text-slate-900 leading-relaxed">{en ? "Exchange & return policy" : "سياسة الاستبدال والاسترجاع"}</h1>
@@ -43,8 +44,8 @@ export default async function PolicyPage() {
         ))}
       </div>
     </main>
-    <StorePopups />
-    <StoreChat />
+    <LazyStorePopups />
+    <LazyStoreChat />
     </>
   );
 }

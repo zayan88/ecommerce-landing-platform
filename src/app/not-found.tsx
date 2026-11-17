@@ -11,7 +11,7 @@ export default function NotFound() {
       <div className="space-y-3 max-w-sm">
         <h1 className="text-5xl font-black text-slate-900">404</h1>
         <p className="text-slate-600 leading-relaxed">الصفحة دي مش موجودة. / This page does not exist.</p>
-        <Link href="/" className="inline-block min-h-[44px] leading-[44px] px-6 rounded-xl bg-slate-900 text-white font-bold text-sm">
+        <Link prefetch={false} href="/" className="inline-block min-h-[44px] leading-[44px] px-6 rounded-xl bg-slate-900 text-white font-bold text-sm">
           الرئيسية / Home
         </Link>
       </div>

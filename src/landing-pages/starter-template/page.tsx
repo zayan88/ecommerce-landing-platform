@@ -6,7 +6,6 @@ import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSect
 import { cssVarsFor, isThemeColor } from "@/lib/palettes";
 import { singleBaseOffer } from "@/lib/offers";
 import { useLang } from "@/components/i18n/LangProvider";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { LandingFooter } from "@/components/shared/LandingFooter";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
@@ -182,7 +181,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {/* Gallery Column */}
         <div className="space-y-3">
-          <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-50">
+          <div className="relative w-full h-72 md:h-auto md:aspect-square rounded-2xl overflow-hidden bg-slate-50">
             <Image
               src={heroImageSrc}
               alt={heroTitle}
@@ -209,6 +208,21 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               ))}
             </div>
           )}
+
+          {/* Phones: the price and the order button on the first screen */}
+          <div className="md:hidden flex items-center justify-between gap-3 rounded-2xl bg-orange-50 border border-orange-200 p-3">
+            <div className="min-w-0">
+              <span className="block text-2xl font-black text-slate-950 font-mono leading-none">
+                {Number(selectedOffer.price).toLocaleString("en-US")} <span className="text-sm font-sans font-bold">{t("currency")}</span>
+              </span>
+              {selectedOffer.original_price ? (
+                <span className="block text-xs text-slate-400 line-through font-mono mt-1">{Number(selectedOffer.original_price).toLocaleString("en-US")} {t("currency")}</span>
+              ) : null}
+            </div>
+            <button type="button" onClick={scrollToCheckout} className="shrink-0 min-h-[48px] px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm shadow-md shadow-orange-500/25 cursor-pointer">
+              {c?.cta_text?.trim() || L("اطلب الآن", "Order now")}
+            </button>
+          </div>
 
           {/* Trust Badges */}
           {!c?.hide_hero_trust && (<div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
@@ -482,9 +496,17 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           }))
         : (lang === "en" ? DEFAULT_REVIEWS_EN : DEFAULT_REVIEWS).map((r) => ({ name: r.name, location: "", comment: r.comment, rating: 5, badge: r.badge }));
     const reviewsBase = reviews.map(({ name, location, comment, rating }) => ({ name, location, comment, rating }));
+    // Sample reviews are placeholders, not real customers: they are NOT shown to visitors (misleading, and against ad policies)
+    const isSample = !(c?.reviews && c.reviews.length > 0);
+    if (isSample && !editMode) return null;
 
     return (
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 text-right">
+        {isSample && (
+          <p className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-300 rounded-xl p-3 leading-relaxed">
+            {L("دي آراء تجريبية ومش بتظهر للزوار. اكتب مكانها آراء عملائك الحقيقيين (عدّل النص) وهتظهر.", "These are sample reviews and are hidden from visitors. Replace them with your real customers' reviews (edit the text) to show them.")}
+          </p>
+        )}
         <div className="flex items-center justify-between">
           <h3 className="text-base font-black text-slate-900 font-heading flex items-center gap-2">
             <ThumbsUp className="w-4 h-4 text-emerald-600" />
@@ -618,8 +640,6 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         <EText field="announcement_bar" as="span" value={announcementText} />
       </div>
       )}
-
-      <LanguageSwitcher strip />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {sections.map((sec) => {

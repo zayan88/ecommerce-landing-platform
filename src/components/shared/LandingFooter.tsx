@@ -52,7 +52,7 @@ export function LandingFooter({ extraBottomSpace = false }: { extraBottomSpace?:
 
         <div className="space-y-1">
           <div className="font-black text-white">{t("footer.info")}</div>
-          <Link href="/policy" className="flex min-h-[44px] items-center gap-2 hover:text-white">
+          <Link prefetch={false} href="/policy" className="flex min-h-[44px] items-center gap-2 hover:text-white">
             <ShieldCheck className="w-4 h-4 text-emerald-400" aria-hidden="true" />
             {t("footer.policy")}
           </Link>

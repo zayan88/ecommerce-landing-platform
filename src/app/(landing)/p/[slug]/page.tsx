@@ -4,14 +4,15 @@ import { notFound } from "next/navigation";
 import { dbStore } from "@/lib/db/store";
 import { getLandingPageComponent, supportsEnglish } from "@/landing-pages/registry";
 import { LangProvider } from "@/components/i18n/LangProvider";
-import { StorePopups } from "@/components/shared/StorePopups";
+import { LazyStorePopups, LazyStoreChat } from "@/components/shared/LazyExtras";
+import { StoreHeader } from "@/components/shared/StoreHeader";
 import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
 import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
 import { Metadata } from "next";
 import { PauseCircle, PackageX } from "lucide-react";
 import { getBrand } from "@/lib/brand";
-import { ChatProduct, StoreChat } from "@/components/shared/StoreChat";
+import { ChatProduct } from "@/components/shared/chat-product";
 import { sanitizeChatProducts } from "@/lib/chat";
 import { absoluteUrl, getSiteUrl, shortText } from "@/lib/seo";
 
@@ -128,9 +129,10 @@ export default async function DynamicLandingPage({ params }: PageProps) {
       <MetaPixel pixelIds={landingPage.meta_pixel_id ? [landingPage.meta_pixel_id] : effectiveMetaPixelIds(settings)} />
       <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settings)} snapPixelIds={effectiveSnapPixelIds(settings)} ga4Id={settings.ga4_measurement_id} gtmId={settings.gtm_container_id} />
       <ChatProduct name={publicProduct.title_ar || landingPage.title} faq={sanitizeChatProducts((settings as any).chat_products)[publicProduct.id] || []} />
+      <StoreHeader />
       <Component product={publicProduct} landingPage={publicLandingPage} />
-      <StorePopups />
-      <StoreChat />
+      <LazyStorePopups />
+      <LazyStoreChat />
     </>
   );
   // product-specific templates only exist in Arabic: lock the language scope (switcher hidden, Arabic everywhere)
