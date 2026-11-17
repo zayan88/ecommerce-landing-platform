@@ -4,13 +4,14 @@ import React from "react";
 import Link from "next/link";
 import { MessageCircle, Phone, Mail, ShieldCheck } from "lucide-react";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { shippingHint } from "@/lib/commerce";
+import { useShippingHint } from "@/components/shared/ShippingScope";
 import { whatsappUrl, telUrl } from "@/lib/store-contact";
 import { useLang } from "@/components/i18n/LangProvider";
 
 /** Store footer for landing-page mode: brand, contact, policy link and the trust line. */
 export function LandingFooter({ extraBottomSpace = false }: { extraBottomSpace?: boolean }) {
   const brand = useBrand();
+  const shipHint = useShippingHint();
   const { t, dir } = useLang();
   const wa = brand.support_whatsapp ? whatsappUrl(brand.support_whatsapp) : "";
   const tel = brand.support_phone ? telUrl(brand.support_phone) : "";
@@ -60,7 +61,7 @@ export function LandingFooter({ extraBottomSpace = false }: { extraBottomSpace?:
       </div>
 
       <div className="border-t border-slate-700 py-4 px-4 text-center text-xs leading-relaxed space-y-1">
-        <div className="font-bold text-emerald-300">{t("footer.cod_line", { ship: shippingHint(brand.commerce.shipping).text })}</div>
+        <div className="font-bold text-emerald-300">{t("footer.cod_line", { ship: shipHint.text })}</div>
         <div>
           © {new Date().getFullYear()} {brand.store_name}. {t("footer.rights")}
         </div>

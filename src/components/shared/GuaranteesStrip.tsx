@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { shippingHint } from "@/lib/commerce";
+import { useShippingHint } from "@/components/shared/ShippingScope";
 import { ShieldCheck, RefreshCw, Truck } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
 import { Removable } from "@/components/editor/EditTools";
@@ -33,7 +33,7 @@ interface GuaranteesStripProps {
 }
 
 export function GuaranteesStrip({ title, items, editable, hideTitle }: GuaranteesStripProps) {
-  const hint = shippingHint(useBrand().commerce.shipping);
+  const hint = useShippingHint();
   const { t, dir } = useLang();
   const base: GuaranteeItem[] = [
     { icon: "inspect", title: t("guar.inspect_t"), desc: t("guar.inspect_d") },

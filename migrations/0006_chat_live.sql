@@ -1,7 +1,7 @@
 -- 0006_chat_live.sql — live store chat: a customer's messages go to the merchant's Telegram support bot and the
 -- merchant's replies (a Telegram "Reply" on the message) come back into the customer's chat window.
 -- chat_conv: one row per conversation (random id kept in the customer's browser).
--- chat_messages: both directions (who = 'me' customer, 'shop' merchant). Purged after 14 days.
+-- chat_messages: both directions (who = 'me' customer, 'shop' merchant). Purged after 1 day.
 -- chat_tg: which Telegram message belongs to which conversation (so a Reply finds its customer).
 CREATE TABLE IF NOT EXISTS chat_conv (
   store_id   TEXT    NOT NULL DEFAULT 'default',

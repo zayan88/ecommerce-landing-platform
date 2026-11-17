@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { shippingHint } from "@/lib/commerce";
+import { useShippingHint } from "@/components/shared/ShippingScope";
 import { Star, MapPin, BadgeCheck } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
 import { useLang } from "@/components/i18n/LangProvider";
@@ -35,7 +35,7 @@ export function SocialProofWall({ rating, reviewsCount, statements, governorates
   const showRating = typeof rating === "number" && rating > 0 && typeof reviewsCount === "number" && reviewsCount > 0;
   const safeRating = showRating ? Math.min(5, Math.max(0, rating as number)) : 0;
   const filledStars = Math.round(safeRating);
-  const hint = shippingHint(useBrand().commerce.shipping);
+  const hint = useShippingHint();
   const { t, dir } = useLang();
   const defaultStmts = [t("proof.p1"), t("proof.p2"), t("proof.p3"), t("proof.p4")];
   const stmts = statements && statements.length > 0 ? statements : defaultStmts.map((x, i) => (i === 1 && !hint.free ? hint.text : x));

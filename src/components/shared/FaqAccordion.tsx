@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { shippingHint } from "@/lib/commerce";
+import { useShippingHint } from "@/components/shared/ShippingScope";
 import { ChevronDown } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
 import { Removable, ItemRemove, ItemAdd } from "@/components/editor/EditTools";
@@ -56,7 +56,7 @@ export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable, hid
   const { editMode } = useEdit();
   const rel = editable && editMode ? " relative" : "";
   const titleId = React.useId();
-  const hint = shippingHint(useBrand().commerce.shipping);
+  const hint = useShippingHint();
   const { t, dir } = useLang();
   const base: FaqItem[] = [1, 2, 3, 4, 5, 6].map((n) => ({ q: t(`faq.q${n}`), a: t(`faq.a${n}`) }));
   const defaults = hint.free ? base : base.map((f, i) => (i === 0 ? { ...f, a: t("faq.a1_paid", { ship: hint.text }) } : f));

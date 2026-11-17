@@ -231,7 +231,14 @@ export function computeShipping(cfg: ShippingConfig, opts: { total: number; prod
 }
 
 /** Short customer-facing text for "how much is shipping" (used where pages used to say "free shipping"). */
-export function shippingHint(cfg: ShippingConfig): { free: boolean; text: string } {
+export function shippingHint(cfg: ShippingConfig, productId?: string): { free: boolean; text: string } {
+  // The product's own fee (set in its editor) wins: 0 = this product ships free, even when the store's default is paid.
+  const own = productId ? cfg.product_fees[productId] : undefined;
+  if (own !== undefined && Number.isFinite(own)) {
+    if (own === 0) return { free: true, text: "شحن مجاني" };
+    if (cfg.free_over > 0) return { free: false, text: `شحن مجاني للطلبات من ${cfg.free_over} ج.م` };
+    return { free: false, text: `الشحن ${own} ج.م` };
+  }
   const anyPaid = cfg.default_fee > 0 || Object.values(cfg.product_fees).some((f) => f > 0) || Object.values(cfg.governorate_fees || {}).some((f) => f > 0);
   if (!anyPaid) return { free: true, text: "شحن مجاني" };
   if (cfg.free_over > 0) return { free: false, text: `شحن مجاني للطلبات من ${cfg.free_over} ج.م` };

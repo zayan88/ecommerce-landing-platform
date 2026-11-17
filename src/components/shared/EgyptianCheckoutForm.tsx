@@ -9,6 +9,7 @@ import { trackMarketingEvent } from "@/lib/tracking/marketing-pixels";
 import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
 import { useBrand } from "@/components/brand/BrandProvider";
+import { sanitizeProductOptions } from "@/lib/product-options";
 import { useLang } from "@/components/i18n/LangProvider";
 import { compressImage } from "@/lib/image-compress";
 import { InstapayMark, VodafoneMark } from "./PayMarks";
@@ -62,6 +63,9 @@ export function EgyptianCheckoutForm({
   const [governorate, setGovernorate] = useState("القاهرة");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+  // Color / size etc. the merchant defined on the product: the customer must pick each one
+  const productOptions = sanitizeProductOptions((product as any).options);
+  const [picked, setPicked] = useState<Record<string, string>>({});
   const brand = useBrand();
   const [payMethod, setPayMethod] = useState<"cod" | "vodafone_cash" | "instapay">("cod");
   const [payRef, setPayRef] = useState("");
@@ -203,7 +207,7 @@ export function EgyptianCheckoutForm({
     : 0;
   const finalTotal = totalAmount - discount + shipFee;
   const belowMin = Boolean(shipCfg && shipCfg.min_order > 0 && totalAmount < shipCfg.min_order);
-  const ship = shipCfg ? shippingHint(shipCfg) : { free: true, text: "شحن مجاني" };
+  const ship = shipCfg ? shippingHint(shipCfg, product.id) : { free: true, text: "شحن مجاني" };
 
   const applyCouponCode = async (raw: string, silent = false) => {
     const code = raw.trim();
@@ -308,6 +312,9 @@ export function EgyptianCheckoutForm({
 
   // Validation
   const validateForm = () => {
+    for (const o of productOptions) {
+      if (!picked[o.name]) return `اختار ${o.name} الأول`;
+    }
     if (!name.trim()) return t("co.v_name");
     const cleanedPhone = phone.trim().replace(/\s+/g, "");
     const egPhoneRegex = /^01[0125][0-9]{8}$/;
@@ -361,6 +368,7 @@ export function EgyptianCheckoutForm({
         shipping_city: governorate || "القاهرة",
         address: address.trim(),
         shipping_address: address.trim(),
+        options: productOptions.length > 0 ? picked : undefined,
         notes: notes.trim() || undefined,
         customer_notes: notes.trim() || undefined,
         // Only send real offers; the synthetic default (no offers configured) is priced server-side from base_price
@@ -493,6 +501,32 @@ export function EgyptianCheckoutForm({
             />
           </div>
         )}
+
+        {/* Product options: color / size ... */}
+        {productOptions.map((o) => (
+          <div key={o.name} role="group" aria-label={o.name}>
+            <p className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">
+              {o.name} <span className="text-red-500">*</span>
+              {picked[o.name] ? <span className="text-emerald-700 font-black"> : {picked[o.name]}</span> : null}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {o.values.map((v) => {
+                const on = picked[o.name] === v;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setPicked((p) => ({ ...p, [o.name]: v }))}
+                    className={`min-h-[44px] min-w-[56px] px-4 rounded-xl text-sm font-bold border-2 transition cursor-pointer ${on ? "border-orange-500 bg-orange-50 text-orange-900 ring-2 ring-orange-500/30" : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"}`}
+                  >
+                    {v}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
 
         {/* Honeypot (invisible to humans and screen readers) */}
         <div aria-hidden="true" className="sr-only">

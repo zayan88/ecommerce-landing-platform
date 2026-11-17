@@ -6,7 +6,7 @@
 import { getD1Client, type SqlClient } from "./d1";
 import { currentStoreId, ordersBackend } from "./orders-repo";
 
-const RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+const RETENTION_MS = 1 * 24 * 60 * 60 * 1000;
 export const CID_RE = /^[a-f0-9]{24,40}$/;
 
 function repoDb(): { db: SqlClient; store: string } | null {

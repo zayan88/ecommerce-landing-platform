@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { normalizeEgyptPhone } from "@/lib/db/abandoned-repo";
 import { getOrdersRepo } from "@/lib/db/orders-repo";
-import { sanitizeChat } from "@/lib/chat";
+import { buildProductInfo, sanitizeChat } from "@/lib/chat";
 import { askLlm, sendSupportFollowUp, sendSupportHandoff, sendSupportLive } from "@/lib/chat-server";
 import { CID_RE, addLine, chatLiveAvailable, getConv, listLines, mapTelegramMessage, upsertConv } from "@/lib/db/chat-repo";
 
@@ -114,7 +114,10 @@ export async function POST(req: NextRequest) {
   }
 
   // 2) Ask the merchant's LLM (only when connected); otherwise the page shows the hand-off form
-  const answer = await askLlm(settings, message);
+  // The product facts (public fields only) so the assistant can answer about price, offers, colors and sizes
+  const page = typeof body.page === "string" ? body.page.slice(0, 200) : "";
+  const products = await dbStore.getProducts().catch(() => []);
+  const answer = await askLlm(settings, message, buildProductInfo(products as any[], page));
   return NextResponse.json(answer ? { ok: true, reply: answer } : { ok: true, need_contact: true, reply: cfg.fallback }, { headers: noStore });
 }
 

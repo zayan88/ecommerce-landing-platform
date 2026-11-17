@@ -167,6 +167,37 @@ export function publicChat(s: any): PublicChat | undefined {
 /** Marker that opens the merchant's text inside the system prompt (never allowed in an answer). */
 const INFO_MARKER = "--- store information ---";
 
+/**
+ * The public facts of the store's active products for the assistant: name, price, offers, options (color / size) and a short
+ * description. Built from an allow-list, so cost, supplier data, SKU and exact stock can never get in. The product the customer
+ * is looking at (from the page path /p/<slug>) goes first.
+ */
+export function buildProductInfo(products: any[], page = "", maxChars = 3500): string {
+  const slug = (page.match(/\/p\/([^/?#]+)/)?.[1] || "").trim();
+  let slugDecoded = slug;
+  try {
+    slugDecoded = decodeURIComponent(slug);
+  } catch {}
+  const list = (Array.isArray(products) ? products : []).filter((p) => p && p.status === "active" && p.title_ar);
+  list.sort((a, b) => Number(b.slug === slugDecoded) - Number(a.slug === slugDecoded));
+  const line = (v: unknown, n: number) => String(v ?? "").replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
+  const blocks: string[] = [];
+  for (const p of list.slice(0, 12)) {
+    const parts = [`- ${line(p.title_ar, 100)}${p.slug === slugDecoded ? " (الصفحة الحالية)" : ""}: السعر ${Number(p.base_price) || 0} جنيه`];
+    const offers = (Array.isArray(p.offers) ? p.offers : []).slice(0, 5).map((o: any) => `${Number(o.quantity) || 1} قطعة بـ ${Number(o.price) || 0} جنيه`);
+    if (offers.length > 1) parts.push(`العروض: ${offers.join("، ")}`);
+    const opts = (Array.isArray(p.options) ? p.options : []).slice(0, 3).map((o: any) => `${line(o?.name, 30)}: ${(Array.isArray(o?.values) ? o.values : []).slice(0, 12).map((v: unknown) => line(v, 40)).join(" / ")}`);
+    if (opts.length) parts.push(`الخيارات المتاحة: ${opts.join("، ")}`);
+    const desc = line(p.description_ar, 350);
+    if (desc) parts.push(`الوصف: ${desc}`);
+    blocks.push(parts.join(" | "));
+  }
+  if (!blocks.length) return "";
+  let out = "منتجات المتجر (معلومات عامة):\n" + blocks.join("\n");
+  if (out.length > maxChars) out = out.slice(0, maxChars);
+  return out;
+}
+
 /** System prompt sent with the customer's question. The merchant's text is data, the rules come first. */
 export function llmSystemPrompt(storeName: string, info: string): string {
   return [

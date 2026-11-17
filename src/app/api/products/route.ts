@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { isAdminRequest } from "@/lib/auth/session";
+import { sanitizeProductOptions } from "@/lib/product-options";
 
 export const runtime = "edge";
 
@@ -42,6 +43,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "اسم المنتج مطلوب" }, { status: 400 });
     }
 
+    if ("options" in body) body.options = sanitizeProductOptions(body.options);
+
     // Saves the product and auto-creates (or ensures) its landing page.
     // On the D1 catalog backend both happen in ONE transaction.
     const { product, landingPage: lp } = await dbStore.saveProductWithLandingPage(body, true);
@@ -64,6 +67,8 @@ export async function PUT(req: NextRequest) {
     if (!body.id) {
       return NextResponse.json({ success: false, error: "معرف المنتج مطلوب للتعديل" }, { status: 400 });
     }
+
+    if ("options" in body) body.options = sanitizeProductOptions(body.options);
 
     // Sync landing page title and slug if updated (one transaction with the product on the D1 backend)
     const { product } = await dbStore.saveProductWithLandingPage(
