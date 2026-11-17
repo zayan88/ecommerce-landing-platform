@@ -10,7 +10,7 @@ import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
 import type { Order } from "@/types";
 import { markAbandonedConverted } from "@/lib/db/abandoned-repo";
-import { formatOptionsNote, sanitizeProductOptions } from "@/lib/product-options";
+import { effectiveOptions, formatOptionsNote, sanitizeVariantsOff } from "@/lib/product-options";
 import { applyCoupon, bestAutoCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
 import {
   beginOrder,
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     const finalGov = data.governorate || data.shipping_governorate || "القاهرة";
     const finalAddress = data.address || data.shipping_address || "العنوان بالتفصيل";
     // Color / size etc.: required when the product has options, checked against the product itself, then written into the notes
-    const optionsCheck = formatOptionsNote(sanitizeProductOptions((product as any).options), data.options);
+    const optionsCheck = formatOptionsNote(effectiveOptions(product), data.options, sanitizeVariantsOff((product as any).variants_off));
     if (optionsCheck.error) {
       return NextResponse.json({ success: false, error: optionsCheck.error }, { status: 400 });
     }
@@ -108,13 +108,16 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      quantity = offerQty;
+      // A single-piece offer can be ordered several times (the customer raised the number of pieces): price = offer price x pieces.
+      // Multi-piece offers keep their own fixed quantity and price.
+      const pieces = offerQty === 1 ? data.quantity : 1;
+      quantity = offerQty * pieces;
       offerFreeShipping = Boolean(selectedOffer.free_shipping);
-      totalAmount = offerPrice;
+      totalAmount = offerPrice * pieces;
       unitPrice = offerPrice / offerQty;
       const originalPrice = Number(selectedOffer.original_price);
       if (Number.isFinite(originalPrice) && originalPrice > offerPrice) {
-        discountAmount = originalPrice - offerPrice;
+        discountAmount = (originalPrice - offerPrice) * pieces;
       }
     } else {
       // No offer: base price × quantity (quantity already limited to 1..5 by the schema).

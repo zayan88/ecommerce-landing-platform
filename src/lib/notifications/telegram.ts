@@ -1,5 +1,6 @@
 import { Order, Product } from "@/types";
 import { dbStore } from "@/lib/db/store";
+import { buildOrderWhatsappMessage } from "@/lib/order-message";
 
 /** Escape user-controlled text for Telegram parse_mode=HTML (prevents broken/injected messages). */
 export function escapeTelegramHtml(value: unknown): string {
@@ -111,7 +112,7 @@ ${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500)
                     {
                       text: "💬 واتساب العميل",
                       url: `https://wa.me/${intlPhone}?text=${encodeURIComponent(
-                        `أهلاً بحضرتك يا فندم! بخصوص طلبك #${order.order_number} من ${settings.store_name || "المتجر"}`
+                        buildOrderWhatsappMessage(order as any, { storeName: settings.store_name || "المتجر", productTitle })
                       )}`,
                     },
                     {

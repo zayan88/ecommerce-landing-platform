@@ -7,6 +7,8 @@ import { EditOrderModal } from "./EditOrderModal";
 import { toCsv, downloadCsv } from "@/lib/csv";
 import { SAFKA_ENABLED } from "@/lib/features";
 import { EGYPTIAN_GOVERNORATES } from "@/lib/constants/governorates";
+import { buildOrderWhatsappMessage } from "@/lib/order-message";
+import { useBrand } from "@/components/brand/BrandProvider";
 import {
   EXPORT_MAX_ROWS,
   ORDERS_PAGE_SIZES,
@@ -43,6 +45,7 @@ import {
 } from "lucide-react";
 
 export default function AdminOrdersPage() {
+  const brand = useBrand();
   // Safka column / actions: build flag or the merchant's switch (Suppliers page)
   const [safkaOn, setSafkaOn] = useState(SAFKA_ENABLED);
   useEffect(() => {
@@ -897,7 +900,7 @@ export default function AdminOrdersPage() {
               ) : (
                 orders.map((ord) => {
                   const whatsappLink = `https://wa.me/2${ord.customer_phone.replace(/^0/, "")}?text=${encodeURIComponent(
-                    `أهلاً بحضرتك يا فندم، بنكلمك من متجرنا لتأكيد طلبك رقم (${ord.order_number}) الخاص بـ ${ord.product?.title_ar || "المنتج"}. العنوان: ${ord.governorate} - ${ord.address}. هل الميعاد مناسب للشحن؟`
+                    buildOrderWhatsappMessage(ord as any, { storeName: brand.store_name, productTitle: ord.product?.title_ar })
                   )}`;
 
                   const isChecked = selectedOrderIds.includes(ord.id);
@@ -1183,7 +1186,7 @@ export default function AdminOrdersPage() {
                 </a>
                 <a
                   href={`https://wa.me/2${selectedOrder.customer_phone.replace(/^0/, "")}?text=${encodeURIComponent(
-                    `أهلاً بحضرتك، بنكلمك لتأكيد طلبك رقم (${selectedOrder.order_number}). العنوان: ${selectedOrder.governorate} - ${selectedOrder.address}. هل الميعاد مناسب للشحن؟`
+                    buildOrderWhatsappMessage(selectedOrder as any, { storeName: brand.store_name, productTitle: (selectedOrder as any).product?.title_ar })
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

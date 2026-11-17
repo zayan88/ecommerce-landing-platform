@@ -9,7 +9,8 @@ import { trackMarketingEvent } from "@/lib/tracking/marketing-pixels";
 import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { sanitizeProductOptions } from "@/lib/product-options";
+import { comboAvailable, effectiveOptions, pickValue, sanitizeVariantsOff } from "@/lib/product-options";
+import { OptionsPicker } from "@/components/shared/OptionsPicker";
 import { useLang } from "@/components/i18n/LangProvider";
 import { compressImage } from "@/lib/image-compress";
 import { InstapayMark, VodafoneMark } from "./PayMarks";
@@ -39,7 +40,12 @@ interface EgyptianCheckoutFormProps {
   hideTrust?: boolean;
   /** Custom text of the order button (merchant setting). */
   ctaText?: string;
+  /** Color / size picks kept by the page, so the hero and the form show the same choice. */
+  pickedOptions?: Record<string, string>;
+  onPickedOptionsChange?: (v: Record<string, string>) => void;
 }
+
+const MAX_PIECES = 10;
 
 export function EgyptianCheckoutForm({
   product,
@@ -52,10 +58,12 @@ export function EgyptianCheckoutForm({
   previewOnly = false,
   hideOffers = false,
   hideTrust = false,
+  pickedOptions,
+  onPickedOptionsChange,
   ctaText,
 }: EgyptianCheckoutFormProps) {
   const router = useRouter();
-  const { t, dir } = useLang();
+  const { t, dir, lang } = useLang();
 
   // Simplified Form fields (Name, Phone once, Governorate, Address, Notes/Details)
   const [name, setName] = useState("");
@@ -64,8 +72,15 @@ export function EgyptianCheckoutForm({
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   // Color / size etc. the merchant defined on the product: the customer must pick each one
-  const productOptions = sanitizeProductOptions((product as any).options);
-  const [picked, setPicked] = useState<Record<string, string>>({});
+  const productOptions = effectiveOptions(product);
+  const variantsOff = sanitizeVariantsOff((product as any).variants_off);
+  const [pickedInner, setPickedInner] = useState<Record<string, string>>({});
+  const picked = pickedOptions ?? pickedInner;
+  const setPicked = (fn: (p: Record<string, string>) => Record<string, string>) => {
+    const next = fn(picked);
+    if (onPickedOptionsChange) onPickedOptionsChange(next);
+    else setPickedInner(next);
+  };
   const brand = useBrand();
   const [payMethod, setPayMethod] = useState<"cod" | "vodafone_cash" | "instapay">("cod");
   const [payRef, setPayRef] = useState("");
@@ -174,8 +189,12 @@ export function EgyptianCheckoutForm({
     }
   };
 
-  const quantity = activeOffer?.quantity || 1;
-  const totalAmount = activeOffer?.price || product.base_price || 0;
+  // No 2 / 3-piece offers (one price only): the customer can still raise the number of pieces. Price = the single-piece price x pieces.
+  const showQty = hideOffers || (product.offers?.length ?? 0) <= 1;
+  const [pieces, setPieces] = useState(1);
+  const extraPieces = showQty && (activeOffer?.quantity || 1) === 1 ? pieces : 1;
+  const quantity = (activeOffer?.quantity || 1) * extraPieces;
+  const totalAmount = (activeOffer?.price || product.base_price || 0) * extraPieces;
 
   // Shipping fee / minimum order / coupon: the numbers shown here mirror what /api/orders decides on the server
   const shipCfg = brand.commerce?.shipping;
@@ -187,7 +206,7 @@ export function EgyptianCheckoutForm({
   const offerFree = Boolean(activeOffer?.free_shipping);
   // the merchant's automatic discount is computed here from the public list (no request); the server re-decides
   const autoRes = brand.commerce?.auto_coupons
-    ? bestAutoCoupon(brand.commerce.auto_coupons, { subtotal: totalAmount, quantity: activeOffer?.quantity || 1, productId: product.id })
+    ? bestAutoCoupon(brand.commerce.auto_coupons, { subtotal: totalAmount, quantity, productId: product.id })
     : null;
   const autoCoupon =
     autoRes && autoRes.ok
@@ -315,6 +334,7 @@ export function EgyptianCheckoutForm({
     for (const o of productOptions) {
       if (!picked[o.name]) return `اختار ${o.name} الأول`;
     }
+    if (productOptions.length > 0 && !comboAvailable(productOptions, variantsOff, picked)) return "الاختيار ده خلص من المخزون، اختار حاجة تانية";
     if (!name.trim()) return t("co.v_name");
     const cleanedPhone = phone.trim().replace(/\s+/g, "");
     const egPhoneRegex = /^01[0125][0-9]{8}$/;
@@ -503,30 +523,7 @@ export function EgyptianCheckoutForm({
         )}
 
         {/* Product options: color / size ... */}
-        {productOptions.map((o) => (
-          <div key={o.name} role="group" aria-label={o.name}>
-            <p className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">
-              {o.name} <span className="text-red-500">*</span>
-              {picked[o.name] ? <span className="text-emerald-700 font-black"> : {picked[o.name]}</span> : null}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {o.values.map((v) => {
-                const on = picked[o.name] === v;
-                return (
-                  <button
-                    key={v}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setPicked((p) => ({ ...p, [o.name]: v }))}
-                    className={`min-h-[44px] min-w-[56px] px-4 rounded-xl text-sm font-bold border-2 transition cursor-pointer ${on ? "border-orange-500 bg-orange-50 text-orange-900 ring-2 ring-orange-500/30" : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"}`}
-                  >
-                    {v}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <OptionsPicker options={productOptions} off={variantsOff} picked={picked} onPick={(name, v) => setPicked((p) => pickValue(productOptions, variantsOff, p, name, v))} />
 
         {/* Honeypot (invisible to humans and screen readers) */}
         <div aria-hidden="true" className="sr-only">
@@ -667,6 +664,18 @@ export function EgyptianCheckoutForm({
             </div>
           )}
         </div>
+
+        {/* Quantity: only when the product has no multi-piece offers */}
+        {showQty && (activeOffer?.quantity || 1) === 1 && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+            <span className="text-sm font-bold text-slate-800">{lang === "en" ? "Quantity" : "الكمية"}</span>
+            <div className="flex items-center gap-1" role="group" aria-label={lang === "en" ? "Quantity" : "الكمية"}>
+              <button type="button" aria-label="-" disabled={pieces <= 1} onClick={() => setPieces((n) => Math.max(1, n - 1))} className="w-12 h-12 rounded-xl border border-slate-300 bg-white text-xl font-black text-slate-800 disabled:opacity-40 cursor-pointer">−</button>
+              <span className="w-12 text-center text-lg font-black font-mono text-slate-950" aria-live="polite">{pieces}</span>
+              <button type="button" aria-label="+" disabled={pieces >= MAX_PIECES} onClick={() => setPieces((n) => Math.min(MAX_PIECES, n + 1))} className="w-12 h-12 rounded-xl border border-slate-300 bg-white text-xl font-black text-slate-800 disabled:opacity-40 cursor-pointer">+</button>
+            </div>
+          </div>
+        )}
 
         {/* Pricing Summary */}
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2 text-xs sm:text-sm">

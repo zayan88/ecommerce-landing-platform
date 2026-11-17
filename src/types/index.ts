@@ -21,6 +21,8 @@ export interface ProductOffer {
 export interface ProductOption {
   name: string;
   values: string[];
+  /** value -> #rrggbb, shown as a color dot next to the value in the checkout. */
+  swatches?: Record<string, string>;
 }
 
 export interface Product {
@@ -43,6 +45,10 @@ export interface Product {
   offers?: ProductOffer[];
   /** Color / size ... the customer picks in the order form. */
   options?: ProductOption[];
+  /** false = the merchant switched the options off (they are kept, just not shown). */
+  options_enabled?: boolean;
+  /** Sold-out combinations (see lib/product-options.ts). */
+  variants_off?: string[];
   created_at: string;
   updated_at: string;
 }
