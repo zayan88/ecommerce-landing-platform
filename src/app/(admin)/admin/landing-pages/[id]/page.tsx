@@ -1,5 +1,6 @@
 "use client";
 
+import { Toast } from "../../_components/toast";
 import { useConfirm } from "../../_components/confirm";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -244,16 +245,7 @@ export default function LandingPageDetailsPage() {
           </p>
         </div>
 
-        {message && (
-          <div
-            role="status"
-            className={`p-3 rounded-xl text-sm font-bold border ${
-              message.ok ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-700"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
+        <Toast message={message} onClose={() => setMessage(null)} />
 
         <button
           type="submit"

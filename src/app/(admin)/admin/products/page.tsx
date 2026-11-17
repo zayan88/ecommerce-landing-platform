@@ -1,5 +1,6 @@
 "use client";
 
+import { Toast } from "../_components/toast";
 import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -518,23 +519,7 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Alert Notification */}
-      {alertMessage && (
-        <div
-          className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-2.5 shadow-sm ${
-            alertMessage.type === "success"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-              : "bg-red-50 border-red-200 text-red-900"
-          }`}
-        >
-          {alertMessage.type === "success" ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-          )}
-          <span>{alertMessage.text}</span>
-        </div>
-      )}
+      <Toast message={alertMessage ? { ok: alertMessage.type === "success", text: alertMessage.text } : null} onClose={() => setAlertMessage(null)} />
 
       {/* Search */}
       <div className="flex flex-col sm:flex-row gap-3">
