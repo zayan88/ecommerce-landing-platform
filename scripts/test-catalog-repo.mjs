@@ -362,7 +362,7 @@ await test("public vs admin shapes: visitors never get cost / supplier fields; p
   const adm = (await call(productsRoute.GET, "/api/products", admin)).body.products.find((p) => p.id === saved.id);
   assert.equal("cost_price" in pub, false);
   assert.equal(adm.cost_price, 250);
-  assert.deepEqual(Object.keys(pub).sort(), Object.keys(adm).filter((k) => k !== "cost_price").sort());
+  assert.deepEqual(Object.keys(pub).sort(), Object.keys(adm).filter((k) => !["cost_price", "stock_quantity", "sku"].includes(k)).sort()); // the exact stock and the sku are not public either
   await dbStore.saveLandingPage({ ...(await repo.getLandingPage("test-device")), meta_capi_token: "EAAB-page-level-secret" });
   assert.equal((await dbStore.getLandingPage("test-device")).meta_capi_token, "EAAB-page-level-secret", "server code can read it");
   const { middleware } = await mod("middleware.ts");
