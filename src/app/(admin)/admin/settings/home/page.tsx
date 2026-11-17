@@ -1,205 +1,91 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { SettingsShell, cardCls, inputCls, Field } from "../../_components/settings-ui";
-import { useConfirm } from "../../_components/confirm";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { ExternalLink, Loader2, MousePointerClick, RotateCcw } from "lucide-react";
 import { StoreTabs } from "../../_components/store-tabs";
-import { HOME_SECTIONS, defaultHomeContent, mergeHomeContent, type HomeContent, type HomeSection } from "@/lib/home-content";
-import { ImageUploader } from "@/components/admin/ImageUploader";
+import { Toast, type ToastMessage } from "../../_components/toast";
+import { useConfirm } from "../../_components/confirm";
 
-const SECTION_LABELS: Record<HomeSection, string> = {
-  trust: "شريط الثقة (4 مربعات تحت العنوان)",
-  features: "لماذا تثق بنا (3 ضمانات)",
-  compare: "المقارنة (المنتجات العادية vs منتجاتنا)",
-  steps: "خطوات الشراء",
-  warranty: "شهادة الضمان",
-  reviews: "آراء العملاء (من إعدادات المتجر)",
-  faq: "الأسئلة الشائعة",
-};
+const card = "bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-7 space-y-4";
 
+/** "Store settings" > "Edit the home page": opens the live editor (the page itself, editable in place). */
 export default function HomeSettingsPage() {
   const confirmAsk = useConfirm();
-  const [brand, setBrand] = useState("متجري");
-  const [hc, setHc] = useState<HomeContent>(defaultHomeContent("ar", "متجري"));
-  const set = <K extends keyof HomeContent>(k: K, v: HomeContent[K]) => setHc((c) => ({ ...c, [k]: v }));
-  const setAt = <T,>(arr: T[], i: number, v: T) => arr.map((x, k) => (k === i ? v : x));
+  const [loading, setLoading] = useState(true);
+  const [custom, setCustom] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  const text = (label: string, k: keyof HomeContent, opts: { rows?: number; max?: number; hint?: string } = {}) => (
-    <Field label={label} hint={opts.hint}>
-      {opts.rows ? (
-        <textarea className={inputCls + " py-3 leading-relaxed"} rows={opts.rows} maxLength={opts.max} value={hc[k] as string} onChange={(e) => set(k, e.target.value as never)} />
-      ) : (
-        <input className={inputCls} maxLength={opts.max} value={hc[k] as string} onChange={(e) => set(k, e.target.value as never)} />
-      )}
-    </Field>
-  );
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((j) => setCustom(Boolean(j?.settings?.home_content && Object.keys(j.settings.home_content).length > 0)))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
-  const pairs = (k: "trust" | "features" | "steps", title: string) => (
-    <div className="space-y-3">
-      <p className="text-sm font-black text-slate-900">{title}</p>
-      {hc[k].map((p, i) => (
-        <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-2">
-          <input className={inputCls} placeholder="العنوان" maxLength={80} value={p.title} onChange={(e) => set(k, setAt(hc[k], i, { ...p, title: e.target.value }))} />
-          <textarea className={inputCls + " py-3 leading-relaxed"} rows={2} placeholder="الوصف" maxLength={300} value={p.desc} onChange={(e) => set(k, setAt(hc[k], i, { ...p, desc: e.target.value }))} />
-        </div>
-      ))}
-    </div>
-  );
-
-  const list = (title: string, k: "compare_old" | "compare_new" | "warranty_chips" | "footer_chips", max: number) => (
-    <div className="space-y-2">
-      <p className="text-sm font-black text-slate-900">{title}</p>
-      {hc[k].map((v, i) => (
-        <div key={i} className="flex gap-2">
-          <input className={inputCls} maxLength={max} value={v} onChange={(e) => set(k, setAt(hc[k], i, e.target.value))} />
-          <button type="button" aria-label="حذف" onClick={() => set(k, hc[k].filter((_, j) => j !== i))} className="min-h-[48px] px-3 rounded-xl text-red-600 hover:bg-red-50 cursor-pointer">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ))}
-      {hc[k].length < 6 && (
-        <button type="button" onClick={() => set(k, [...hc[k], ""])} className="min-h-[44px] w-full rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-          <Plus className="w-4 h-4" /> إضافة
-        </button>
-      )}
-    </div>
-  );
+  const reset = async () => {
+    if (!(await confirmAsk({ title: "استرجاع الصفحة الرئيسية", tone: "neutral", confirmText: "استرجاع", message: "هتمسح كل تعديلاتك على الصفحة الرئيسية وترجع للنصوص الجاهزة. تكمّل؟" }))) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ home_content: {} }) });
+      const j = await res.json();
+      if (!res.ok || !j.success) throw new Error(j.error || "تعذر الحفظ");
+      setCustom(false);
+      setToast({ ok: true, text: "رجعت الصفحة الرئيسية للنصوص الجاهزة" });
+    } catch (e: any) {
+      setToast({ ok: false, text: e.message || "تعذر الحفظ" });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <SettingsShell
-      title="إعدادات المتجر"
-      description="كل نصوص الصفحة الرئيسية للمتجر بتتعدّل من هنا. اللي تسيبه فاضي بيرجع للنص الافتراضي. وتقدر كمان تخلّي أي صفحة هبوط هي الرئيسية من قائمة صفحات الهبوط."
-      load={(s) => {
-        const name = (s.store_name || "متجري") as string;
-        setBrand(name);
-        const lang = s.lang_default === "en" ? "en" : "ar";
-        setHc(mergeHomeContent(defaultHomeContent(lang, name), s.home_content));
-      }}
-      payload={() => ({ home_content: hc })}
-    >
+    <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-5 text-right" dir="rtl">
+      <Toast message={toast} onClose={() => setToast(null)} />
+      <h1 className="text-2xl font-black text-slate-900 font-heading">إعدادات المتجر</h1>
       <StoreTabs />
-      <section className={cardCls}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-black text-slate-900">البداية من نصوص جاهزة</h2>
-          <div className="flex gap-2">
-            {(["ar", "en"] as const).map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={async () => {
-                  if (await confirmAsk({ title: "استبدال النصوص", tone: "neutral", confirmText: "استبدال", message: `هتستبدل كل النصوص اللي في الصفحة بالنصوص الافتراضية (${l === "ar" ? "عربي" : "English"}). تكمّل؟` })) setHc(defaultHomeContent(l, brand));
-                }}
-                className="min-h-[44px] px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-sm font-bold cursor-pointer"
-              >
-                {l === "ar" ? "نصوص عربي" : "English texts"}
-              </button>
-            ))}
-          </div>
+
+      {loading ? (
+        <div className="p-10 flex items-center justify-center text-slate-500 gap-2">
+          <Loader2 className="w-5 h-5 animate-spin" /> جاري التحميل...
         </div>
-        <p className="text-xs text-slate-500 leading-relaxed">النصوص دي مكتوبة لمتجر مصري افتراضياً. عدّلها على حسب متجرك وبلدك (الشحن، الدفع، الضمان).</p>
-      </section>
+      ) : (
+        <>
+          <section className={card}>
+            <div className="flex items-start gap-3">
+              <span className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                <MousePointerClick className="w-6 h-6" />
+              </span>
+              <div className="space-y-1">
+                <h2 className="text-lg font-black text-slate-900">تحرير الصفحة الرئيسية مباشرة</h2>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  بتفتح الصفحة الرئيسية بنفسها وتعدّلها زي أي صفحة هبوط: اضغط على أي نص واكتب، واضغط × عشان تحذف زرار أو شارة أو قسم، و«+ إضافة» عشان ترجّع حاجة.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/admin/settings/home/edit" className="min-h-[48px] px-6 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-sm flex items-center gap-2">
+                <MousePointerClick className="w-4 h-4" /> فتح المحرر
+              </Link>
+              <a href="/" target="_blank" rel="noopener noreferrer" className="min-h-[48px] px-5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-sm flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" /> مشاهدة الصفحة
+              </a>
+            </div>
+          </section>
 
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">الأقسام الظاهرة</h2>
-        {HOME_SECTIONS.map((s) => (
-          <label key={s} className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer">
-            <span className="text-sm font-bold text-slate-900">{SECTION_LABELS[s]}</span>
-            <input type="checkbox" className="w-5 h-5 accent-emerald-600" checked={!hc.hide[s]} onChange={(e) => set("hide", { ...hc.hide, [s]: e.target.checked ? undefined : true })} />
-          </label>
-        ))}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">أعلى الصفحة</h2>
-        {text("الشعار الصغير تحت اسم المتجر", "tagline", { max: 80 })}
-        {text("الشارة فوق العنوان", "hero_badge", { max: 100 })}
-        {text("العنوان الرئيسي", "hero_title", { max: 120 })}
-        {text("الجزء الملوّن من العنوان", "hero_highlight", { max: 120 })}
-        {text("الوصف", "hero_text", { rows: 3, max: 500 })}
-        {text("نص زرار الدعوة للشراء", "hero_cta", { max: 50 })}
-        <Field label="صورة (اختياري)" hint="بتظهر تحت الشارة وفوق العنوان.">
-          <ImageUploader value={hc.hero_image} onChange={(u) => set("hero_image", u)} heightClass="h-40" />
-        </Field>
-        {pairs("trust", "شريط الثقة")}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">قسم المنتجات</h2>
-        {text("الشارة", "products_badge", { max: 80 })}
-        {text("العنوان", "products_title", { max: 120 })}
-        {text("الوصف", "products_sub", { rows: 2, max: 300 })}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">لماذا تثق بنا</h2>
-        {text("الشارة", "features_badge", { max: 80 })}
-        {text("العنوان", "features_title", { max: 120 })}
-        {text("الوصف", "features_sub", { rows: 2, max: 300 })}
-        {pairs("features", "الضمانات")}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">المقارنة</h2>
-        {text("الشارة", "compare_badge", { max: 80 })}
-        {text("العنوان", "compare_title", { max: 160 })}
-        {text("الوصف", "compare_sub", { rows: 2, max: 300 })}
-        {text("عنوان عمود المنتجات العادية", "compare_old_title", { max: 100 })}
-        {list("نقاط المنتجات العادية", "compare_old", 200)}
-        {text("عنوان عمود منتجاتنا", "compare_new_title", { max: 100 })}
-        {list("نقاط منتجاتنا", "compare_new", 200)}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">خطوات الشراء</h2>
-        {text("الشارة", "steps_badge", { max: 80 })}
-        {text("العنوان", "steps_title", { max: 160 })}
-        {pairs("steps", "الخطوات")}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">شهادة الضمان</h2>
-        {text("العنوان", "warranty_title", { max: 120 })}
-        {text("النص", "warranty_text", { rows: 4, max: 600 })}
-        {list("الشارات الصغيرة", "warranty_chips", 60)}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">آراء العملاء</h2>
-        {text("عنوان القسم", "reviews_title", { max: 100, hint: "الآراء نفسها بتتكتب في إعدادات المتجر." })}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">الأسئلة الشائعة</h2>
-        {text("الشارة", "faq_badge", { max: 80 })}
-        {text("العنوان", "faq_title", { max: 120 })}
-        {hc.faq.map((f, i) => (
-          <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-2">
-            <input className={inputCls} placeholder="السؤال" maxLength={160} value={f.q} onChange={(e) => set("faq", setAt(hc.faq, i, { ...f, q: e.target.value }))} />
-            <textarea className={inputCls + " py-3 leading-relaxed"} rows={3} placeholder="الإجابة" maxLength={600} value={f.a} onChange={(e) => set("faq", setAt(hc.faq, i, { ...f, a: e.target.value }))} />
-            <button
-              type="button"
-              onClick={async () => {
-                if (await confirmAsk({ title: "حذف السؤال", message: "هتحذف السؤال ده وإجابته." })) set("faq", hc.faq.filter((_, j) => j !== i));
-              }}
-              className="min-h-[44px] px-3 rounded-xl text-red-600 hover:bg-red-50 text-sm font-bold cursor-pointer"
-            >
-              حذف
+          <section className={card}>
+            <h2 className="text-lg font-black text-slate-900">استرجاع النصوص الجاهزة</h2>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              {custom ? "الصفحة الرئيسية متعدّلة. زرار الاسترجاع بيمسح كل تعديلاتك." : "الصفحة الرئيسية دلوقتي على النصوص الجاهزة (حسب لغة المتجر)."} تقدر كمان تخلّي أي صفحة هبوط هي الرئيسية من قائمة صفحات الهبوط.
+            </p>
+            <button type="button" onClick={reset} disabled={busy || !custom} className="min-h-[48px] px-5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-sm flex items-center gap-2 cursor-pointer disabled:opacity-50">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />} استرجاع النصوص الجاهزة
             </button>
-          </div>
-        ))}
-        {hc.faq.length < 8 && (
-          <button type="button" onClick={() => set("faq", [...hc.faq, { q: "", a: "" }])} className="min-h-[48px] w-full rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-            <Plus className="w-4 h-4" /> إضافة سؤال
-          </button>
-        )}
-      </section>
-
-      <section className={cardCls}>
-        <h2 className="text-lg font-black text-slate-900">أسفل الصفحة</h2>
-        {text("السطر تحت اسم المتجر", "footer_text", { max: 160 })}
-        {list("الشارات الصغيرة", "footer_chips", 60)}
-      </section>
-    </SettingsShell>
+          </section>
+        </>
+      )}
+    </div>
   );
 }

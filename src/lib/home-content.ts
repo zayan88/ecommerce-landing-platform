@@ -205,7 +205,10 @@ const pairList = (v: unknown, n: number): TitleDesc[] =>
 
 const IMG_RE = /^(https?:\/\/[^\s]+|\/[^\s]*)$/i;
 
-/** What the merchant saved: cleaned, only fields that have a value (the rest fall back to the defaults). */
+/**
+ * What the merchant saved, cleaned. A field that is MISSING falls back to the default text; a field saved EMPTY
+ * ("" or []) means the merchant deleted that element, so it stays empty (this is how deleting a button sticks).
+ */
 export function sanitizeHomeContent(raw: unknown): Partial<HomeContent> {
   const r: Record<string, any> = raw && typeof raw === "object" ? (raw as Record<string, any>) : {};
   const out: Partial<HomeContent> = {};
@@ -219,29 +222,29 @@ export function sanitizeHomeContent(raw: unknown): Partial<HomeContent> {
     ["reviews_title", 100], ["faq_badge", 80], ["faq_title", 120], ["footer_text", 160],
   ];
   for (const [k, max] of S) {
-    const v = str(r[k], max);
-    if (v) (out as any)[k] = v;
+    if (typeof r[k] === "string") (out as any)[k] = str(r[k], max);
   }
-  const img = str(r.hero_image, 500);
-  if (img && IMG_RE.test(img)) out.hero_image = img;
+  if (typeof r.hero_image === "string") {
+    const img = str(r.hero_image, 500);
+    if (img === "" || IMG_RE.test(img)) out.hero_image = img;
+  }
   const pairs: [keyof HomeContent, number][] = [["trust", 4], ["features", 3], ["steps", 3]];
   for (const [k, n] of pairs) {
-    const v = pairList(r[k], n);
-    if (v.length) (out as any)[k] = v;
+    if (Array.isArray(r[k])) (out as any)[k] = pairList(r[k], n);
   }
   const lists: [keyof HomeContent, number, number][] = [["compare_old", 200, 6], ["compare_new", 200, 6], ["warranty_chips", 60, 4], ["footer_chips", 60, 4]];
   for (const [k, max, n] of lists) {
-    const v = strList(r[k], max, n);
-    if (v.length) (out as any)[k] = v;
+    if (Array.isArray(r[k])) (out as any)[k] = strList(r[k], max, n);
   }
-  const faq = (Array.isArray(r.faq) ? r.faq : [])
-    .slice(0, 8)
-    .map((x: any) => ({ q: str(x?.q, 160), a: str(x?.a, 600) }))
-    .filter((x) => x.q && x.a);
-  if (faq.length) out.faq = faq;
+  if (Array.isArray(r.faq)) {
+    out.faq = r.faq
+      .slice(0, 8)
+      .map((x: any) => ({ q: str(x?.q, 160), a: str(x?.a, 600) }))
+      .filter((x: Faq) => x.q && x.a);
+  }
   const hide: Partial<Record<HomeSection, boolean>> = {};
   for (const s of HOME_SECTIONS) if (r.hide && r.hide[s] === true) hide[s] = true;
-  out.hide = hide;
+  if (Object.keys(hide).length) out.hide = hide;
   return out;
 }
 
