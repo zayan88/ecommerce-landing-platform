@@ -117,7 +117,7 @@ export default async function DynamicLandingPage({ params }: PageProps) {
 
   // Never serialize secrets or internal business data into the public page HTML
   const publicProduct: any = { ...landingPage.product };
-  for (const f of ["cost_price", "safka_product_id", "safka_property_id", "safka_commission", "safka_raw"]) {
+  for (const f of ["cost_price", "safka_product_id", "safka_property_id", "safka_commission", "safka_raw", "stock_quantity", "sku"]) {
     delete publicProduct[f];
   }
   const publicLandingPage: any = { ...landingPage, product: publicProduct };

@@ -11,6 +11,8 @@ const PRIVATE_PRODUCT_FIELDS = [
   "safka_property_id",
   "safka_commission",
   "safka_raw",
+  "stock_quantity", // exact inventory is business-sensitive
+  "sku",
 ] as const;
 
 export async function GET(req: NextRequest) {
@@ -28,7 +30,8 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ success: true, products: publicProducts });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error("[products GET]", err?.message);
+    return NextResponse.json({ success: false, error: "تعذر تحميل المنتجات" }, { status: 500 });
   }
 }
 

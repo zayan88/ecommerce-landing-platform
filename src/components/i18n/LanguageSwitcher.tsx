@@ -6,11 +6,11 @@ import { useBrand } from "@/components/brand/BrandProvider";
 import { useLang } from "./LangProvider";
 
 /** Small AR / EN pill on the storefront. Hidden on templates that only exist in Arabic or when the merchant turned it off. */
-export function LanguageSwitcher({ className = "" }: { className?: string }) {
+export function LanguageSwitcher({ className = "", strip = false }: { className?: string; strip?: boolean }) {
   const brand = useBrand();
   const { lang, locked, setLang, t } = useLang();
   if (locked || brand.lang_switch === false) return null;
-  return (
+  const button = (
     <button
       type="button"
       onClick={() => setLang(lang === "ar" ? "en" : "ar")}
@@ -21,4 +21,6 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
       {t("lang_switch_label")}
     </button>
   );
+  // strip: its own slim row in the page flow (nothing floats over the content)
+  return strip ? <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-3 flex justify-end">{button}</div> : button;
 }

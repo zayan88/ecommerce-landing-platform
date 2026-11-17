@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
 import { applyCoupon, bestAutoCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
+import { allowPublic, clientIp } from "@/lib/public-rate-limit";
 
 export const runtime = "edge";
 
@@ -12,6 +13,10 @@ export const runtime = "edge";
 const noStore = { "Cache-Control": "no-store" };
 
 export async function POST(req: NextRequest) {
+  // 40 checks per 10 minutes per address: a coupon code cannot be guessed by brute force
+  if (!(await allowPublic("coupon", clientIp(req), 10 * 60 * 1000, 40, true))) {
+    return NextResponse.json({ valid: false, reason: "محاولات كتير، جرّب بعد شوية" }, { status: 429, headers: noStore });
+  }
   const body = await req.json().catch(() => null);
   const productId = typeof body?.product_id === "string" ? body.product_id.slice(0, 120) : "";
   if (!productId) return NextResponse.json({ valid: false, reason: "بيانات غير صحيحة" }, { status: 400, headers: noStore });

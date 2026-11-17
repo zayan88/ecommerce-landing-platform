@@ -12,6 +12,8 @@ import { base64ToBytes, bytesToBase64, contentTypeFor, type MediaExt } from "@/l
 export const RECEIPT_ID_RE = /^[a-f0-9]{20}$/;
 export const MAX_RECEIPT_BYTES = 800_000;
 const MAX_AGE_MS = 45 * 24 * 60 * 60 * 1000;
+/** An upload that no order picked up within this time is junk. */
+const UNATTACHED_MAX_AGE_MS = 3 * 60 * 60 * 1000;
 const KV_PREFIX = "receipt:";
 
 function d1(): { db: SqlClient; store: string } | null {
@@ -35,6 +37,18 @@ export async function saveReceipt(bytes: Uint8Array, ext: MediaExt, now = Date.n
       { sql: "INSERT INTO payment_receipts (store_id, id, ct, b64, size, created_ms) VALUES (?, ?, ?, ?, ?, ?)", params: [ctx.store, id, ct, bytesToBase64(bytes), bytes.length, now] },
       { sql: "DELETE FROM payment_receipts WHERE store_id = ? AND created_ms < ?", params: [ctx.store, now - MAX_AGE_MS] },
     ]);
+    // Junk uploads that no order picked up within 3 hours (the customer attaches a receipt within minutes).
+    // Best effort: a failure here must never block the upload.
+    try {
+      await ctx.db.query(
+        "DELETE FROM payment_receipts WHERE store_id = ? AND created_ms < ? AND id NOT IN (" +
+          "SELECT json_extract(tracking, '$.payment.receipt_id') FROM orders WHERE store_id = ? AND tracking IS NOT NULL " +
+          "AND json_extract(tracking, '$.payment.receipt_id') IS NOT NULL)",
+        [ctx.store, now - UNATTACHED_MAX_AGE_MS, ctx.store]
+      );
+    } catch {
+      /* ignore */
+    }
     return id;
   }
   const ok = await kvStore.put(KV_PREFIX + id, { ct, b64: bytesToBase64(bytes), size: bytes.length, created_ms: now });

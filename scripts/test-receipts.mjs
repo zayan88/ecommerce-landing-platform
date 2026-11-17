@@ -121,4 +121,18 @@ for (const backend of ["d1", "kv"]) {
   });
 }
 
+await test("security: junk uploads that no order picked up are purged after 3 hours, attached ones stay", async () => {
+  process.env.ORDERS_BACKEND = "d1";
+  const repo = await mod("lib/db/receipts-repo.ts");
+  const T0 = Date.now();
+  const junk = await repo.saveReceipt(WEBP, "webp", T0);
+  const attachedId = await repo.saveReceipt(WEBP, "webp", T0);
+  const r = await place({ payment_receipt: attachedId });
+  assert.equal(r.status, 200);
+  // a later upload triggers the purge: 4 hours after the first two
+  await repo.saveReceipt(WEBP, "webp", T0 + 4 * 60 * 60 * 1000);
+  assert.equal(await repo.receiptExists(junk), false, "the unattached one is gone");
+  assert.equal(await repo.receiptExists(attachedId), true, "the one an order carries is kept");
+});
+
 await finish();

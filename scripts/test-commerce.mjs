@@ -22,6 +22,7 @@ const lib = await mod("lib/commerce.ts");
 const ordersRoute = await mod("app/api/orders/route.ts");
 const settingsRoute = await mod("app/api/settings/route.ts");
 const checkRoute = await mod("app/api/coupons/check/route.ts");
+const productsRoute = await mod("app/api/products/route.ts");
 const { middleware } = await mod("middleware.ts");
 
 let phoneSeq = 0;
@@ -266,6 +267,28 @@ await test("shipping by governorate: product fee wins, then the governorate fee,
   const chk = await check({ product_id: "prod-c1", offer_id: "off-paid", governorate: "الإسكندرية" });
   assert.equal(chk.body.shipping, 30, "the coupon check prices shipping the same way");
   await reset();
+});
+
+await test("security: the coupon check is rate limited per address (no brute-forcing of codes)", async () => {
+  await reset();
+  const hit = (ip) => call(checkRoute.POST, "/api/coupons/check", { method: "POST", headers: { "cf-connecting-ip": ip }, body: { product_id: "prod-c1", code: "GUESS" } });
+  let last;
+  for (let i = 0; i < 42; i++) last = await hit("10.88.0.1");
+  assert.equal(last.status, 429);
+  assert.equal((await hit("10.88.0.2")).status, 200, "another address is not affected");
+});
+
+await test("security: the public products API hides cost, supplier fields, sku and the exact stock; the admin still sees everything", async () => {
+  const pub = await call(productsRoute.GET, "/api/products", { method: "GET" });
+  assert.equal(pub.status, 200);
+  const p = pub.body.products.find((x) => x.id === "prod-c1");
+  assert.ok(p);
+  for (const f of ["cost_price", "stock_quantity", "sku", "safka_raw", "safka_commission"]) assert.equal(f in p, false, f + " must not be public");
+  assert.ok(p.base_price > 0 && p.title_ar);
+  const adm = await call(productsRoute.GET, "/api/products", { method: "GET", admin: true });
+  const a = adm.body.products.find((x) => x.id === "prod-c1");
+  assert.equal(a.stock_quantity, 10);
+  assert.equal(a.sku, "C1");
 });
 
 await finish();
