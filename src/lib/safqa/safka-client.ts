@@ -62,7 +62,8 @@ function normalizeArabicText(t?: string): string {
 export class SafkaClient {
   private static async getApiKey(): Promise<string> {
     const settings = await dbStore.getSettings();
-    return settings.safqa_api_secret_token || process.env.SAFKA_API_KEY || "";
+    // A pasted key often carries spaces / line breaks / quotes: Safka then says "API key is invalid"
+    return String(settings.safqa_api_secret_token || process.env.SAFKA_API_KEY || "").trim().replace(/^['"]+|['"]+$/g, "").trim();
   }
 
   private static getBaseUrl(): string {
