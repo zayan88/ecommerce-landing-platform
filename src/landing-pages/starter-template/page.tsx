@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSections } from "@/types";
 import { cssVarsFor, isThemeColor } from "@/lib/palettes";
-import { buildDefaultOffers } from "@/lib/offers";
+import { singleBaseOffer } from "@/lib/offers";
 import { LandingFooter } from "@/components/shared/LandingFooter";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
@@ -64,7 +64,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   // Editor (admin) provides edit mode; on the public site this is always false
   const { editMode } = useEdit();
   // Built-in default tiers (the merchant can override them in the editor's offers tab)
-  const defaultOffers: ProductOffer[] = buildDefaultOffers(product);
+  const defaultOffers: ProductOffer[] = singleBaseOffer(product);
 
   const hideOffers = !!landingPage.content_config?.hide_offers;
   const allOffers = product.offers && product.offers.length > 0 ? product.offers : defaultOffers;
