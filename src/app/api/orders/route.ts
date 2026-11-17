@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     const afterCoupon = totalAmount - (couponApplied?.amount || 0);
     const shippingFee = couponApplied?.free_shipping
       ? 0
-      : computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping });
+      : computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping, governorate: data.governorate });
     const finalAmount = afterCoupon + shippingFee;
 
     // 4. Resolve client IP and User-Agent for CAPI / rate limiting

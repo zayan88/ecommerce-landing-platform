@@ -40,7 +40,7 @@ const check = (b) => call(checkRoute.POST, "/api/coupons/check", { method: "POST
 const reset = () => save({ shipping_config: {}, coupons: [] });
 
 await test("pure rules: shipping order of precedence, coupon math and limits", () => {
-  const cfg = { default_fee: 60, free_over: 1000, min_order: 0, product_fees: { p1: 20, p0: 0 } };
+  const cfg = { default_fee: 60, free_over: 1000, min_order: 0, product_fees: { p1: 20, p0: 0 }, governorate_fees: {} };
   assert.equal(lib.computeShipping(cfg, { total: 500, productId: "x" }), 60);
   assert.equal(lib.computeShipping(cfg, { total: 500, productId: "p1" }), 20, "product override");
   assert.equal(lib.computeShipping(cfg, { total: 500, productId: "p0" }), 0, "override 0 = free");
@@ -58,7 +58,7 @@ await test("sanitizers drop invalid input", () => {
   const c = lib.sanitizeCoupons([{ code: "bad code!", value: 5 }, { code: "OK1", type: "percent", value: 500 }, { code: "ok1", value: 5 }, { code: "ZERO", value: 0 }]);
   assert.deepEqual(c.map((x) => [x.code, x.value]), [["OK1", 100]], "percent capped at 100, duplicates and zero dropped");
   const s = lib.sanitizeShipping({ default_fee: -5, free_over: "abc", product_fees: { "ok-id": 10, "bad id": 5, x: "" } });
-  assert.deepEqual(s, { default_fee: 0, free_over: 0, min_order: 0, product_fees: { "ok-id": 10 } });
+  assert.deepEqual(s, { default_fee: 0, free_over: 0, min_order: 0, product_fees: { "ok-id": 10 }, governorate_fees: {} });
   const p = lib.sanitizePopup({ enabled: true, image_url: "javascript:alert(1)", title: "<b>x</b>", delay_seconds: 9999 });
   assert.equal(p.image_url, "");
   assert.equal(p.delay_seconds, 300);
@@ -238,6 +238,34 @@ await test("settings API: downsell must point at an existing coupon; the popup i
   assert.equal(r.body.settings.popup.image_url, "");
   const r2 = await save({ downsell: { auto: true, coupon_code: "real", delay_seconds: 5 } });
   assert.equal(r2.body.settings.downsell.coupon_code, "REAL");
+});
+
+await test("shipping by governorate: product fee wins, then the governorate fee, then the store fee; server and coupon check agree", async () => {
+  await reset();
+  // sanitizing
+  const clean = lib.sanitizeShipping({ default_fee: 50, governorate_fees: { "الإسكندرية": "30", "<b>x</b>": 5, "القاهرة": "", "الأقصر": -9, "أ": 3 } });
+  assert.deepEqual(clean.governorate_fees, { "الإسكندرية": 30, "الأقصر": 0 }, "bad names / empty / too short dropped, negatives clamp to 0");
+  assert.deepEqual(lib.DEFAULT_SHIPPING.governorate_fees, {});
+  // precedence (pure)
+  const cfg = lib.sanitizeShipping({ default_fee: 50, governorate_fees: { "الإسكندرية": 30, "الأقصر": 0 }, product_fees: { "prod-c2": 20 } });
+  const fee = (o) => lib.computeShipping(cfg, { total: 500, ...o });
+  assert.equal(fee({ productId: "prod-c1", governorate: "الإسكندرية" }), 30);
+  assert.equal(fee({ productId: "prod-c1", governorate: "الأقصر" }), 0, "0 = a free governorate");
+  assert.equal(fee({ productId: "prod-c1", governorate: "الجيزة" }), 50, "no governorate fee: the store fee");
+  assert.equal(fee({ productId: "prod-c1" }), 50);
+  assert.equal(fee({ productId: "prod-c2", governorate: "الإسكندرية" }), 20, "the product's own fee beats the governorate");
+  assert.equal(fee({ productId: "prod-c1", governorate: "الإسكندرية", offerFree: true }), 0);
+  assert.equal(lib.shippingHint(lib.sanitizeShipping({ governorate_fees: { "الإسكندرية": 30 } })).free, false, "a paid governorate means shipping is not 'free' in the hints");
+  // through the real routes
+  assert.equal((await save({ shipping_config: { default_fee: 50, governorate_fees: { "الإسكندرية": 30 } } })).status, 200);
+  const alex = await place({ governorate: "الإسكندرية" });
+  assert.equal(alex.status, 200, JSON.stringify(alex.body));
+  assert.equal((await dbStore.getOrder(alex.body.order.id)).shipping_fee, 30);
+  const giza = await place({ governorate: "الجيزة" });
+  assert.equal((await dbStore.getOrder(giza.body.order.id)).shipping_fee, 50);
+  const chk = await check({ product_id: "prod-c1", offer_id: "off-paid", governorate: "الإسكندرية" });
+  assert.equal(chk.body.shipping, 30, "the coupon check prices shipping the same way");
+  await reset();
 });
 
 await finish();

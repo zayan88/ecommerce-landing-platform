@@ -65,6 +65,9 @@ export default function AdminProductsPage() {
   // Questions & answers the store chat uses on this product's page (stored in settings.chat_products[id])
   const [chatFaq, setChatFaq] = useState<{ q: string; keywords: string; answer: string }[]>([]);
   const [allChatFaq, setAllChatFaq] = useState<Record<string, any[]>>({});
+  // This product's own shipping fee (empty = the store's governorate / default fee). Kept in settings.shipping_config.product_fees.
+  const [shipCfg, setShipCfg] = useState<any>(null);
+  const [productShipFee, setProductShipFee] = useState("");
   // Quantity tiers. Until the merchant touches them they follow the price (defaults).
   const [offers, setOffers] = useState<ProductOffer[]>([]);
   const [offersTouched, setOffersTouched] = useState(false);
@@ -117,6 +120,7 @@ export default function AdminProductsPage() {
     setUpsellOpen(false);
     setUpsellEnabled(false);
     setChatFaq([]);
+    setProductShipFee("");
     loadChatFaq();
     setIsModalOpen(true);
   };
@@ -126,16 +130,22 @@ export default function AdminProductsPage() {
       const j = await (await fetch("/api/settings")).json();
       const all = (j?.settings?.chat_products || {}) as Record<string, any[]>;
       setAllChatFaq(all);
-      return all;
+      setShipCfg(j?.settings?.shipping_config || null);
+      return { all, ship: j?.settings?.shipping_config || null };
     } catch {
-      return {} as Record<string, any[]>;
+      return { all: {} as Record<string, any[]>, ship: null };
     }
   };
 
   const openEditModal = (prod: Product) => {
     setEditingProduct(prod);
     setChatFaq([]);
-    loadChatFaq().then((all) => setChatFaq((all[prod.id] || []).map((x: any) => ({ q: x.q, keywords: (x.keywords || []).join("، "), answer: x.answer }))));
+    setProductShipFee("");
+    loadChatFaq().then(({ all, ship }) => {
+      setChatFaq((all[prod.id] || []).map((x: any) => ({ q: x.q, keywords: (x.keywords || []).join("، "), answer: x.answer })));
+      const fee = ship?.product_fees?.[prod.id];
+      setProductShipFee(fee === undefined || fee === null ? "" : String(fee));
+    });
     setTitleAr(prod.title_ar || "");
     setSlug(prod.slug || "");
     setSku(prod.sku || "");
@@ -236,7 +246,23 @@ export default function AdminProductsPage() {
           const next = { ...allChatFaq };
           if (chatFaq.some((f) => f.q.trim() && f.answer.trim())) next[pid] = chatFaq as any;
           else delete next[pid];
-          fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_products: next }) }).catch(() => {});
+          fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+              chat_products: next,
+              ...(shipCfg
+                ? {
+                    shipping_config: {
+                      ...shipCfg,
+                      product_fees: (() => {
+                        const fees = { ...(shipCfg.product_fees || {}) };
+                        if (productShipFee.trim() === "") delete fees[pid];
+                        else fees[pid] = Math.max(0, Math.round(Number(productShipFee) || 0));
+                        return fees;
+                      })(),
+                    },
+                  }
+                : {}),
+            }),
+          }).catch(() => {});
         }
         setIsModalOpen(false);
         // New product in landing-page mode: go straight to the live editor of its page.
@@ -858,6 +884,25 @@ export default function AdminProductsPage() {
                     </span>
                     <input type="checkbox" checked={productActive} onChange={(e) => setProductActive(e.target.checked)} className="w-5 h-5 accent-emerald-600 shrink-0" />
                   </label>
+                </section>
+
+                <section className={cardCls}>
+                  <h3 className={cardTitle}>الشحن</h3>
+                  <div>
+                    <label className={lbl}>سعر شحن المنتج ده ({brand.currency})</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={productShipFee}
+                      onChange={(e) => setProductShipFee(e.target.value)}
+                      placeholder="تكلفة المتجر"
+                      className={inputCls + " font-mono"}
+                      disabled={!shipCfg}
+                    />
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      سيب الخانة فاضية عشان المنتج ياخد تكلفة شحن المتجر (حسب المحافظة). اكتب 0 لشحن مجاني للمنتج ده. تكلفة المتجر والمحافظات من الإعدادات &gt; الشحن.
+                    </p>
+                  </div>
                 </section>
 
                 <section className={cardCls}>

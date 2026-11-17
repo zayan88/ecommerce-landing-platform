@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const c = typed ? applyCoupon(all, body.code, ctx) : bestAutoCoupon(all, ctx);
   const discount = c.ok ? c.discount : 0;
   const after = subtotal - discount;
-  const shipping = c.ok && c.free_shipping ? 0 : computeShipping(cfg, { total: after, productId: product.id, offerFree: Boolean(offer?.free_shipping) });
+  const shipping = c.ok && c.free_shipping ? 0 : computeShipping(cfg, { total: after, productId: product.id, offerFree: Boolean(offer?.free_shipping), governorate: typeof body?.governorate === "string" ? body.governorate : undefined });
   return NextResponse.json(
     {
       valid: c.ok,

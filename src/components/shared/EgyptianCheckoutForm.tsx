@@ -191,7 +191,7 @@ export function EgyptianCheckoutForm({
           code: autoRes.code || "",
           discount: autoRes.discount,
           auto: true as const,
-          shipping: autoRes.free_shipping || !shipCfg ? 0 : computeShipping(shipCfg, { total: totalAmount - autoRes.discount, productId: product.id, offerFree }),
+          shipping: autoRes.free_shipping || !shipCfg ? 0 : computeShipping(shipCfg, { total: totalAmount - autoRes.discount, productId: product.id, offerFree, governorate }),
         }
       : null;
   const eff = coupon ?? autoCoupon;
@@ -199,7 +199,7 @@ export function EgyptianCheckoutForm({
   const shipFee = eff
     ? eff.shipping
     : shipCfg
-    ? computeShipping(shipCfg, { total: totalAmount, productId: product.id, offerFree })
+    ? computeShipping(shipCfg, { total: totalAmount, productId: product.id, offerFree, governorate })
     : 0;
   const finalTotal = totalAmount - discount + shipFee;
   const belowMin = Boolean(shipCfg && shipCfg.min_order > 0 && totalAmount < shipCfg.min_order);
@@ -217,6 +217,7 @@ export function EgyptianCheckoutForm({
           code,
           product_id: product.id,
           offer_id: activeOffer?.id && product.offers?.some((o) => o.id === activeOffer.id) ? activeOffer.id : undefined,
+          governorate,
         }),
       });
       const j = await res.json();

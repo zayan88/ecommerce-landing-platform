@@ -38,7 +38,6 @@ import {
   MessageCircle,
   Plug,
   Handshake,
-  LayoutTemplate,
 } from "lucide-react";
 
 interface NavChild {
@@ -105,7 +104,6 @@ const allNavigationItems: NavItem[] = [
       { name: "إشعارات المبيعات", href: "/admin/settings/notifications", icon: Bell },
       { name: "طرق الدفع", href: "/admin/settings/payments", icon: CreditCard },
       { name: "الشحن", href: "/admin/settings/shipping", icon: Truck },
-      { name: "الصفحة الرئيسية", href: "/admin/settings/home", icon: LayoutTemplate },
       { name: "الشات", href: "/admin/settings/chat", icon: MessageCircle },
       { name: "MCP", href: "/admin/settings/mcp", icon: Plug },
     ],
@@ -246,7 +244,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {navigationItems.map((item) => {
               const Icon = item.icon;
               if (item.children) {
-                const isChildActive = (href: string) => pathname === href || (href !== item.href && pathname.startsWith(href + "/"));
+                const isChildActive = (href: string) => pathname === href || (href !== item.href && pathname.startsWith(href + "/")) || (href === "/admin/settings" && pathname === "/admin/settings/home");
                 const groupActive = item.children.some((c) => isChildActive(c.href));
                 const open = groupActive || openGroups[item.href];
                 return (

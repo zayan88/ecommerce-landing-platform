@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { SettingsShell, cardCls, inputCls, Field } from "../../_components/settings-ui";
 import { useConfirm } from "../../_components/confirm";
+import { StoreTabs } from "../../_components/store-tabs";
 import { HOME_SECTIONS, defaultHomeContent, mergeHomeContent, type HomeContent, type HomeSection } from "@/lib/home-content";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 
@@ -67,7 +68,7 @@ export default function HomeSettingsPage() {
 
   return (
     <SettingsShell
-      title="الصفحة الرئيسية"
+      title="إعدادات المتجر"
       description="كل نصوص الصفحة الرئيسية للمتجر بتتعدّل من هنا. اللي تسيبه فاضي بيرجع للنص الافتراضي. وتقدر كمان تخلّي أي صفحة هبوط هي الرئيسية من قائمة صفحات الهبوط."
       load={(s) => {
         const name = (s.store_name || "متجري") as string;
@@ -77,6 +78,7 @@ export default function HomeSettingsPage() {
       }}
       payload={() => ({ home_content: hc })}
     >
+      <StoreTabs />
       <section className={cardCls}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-black text-slate-900">البداية من نصوص جاهزة</h2>
