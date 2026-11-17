@@ -285,7 +285,7 @@ export class SafkaClient {
       const calculatedCommission = Math.max(0, order.total_amount - totalCost);
 
       const storeName = (await dbStore.getSettings()).store_name || "المتجر";
-      const safkaPageId = (process.env.SAFKA_PAGE_ID || "").trim();
+      const safkaPageId = String((await dbStore.getSettings() as any).safka_page_id || process.env.SAFKA_PAGE_ID || "").trim();
       const payload = {
         items: [
           {

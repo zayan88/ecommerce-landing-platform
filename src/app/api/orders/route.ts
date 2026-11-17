@@ -293,7 +293,8 @@ export async function POST(req: NextRequest) {
     // 6. Forward order to Safka Egypt Dropshipping API (Awaited to ensure completion on Serverless/Vercel)
     let safkaResult = null;
     try {
-      if (SAFKA_ENABLED) safkaResult = await SafkaClient.createOrder(createdOrder);
+      const safkaOn = SAFKA_ENABLED || Boolean(((await dbStore.getSettings()) as any).safka_enabled);
+      if (safkaOn) safkaResult = await SafkaClient.createOrder(createdOrder);
       console.log(`[Order Created] Linked to Safka Egypt:`, safkaResult);
     } catch (err) {
       console.error("[Safka dropshipping forward error]", err);

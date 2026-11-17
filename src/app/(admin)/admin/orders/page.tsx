@@ -43,6 +43,12 @@ import {
 } from "lucide-react";
 
 export default function AdminOrdersPage() {
+  // Safka column / actions: build flag or the merchant's switch (Suppliers page)
+  const [safkaOn, setSafkaOn] = useState(SAFKA_ENABLED);
+  useEffect(() => {
+    if (SAFKA_ENABLED) return;
+    fetch("/api/settings").then((r) => r.json()).then((j) => setSafkaOn(j?.settings?.safka_enabled === true)).catch(() => {});
+  }, []);
   const confirmAsk = useConfirm();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -601,7 +607,7 @@ export default function AdminOrdersPage() {
             {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-500" /> : <VolumeX className="w-4 h-4 text-gray-400" />}
             <span>{soundEnabled ? "الصوت شغال" : "الصوت مكتوم"}</span>
           </button>
-          {SAFKA_ENABLED && (
+          {safkaOn && (
             <button
               onClick={() => {
                 setPage(0);
@@ -870,21 +876,21 @@ export default function AdminOrdersPage() {
                 <th className="py-3.5 px-4 min-w-[220px]">المنتج والباقة المطلوبة</th>
                 <th className="py-3.5 px-4">المبلغ</th>
                 <th className="py-3.5 px-4">حالة الطلب</th>
-                {SAFKA_ENABLED && <th className="py-3.5 px-4">بوابة صفقة</th>}
+                {safkaOn && <th className="py-3.5 px-4">بوابة صفقة</th>}
                 <th className="py-3.5 px-4 text-center">إجراءات سريعة</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading && orders.length === 0 ? (
                 <tr>
-                  <td colSpan={SAFKA_ENABLED ? 9 : 8} className="py-8 text-center text-gray-400">
+                  <td colSpan={safkaOn ? 9 : 8} className="py-8 text-center text-gray-400">
                     <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     <span>جاري تحميل الطلبات...</span>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={SAFKA_ENABLED ? 9 : 8} className="py-12 text-center text-gray-400">
+                  <td colSpan={safkaOn ? 9 : 8} className="py-12 text-center text-gray-400">
                     لا توجد طلبات تطابق هذا البحث
                   </td>
                 </tr>
@@ -986,7 +992,7 @@ export default function AdminOrdersPage() {
                         </select>
                       </td>
 
-                      {SAFKA_ENABLED && (
+                      {safkaOn && (
                       <td className="py-3.5 px-4 text-xs">
                         <div className="flex items-center gap-1.5">
                           <span
