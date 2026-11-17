@@ -1228,12 +1228,35 @@ export default function AdminOrdersPage() {
                     <span className="text-gray-500">الحالة:</span>
                     {selectedOrder.tracking.payment.status === "paid" ? (
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">التحويل وصل ✓</span>
+                    ) : selectedOrder.tracking.payment.status === "rejected" ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">التحويل مرفوض ✗</span>
                     ) : (
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">في انتظار التحويل</span>
                     )}
                   </div>
                 </div>
-                {selectedOrder.tracking.payment.status !== "paid" && (
+                {selectedOrder.tracking.payment.status === "awaiting" && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm("رفض التحويل؟ الطلب هيتلغي وصورة التحويل هتتمسح.")) return;
+                      const res = await fetch(`/api/orders?id=${encodeURIComponent(selectedOrder.id)}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "reject_payment" }),
+                      });
+                      const j = await res.json().catch(() => null);
+                      if (j?.success && j.order) {
+                        handleOrderUpdated(j.order);
+                        fetchOrders({ withTotal: true });
+                      } else alert(j?.error || "تعذر رفض التحويل");
+                    }}
+                    className="w-full min-h-[48px] rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-black cursor-pointer"
+                  >
+                    رفض التحويل
+                  </button>
+                )}
+                {selectedOrder.tracking.payment.status === "awaiting" && (
                   <button
                     type="button"
                     onClick={async () => {

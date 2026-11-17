@@ -95,6 +95,20 @@ for (const backend of ["d1", "kv"]) {
     assert.equal(order.tracking.payment.status, "paid", "the rest of the payment record is kept");
   });
 
+  await test(tag + "reject_payment cancels the order, marks the payment rejected and deletes the image; a paid one cannot be rejected", async () => {
+    const up = await upload();
+    const r = await place({ payment_receipt: up.body.id });
+    const rej = await patch(r.body.order.id, { action: "reject_payment" });
+    assert.equal(rej.body.success, true);
+    assert.equal((await view(up.body.id)).status, 404);
+    const order = await dbStore.getOrder(r.body.order.id);
+    assert.equal(order.status, "cancelled");
+    assert.equal(order.tracking.payment.status, "rejected");
+    const r2 = await place({});
+    await patch(r2.body.order.id, { action: "confirm_payment" });
+    assert.equal((await patch(r2.body.order.id, { action: "reject_payment" })).status, 400);
+  });
+
   await test(tag + "rejecting (cancelling) or moving the order on deletes the image", async () => {
     const a = await upload();
     const ra = await place({ payment_receipt: a.body.id });

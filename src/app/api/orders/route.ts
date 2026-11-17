@@ -573,6 +573,20 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: true, order: updated });
     }
 
+    // The merchant did not receive the transfer: reject the payment and cancel the order (the screenshot is deleted)
+    if (action === "reject_payment") {
+      const order = await dbStore.getOrder(orderId);
+      if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
+      const pay = order.tracking?.payment;
+      if (!pay) return NextResponse.json({ success: false, error: "الطلب ده دفعه عند الاستلام" }, { status: 400 });
+      if (pay.status === "paid") return NextResponse.json({ success: false, error: "التحويل اتأكد قبل كده" }, { status: 400 });
+      const updated = await dbStore.updateOrder(orderId, {
+        tracking: { ...(order.tracking || {}), payment: { ...pay, status: "rejected", rejected_at: new Date().toISOString() } },
+        status: "cancelled",
+      } as any);
+      return NextResponse.json({ success: true, order: updated });
+    }
+
     // General update for order fields
     const allowedFields = [
       "status",
