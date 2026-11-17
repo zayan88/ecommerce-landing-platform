@@ -1,6 +1,7 @@
 import { Order, Product } from "@/types";
 import { dbStore } from "@/lib/db/store";
 import { buildOrderWhatsappMessage } from "@/lib/order-message";
+import { getReceipt } from "@/lib/db/receipts-repo";
 
 /** Escape user-controlled text for Telegram parse_mode=HTML (prevents broken/injected messages). */
 export function escapeTelegramHtml(value: unknown): string {
@@ -97,6 +98,10 @@ ${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500)
 
       const results: TelegramSendResult[] = [];
 
+      // The customer's transfer screenshot (Vodafone Cash / InstaPay), sent right after the order message
+      let receipt: { ct: string; bytes: Uint8Array } | null = null;
+      if (pay?.receipt_id) receipt = await getReceipt(pay.receipt_id).catch(() => null);
+
       for (const chatId of chatIds) {
         try {
           const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -128,6 +133,18 @@ ${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500)
           const data = await res.json();
           if (res.ok && data.ok) {
             results.push({ success: true, messageId: data.result?.message_id });
+            if (receipt) {
+              try {
+                const fd = new FormData();
+                fd.append("chat_id", chatId);
+                fd.append("caption", `🧾 صورة التحويل — طلب #${truncate(order.order_number, 40)}`);
+                fd.append("photo", new Blob([receipt.bytes as unknown as BlobPart], { type: receipt.ct }), "receipt");
+                const pr = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: "POST", body: fd });
+                if (!pr.ok) console.error(`[Telegram Receipt] chat ${chatId}: HTTP ${pr.status}`);
+              } catch (e: any) {
+                console.error(`[Telegram Receipt] chat ${chatId}:`, e?.message);
+              }
+            }
             console.log(`[Telegram Notification] Successfully delivered to chat ${chatId}`);
           } else {
             console.error(`[Telegram Notification Error] chat ${chatId}:`, data.description);
