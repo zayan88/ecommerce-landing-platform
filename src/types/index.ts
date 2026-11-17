@@ -226,6 +226,9 @@ export interface Order {
 export interface OrderPayment {
   method: string;
   reference?: string;
+  /** Uploaded transfer screenshot (admin-only image); removed once the merchant decides the order. */
+  receipt_id?: string;
+  receipt_deleted_at?: string;
   status: "awaiting" | "paid";
   confirmed_at?: string;
 }

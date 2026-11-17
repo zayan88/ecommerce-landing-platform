@@ -10,6 +10,9 @@ import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
 import { useBrand } from "@/components/brand/BrandProvider";
 import { useLang } from "@/components/i18n/LangProvider";
+import { compressImage } from "@/lib/image-compress";
+import { InstapayMark, VodafoneMark } from "./PayMarks";
+import { Camera, Loader2, Trash2 } from "lucide-react";
 import { bestAutoCoupon, computeShipping, shippingHint } from "@/lib/commerce";
 import {
   CheckCircleIcon,
@@ -62,6 +65,40 @@ export function EgyptianCheckoutForm({
   const brand = useBrand();
   const [payMethod, setPayMethod] = useState<"cod" | "vodafone_cash" | "instapay">("cod");
   const [payRef, setPayRef] = useState("");
+  // transfer screenshot (uploaded as soon as it is picked; the order only carries its id)
+  const [receiptId, setReceiptId] = useState("");
+  const [receiptPreview, setReceiptPreview] = useState("");
+  const [receiptBusy, setReceiptBusy] = useState(false);
+  const [receiptErr, setReceiptErr] = useState("");
+  const pickReceipt = async (file: File | undefined) => {
+    if (!file) return;
+    setReceiptErr("");
+    setReceiptBusy(true);
+    try {
+      const blob = await compressImage(file, 1280, 700_000);
+      const fd = new FormData();
+      fd.append("file", blob, "receipt.webp");
+      const res = await fetch("/api/receipts", { method: "POST", body: fd });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.id) throw new Error(j.error || t("co.receipt_err"));
+      setReceiptId(j.id);
+      setReceiptPreview((old) => {
+        if (old) URL.revokeObjectURL(old);
+        return URL.createObjectURL(blob);
+      });
+    } catch (e: any) {
+      setReceiptErr(e?.message || t("co.receipt_err"));
+    } finally {
+      setReceiptBusy(false);
+    }
+  };
+  const clearReceipt = () => {
+    setReceiptId("");
+    setReceiptPreview((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return "";
+    });
+  };
   const [copied, setCopied] = useState(false);
   const copyPayTarget = async (text: string) => {
     try {
@@ -334,6 +371,7 @@ export function EgyptianCheckoutForm({
         website: website || undefined,
         payment_method: payMethod,
         payment_reference: payMethod === "cod" ? undefined : payRef.trim() || undefined,
+        payment_receipt: payMethod === "cod" ? undefined : receiptId || undefined,
         coupon_code: coupon?.code,
         event_id: eventId,
         ...utms,
@@ -618,7 +656,9 @@ export function EgyptianCheckoutForm({
                 }`}
               >
                 <input type="radio" name="pay_method" value={id} checked={payMethod === id} onChange={() => setPayMethod(id)} className="mt-1 w-4 h-4 accent-orange-600" />
-                <span>
+                {id === "vodafone_cash" && <VodafoneMark className="w-8 h-8 shrink-0" />}
+                {id === "instapay" && <InstapayMark className="w-8 h-8 shrink-0" />}
+                <span className="flex-1">
                   <span className="block text-sm font-black text-slate-900">{title}</span>
                   <span className="block text-xs text-slate-500">{hint}</span>
                 </span>
@@ -626,7 +666,8 @@ export function EgyptianCheckoutForm({
             ))}
             {payMethod !== "cod" && (
               <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2 text-sm">
-                <p className="font-bold text-slate-800">
+                <p className="font-bold text-slate-800 flex items-center gap-2">
+                  {payMethod === "vodafone_cash" ? <VodafoneMark className="w-6 h-6 shrink-0" /> : <InstapayMark className="w-6 h-6 shrink-0" />}
                   {t("co.transfer", { amt: Number(finalTotal).toLocaleString("en-US"), cur: t("currency") })}
                 </p>
                 {(() => {
@@ -659,6 +700,30 @@ export function EgyptianCheckoutForm({
                   placeholder={t("co.ref_ph")}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500"
                 />
+                {/* Transfer screenshot: goes with the order, deleted once the merchant decides it */}
+                <div className="space-y-1.5">
+                  <p className="text-xs sm:text-sm font-bold text-slate-800">
+                    {t("co.receipt")} <span className="text-slate-400 font-normal">{t("co.optional")}</span>
+                  </p>
+                  {receiptId && receiptPreview ? (
+                    <div className="flex items-center gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={receiptPreview} alt={t("co.receipt")} className="w-16 h-16 rounded-lg object-cover border border-emerald-200" />
+                      <span className="flex-1 text-xs font-bold text-emerald-800">{t("co.receipt_ok")}</span>
+                      <button type="button" onClick={clearReceipt} className="min-h-[40px] px-3 rounded-lg text-red-600 hover:bg-red-50 text-xs font-bold flex items-center gap-1 cursor-pointer">
+                        <Trash2 className="w-4 h-4" /> {t("co.receipt_remove")}
+                      </button>
+                    </div>
+                  ) : (
+                    <label className={`flex items-center justify-center gap-2 min-h-[56px] rounded-xl border-2 border-dashed px-3 text-sm font-bold cursor-pointer transition ${receiptBusy ? "border-slate-300 text-slate-500" : "border-orange-300 text-orange-700 hover:bg-orange-50"}`}>
+                      {receiptBusy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
+                      <span>{receiptBusy ? t("co.receipt_busy") : t("co.receipt_pick")}</span>
+                      <input type="file" accept="image/*" className="sr-only" disabled={receiptBusy} onChange={(e) => { pickReceipt(e.target.files?.[0]); e.target.value = ""; }} />
+                    </label>
+                  )}
+                  {receiptErr && <p className="text-xs font-bold text-red-700">{receiptErr}</p>}
+                  <p className="text-[11px] text-slate-500 leading-relaxed">{t("co.receipt_hint")}</p>
+                </div>
                 <p className="text-xs text-slate-500 leading-relaxed">{t("co.transfer_note")}</p>
               </div>
             )}

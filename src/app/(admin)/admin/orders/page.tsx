@@ -1209,6 +1209,18 @@ export default function AdminOrdersPage() {
                       <span className="font-mono font-bold text-gray-900" dir="ltr">{selectedOrder.tracking.payment.reference}</span>
                     </div>
                   )}
+                  {selectedOrder.tracking.payment.receipt_id ? (
+                    <div className="space-y-1.5">
+                      <span className="text-gray-500 block">صورة التحويل:</span>
+                      <a href={`/api/receipts/${selectedOrder.tracking.payment.receipt_id}`} target="_blank" rel="noopener noreferrer" className="block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={`/api/receipts/${selectedOrder.tracking.payment.receipt_id}`} alt="صورة التحويل" className="w-full max-h-72 object-contain rounded-xl border border-gray-200 bg-white" />
+                      </a>
+                      <p className="text-[11px] text-gray-500">الصورة بتتمسح تلقائي أول ما تأكّد الطلب أو ترفضه.</p>
+                    </div>
+                  ) : selectedOrder.tracking.payment.receipt_deleted_at ? (
+                    <p className="text-[11px] text-gray-500">صورة التحويل اتمسحت بعد قرارك في الطلب.</p>
+                  ) : null}
                   <div className="flex justify-between gap-2 items-center">
                     <span className="text-gray-500">الحالة:</span>
                     {selectedOrder.tracking.payment.status === "paid" ? (

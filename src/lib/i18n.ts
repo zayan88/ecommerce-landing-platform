@@ -169,6 +169,15 @@ const D: Record<string, Entry> = {
   "chat.order_now_short": { ar: "اطلب الآن", en: "Order now" },
   "chat.ask": { ar: "اسأل", en: "Ask" },
   "chat.new_reply": { ar: "رد جديد", en: "New reply" },
+
+  // ── payment receipt upload ──
+  "co.receipt": { ar: "صورة التحويل (إيصال)", en: "Transfer receipt (screenshot)" },
+  "co.receipt_hint": { ar: "ارفع لقطة شاشة التحويل عشان نأكد طلبك أسرع. بتتمسح بعد ما نراجعها.", en: "Upload a screenshot of the transfer so we can confirm faster. It is deleted after we review it." },
+  "co.receipt_pick": { ar: "اضغط لرفع صورة التحويل", en: "Tap to upload the transfer screenshot" },
+  "co.receipt_busy": { ar: "جاري رفع الصورة...", en: "Uploading..." },
+  "co.receipt_remove": { ar: "حذف الصورة", en: "Remove image" },
+  "co.receipt_err": { ar: "تعذر رفع الصورة، جرّب صورة تانية", en: "Could not upload the image, try another one" },
+  "co.receipt_ok": { ar: "تم رفع الصورة ✓", en: "Image uploaded ✓" },
 };
 
 /** Translate a key; `{n}` style variables are replaced. Unknown key → the key itself. */

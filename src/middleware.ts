@@ -44,6 +44,7 @@ function isPublicApi(method: string, p: string): boolean {
   if (p === "/api/coupons/check") return m === "POST";
   if (p === "/api/shipping/bosta-webhook") return m === "POST";
   if (p === "/api/chat") return m === "POST" || m === "GET";
+  if (p === "/api/receipts") return m === "POST"; // customers attach a transfer screenshot; reading one back is admin-only
   if (p === "/api/chat/webhook") return m === "POST"; // authenticated by Telegram's secret-token header inside the route
   // Uploaded product images are public (GET /api/media/<id>); uploading (POST /api/media) stays admin-only
   if (p.startsWith("/api/media/")) return m === "GET" && !p.slice("/api/media/".length).includes("/");

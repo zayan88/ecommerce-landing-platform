@@ -3,6 +3,7 @@ import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
 import { generateOrderId, generateOrderNumber, generateUniqueOrderNumber } from "@/lib/orders/guard";
 import { getOrdersRepo, ordersBackend, ordersKvMirrorEnabled, type OrdersPulse } from "./orders-repo";
+import { deleteReceipt } from "./receipts-repo";
 import { cachedCatalogRead, catalogBackend, catalogKvMirrorEnabled, getCatalogRepo, invalidateCatalogCache } from "./catalog-repo";
 
 /** Upper bound of the "total" shown by the orders pager (bounds the D1 rows read by the COUNT). */
@@ -728,6 +729,36 @@ async function mirrorOrderToKv(order: Order): Promise<void> {
  * Backend-neutral order patch: D1 (ORDERS_BACKEND=d1) or the KV read-modify-write above.
  * `source` labels the order_status_history row when the status changes.
  */
+/**
+ * A transfer screenshot is kept only until the merchant decides the order: once the order is no longer pending
+ * (confirmed, rejected/cancelled, shipped...) or its payment is marked received, the image is deleted for good.
+ */
+async function settleReceipt(order: Order | null): Promise<void> {
+  try {
+    const pay = order?.tracking?.payment;
+    if (!order || !pay?.receipt_id) return;
+    const decided = order.status !== "pending" || pay.status === "paid";
+    if (!decided) return;
+    await deleteReceipt(pay.receipt_id);
+    await patchOrder(order.id, { tracking: { ...(order.tracking || {}), payment: { ...pay, receipt_id: undefined, receipt_deleted_at: new Date().toISOString() } } } as Partial<Order>, false, "admin");
+  } catch (e) {
+    console.error("[receipt cleanup]", (e as Error)?.message);
+  }
+}
+
+/** Orders are being deleted: their screenshots go with them. */
+async function dropReceiptsOf(ids: string[]): Promise<void> {
+  for (const id of ids.slice(0, 500)) {
+    try {
+      const o = await dbStore.getOrder(id);
+      const rid = o?.tracking?.payment?.receipt_id;
+      if (rid) await deleteReceipt(rid);
+    } catch {
+      /* best effort */
+    }
+  }
+}
+
 async function patchOrder(id: string, patch: Partial<Order>, savedElsewhere: boolean, source: string): Promise<Order | null> {
   if (ordersBackend() !== "d1") return applyOrderPatch(id, patch, savedElsewhere);
   try {
@@ -1717,6 +1748,7 @@ export const dbStore = {
 
     const order = await patchOrder(id, updatePayload, Boolean(admin), "admin");
     if (!order) return null;
+    await settleReceipt(order);
 
     let products: Product[] = memoryProducts;
     try {
@@ -1928,6 +1960,7 @@ export const dbStore = {
     }
     try {
       const order = await patchOrder(id, { status, updated_at }, Boolean(admin), "status");
+      await settleReceipt(order);
       saveToFile();
       return Boolean(order);
     } catch (e) {
@@ -1963,6 +1996,7 @@ export const dbStore = {
   },
 
   async deleteOrder(id: string): Promise<boolean> {
+    await dropReceiptsOf([id]);
     loadFromFile();
     const admin = getSupabaseAdmin();
     if (admin) {
@@ -2013,6 +2047,7 @@ export const dbStore = {
   },
 
   async deleteOrders(ids: string[]): Promise<{ count: number }> {
+    await dropReceiptsOf(ids);
     loadFromFile();
     const idSet = new Set(ids);
     const admin = getSupabaseAdmin();
