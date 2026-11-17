@@ -265,5 +265,58 @@ await test("LLM guard: the prompt limits it to store topics, steering attempts n
   await save({ chat: { enabled: true, faq: FAQ, llm_enabled: false } });
 });
 
+await test("live-first: the question pings Telegram right away (no phone), a Reply continues the chat, no reply -> phone later", async () => {
+  assert.equal(lib.sanitizeChat({ reply_wait_seconds: 5 }).reply_wait_seconds, 60);
+  assert.equal(lib.sanitizeChat({ reply_wait_seconds: 99999 }).reply_wait_seconds, 1800);
+  assert.equal(lib.sanitizeChat({}).reply_wait_seconds, 300);
+  await save({ chat: { enabled: true, faq: FAQ, reply_wait_seconds: 600 }, support_bot_token: BOT, support_chat_id: "123456789" });
+  await dbStore.updateSettings({ support_webhook_secret: "wh-secret-123" });
+  const poll = (c, after = 0) => call(chatRoute.GET, `/api/chat?cid=${c}&after=${after}`, { method: "GET" });
+  const hook = (update) => call(webhookRoute.POST, "/api/chat/webhook", { method: "POST", body: update, headers: { "x-telegram-bot-api-secret-token": "wh-secret-123" } });
+
+  // 1) A customer answered by the merchant in time: no phone asked at all
+  const cidA = "aaaa1111bbbb2222cccc3333";
+  let n = sent.telegram.length;
+  let r = await chat({ message: "عايز أعرف عن الألوان المتاحة", cid: cidA, live_start: true, page: "/p/x" });
+  assert.equal(r.body.waiting, true);
+  assert.equal(r.body.wait_seconds, 600);
+  assert.equal(sent.telegram.length, n + 1);
+  assert.ok(sent.telegram[n].body.text.includes("10 دقايق"), "tells the merchant the wait time");
+  assert.ok(!sent.telegram[n].body.text.includes("01"), "no phone in a live-first message");
+  await hook({ message: { text: "متاح أسود وأبيض", chat: { id: 123456789 }, reply_to_message: { message_id: 1000 + n + 1 } } });
+  let p = await poll(cidA);
+  assert.deepEqual(p.body.lines.map((l) => [l.who, l.text]), [["me", "عايز أعرف عن الألوان المتاحة"], ["shop", "متاح أسود وأبيض"]]);
+
+  // 2) Nobody answers: after the wait the chat sends the phone; the same conversation, marked as late, no duplicate line
+  const cidB = "bbbb1111cccc2222dddd3333";
+  n = sent.telegram.length;
+  r = await chat({ message: "الجهاز بيشتغل بالبطارية؟", cid: cidB, live_start: true });
+  assert.equal(r.body.waiting, true);
+  r = await chat({ message: "الجهاز بيشتغل بالبطارية؟", name: "سمر", phone: "01098765432", cid: cidB });
+  assert.equal(r.body.handoff, true);
+  assert.equal(r.body.live, true);
+  const late = sent.telegram[sent.telegram.length - 1].body;
+  assert.ok(late.text.includes("استنى ردك"), "marked as a late hand-off");
+  assert.ok(late.text.includes("01098765432"));
+  assert.ok(late.reply_markup.inline_keyboard[0][0].url.includes("wa.me/"), "WhatsApp button");
+  p = await poll(cidB);
+  assert.equal(p.body.lines.length, 1, "the question is stored once");
+  // a Reply to the late message still reaches the customer
+  await hook({ message: { text: "آسفين على التأخير، بيشتغل بالبطارية 8 ساعات", chat: { id: 123456789 }, reply_to_message: { message_id: 1000 + sent.telegram.length } } });
+  p = await poll(cidB);
+  assert.deepEqual(p.body.lines.map((l) => l.who), ["me", "shop"]);
+
+  // 3) Live is not available (no webhook secret): the page is told to ask for a number right away, nothing is sent
+  await dbStore.updateSettings({ support_webhook_secret: "" });
+  n = sent.telegram.length;
+  r = await chat({ message: "سؤال", cid: "cccc1111dddd2222eeee3333", live_start: true });
+  assert.equal(r.body.need_contact, true);
+  assert.equal(r.body.waiting, undefined);
+  assert.equal(sent.telegram.length, n);
+  // a bad cid is never a live conversation
+  r = await chat({ message: "سؤال", cid: "../x", live_start: true });
+  assert.equal(r.body.need_contact, true);
+});
+
 globalThis.fetch = realFetch;
 await finish();

@@ -30,6 +30,8 @@ export interface ChatConfig {
   nudges: string[];
   /** Seconds between balloons (10-300). */
   nudge_seconds: number;
+  /** How long the customer waits for the merchant's live reply before the chat asks for a phone number (60-1800 s). */
+  reply_wait_seconds: number;
 }
 
 const clean = (v: unknown, max: number): string =>
@@ -47,6 +49,7 @@ export const DEFAULT_CHAT: ChatConfig = {
   llm_prompt: "",
   nudges: [],
   nudge_seconds: 25,
+  reply_wait_seconds: 300,
 };
 
 /** https URL with a real hostname (no IP literals, no localhost, no credentials): the server will call it. */
@@ -89,8 +92,10 @@ export function sanitizeChat(input: unknown): ChatConfig {
   const faq = sanitizeFaqList(i.faq, 30);
   const nudges = (Array.isArray(i.nudges) ? i.nudges : []).map((n: unknown) => clean(n, 100)).filter(Boolean).slice(0, 6);
   const secs = Math.round(Number(i.nudge_seconds));
+  const wait = Math.round(Number(i.reply_wait_seconds));
   return {
     nudges,
+    reply_wait_seconds: Number.isFinite(wait) && wait > 0 ? Math.min(1800, Math.max(60, wait)) : DEFAULT_CHAT.reply_wait_seconds,
     nudge_seconds: Number.isFinite(secs) ? Math.min(300, Math.max(10, secs)) : DEFAULT_CHAT.nudge_seconds,
     enabled: Boolean(i.enabled),
     title: clean(i.title, 40) || DEFAULT_CHAT.title,
@@ -145,6 +150,7 @@ export interface PublicChat {
   faq: ChatFaq[];
   nudges: string[];
   nudge_seconds: number;
+  reply_wait_seconds: number;
   /** The server may answer (LLM) before handing off. */
   ask_server: boolean;
 }
@@ -155,7 +161,7 @@ export function publicChat(s: any): PublicChat | undefined {
   const c = sanitizeChat(s.chat);
   if (!c.enabled) return undefined;
   const llm = c.llm_enabled && Boolean(c.llm_model) && typeof s.llm_api_key === "string" && s.llm_api_key.length > 0;
-  return { title: c.title, welcome: c.welcome, fallback: c.fallback, faq: c.faq, nudges: c.nudges, nudge_seconds: c.nudge_seconds, ask_server: llm };
+  return { title: c.title, welcome: c.welcome, fallback: c.fallback, faq: c.faq, nudges: c.nudges, nudge_seconds: c.nudge_seconds, reply_wait_seconds: c.reply_wait_seconds, ask_server: llm };
 }
 
 /** Marker that opens the merchant's text inside the system prompt (never allowed in an answer). */

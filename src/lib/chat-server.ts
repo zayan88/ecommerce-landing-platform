@@ -14,6 +14,8 @@ export interface HandoffInput {
   storeName: string;
   /** The reply can come back into the customer's chat window (live chat is available). */
   live?: boolean;
+  /** The customer already waited for a live reply that never came, and now left a number. */
+  late?: boolean;
 }
 
 /** Sends the customer's message to the merchant's support chat with a "reply on WhatsApp" button. */
@@ -24,7 +26,7 @@ export async function sendSupportHandoff(settings: any, input: HandoffInput): Pr
   const esc = escapeTelegramHtml;
   const wa = `https://wa.me/2${input.phone.replace(/^0/, "")}?text=${encodeURIComponent(`أهلاً ${input.name || ""}، بخصوص رسالتك لـ ${input.storeName}:`)}`;
   const text = [
-    `💬 <b>رسالة دعم جديدة — ${esc(input.storeName)}</b>`,
+    input.late ? `⏰ <b>عميل استنى ردك ومحدش رد — ${esc(input.storeName)}</b>` : `💬 <b>رسالة دعم جديدة — ${esc(input.storeName)}</b>`,
     "━━━━━━━━━━━━━━",
     `👤 <b>الاسم:</b> ${esc(input.name || "—")}`,
     `📞 <b>الموبايل:</b> <code>${esc(input.phone)}</code>`,
@@ -54,6 +56,38 @@ export async function sendSupportHandoff(settings: any, input: HandoffInput): Pr
   }
 }
 
+/**
+ * First message of a live conversation: the customer is on the site RIGHT NOW and has not left a number yet.
+ * The merchant answers with a Telegram Reply within the wait time; otherwise the chat asks the customer for a number.
+ */
+export async function sendSupportLive(settings: any, input: { message: string; page?: string; storeName: string; waitMinutes: number }): Promise<number | null> {
+  const token = typeof settings.support_bot_token === "string" ? settings.support_bot_token : "";
+  const chatId = typeof settings.support_chat_id === "string" ? settings.support_chat_id : "";
+  if (!token || !chatId) return null;
+  const esc = escapeTelegramHtml;
+  const text = [
+    `🟢 <b>عميل على الموقع دلوقتي — ${esc(input.storeName)}</b>`,
+    "━━━━━━━━━━━━━━",
+    input.page ? `🔗 <b>الصفحة:</b> ${esc(input.page.slice(0, 200))}` : "",
+    esc(input.message.slice(0, 800)),
+    "━━━━━━━━━━━━━━",
+    `↩️ اعمل Reply على الرسالة دي خلال ${input.waitMinutes} دقايق والرد هيوصله في الشات. لو محدش رد هيسيب رقمه.`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+    });
+    const j: any = await res.json().catch(() => null);
+    return res.ok && typeof j?.result?.message_id === "number" ? j.result.message_id : null;
+  } catch {
+    return null;
+  }
+}
+
 /** A follow-up line of an ongoing conversation (the customer typed again). Returns the Telegram message id, or null. */
 export async function sendSupportFollowUp(settings: any, input: { name: string; phone: string; text: string }): Promise<number | null> {
   const token = typeof settings.support_bot_token === "string" ? settings.support_bot_token : "";
@@ -66,7 +100,7 @@ export async function sendSupportFollowUp(settings: any, input: { name: string; 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: `💬 <b>${esc(input.name || "عميل")}</b> <code>${esc(input.phone)}</code>\n${esc(input.text.slice(0, 800))}`,
+        text: `💬 <b>${esc(input.name || "عميل على الموقع")}</b>${input.phone ? ` <code>${esc(input.phone)}</code>` : ""}\n${esc(input.text.slice(0, 800))}`,
         parse_mode: "HTML",
         disable_web_page_preview: true,
       }),
