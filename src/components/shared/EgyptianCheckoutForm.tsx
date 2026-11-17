@@ -378,17 +378,35 @@ export function EgyptianCheckoutForm({
         ...utms,
       };
 
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || t("co.err_send"));
+      // A busy edge can answer a request with a temporary 5xx / an empty reply. The server de-duplicates the same order
+      // (same phone + product + event id), so sending it again is safe: retry quietly instead of showing the customer an error.
+      let data: any = null;
+      let failure: Error | null = null;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, 700 * attempt));
+        try {
+          const res = await fetch("/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const body: any = await res.json().catch(() => null);
+          if (res.ok && body?.success) {
+            data = body;
+            failure = null;
+            break;
+          }
+          if (res.status < 500 && body) {
+            // a definite answer (validation, rate limit, ...): show it, do not retry
+            failure = new Error(body.error || t("co.err_send"));
+            break;
+          }
+          failure = new Error(t("co.err_conn")); // 5xx or unreadable reply: retry
+        } catch {
+          failure = new Error(t("co.err_conn")); // network hiccup: retry
+        }
       }
+      if (!data) throw failure || new Error(t("co.err_conn"));
 
       // Track Purchase on Client-Side Pixel
       trackMetaEvent(
