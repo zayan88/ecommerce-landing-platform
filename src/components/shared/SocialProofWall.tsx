@@ -5,6 +5,7 @@ import { useBrand } from "@/components/brand/BrandProvider";
 import { shippingHint } from "@/lib/commerce";
 import { Star, MapPin, BadgeCheck } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
+import { useLang } from "@/components/i18n/LangProvider";
 
 /**
  * Trust strip. Deliberately contains NO invented buyer names, NO fake "bought X minutes ago"
@@ -35,11 +36,13 @@ export function SocialProofWall({ rating, reviewsCount, statements, governorates
   const safeRating = showRating ? Math.min(5, Math.max(0, rating as number)) : 0;
   const filledStars = Math.round(safeRating);
   const hint = shippingHint(useBrand().commerce.shipping);
-  const stmts = statements && statements.length > 0 ? statements : DEFAULT_PROOF_STATEMENTS.map((t, i) => (i === 1 && !hint.free ? hint.text : t));
-  const places = governorates && governorates.length > 0 ? governorates : DEFAULT_COVERAGE;
+  const { t, dir } = useLang();
+  const defaultStmts = [t("proof.p1"), t("proof.p2"), t("proof.p3"), t("proof.p4")];
+  const stmts = statements && statements.length > 0 ? statements : defaultStmts.map((x, i) => (i === 1 && !hint.free ? hint.text : x));
+  const places = governorates && governorates.length > 0 ? governorates : [t("proof.coverage")];
 
   return (
-    <section dir="rtl" aria-label="ليه تثق فينا" className="bg-white rounded-3xl border border-slate-200/90 shadow-sm sm:shadow-md p-4 sm:p-5 space-y-3">
+    <section dir={dir} aria-label={t("proof.aria")} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm sm:shadow-md p-4 sm:p-5 space-y-3">
       {showRating && (
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <span className="flex items-center gap-0.5 text-amber-500" aria-hidden="true">
@@ -48,7 +51,7 @@ export function SocialProofWall({ rating, reviewsCount, statements, governorates
             ))}
           </span>
           <span className="font-black text-slate-900 text-base">{safeRating.toFixed(1)} / 5</span>
-          <span className="text-xs sm:text-sm text-slate-600">من {reviewsCount} تقييم</span>
+          <span className="text-xs sm:text-sm text-slate-600">{t("proof.from_reviews", { n: reviewsCount as number })}</span>
         </div>
       )}
 
@@ -66,7 +69,7 @@ export function SocialProofWall({ rating, reviewsCount, statements, governorates
 
       <div className="flex items-center justify-center gap-1.5 flex-wrap text-[11px] sm:text-xs text-slate-600 leading-relaxed">
         <MapPin className="w-4 h-4 text-orange-600" aria-hidden="true" />
-        <span className="font-bold text-slate-800">بنوصّل:</span>
+        <span className="font-bold text-slate-800">{t("proof.we_deliver")}</span>
         {places.map((p, i) => (
           <EText key={i} field={editable ? `proof_governorates.${i}` : undefined} base={places} as="span" className="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 font-semibold" value={p} />
         ))}

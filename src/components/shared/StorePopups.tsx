@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { X, Ticket } from "lucide-react";
 import { useBrand } from "@/components/brand/BrandProvider";
+import { useLang } from "@/components/i18n/LangProvider";
 
 /**
  * The merchant's promotional popup and the downsell coupon popup (shown when the visitor is about to leave,
@@ -27,6 +28,7 @@ const markSeen = (key: string) => {
 
 export function StorePopups() {
   const brand = useBrand();
+  const { t, dir } = useLang();
   const pathname = usePathname() || "";
   const popup = brand.commerce?.popup;
   const downsell = brand.commerce?.downsell;
@@ -85,11 +87,11 @@ export function StorePopups() {
       className="fixed inset-0 z-[60] bg-slate-900/60 flex items-center justify-center p-4"
       onMouseDown={(e) => e.target === e.currentTarget && setOpen(null)}
     >
-      <div role="dialog" aria-modal="true" dir="rtl" className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden text-right">
+      <div role="dialog" aria-modal="true" dir={dir} className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden text-right">
         <button
           type="button"
           onClick={() => setOpen(null)}
-          aria-label="إغلاق"
+          aria-label={t("close")}
           className="absolute top-3 left-3 w-10 h-10 rounded-full bg-white/90 hover:bg-slate-100 flex items-center justify-center cursor-pointer z-10"
         >
           <X className="w-5 h-5 text-slate-600" />
@@ -120,7 +122,7 @@ export function StorePopups() {
             <div className="mx-auto w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
               <Ticket className="w-7 h-7" />
             </div>
-            <h3 className="text-xl font-black text-slate-950">استنى! عندنا لك كوبون</h3>
+            <h3 className="text-xl font-black text-slate-950">{t("popup.title")}</h3>
             {downsell.message && <p className="text-sm text-slate-600 leading-relaxed">{downsell.message}</p>}
             <div className="rounded-xl border-2 border-dashed border-orange-300 bg-orange-50 py-3 font-mono text-lg font-black text-orange-700" dir="ltr">
               {downsell.code}
@@ -133,10 +135,10 @@ export function StorePopups() {
               }}
               className="w-full min-h-[52px] rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base cursor-pointer"
             >
-              استخدم الكوبون واطلب
+              {t("popup.use")}
             </button>
             <button type="button" onClick={() => setOpen(null)} className="text-sm font-bold text-slate-500 hover:text-slate-700 cursor-pointer min-h-[44px]">
-              لا شكراً
+              {t("popup.no")}
             </button>
           </div>
         )}

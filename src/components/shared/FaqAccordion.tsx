@@ -5,6 +5,7 @@ import { useBrand } from "@/components/brand/BrandProvider";
 import { shippingHint } from "@/lib/commerce";
 import { ChevronDown } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
+import { useLang } from "@/components/i18n/LangProvider";
 
 export interface FaqItem {
   q: string;
@@ -50,11 +51,9 @@ interface FaqAccordionProps {
 export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable }: FaqAccordionProps) {
   const titleId = React.useId();
   const hint = shippingHint(useBrand().commerce.shipping);
-  const defaults = hint.free
-    ? DEFAULT_FAQ
-    : DEFAULT_FAQ.map((f, i) =>
-        i === 0 ? { ...f, a: `الشحن لكل محافظات مصر لحد باب بيتك (${hint.text}). تكلفة الشحن بتظهر لك قبل ما تأكد الطلب، والتوصيل بياخد من 5 لـ 7 أيام عمل.` } : f
-      );
+  const { t, dir } = useLang();
+  const base: FaqItem[] = [1, 2, 3, 4, 5, 6].map((n) => ({ q: t(`faq.q${n}`), a: t(`faq.a${n}`) }));
+  const defaults = hint.free ? base : base.map((f, i) => (i === 0 ? { ...f, a: t("faq.a1_paid", { ship: hint.text }) } : f));
   const list = items && items.length > 0 ? items.filter((i) => i?.q && i?.a) : defaults;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -67,8 +66,8 @@ export function FaqAccordion({ title, items, defaultOpenIndex = 0, editable }: F
   };
 
   return (
-    <section dir="rtl" aria-labelledby={titleId} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm sm:shadow-md p-4 sm:p-6">
-      <EText field={editable ? "faq_title" : undefined} id={titleId} as="h2" className="text-xl sm:text-2xl font-black text-slate-900 font-heading text-center mb-4 leading-relaxed" value={title || "أسئلة بتدور في بالك؟ جاوبنا عليها"} />
+    <section dir={dir} aria-labelledby={titleId} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm sm:shadow-md p-4 sm:p-6">
+      <EText field={editable ? "faq_title" : undefined} id={titleId} as="h2" className="text-xl sm:text-2xl font-black text-slate-900 font-heading text-center mb-4 leading-relaxed" value={title || t("faq.title")} />
       <div className="space-y-2.5">
         {list.map((item, idx) => (
           <details

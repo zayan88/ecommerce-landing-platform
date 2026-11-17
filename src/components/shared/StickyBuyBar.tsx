@@ -5,6 +5,7 @@ import { ShoppingBagIcon } from "@heroicons/react/24/solid";
 import { Product, ProductOffer } from "@/types";
 import { useBrand } from "@/components/brand/BrandProvider";
 import { shippingHint } from "@/lib/commerce";
+import { useLang } from "@/components/i18n/LangProvider";
 
 interface StickyBuyBarProps {
   product?: Product;
@@ -27,8 +28,10 @@ export function StickyBuyBar({
   price = selectedOffer?.price || product?.base_price || 0,
   compareAtPrice = selectedOffer?.original_price || product?.compare_at_price,
   onCtaClick = onOrderClick ?? onBuyClick,
-  ctaText = "أكّد طلبك الآن 🛒",
+  ctaText,
 }: StickyBuyBarProps) {
+  const { t, dir } = useLang();
+  const cta = ctaText || t("sticky.cta");
   const shipHint = shippingHint(useBrand().commerce.shipping);
   const [pastHero, setPastHero] = React.useState(false);
   const [formInView, setFormInView] = React.useState(false);
@@ -73,21 +76,21 @@ export function StickyBuyBar({
         className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-[0_-4px_25px_rgba(0,0,0,0.12)] transition-transform duration-300 ${
           visible ? "translate-y-0" : "translate-y-full pointer-events-none"
         }`}
-        dir="rtl"
+        dir={dir}
         aria-hidden={!visible}
       >
       <div className="flex items-center justify-between gap-4 max-w-3xl mx-auto">
         <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-1.5 sm:gap-2">
-            <span className="text-xl sm:text-2xl font-black text-orange-600 font-heading">{price} ج.م</span>
+            <span className="text-xl sm:text-2xl font-black text-orange-600 font-heading">{price} {t("currency")}</span>
             {compareAtPrice && (
-              <span className="text-xs sm:text-sm text-slate-400 line-through">{compareAtPrice} ج.م</span>
+              <span className="text-xs sm:text-sm text-slate-400 line-through">{compareAtPrice} {t("currency")}</span>
             )}
           </div>
           <span className="hidden sm:inline-block text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-            ✓ معاينة وفحص قبل الدفع{shipHint.free ? " + شحن مجاني" : ""}
+            {t("sticky.inspect")}{shipHint.free ? t("sticky.plus_free") : ""}
           </span>
-          <span className="sm:hidden text-[10px] text-emerald-700 font-bold">✓ معاينة قبل الدفع</span>
+          <span className="sm:hidden text-[10px] text-emerald-700 font-bold">{t("sticky.inspect_short")}</span>
         </div>
 
         <button
@@ -96,7 +99,7 @@ export function StickyBuyBar({
           className="flex-1 max-w-[210px] sm:max-w-[260px] min-h-[48px] py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs sm:text-sm shadow-md shadow-orange-500/25 flex items-center justify-center gap-1.5 sm:gap-2 active:scale-95 transition cursor-pointer"
         >
           <ShoppingBagIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>{ctaText}</span>
+          <span>{cta}</span>
         </button>
       </div>
       </div>

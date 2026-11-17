@@ -6,16 +6,18 @@ import { MessageCircle, Phone, Mail, ShieldCheck } from "lucide-react";
 import { useBrand } from "@/components/brand/BrandProvider";
 import { shippingHint } from "@/lib/commerce";
 import { whatsappUrl, telUrl } from "@/lib/store-contact";
+import { useLang } from "@/components/i18n/LangProvider";
 
 /** Store footer for landing-page mode: brand, contact, policy link and the trust line. */
 export function LandingFooter({ extraBottomSpace = false }: { extraBottomSpace?: boolean }) {
   const brand = useBrand();
+  const { t, dir } = useLang();
   const wa = brand.support_whatsapp ? whatsappUrl(brand.support_whatsapp) : "";
   const tel = brand.support_phone ? telUrl(brand.support_phone) : "";
 
   return (
     <footer
-      dir="rtl"
+      dir={dir}
       data-landing-footer
       className={`bg-slate-900 text-slate-300 ${extraBottomSpace ? "pb-24 sm:pb-6" : ""}`}
     >
@@ -26,17 +28,17 @@ export function LandingFooter({ extraBottomSpace = false }: { extraBottomSpace?:
         </div>
 
         <div className="space-y-1">
-          <div className="font-black text-white">تواصل معنا</div>
+          <div className="font-black text-white">{t("footer.contact")}</div>
           {wa && (
             <a href={wa} target="_blank" rel="noopener noreferrer" className="flex min-h-[44px] items-center gap-2 hover:text-white">
               <MessageCircle className="w-4 h-4 text-emerald-400" aria-hidden="true" />
-              واتساب <span dir="ltr">{brand.support_whatsapp}</span>
+              {t("footer.whatsapp")} <span dir="ltr">{brand.support_whatsapp}</span>
             </a>
           )}
           {tel && (
             <a href={tel} className="flex min-h-[44px] items-center gap-2 hover:text-white">
               <Phone className="w-4 h-4 text-emerald-400" aria-hidden="true" />
-              اتصال <span dir="ltr">{brand.support_phone}</span>
+              {t("footer.call")} <span dir="ltr">{brand.support_phone}</span>
             </a>
           )}
           {brand.support_email && (
@@ -45,22 +47,22 @@ export function LandingFooter({ extraBottomSpace = false }: { extraBottomSpace?:
               <span dir="ltr">{brand.support_email}</span>
             </a>
           )}
-          {!wa && !tel && !brand.support_email && <p className="leading-relaxed text-slate-400">يمكنك الطلب مباشرة من النموذج في الصفحة.</p>}
+          {!wa && !tel && !brand.support_email && <p className="leading-relaxed text-slate-400">{t("footer.order_form")}</p>}
         </div>
 
         <div className="space-y-1">
-          <div className="font-black text-white">معلومات مهمة</div>
+          <div className="font-black text-white">{t("footer.info")}</div>
           <Link href="/policy" className="flex min-h-[44px] items-center gap-2 hover:text-white">
             <ShieldCheck className="w-4 h-4 text-emerald-400" aria-hidden="true" />
-            سياسة الاستبدال والاسترجاع
+            {t("footer.policy")}
           </Link>
         </div>
       </div>
 
       <div className="border-t border-slate-700 py-4 px-4 text-center text-xs leading-relaxed space-y-1">
-        <div className="font-bold text-emerald-300">الدفع عند الاستلام • {shippingHint(brand.commerce.shipping).text} • معاينة قبل الدفع</div>
+        <div className="font-bold text-emerald-300">{t("footer.cod_line", { ship: shippingHint(brand.commerce.shipping).text })}</div>
         <div>
-          © {new Date().getFullYear()} {brand.store_name}. جميع الحقوق محفوظة.
+          © {new Date().getFullYear()} {brand.store_name}. {t("footer.rights")}
         </div>
       </div>
     </footer>

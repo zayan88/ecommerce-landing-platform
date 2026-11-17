@@ -29,6 +29,10 @@ export interface Brand {
   commerce: PublicCommerce;
   /** The store chat, only when the merchant enabled it (never the LLM key or the Telegram bot). */
   chat?: PublicChat;
+  /** Store language: the visitor may switch between Arabic and English (default on). */
+  lang_switch?: boolean;
+  /** Language a new visitor sees. */
+  lang_default?: "ar" | "en";
   /** landing = each product has its own landing page; catalog = regular store home listing all products. */
 }
 
@@ -97,5 +101,7 @@ export const getBrand = cache(async (): Promise<Brand> => {
     payments: publicPayments(s.payment_methods),
     commerce: publicCommerce(s),
     chat: publicChat(s),
+    lang_switch: s.lang_switch !== false,
+    lang_default: s.lang_default === "en" ? "en" : "ar",
   };
 });

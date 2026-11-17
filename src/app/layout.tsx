@@ -15,6 +15,8 @@ import "@fontsource/tajawal/900.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { VisitorTracker } from "@/components/tracking/VisitorTracker";
+import { LangProvider } from "@/components/i18n/LangProvider";
+import { getLang } from "@/lib/i18n-server";
 
 export const runtime = "edge";
 
@@ -45,17 +47,20 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const brand = await getBrand();
+  const lang = await getLang();
   // Merchant theme: CSS variables consumed by tailwind.config.ts (emerald-* = primary, orange-* = accent)
   const themeVars = { ...cssVarsFor("primary", brand.primary), ...cssVarsFor("accent", brand.accent) } as React.CSSProperties;
 
   return (
-    <html lang="ar" dir="rtl" style={themeVars}>
+    <html lang={lang} dir="rtl" style={themeVars}>
       <body className="antialiased bg-slate-50 text-gray-900 font-sans">
         <BrandProvider brand={brand}>
           <Suspense fallback={null}>
             <VisitorTracker />
           </Suspense>
-          <Providers>{children}</Providers>
+          <LangProvider initial={lang}>
+            <Providers>{children}</Providers>
+          </LangProvider>
         </BrandProvider>
       </body>
     </html>

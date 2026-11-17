@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { usePathname } from "next/navigation";
 import { MessageCircle, Send, ShoppingBag, X } from "lucide-react";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { matchFaq, type ChatFaq } from "@/lib/chat";
+import { DEFAULT_CHAT, matchFaq, type ChatFaq } from "@/lib/chat";
+import { useLang } from "@/components/i18n/LangProvider";
 
 /**
  * Floating chat bubble on the whole store (landing pages and the home). The merchant's Q&A is answered right
@@ -63,6 +64,7 @@ function getCid(): string {
 
 export function StoreChat() {
   const brand = useBrand();
+  const { t, lang, dir } = useLang();
   const chat = brand.chat;
   const pathname = usePathname() || "";
   const [open, setOpen] = useState(false);
@@ -93,20 +95,20 @@ export function StoreChat() {
     const texts = chat.nudges.length
       ? chat.nudges
       : onProductPage
-        ? ["عندك سؤال عن المنتج؟ اسألنا 👋", "الدفع عند الاستلام وتفحص المنتج قبل ما تدفع 👌", "شحن مجاني لكل المحافظات. اطلب دلوقتي 🚚"]
-        : ["أهلاً! محتاج مساعدة؟ اسألنا 👋", "شحن مجاني والدفع عند الاستلام 🚚"];
+        ? [t("chat.nudge_p1"), t("chat.nudge_p2"), t("chat.nudge_p3")]
+        : [t("chat.nudge_h1"), t("chat.nudge_h2")];
     const ms = Math.max(10, chat.nudge_seconds) * 1000;
-    const t = setInterval(() => {
+    const timerId = setInterval(() => {
       if (nudgesOff.current) return;
-      if (nudgeCount.current >= MAX_NUDGES) return clearInterval(t);
+      if (nudgeCount.current >= MAX_NUDGES) return clearInterval(timerId);
       setNudge(texts[nudgeCount.current % texts.length]);
       nudgeCount.current += 1;
     }, ms);
-    return () => clearInterval(t);
+    return () => clearInterval(timerId);
   }, [chat, open, onProductPage]);
 
   useEffect(() => {
-    if (open && msgs.length === 0 && chat) setMsgs([{ from: "bot", text: chat.welcome }]);
+    if (open && msgs.length === 0 && chat) setMsgs([{ from: "bot", text: lang === "en" && chat.welcome === DEFAULT_CHAT.welcome ? "Hi! Pick a question or type your message and we will reply." : chat.welcome }]);
   }, [open, chat, msgs.length]);
   // Restore an earlier conversation, then poll for the merchant's replies (only while a conversation is open)
   useEffect(() => {
@@ -148,12 +150,12 @@ export function StoreChat() {
   }, [chat, open, live]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!waiting || !chat) return;
-    const t = setTimeout(() => {
+    const timerId = setTimeout(() => {
       setPending(waiting.text);
       setWaiting(null);
-      setMsgs((m) => [...m, { from: "bot", text: "لسه محدش قدر يرد دلوقتي. سيب اسمك ورقمك وهنرد عليك على واتساب في أقرب وقت." }]);
+      setMsgs((m) => [...m, { from: "bot", text: t("chat.no_reply") }]);
     }, Math.max(60, chat.reply_wait_seconds) * 1000);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timerId);
   }, [waiting, chat]);
   useEffect(() => {
     if (open) setUnread(false);
@@ -183,10 +185,10 @@ export function StoreChat() {
       try {
         const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, cid: getCid() }) });
         const j = await res.json();
-        if (res.status === 429) return bot(j.error || "جرّب بعد شوية");
-        if (!j.sent) bot("تعذر الإرسال دلوقتي، جرّب تاني.");
+        if (res.status === 429) return bot(j.error || t("chat.try_later"));
+        if (!j.sent) bot(t("chat.send_fail"));
       } catch {
-        bot("تعذر الإرسال دلوقتي، جرّب تاني.");
+        bot(t("chat.send_fail"));
       }
       return;
     }
@@ -197,7 +199,7 @@ export function StoreChat() {
         const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
         const j = await res.json();
         if (j.reply && !j.need_contact) return bot(j.reply);
-        if (res.status === 429) return bot(j.error || "جرّب بعد شوية");
+        if (res.status === 429) return bot(j.error || t("chat.try_later"));
       } catch {
         // fall through to the hand-off
       } finally {
@@ -209,11 +211,11 @@ export function StoreChat() {
     try {
       const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, cid: getCid(), live_start: true, page: window.location.pathname }) });
       const j = await res.json();
-      if (res.status === 429) return bot(j.error || "جرّب بعد شوية");
+      if (res.status === 429) return bot(j.error || t("chat.try_later"));
       if (j.waiting) {
         setLive(true);
         setWaiting({ text, since: Date.now() });
-        return bot("وصلت رسالتك لفريق الدعم، هيرد عليك هنا في الشات. استنى دقايق...");
+        return bot(t("chat.sent_wait"));
       }
     } catch {
       // fall through to the phone form
@@ -237,7 +239,7 @@ export function StoreChat() {
       });
       const j = await res.json();
       if (!res.ok) {
-        setFormError(j.error || "تعذر الإرسال");
+        setFormError(j.error || t("chat.fail_short"));
         return;
       }
       setPending(null);
@@ -245,7 +247,7 @@ export function StoreChat() {
       if (j.live) setLive(true);
       bot(j.reply);
     } catch {
-      setFormError("تعذر الإرسال، جرّب تاني");
+      setFormError(t("chat.fail_retry"));
     } finally {
       setBusy(false);
     }
@@ -256,12 +258,12 @@ export function StoreChat() {
   const bottom = pathname.startsWith("/p/") ? "bottom-24 sm:bottom-6" : "bottom-5";
 
   return (
-    <div className={`fixed ${bottom} left-4 z-50`} dir="rtl">
+    <div className={`fixed ${bottom} left-4 z-50`} dir={dir}>
       {open && (
         <div role="dialog" aria-label={chat.title} className="mb-3 w-[min(92vw,22rem)] h-[min(70vh,30rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden text-right">
           <div className="flex items-center justify-between gap-2 px-4 py-3 bg-slate-900 text-white">
             <span className="font-black text-sm">{chat.title}</span>
-            <button type="button" onClick={() => setOpen(false)} aria-label="إغلاق" className="w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center cursor-pointer">
+            <button type="button" onClick={() => setOpen(false)} aria-label={t("close")} className="w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -274,7 +276,7 @@ export function StoreChat() {
                 </span>
                 {m.order && (
                   <button type="button" onClick={orderNow} className="mt-1 ms-2 min-h-[36px] px-3 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-black flex items-center gap-1 cursor-pointer self-end">
-                    <ShoppingBag className="w-3.5 h-3.5" /> اطلب دلوقتي
+                    <ShoppingBag className="w-3.5 h-3.5" /> {t("chat.order_now")}
                   </button>
                 )}
               </div>
@@ -283,7 +285,7 @@ export function StoreChat() {
               <div className="flex flex-wrap gap-2 pt-1">
                 {onProductPage && (
                   <button type="button" onClick={orderNow} className="min-h-[40px] px-3 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-black cursor-pointer flex items-center gap-1">
-                    <ShoppingBag className="w-3.5 h-3.5" /> اطلب دلوقتي
+                    <ShoppingBag className="w-3.5 h-3.5" /> {t("chat.order_now")}
                   </button>
                 )}
                 {faqAll.slice(0, 6).map((f, i) => (
@@ -295,17 +297,17 @@ export function StoreChat() {
             )}
             {pending && (
               <form onSubmit={submitContact} className="bg-white border border-slate-200 rounded-2xl p-3 space-y-2">
-                <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="اسمك" className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500" />
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" dir="ltr" placeholder="رقم الواتساب 01xxxxxxxxx" className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500" />
+                <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder={t("chat.name_ph")} className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500" />
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" dir="ltr" placeholder={t("chat.phone_ph")} className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500" />
                 {formError && <p className="text-xs font-bold text-red-700">{formError}</p>}
                 <button type="submit" disabled={busy} className="w-full min-h-[44px] rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-black cursor-pointer disabled:opacity-60">
-                  {busy ? "جاري الإرسال..." : "ابعت رسالتي"}
+                  {busy ? t("chat.sending") : t("chat.send_msg")}
                 </button>
               </form>
             )}
             {showWhatsapp && wa && (
               <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="block text-center min-h-[44px] leading-[44px] rounded-xl bg-emerald-600 text-white text-sm font-black">
-                كلمنا على واتساب
+                {t("chat.whatsapp_us")}
               </a>
             )}
             <div ref={endRef} />
@@ -318,8 +320,8 @@ export function StoreChat() {
             }}
             className="flex gap-2 p-2.5 border-t border-slate-200 bg-white"
           >
-            <input value={input} onChange={(e) => setInput(e.target.value)} maxLength={300} placeholder="اكتب رسالتك..." disabled={busy} className="flex-1 min-w-0 px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500" />
-            <button type="submit" disabled={busy || !input.trim()} aria-label="إرسال" className="w-11 h-11 rounded-xl bg-orange-600 hover:bg-orange-700 text-white flex items-center justify-center cursor-pointer disabled:opacity-50">
+            <input value={input} onChange={(e) => setInput(e.target.value)} maxLength={300} placeholder={t("chat.input_ph")} disabled={busy} className="flex-1 min-w-0 px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-orange-500" />
+            <button type="submit" disabled={busy || !input.trim()} aria-label={t("chat.send")} className="w-11 h-11 rounded-xl bg-orange-600 hover:bg-orange-700 text-white flex items-center justify-center cursor-pointer disabled:opacity-50">
               <Send className="w-4 h-4 -scale-x-100" />
             </button>
           </form>
@@ -327,15 +329,15 @@ export function StoreChat() {
       )}
       {!open && nudge && (
         <div className="absolute bottom-16 left-0 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 text-right" role="status">
-          <button type="button" onClick={() => { nudgesOff.current = true; setNudge(null); }} aria-label="إخفاء" className="absolute top-1 left-1 w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100 flex items-center justify-center cursor-pointer">
+          <button type="button" onClick={() => { nudgesOff.current = true; setNudge(null); }} aria-label={t("chat.hide")} className="absolute top-1 left-1 w-7 h-7 rounded-full text-slate-400 hover:bg-slate-100 flex items-center justify-center cursor-pointer">
             <X className="w-4 h-4" />
           </button>
           <p className="text-sm font-bold text-slate-800 leading-relaxed ps-0 pe-1 pl-6">{nudge}</p>
           <div className="flex gap-2 mt-2">
             {onProductPage && (
-              <button type="button" onClick={orderNow} className="min-h-[36px] px-3 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-black cursor-pointer">اطلب الآن</button>
+              <button type="button" onClick={orderNow} className="min-h-[36px] px-3 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-black cursor-pointer">{t("chat.order_now_short")}</button>
             )}
-            <button type="button" onClick={() => { setNudge(null); setOpen(true); }} className="min-h-[36px] px-3 rounded-full border border-slate-300 text-slate-700 text-xs font-bold cursor-pointer">اسأل</button>
+            <button type="button" onClick={() => { setNudge(null); setOpen(true); }} className="min-h-[36px] px-3 rounded-full border border-slate-300 text-slate-700 text-xs font-bold cursor-pointer">{t("chat.ask")}</button>
           </div>
         </div>
       )}
@@ -347,7 +349,7 @@ export function StoreChat() {
         className="relative w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-xl shadow-orange-600/30 flex items-center justify-center cursor-pointer"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-        {!open && unread && <span className="absolute top-0 right-0 w-4 h-4 rounded-full bg-red-500 border-2 border-white" aria-label="رد جديد" />}
+        {!open && unread && <span className="absolute top-0 right-0 w-4 h-4 rounded-full bg-red-500 border-2 border-white" aria-label={t("chat.new_reply")} />}
       </button>
     </div>
   );
