@@ -90,7 +90,7 @@ export default function ProductOptionsEditor({ value, onChange }: { value: Optio
               <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 space-y-2.5">
                 <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr_auto] gap-2 items-center">
                   <input type="text" value={row.name} maxLength={30} onChange={(e) => setRow(i, { name: e.target.value })} placeholder="الاسم (اللون)" className={input} />
-                  <input type="text" value={row.values} onChange={(e) => setRow(i, { values: e.target.value })} placeholder="القيم مفصولة بفاصلة: أحمر، أزرق، أسود" className={input} />
+                  <input type="text" value={row.values} onChange={(e) => setRow(i, { values: e.target.value })} placeholder="اكتب القيم بنفسك مفصولة بفاصلة" className={input} />
                   <button type="button" onClick={() => onChange({ ...value, rows: value.rows.filter((_, k) => k !== i) })} className="min-h-[44px] px-3 rounded-xl border border-red-200 text-red-700 text-sm font-bold hover:bg-red-50 cursor-pointer">
                     حذف
                   </button>
@@ -122,8 +122,8 @@ export default function ProductOptionsEditor({ value, onChange }: { value: Optio
           {value.rows.length < MAX_OPTIONS && (
             <div className="flex flex-wrap gap-2">
               {[
-                ["اللون", "أحمر، أزرق، أسود", true],
-                ["المقاس", "S، M، L، XL", false],
+                ["اللون", "", true],
+                ["المقاس", "", false],
                 ["", "", false],
               ].map(([n, v, colors], k) => (
                 <button
@@ -138,7 +138,65 @@ export default function ProductOptionsEditor({ value, onChange }: { value: Optio
             </div>
           )}
 
-          {combos.length > 1 && combos.length <= MAX_COMBOS_LISTED && (
+          {options.length === 2 && combos.length > 1 && combos.length <= MAX_COMBOS_LISTED && (
+            <div className="space-y-2">
+              <p className="text-sm font-black text-slate-900">إيه المتاح مع إيه؟</p>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                علّم على {options[1].name} المتاحة لكل {options[0].name}. اللي مش معلّم العميل مش هيشوفه لما يختار {options[0].name} ده.
+              </p>
+              <div className="rounded-2xl border border-slate-200 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 text-xs text-slate-600">
+                      <th className="p-2 text-right font-bold">{options[0].name}</th>
+                      {options[1].values.map((v2) => (
+                        <th key={v2} className="p-2 text-center font-bold">{v2}</th>
+                      ))}
+                      <th className="p-2 text-center font-bold">الكل</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {options[0].values.map((v1) => {
+                      const keys = options[1].values.map((v2) => comboKey(options, { [options[0].name]: v1, [options[1].name]: v2 }));
+                      const allOn = keys.every((k) => !value.off.includes(k));
+                      return (
+                        <tr key={v1} className="border-t border-slate-100">
+                          <td className="p-2 font-bold text-slate-800">{v1}</td>
+                          {keys.map((k, idx) => {
+                            const on = !value.off.includes(k);
+                            return (
+                              <td key={k} className="p-1 text-center">
+                                <label className="inline-flex items-center justify-center w-11 h-11 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    aria-label={k}
+                                    checked={on}
+                                    onChange={() => onChange({ ...value, off: on ? [...value.off, k] : value.off.filter((x) => x !== k) })}
+                                    className="w-5 h-5"
+                                  />
+                                </label>
+                              </td>
+                            );
+                          })}
+                          <td className="p-1 text-center">
+                            <button
+                              type="button"
+                              onClick={() => onChange({ ...value, off: allOn ? [...value.off.filter((x) => !keys.includes(x)), ...keys] : value.off.filter((x) => !keys.includes(x)) })}
+                              className="text-xs font-bold text-sky-700 hover:underline cursor-pointer min-h-[44px] px-2"
+                            >
+                              {allOn ? "ولا واحد" : "الكل"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {options.length !== 2 && combos.length > 1 && combos.length <= MAX_COMBOS_LISTED && (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-black text-slate-900">كل التركيبات ({combos.length})</p>

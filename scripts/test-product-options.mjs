@@ -110,4 +110,16 @@ await test("swatches, the on/off switch and sold-out combinations", async () => 
   assert.equal(off2.status, 200, "options switched off: the order needs no picks");
 });
 
+await test("a color only comes in its own sizes: picking a color drops a size it does not have", () => {
+  const o = [{ name: "اللون", values: ["أحمر", "أزرق"] }, { name: "المقاس", values: ["S", "M", "L"] }];
+  const off = ["أحمر / S", "أزرق / L"]; // red: M, L   blue: S, M
+  assert.equal(opt.valueHasStock(o, off, { اللون: "أحمر" }, "المقاس", "S"), false);
+  assert.equal(opt.valueHasStock(o, off, { اللون: "أزرق" }, "المقاس", "S"), true);
+  let picks = opt.pickValue(o, off, {}, "المقاس", "L");
+  picks = opt.pickValue(o, off, picks, "اللون", "أزرق");
+  assert.deepEqual(picks, { اللون: "أزرق" }, "blue has no L: the size pick is dropped");
+  picks = opt.pickValue(o, off, picks, "المقاس", "S");
+  assert.deepEqual(picks, { اللون: "أزرق", المقاس: "S" });
+});
+
 finish();

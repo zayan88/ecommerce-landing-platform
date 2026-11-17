@@ -98,6 +98,18 @@ export function valueHasStock(options: ProductOption[], off: string[], picks: Re
   });
 }
 
+/** Picking a value: the picks of the other options that do not exist with it (e.g. a size this color does not come in) are dropped. */
+export function pickValue(options: ProductOption[], off: string[], picks: Record<string, string>, name: string, value: string): Record<string, string> {
+  const next: Record<string, string> = { ...picks, [name]: value };
+  for (const o of options) {
+    if (o.name === name || !next[o.name]) continue;
+    const others = { ...next };
+    delete others[o.name];
+    if (!valueHasStock(options, off, others, o.name, next[o.name])) delete next[o.name];
+  }
+  return next;
+}
+
 /** The customer's picks vs the product's options: every option is required, must be one of its values, and the combination must not be sold out. */
 export function formatOptionsNote(options: ProductOption[], picked: unknown, off: string[] = []): { note: string; error?: string } {
   if (options.length === 0) return { note: "" };

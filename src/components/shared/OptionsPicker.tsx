@@ -19,6 +19,8 @@ export function OptionsPicker({ options, off, picked, onPick, compact = false }:
             {o.values.map((v) => {
               const on = picked[o.name] === v;
               const inStock = valueHasStock(options, off, picked, o.name, v);
+              // a value that does not exist with what the customer already picked (e.g. a size this color does not come in) is not shown
+              if (!inStock && !on) return null;
               const dot = o.swatches?.[v];
               return (
                 <button

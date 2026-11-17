@@ -9,7 +9,7 @@ import { trackMarketingEvent } from "@/lib/tracking/marketing-pixels";
 import { Product, ProductOffer } from "@/types";
 import { HeroOfferSelector } from "./HeroOfferSelector";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { comboAvailable, effectiveOptions, sanitizeVariantsOff } from "@/lib/product-options";
+import { comboAvailable, effectiveOptions, pickValue, sanitizeVariantsOff } from "@/lib/product-options";
 import { OptionsPicker } from "@/components/shared/OptionsPicker";
 import { useLang } from "@/components/i18n/LangProvider";
 import { compressImage } from "@/lib/image-compress";
@@ -523,7 +523,7 @@ export function EgyptianCheckoutForm({
         )}
 
         {/* Product options: color / size ... */}
-        <OptionsPicker options={productOptions} off={variantsOff} picked={picked} onPick={(name, v) => setPicked((p) => ({ ...p, [name]: v }))} />
+        <OptionsPicker options={productOptions} off={variantsOff} picked={picked} onPick={(name, v) => setPicked((p) => pickValue(productOptions, variantsOff, p, name, v))} />
 
         {/* Honeypot (invisible to humans and screen readers) */}
         <div aria-hidden="true" className="sr-only">

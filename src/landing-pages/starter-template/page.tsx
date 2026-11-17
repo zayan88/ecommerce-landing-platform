@@ -12,7 +12,7 @@ import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
 import { SocialProofWall } from "@/components/shared/SocialProofWall";
 import { ShippingScope } from "@/components/shared/ShippingScope";
 import { OptionsPicker } from "@/components/shared/OptionsPicker";
-import { effectiveOptions, sanitizeVariantsOff } from "@/lib/product-options";
+import { effectiveOptions, pickValue, sanitizeVariantsOff } from "@/lib/product-options";
 import { shippingHint } from "@/lib/commerce";
 import { useBrand } from "@/components/brand/BrandProvider";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
@@ -316,7 +316,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
           {/* Color / size */}
           {productOptions.length > 0 && (
-            <OptionsPicker options={productOptions} off={variantsOff} picked={pickedOptions} onPick={(name, v) => setPickedOptions((p) => ({ ...p, [name]: v }))} compact />
+            <OptionsPicker options={productOptions} off={variantsOff} picked={pickedOptions} onPick={(name, v) => setPickedOptions((p) => pickValue(productOptions, variantsOff, p, name, v))} compact />
           )}
 
           {/* Price Display */}
