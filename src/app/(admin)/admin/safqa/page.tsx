@@ -56,12 +56,18 @@ export default function AdminSafqaPage() {
 
   // Host URL for webhooks
   const [customOrigin, setCustomOrigin] = useState("");
+  // The webhook secret: Safka must send it, so the links we show carry it (?secret=...)
+  const [hookSecret, setHookSecret] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setCustomOrigin(window.location.origin);
     }
     fetchSettings();
+    fetch("/api/safqa/webhook-secret", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => { if (j?.success && typeof j.secret === "string") setHookSecret(j.secret); })
+      .catch(() => {});
   }, []);
 
   const fetchSettings = async () => {
@@ -218,8 +224,9 @@ export default function AdminSafqaPage() {
   const effectiveOrigin = customOrigin || "https://ecommerce-landing-platform.vercel.app";
 
   // Webhook URLs
-  const productWebhookUrl = `${effectiveOrigin}/api/safqa/products`;
-  const orderWebhookUrl = `${effectiveOrigin}/api/safqa/orders`;
+  const secretQs = hookSecret ? `?secret=${encodeURIComponent(hookSecret)}` : "";
+  const productWebhookUrl = `${effectiveOrigin}/api/safqa/products${secretQs}`;
+  const orderWebhookUrl = `${effectiveOrigin}/api/safqa/orders${secretQs}`;
   const callbackApiUrl = `${effectiveOrigin}/api/safqa/connect-callback`;
   const redirectAdminUrl = `${effectiveOrigin}/admin/safqa`;
 

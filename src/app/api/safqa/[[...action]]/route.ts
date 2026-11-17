@@ -45,6 +45,12 @@ export async function GET(req: NextRequest, { params }: RouteProps) {
     return NextResponse.redirect(new URL("/admin/safqa?connected=true", req.url));
   }
 
+  // The webhook secret, for the admin page to build the links to paste into Safka (admin only; never public)
+  if (subAction === "webhook-secret") {
+    if (!isAdminRequest(req)) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 401 });
+    return NextResponse.json({ success: true, secret: (process.env.SAFQA_WEBHOOK_SECRET || "").trim() }, { headers: { "Cache-Control": "no-store" } });
+  }
+
   // 2. Health checks for webhooks & integration
   if (subAction === "orders" || subAction === "order-webhook") {
     return NextResponse.json({
