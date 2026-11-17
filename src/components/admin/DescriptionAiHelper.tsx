@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { Check, Copy, ExternalLink, Sparkles, Wand2 } from "lucide-react";
-import { buildDescriptionPrompt, cleanAiDescription } from "@/lib/ai-description";
+import { buildDescriptionPrompt, parseAiProduct, type AiProductContent } from "@/lib/ai-description";
 
 interface Props {
   title: string;
@@ -10,10 +10,11 @@ interface Props {
   brandName?: string;
   /** What is in the description box right now (used as the product notes inside the prompt). */
   notes: string;
-  onApply: (text: string) => void;
+  /** Called with everything the AI wrote: title (may be ""), description (may be ""), and the chat Q&A. */
+  onApply: (content: AiProductContent) => void;
 }
 
-/** Same copy / paste flow as the page editor's AI tab, for the product description: copy the prompt, paste the answer. */
+/** Copy / paste flow (same as the page editor's AI tab): copy the prompt, paste the answer. One answer fills the title, the description and the chat questions. */
 export default function DescriptionAiHelper({ title, price, brandName, notes, onApply }: Props) {
   const [open, setOpen] = useState(false);
   const [pasted, setPasted] = useState("");
@@ -33,21 +34,22 @@ export default function DescriptionAiHelper({ title, price, brandName, notes, on
   };
 
   const apply = () => {
-    const text = cleanAiDescription(pasted);
-    if (text.length < 20) {
+    const parsed = parseAiProduct(pasted);
+    if (parsed.description.length < 20 && !parsed.title && parsed.faq.length === 0) {
       setMsg({ ok: false, text: "الصق رد الذكاء الاصطناعي الأول (النص كامل)." });
       return;
     }
-    onApply(text);
+    onApply(parsed);
     setPasted("");
-    setMsg({ ok: true, text: "اتحط الوصف في الخانة فوق. راجعه وعدّل عليه، وبعدين احفظ المنتج." });
+    const parts = [parsed.title ? "العنوان" : "", parsed.description ? "الوصف" : "", parsed.faq.length ? `${parsed.faq.length} سؤال وجواب للشات` : ""].filter(Boolean);
+    setMsg({ ok: true, text: `اتملّى: ${parts.join(" + ")}. راجعهم وعدّل عليهم، وبعدين احفظ المنتج.` });
   };
 
   return (
     <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-3 space-y-3">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="w-full flex items-center gap-2 text-right cursor-pointer">
         <Sparkles className="w-4 h-4 text-violet-600 shrink-0" />
-        <span className="flex-1 text-sm font-black text-violet-900">اكتب الوصف بالذكاء الاصطناعي</span>
+        <span className="flex-1 text-sm font-black text-violet-900">اكتب العنوان والوصف وأسئلة الشات بالذكاء الاصطناعي</span>
         <span className="text-xs font-bold text-violet-700">{open ? "إخفاء" : "فتح"}</span>
       </button>
 
@@ -80,11 +82,11 @@ export default function DescriptionAiHelper({ title, price, brandName, notes, on
                 setMsg(null);
               }}
               rows={5}
-              placeholder="الصق الوصف اللي كتبه الذكاء الاصطناعي..."
+              placeholder="الصق رد الذكاء الاصطناعي (العنوان والوصف والأسئلة)..."
               className="w-full rounded-xl border border-slate-300 bg-white p-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-orange-500"
             />
             <button type="button" onClick={apply} className="w-full min-h-[44px] rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-black flex items-center justify-center gap-2 cursor-pointer">
-              <Wand2 className="w-4 h-4" /> ضع الوصف في خانة المنتج
+              <Wand2 className="w-4 h-4" /> املأ العنوان والوصف وأسئلة الشات
             </button>
           </div>
 
