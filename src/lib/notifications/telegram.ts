@@ -86,7 +86,7 @@ export class TelegramNotifier {
 ━━━━━━━━━━━━━━━━━━━━
 📦 <b>المنتج:</b> ${esc(productTitle)}
 🔢 <b>الكمية:</b> ${esc(order.quantity)} قطعة
-💰 <b>المبلغ عند الاستلام:</b> <b>${esc(order.final_amount)} ج.م</b> (شحن مجاني 🚚)
+💰 <b>${(product as any)?.digital ? "المبلغ" : "المبلغ عند الاستلام"}:</b> <b>${esc(order.final_amount)} ج.م</b> ${(product as any)?.digital ? "(تسليم إلكتروني ⚡)" : "(شحن مجاني 🚚)"}
 💵 <b>طريقة الدفع:</b> ${paymentLine}
 ${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500))}</i>\n` : ""}━━━━━━━━━━━━━━━━━━━━
 🎯 <b>مصدر الإعلان:</b> ${sourceDisplay}
@@ -112,7 +112,7 @@ ${order.notes ? `📝 <b>ملاحظات:</b> <i>${esc(truncate(order.notes, 500)
                     {
                       text: "💬 واتساب العميل",
                       url: `https://wa.me/${intlPhone}?text=${encodeURIComponent(
-                        buildOrderWhatsappMessage(order as any, { storeName: settings.store_name || "المتجر", productTitle })
+                        buildOrderWhatsappMessage(order as any, { storeName: settings.store_name || "المتجر", productTitle, digital: Boolean((product as any)?.digital) })
                       )}`,
                     },
                     {

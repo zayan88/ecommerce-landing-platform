@@ -66,6 +66,7 @@ export default function AdminProductsPage() {
   // Questions & answers the store chat uses on this product's page (stored in settings.chat_products[id])
   // Color / size ... (values typed separated by commas)
   const [optionsState, setOptionsState] = useState<OptionsState>(EMPTY_OPTIONS);
+  const [isDigital, setIsDigital] = useState(false);
   const [chatFaq, setChatFaq] = useState<{ q: string; keywords: string; answer: string }[]>([]);
   const [allChatFaq, setAllChatFaq] = useState<Record<string, any[]>>({});
   // This product's own shipping fee (empty = the store's governorate / default fee). Kept in settings.shipping_config.product_fees.
@@ -123,6 +124,7 @@ export default function AdminProductsPage() {
     setUpsellOpen(false);
     setUpsellEnabled(false);
     setOptionsState(EMPTY_OPTIONS);
+    setIsDigital(false);
     setChatFaq([]);
     setProductShipFee("");
     loadChatFaq();
@@ -146,6 +148,7 @@ export default function AdminProductsPage() {
   const openEditModal = (prod: Product) => {
     setEditingProduct(prod);
     setOptionsState(optionsStateFromProduct(prod));
+    setIsDigital(Boolean((prod as any).digital));
     setChatFaq([]);
     setProductShipFee("");
     loadChatFaq().then(({ all, ship }) => {
@@ -239,6 +242,7 @@ export default function AdminProductsPage() {
         images: imagesArray,
         offers: finalOffers,
         ...optionsPayload(optionsState),
+        digital: isDigital,
       };
 
       const res = await fetch("/api/products", {
@@ -778,6 +782,14 @@ export default function AdminProductsPage() {
                     }}
                   />
                 </section>
+
+                <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 cursor-pointer">
+                  <input type="checkbox" checked={isDigital} onChange={(e) => setIsDigital(e.target.checked)} className="mt-1 w-4 h-4 accent-orange-600" />
+                  <span>
+                    <span className="block text-sm font-bold text-slate-900">منتج رقمي (من غير شحن)</span>
+                    <span className="block text-xs text-slate-500 mt-0.5">الفورم بيطلب الاسم والموبايل والإيميل بس، من غير عنوان ولا شحن.</span>
+                  </span>
+                </label>
 
                 <ProductOptionsEditor value={optionsState} onChange={setOptionsState} />
 

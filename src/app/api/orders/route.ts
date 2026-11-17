@@ -78,12 +78,18 @@ export async function POST(req: NextRequest) {
     // 3. Resolve pricing & offers server-side only (All shipping is 100% Free)
     const finalGov = data.governorate || data.shipping_governorate || "القاهرة";
     const finalAddress = data.address || data.shipping_address || "العنوان بالتفصيل";
+    // Digital product: no address / shipping; the customer's email is required and goes into the notes
+    const isDigital = Boolean((product as any).digital);
+    if (isDigital && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email || "")) {
+      return NextResponse.json({ success: false, error: "اكتب إيميل صحيح عشان نبعتلك المنتج" }, { status: 400 });
+    }
+    const emailNote = isDigital ? `الإيميل: ${data.email}` : "";
     // Color / size etc.: required when the product has options, checked against the product itself, then written into the notes
     const optionsCheck = formatOptionsNote(effectiveOptions(product), data.options, sanitizeVariantsOff((product as any).variants_off));
     if (optionsCheck.error) {
       return NextResponse.json({ success: false, error: optionsCheck.error }, { status: 400 });
     }
-    const finalNotes = [optionsCheck.note ? `الخيارات: ${optionsCheck.note}` : "", data.notes || data.customer_notes || ""].filter(Boolean).join(" | ");
+    const finalNotes = [emailNote, optionsCheck.note ? `الخيارات: ${optionsCheck.note}` : "", data.notes || data.customer_notes || ""].filter(Boolean).join(" | ");
 
     let quantity: number;
     let unitPrice: number;
@@ -158,7 +164,7 @@ export async function POST(req: NextRequest) {
     }
     if (couponApplied) discountAmount += couponApplied.amount;
     const afterCoupon = totalAmount - (couponApplied?.amount || 0);
-    const shippingFee = couponApplied?.free_shipping
+    const shippingFee = isDigital || couponApplied?.free_shipping
       ? 0
       : computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping, governorate: data.governorate });
     const finalAmount = afterCoupon + shippingFee;

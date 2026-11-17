@@ -900,7 +900,7 @@ export default function AdminOrdersPage() {
               ) : (
                 orders.map((ord) => {
                   const whatsappLink = `https://wa.me/2${ord.customer_phone.replace(/^0/, "")}?text=${encodeURIComponent(
-                    buildOrderWhatsappMessage(ord as any, { storeName: brand.store_name, productTitle: ord.product?.title_ar })
+                    buildOrderWhatsappMessage(ord as any, { storeName: brand.store_name, productTitle: ord.product?.title_ar, digital: Boolean((ord.product as any)?.digital) })
                   )}`;
 
                   const isChecked = selectedOrderIds.includes(ord.id);
@@ -1186,7 +1186,7 @@ export default function AdminOrdersPage() {
                 </a>
                 <a
                   href={`https://wa.me/2${selectedOrder.customer_phone.replace(/^0/, "")}?text=${encodeURIComponent(
-                    buildOrderWhatsappMessage(selectedOrder as any, { storeName: brand.store_name, productTitle: (selectedOrder as any).product?.title_ar })
+                    buildOrderWhatsappMessage(selectedOrder as any, { storeName: brand.store_name, productTitle: (selectedOrder as any).product?.title_ar, digital: Boolean((selectedOrder as any).product?.digital) })
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

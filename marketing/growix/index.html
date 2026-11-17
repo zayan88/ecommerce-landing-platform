@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Growix | متجر الدفع عند الاستلام الجاهز</title>
+<meta name="description" content="Growix: متجر وصفحات هبوط جاهزة للدفع عند الاستلام في مصر. بتدفع مرة واحدة، والمتجر على حسابك أنت، ومن غير نسبة على كل أوردر.">
+<meta name="theme-color" content="#1d4ed8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-950: #0b1b4a;
+    --blue-800: #1e40af;
+    --blue-600: #2563eb;
+    --blue-500: #3b82f6;
+    --blue-50: #eff6ff;
+    --green-600: #059669;
+    --green-500: #10b981;
+    --green-50: #ecfdf5;
+    --ink: #0f172a;
+    --muted: #475569;
+    --line: #e2e8f0;
+    --bg: #ffffff;
+    --soft: #f8fafc;
+    --cta: #f97316;
+    --cta-dark: #ea580c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; color-scheme: light; }
+  body { font-family: "Cairo", system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.8; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  section { padding: 56px 0; }
+  h1, h2, h3 { font-weight: 900; line-height: 1.4; color: var(--ink); }
+  h2 { font-size: clamp(1.5rem, 4.5vw, 2.1rem); text-align: center; }
+  .sub { text-align: center; color: var(--muted); max-width: 640px; margin: 8px auto 32px; }
+  .eyebrow { display: inline-block; padding: 4px 14px; border-radius: 999px; background: var(--green-50); color: var(--green-600); border: 1px solid #a7f3d0; font-weight: 700; font-size: .8rem; }
+
+  /* header */
+  header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 60px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 1.35rem; color: var(--blue-950); }
+  .logo svg { width: 32px; height: 32px; }
+  .logo b { color: var(--green-600); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 26px; border-radius: 14px; font-weight: 900; font-size: 1rem; cursor: pointer; border: 0; font-family: inherit; transition: transform .15s, box-shadow .15s, background .15s; }
+  .btn:active { transform: scale(.97); }
+  .btn-cta { background: var(--cta); color: #fff; box-shadow: 0 10px 24px -8px rgba(249,115,22,.55); }
+  .btn-cta:hover { background: var(--cta-dark); }
+  .btn-ghost { background: #fff; color: var(--blue-800); border: 2px solid var(--blue-600); }
+  .btn-sm { min-height: 40px; padding: 0 18px; font-size: .9rem; border-radius: 12px; }
+
+  /* hero */
+  .hero { background: linear-gradient(160deg, var(--blue-950) 0%, var(--blue-800) 55%, #0f766e 120%); color: #fff; padding: 56px 0 64px; position: relative; overflow: hidden; }
+  .hero::after { content: ""; position: absolute; inset: auto -80px -120px auto; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle, rgba(16,185,129,.35), transparent 70%); }
+  .hero .wrap { position: relative; z-index: 1; display: grid; gap: 36px; align-items: center; }
+  .hero h1 { color: #fff; font-size: clamp(1.9rem, 6.5vw, 3rem); }
+  .hero h1 em { font-style: normal; color: #6ee7b7; }
+  .hero p.lead { color: #dbeafe; font-size: 1.1rem; margin: 14px 0 22px; max-width: 560px; }
+  .hero .eyebrow { background: rgba(16,185,129,.16); border-color: rgba(110,231,183,.4); color: #6ee7b7; margin-bottom: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .chip { padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); font-size: .85rem; font-weight: 600; color: #e0f2fe; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  @media (min-width: 900px) { .hero .wrap { grid-template-columns: 1.1fr .9fr; } }
+
+  /* phone mock */
+  .phone { margin: 0 auto; width: min(300px, 86vw); background: #fff; color: var(--ink); border-radius: 30px; padding: 14px; box-shadow: 0 30px 60px -20px rgba(2,6,23,.6); border: 6px solid #0f172a; }
+  .phone .bar { background: var(--blue-950); color: #fff; font-size: .72rem; text-align: center; border-radius: 10px; padding: 4px; font-weight: 700; }
+  .phone .img { height: 110px; border-radius: 14px; margin: 10px 0; background: linear-gradient(135deg, var(--blue-50), var(--green-50)); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; }
+  .phone .t { font-weight: 900; font-size: .95rem; }
+  .phone .offers { display: grid; gap: 6px; margin: 8px 0; }
+  .phone .offer { border: 2px solid var(--line); border-radius: 12px; padding: 6px 10px; font-size: .8rem; font-weight: 700; display: flex; justify-content: space-between; }
+  .phone .offer.on { border-color: var(--green-500); background: var(--green-50); }
+  .phone .buy { background: var(--cta); color: #fff; text-align: center; border-radius: 12px; padding: 9px; font-weight: 900; font-size: .9rem; }
+  .phone .ok { font-size: .7rem; color: var(--green-600); text-align: center; margin-top: 6px; font-weight: 700; }
+
+  /* problem */
+  .problem { background: var(--soft); }
+  .cols { display: grid; gap: 16px; }
+  @media (min-width: 760px) { .cols.c3 { grid-template-columns: repeat(3, 1fr); } .cols.c2 { grid-template-columns: repeat(2, 1fr); } }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+  .card h3 { font-size: 1.05rem; margin: 8px 0 4px; }
+  .card p { color: var(--muted); font-size: .95rem; }
+  .ico { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--blue-50); }
+  .ico.g { background: var(--green-50); }
+  .vs { display: grid; gap: 14px; }
+  @media (min-width: 760px) { .vs { grid-template-columns: 1fr 1fr; } }
+  .vs .bad { background: #fff1f2; border: 1px solid #fecdd3; }
+  .vs .good { background: var(--green-50); border: 1px solid #a7f3d0; }
+  .vs ul { list-style: none; margin-top: 10px; display: grid; gap: 8px; }
+  .vs li { font-size: .95rem; font-weight: 600; }
+  .vs .bad li::before { content: "✕  "; color: #e11d48; font-weight: 900; }
+  .vs .good li::before { content: "✓  "; color: var(--green-600); font-weight: 900; }
+
+  /* steps */
+  .steps { counter-reset: s; display: grid; gap: 14px; }
+  @media (min-width: 760px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+  .step { position: relative; padding-top: 34px; }
+  .step::before { counter-increment: s; content: counter(s); position: absolute; top: -16px; right: 18px; width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--blue-600), var(--green-500)); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+
+  /* pricing */
+  .pricing { background: linear-gradient(180deg, var(--blue-50), #fff); }
+  .price-card { max-width: 520px; margin: 0 auto; background: #fff; border: 2px solid var(--blue-600); border-radius: 28px; padding: 28px 22px; box-shadow: 0 24px 50px -24px rgba(37,99,235,.5); text-align: center; }
+  .price { font-size: 3rem; font-weight: 900; color: var(--blue-800); line-height: 1.2; }
+  .price small { font-size: 1rem; color: var(--muted); font-weight: 700; }
+  .price-card ul { list-style: none; text-align: right; margin: 18px 0 22px; display: grid; gap: 9px; }
+  .price-card li { font-weight: 600; font-size: .95rem; padding-right: 26px; position: relative; }
+  .price-card li::before { content: "✓"; position: absolute; right: 0; color: var(--green-600); font-weight: 900; }
+  .note { font-size: .85rem; color: var(--muted); margin-top: 12px; }
+
+  /* faq */
+  details { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 4px 16px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 900; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 10px; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--blue-600); font-size: 1.4rem; font-weight: 900; }
+  details[open] summary::after { content: "−"; }
+  details p { color: var(--muted); padding-bottom: 14px; font-size: .95rem; }
+
+  /* final */
+  .final { background: linear-gradient(160deg, var(--blue-950), var(--blue-800)); color: #fff; text-align: center; }
+  .final h2 { color: #fff; }
+  .final p { color: #dbeafe; margin: 10px auto 22px; max-width: 560px; }
+  footer { padding: 24px 0 90px; text-align: center; color: var(--muted); font-size: .85rem; }
+
+  .sticky { position: fixed; inset: auto 12px 12px 12px; z-index: 30; display: none; }
+  .sticky .btn { width: 100%; }
+  @media (max-width: 760px) { .sticky { display: block; } }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn { transition: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Growix">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#2563eb"/><stop offset="1" stop-color="#10b981"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#g)"/><path d="M7 22l6-7 4 4 8-10" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 9h6v6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Grow<b>ix</b></span>
+    </a>
+    <a class="btn btn-cta btn-sm" data-wa href="#order">اطلب دلوقتي</a>
+  </div>
+</header>
+
+<main id="top">
+  <!-- HERO -->
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">لتجار الدفع عند الاستلام في مصر</span>
+        <h1>متجرك الجاهز للبيع <em>بدفعة واحدة</em>، ومن غير نسبة على كل أوردر</h1>
+        <p class="lead">صفحات هبوط ونموذج طلب سريع وإشعارات تيليجرام ورسالة واتساب للتأكيد، كله جاهز ومتركّب على حسابك إنت. جهّز منتجك وابدأ إعلاناتك.</p>
+        <div class="cta-row">
+          <a class="btn btn-cta" data-wa href="#order">ابدأ متجرك دلوقتي</a>
+          <a class="btn btn-ghost" href="#price">شوف السعر</a>
+        </div>
+        <div class="chips">
+          <span class="chip">دفعة واحدة</span>
+          <span class="chip">على حسابك إنت</span>
+          <span class="chip">من غير بطاقة بنكية</span>
+          <span class="chip">عربي بالكامل</span>
+        </div>
+      </div>
+      <div aria-hidden="true">
+        <div class="phone">
+          <div class="bar">🚚 شحن مجاني + معاينة قبل الدفع</div>
+          <div class="img">🛍️</div>
+          <div class="t">اسم منتجك هنا</div>
+          <div class="offers">
+            <div class="offer"><span>قطعة واحدة</span><span>599 ج.م</span></div>
+            <div class="offer on"><span>قطعتين ⭐ الأكثر طلباً</span><span>999 ج.م</span></div>
+            <div class="offer"><span>3 قطع 🔥 أعلى توفير</span><span>1,299 ج.م</span></div>
+          </div>
+          <div class="buy">اطلب الآن، الدفع عند الاستلام</div>
+          <div class="ok">✓ بيوصلك إشعار على تيليجرام أول ما الأوردر ينزل</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROBLEM -->
+  <section class="problem">
+    <div class="wrap">
+      <h2>ليه Growix؟</h2>
+      <p class="sub">أغلب المنصات بتاخد منك رسوم على كل أوردر أو اشتراك شهري. هنا بتدفع مرة واحدة، والمتجر بتاعك إنت.</p>
+      <div class="vs">
+        <div class="card bad">
+          <h3>المنصات العادية</h3>
+          <ul>
+            <li>رسوم أو نسبة على كل أوردر، وبتكبر مع نجاحك</li>
+            <li>اشتراك شهري مفتوح</li>
+            <li>المتجر والبيانات عندهم</li>
+            <li>إعدادات كتير ومش مخصصة لسوق الدفع عند الاستلام</li>
+          </ul>
+        </div>
+        <div class="card good">
+          <h3>Growix</h3>
+          <ul>
+            <li>دفعة واحدة، مفيش نسبة على الأوردرات</li>
+            <li>المتجر على حساب Cloudflare بتاعك</li>
+            <li>الأوردرات والعملاء بياناتك إنت</li>
+            <li>مبني للدفع عند الاستلام وحق المعاينة من أول يوم</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section>
+    <div class="wrap">
+      <h2>إيه اللي هتاخده؟</h2>
+      <p class="sub">كل اللي محتاجه عشان تبيع من إعلان لحد ما الأوردر يتأكد.</p>
+      <div class="cols c3">
+        <div class="card"><div class="ico">🛒</div><h3>نموذج طلب واحد سريع</h3><p>اسم وموبايل وعنوان بس، مع عروض 1 و2 و3 قطع جوه نفس الكارت، وكمية وخيارات لون ومقاس.</p></div>
+        <div class="card"><div class="ico g">🔔</div><h3>إشعار تيليجرام فوري</h3><p>كل أوردر جديد بيوصلك على موبايلك بكل تفاصيله، وفي زرار يفتح واتساب العميل.</p></div>
+        <div class="card"><div class="ico">💬</div><h3>رسالة واتساب للتأكيد</h3><p>رسالة جاهزة فيها المنتج واللون والمقاس والسعر والعنوان، تبعتها للعميل بضغطة.</p></div>
+        <div class="card"><div class="ico g">✏️</div><h3>محرر صفحات مباشر</h3><p>عدّل النصوص والصور، وضيف أو احذف أي عنوان أو صورة أو نقطة، وانت شايف الصفحة قدامك.</p></div>
+        <div class="card"><div class="ico">✨</div><h3>اكتب بالذكاء الاصطناعي</h3><p>انسخ البرومبت لأي أداة ذكاء اصطناعي والصق الرد، من غير ما تحتاج مفتاح أو اشتراك جوه المتجر.</p></div>
+        <div class="card"><div class="ico g">🎟️</div><h3>كوبونات وشحن لكل محافظة</h3><p>خصومات تلقائية أو بكود، وسعر شحن للمتجر أو للمنتج أو للمحافظة.</p></div>
+        <div class="card"><div class="ico">🤖</div><h3>شات للعملاء</h3><p>بيجاوب من الأسئلة اللي إنت كتبتها، ولو مالقاش إجابة بيحوّل لك على تيليجرام وإنت بترد عليه.</p></div>
+        <div class="card"><div class="ico g">📈</div><h3>تتبع الإعلانات</h3><p>بيكسل ميتا وAPI التحويلات، وتتبع الأوردرات المتروكة عشان تكلم العميل تاني.</p></div>
+        <div class="card"><div class="ico">🚚</div><h3>شحن وطلبات</h3><p>لوحة طلبات بحالاتها وتصدير، وربط بشركات الشحن زي بوسطة.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section class="problem">
+    <div class="wrap">
+      <h2>تبدأ إزاي؟</h2>
+      <p class="sub">إحنا بنجهّز المتجر، وإنت بتركّز في المنتج والإعلانات.</p>
+      <div class="steps">
+        <div class="card step"><h3>١) تتواصل معانا</h3><p>تبعتلنا على واتساب وتقولنا هتبيع إيه.</p></div>
+        <div class="card step"><h3>٢) نجهّز متجرك</h3><p>بنركّب المتجر على حساب Cloudflare بتاعك، ونضبط الاسم والألوان والإشعارات.</p></div>
+        <div class="card step"><h3>٣) تضيف منتجك وتبيع</h3><p>بتضيف المنتج والعروض بنفسك من لوحة بسيطة، وتشغّل إعلانك.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICE -->
+  <section class="pricing" id="price">
+    <div class="wrap">
+      <h2>سعر واضح، مرة واحدة</h2>
+      <p class="sub">من غير اشتراك ومن غير رسوم على الأوردرات.</p>
+      <div class="price-card">
+        <span class="eyebrow">باقة التأسيس</span>
+        <div class="price">2000 <small>جنيه، مرة واحدة</small></div>
+        <ul>
+          <li>متجرك مركّب على حساب Cloudflare بتاعك</li>
+          <li>صفحات هبوط ونموذج طلب بالدفع عند الاستلام</li>
+          <li>إشعارات تيليجرام وشات للعملاء</li>
+          <li>محرر الصفحات والكتابة بالذكاء الاصطناعي</li>
+          <li>الدومين بنساعدك تجيبه باسمك، وتجديده عليك</li>
+        </ul>
+        <a class="btn btn-cta" data-wa href="#order" style="width:100%">اطلب باقة التأسيس</a>
+        <p class="note">السعر بيبدأ من 2000 جنيه، وممكن يزيد لو محتاج حاجات إضافية زي ربط شركات شحن.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section>
+    <div class="wrap" style="max-width:760px">
+      <h2>أسئلة بنتسأل عليها</h2>
+      <p class="sub">إجابات صريحة، حتى عن الحدود.</p>
+      <details open><summary>أدفع حاجة تاني بعد الـ 2000؟</summary><p>لا رسوم على الأوردرات ولا اشتراك شهري. اللي بتدفعه بعد كده بيكون لمزود خارجي بس، زي تجديد الدومين السنوي.</p></details>
+      <details><summary>المتجر على حساب مين؟</summary><p>على حساب Cloudflare بتاعك إنت، فالأوردرات وبيانات العملاء عندك. بنجهّزه ونسلمهولك.</p></details>
+      <details><summary>أحتاج بطاقة بنكية؟</summary><p>لا. المتجر شغال على الخطة المجانية من Cloudflare ومش محتاج بطاقة.</p></details>
+      <details><summary>بيستحمل كام أوردر؟</summary><p>على الخطة المجانية كفاية لحد حوالي 300 أوردر في اليوم. ومع الضغط العالي ممكن تحصل أعطال متقطعة قصيرة، والنظام بيعيد محاولة تسجيل الأوردر تلقائياً. لو كبرت، تقدر تترقى بالخطة المدفوعة من Cloudflare (حوالي 5 دولار في الشهر) وده اختياري.</p></details>
+      <details><summary>في دعم وتحديثات بعد التسليم؟</summary><p>التسليم بيكون جاهز ومعاه شرح للاستخدام، لكن الباقة دي بدون دعم أو تحديثات مستمرة بعد التسليم. اسأل عن اللي تحتاجه قبل ما تطلب.</p></details>
+      <details><summary>الذكاء الاصطناعي بيكلفني؟</summary><p>لا. الكتابة بالذكاء الاصطناعي بتتم بالنسخ واللصق في أي أداة بتستخدمها، من غير مفتاح جوه المتجر.</p></details>
+      <details><summary>ينفع أبيع منتجات كتير؟</summary><p>أيوه. تقدر تضيف منتجات وصفحة هبوط لكل منتج، وكل منتج ليه عروضه وخياراته وسعر شحنه.</p></details>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="final" id="order">
+    <div class="wrap">
+      <h2>جاهز تبدأ تبيع؟</h2>
+      <p>ابعتلنا على واتساب وقولنا هتبيع إيه، وهنرد عليك بالخطوات.</p>
+      <a class="btn btn-cta" data-wa href="#order">كلمنا على واتساب</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Growix © 2026 · متجر الدفع عند الاستلام للتجار المصريين</div>
+</footer>
+
+<div class="sticky"><a class="btn btn-cta" data-wa href="#order">اطلب دلوقتي على واتساب</a></div>
+
+<script>
+  // Put the owner's WhatsApp number here (digits with country code, e.g. 2010xxxxxxxx). Empty = the button opens WhatsApp's contact picker.
+  var WHATSAPP_NUMBER = "";
+  var MESSAGE = "أهلاً Growix، عاوز أعرف تفاصيل باقة التأسيس.";
+  var base = WHATSAPP_NUMBER ? "https://wa.me/" + WHATSAPP_NUMBER : "https://wa.me/";
+  document.querySelectorAll("a[data-wa]").forEach(function (a) {
+    a.href = base + "?text=" + encodeURIComponent(MESSAGE);
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+  });
+</script>
+</body>
+</html>

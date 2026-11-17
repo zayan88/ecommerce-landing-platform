@@ -142,10 +142,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   // Editor only: list items get a relative box so their delete button can sit on them
   const rel = editMode ? " relative" : "";
   const shipHint = shippingHint(useBrand().commerce.shipping, product.id);
+  const digital = Boolean((product as any).digital);
 
   const announcementText =
     c?.announcement_bar ||
-    (shipHint.free ? L("شحن مجاني 100% لجميع محافظات مصر", "100% free shipping to all governorates") : shipHint.text) + L(" + حق المعاينة والتجربة قبل الدفع 💵", " + inspect and try before you pay 💵");
+    (digital ? L("تسليم فوري على الإيميل ⚡", "Instant delivery to your email ⚡") : shipHint.free ? L("شحن مجاني 100% لجميع محافظات مصر", "100% free shipping to all governorates") : shipHint.text) + (digital ? "" : L(" + حق المعاينة والتجربة قبل الدفع 💵", " + inspect and try before you pay 💵"));
   const heroTitle = c?.hero_headline || product.title_ar;
   const heroSubtitle =
     c?.hero_subheadline ||
@@ -242,15 +243,15 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           {!c?.hide_hero_trust && (<div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
-              <span className="font-bold text-[11px] text-slate-700 block">{L("معاينة قبل الدفع", "Inspect before paying")}</span>
+              <span className="font-bold text-[11px] text-slate-700 block">{digital ? L("دفع آمن", "Secure payment") : L("معاينة قبل الدفع", "Inspect before paying")}</span>
             </div>
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <Truck className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
-              <span className="font-bold text-[11px] text-slate-700 block">{shipHint.free ? L("شحن مجاني 100%", "100% free shipping") : shipHint.text}</span>
+              <span className="font-bold text-[11px] text-slate-700 block">{digital ? L("تسليم إلكتروني", "Digital delivery") : shipHint.free ? L("شحن مجاني 100%", "100% free shipping") : shipHint.text}</span>
             </div>
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <Clock className="w-4 h-4 text-amber-600 mx-auto mb-0.5" />
-              <span className="font-bold text-[11px] text-slate-700 block">{L("توصيل 5-7 أيام", "Delivery in 5-7 days")}</span>
+              <span className="font-bold text-[11px] text-slate-700 block">{digital ? L("وصول فوري", "Instant access") : L("توصيل 5-7 أيام", "Delivery in 5-7 days")}</span>
             </div>
           </div>)}
         </div>
@@ -344,7 +345,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             onClick={scrollToCheckout}
             className="w-full py-4 px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base sm:text-lg shadow-lg shadow-orange-500/25 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2"
           >
-            <span>{L("اطلب الآن - الدفع بعد الفحص والمعاينة", "Order now - pay after inspection")}</span>
+            <span>{digital ? L("اطلب الآن", "Order now") : L("اطلب الآن - الدفع بعد الفحص والمعاينة", "Order now - pay after inspection")}</span>
             <ArrowDown className="w-5 h-5 animate-bounce" />
           </button>
         </div>

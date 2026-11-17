@@ -45,6 +45,8 @@ export interface Product {
   offers?: ProductOffer[];
   /** Color / size ... the customer picks in the order form. */
   options?: ProductOption[];
+  /** A digital product (a file, a course, a theme): no address / shipping in the order form, the customer leaves an email. */
+  digital?: boolean;
   /** false = the merchant switched the options off (they are kept, just not shown). */
   options_enabled?: boolean;
   /** Sold-out combinations (see lib/product-options.ts). */

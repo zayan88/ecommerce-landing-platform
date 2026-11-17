@@ -33,7 +33,7 @@ const PAY_LABEL: Record<string, string> = {
   safqa: "دفع أونلاين",
 };
 
-export function buildOrderWhatsappMessage(order: OrderMessageInput, ctx: { storeName?: string; productTitle?: string } = {}): string {
+export function buildOrderWhatsappMessage(order: OrderMessageInput, ctx: { storeName?: string; productTitle?: string; digital?: boolean } = {}): string {
   const store = (ctx.storeName || "").trim() || "متجرنا";
   const name = (order.customer_name || "").trim();
   const qty = Number(order.quantity) > 0 ? Number(order.quantity) : 1;
@@ -53,12 +53,14 @@ export function buildOrderWhatsappMessage(order: OrderMessageInput, ctx: { store
   lines.push("");
   if (order.unit_price !== undefined && qty > 1) lines.push(`💰 سعر القطعة: ${money(order.unit_price)} ج.م`);
   if (discount > 0) lines.push(`🏷️ الخصم: ${money(discount)} ج.م`);
-  lines.push(`🚚 الشحن: ${ship > 0 ? money(ship) + " ج.م" : "مجاني"}`);
+  if (!ctx.digital) lines.push(`🚚 الشحن: ${ship > 0 ? money(ship) + " ج.م" : "مجاني"}`);
   lines.push(`✅ الإجمالي: ${money(total)} ج.م (${PAY_LABEL[order.payment_method || "cod"] || PAY_LABEL.cod})`);
-  if (place) lines.push(`📍 العنوان: ${place}`);
+  if (place && !ctx.digital) lines.push(`📍 العنوان: ${place}`);
   lines.push("");
   lines.push(
-    cod
+    ctx.digital
+      ? "لو البيانات دي مظبوطة ابعتلنا «تأكيد» وهنبعتلك المنتج على الإيميل بعد الدفع."
+      : cod
       ? "لو البيانات دي مظبوطة ابعتلنا «تأكيد» وهنجهز الشحنة. وتقدر تفتح الشحنة وتعاين المنتج قدام المندوب قبل ما تدفع."
       : "لو البيانات دي مظبوطة ابعتلنا «تأكيد» وهنجهز الشحنة."
   );
