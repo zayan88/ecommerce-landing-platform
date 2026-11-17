@@ -28,6 +28,8 @@ import {
   Link2,
   Crosshair,
   Ticket,
+  PanelRightClose,
+  PanelRightOpen,
   PhoneMissed,
   PanelTop,
   Store,
@@ -110,6 +112,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Desktop: the sidebar can be folded away for more room (remembered in this browser)
+  const [sidebarHidden, setSidebarHidden] = useState(false);
+  useEffect(() => {
+    try {
+      setSidebarHidden(localStorage.getItem("admin_sidebar_hidden") === "1");
+    } catch {
+      /* storage blocked: stays open */
+    }
+  }, []);
+  const toggleSidebar = () =>
+    setSidebarHidden((v) => {
+      try {
+        localStorage.setItem("admin_sidebar_hidden", v ? "0" : "1");
+      } catch {
+        /* ignore */
+      }
+      return !v;
+    });
   const [loggingOut, setLoggingOut] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [pendingBadge, setPendingBadge] = useState(0);
@@ -177,6 +197,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar Navigation */}
       <aside
         className={`fixed inset-y-0 right-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between p-4 transition-transform duration-300 md:static md:translate-x-0 ${
+          sidebarHidden ? "md:hidden" : ""
+        } ${
           mobileMenuOpen ? "translate-x-0 shadow-2xl" : "translate-x-full md:translate-x-0"
         }`}
       >
@@ -312,7 +334,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Desktop Bar */}
         <header className="hidden md:flex bg-white border-b border-gray-200 py-3.5 px-8 items-center justify-between sticky top-0 z-30 shadow-sm">
-          <div />
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={sidebarHidden ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية"}
+            title={sidebarHidden ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية"}
+            className="w-9 h-9 rounded-lg text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+          >
+            {sidebarHidden ? <PanelRightOpen className="w-5 h-5" /> : <PanelRightClose className="w-5 h-5" />}
+          </button>
 
           <div className="flex items-center gap-3 text-xs font-bold">
             <a

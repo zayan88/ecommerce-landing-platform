@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Metadata } from "next";
 import { StoreChat } from "@/components/shared/StoreChat";
+import { LangProvider } from "@/components/i18n/LangProvider";
 
 function homeMetadata(name: string): Metadata {
   return {
@@ -78,6 +79,7 @@ export default async function HomePage() {
     });
 
   return (
+    <LangProvider initial="ar" locked>
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-orange-500 selection:text-white font-sans" dir="rtl">
       {/* Meta Facebook Pixel */}
       <MetaPixel pixelIds={effectiveMetaPixelIds(settings)} />
@@ -663,5 +665,6 @@ export default async function HomePage() {
       {/* Floating Interactive AI Sales & Customer Support Drawer */}
       <StoreChat />
     </div>
+    </LangProvider>
   );
 }

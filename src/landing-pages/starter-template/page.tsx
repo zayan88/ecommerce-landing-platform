@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Product, LandingPage, ProductOffer, LandingPageSectionConfig, mergeSections } from "@/types";
 import { cssVarsFor, isThemeColor } from "@/lib/palettes";
 import { singleBaseOffer } from "@/lib/offers";
+import { useLang } from "@/components/i18n/LangProvider";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { LandingFooter } from "@/components/shared/LandingFooter";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
@@ -54,6 +56,18 @@ const DEFAULT_REVIEWS: { name: string; comment: string; badge: string }[] = [
   },
 ];
 
+const DEFAULT_REVIEWS_EN: { name: string; comment: string; badge: string }[] = [
+  { name: "Ahmed S.", comment: "Excellent product, exactly as described. Delivery was very fast, I received it after 3 days.", badge: "✓ Verified buyer" },
+  { name: "Marwa Y.", comment: "I liked that I could inspect the product with the courier before paying. Great service and good quality.", badge: "✓ Verified buyer" },
+  { name: "Karim H.", comment: "I bought the 2-piece offer to save money. Great packaging and the product works perfectly. Recommended.", badge: "✓ Verified buyer" },
+];
+
+const DEFAULT_STEPS_EN: { step_num: number; title: string; desc: string }[] = [
+  { step_num: 1, title: "", desc: "Enter your details (name, mobile, governorate) in the form below." },
+  { step_num: 2, title: "", desc: "Our confirmation team will call you to confirm the address and delivery time." },
+  { step_num: 3, title: "", desc: "Inspect the parcel with the courier, then pay after you are sure the product is fine." },
+];
+
 const DEFAULT_STEPS: { step_num: number; title: string; desc: string }[] = [
   { step_num: 1, title: "", desc: "اكتب بياناتك (الاسم، الموبايل، المحافظة) في الفورم بالأسفل." },
   { step_num: 2, title: "", desc: "سيتصل بك فريق التأكيد هاتفياً لمراجعة العنوان وميعاد التسليم." },
@@ -63,6 +77,8 @@ const DEFAULT_STEPS: { step_num: number; title: string; desc: string }[] = [
 export default function StarterLandingPage({ product, landingPage }: StarterLandingPageProps) {
   // Editor (admin) provides edit mode; on the public site this is always false
   const { editMode } = useEdit();
+  const { lang, dir, t } = useLang();
+  const L = (ar: string, en: string) => (lang === "en" ? en : ar);
   // Built-in default tiers (the merchant can override them in the editor's offers tab)
   const defaultOffers: ProductOffer[] = singleBaseOffer(product);
 
@@ -118,13 +134,13 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   const announcementText =
     c?.announcement_bar ||
-    (shipHint.free ? "شحن مجاني 100% لجميع محافظات مصر" : shipHint.text) + " + حق المعاينة والتجربة قبل الدفع 💵";
+    (shipHint.free ? L("شحن مجاني 100% لجميع محافظات مصر", "100% free shipping to all governorates") : shipHint.text) + L(" + حق المعاينة والتجربة قبل الدفع 💵", " + inspect and try before you pay 💵");
   const heroTitle = c?.hero_headline || product.title_ar;
   const heroSubtitle =
     c?.hero_subheadline ||
     (descriptionLines[0]
       ? `💡 ${descriptionLines[0]}`
-      : "💡 احصل على أفضل تجربة مع المنتج الأصلي المعتمد وبأعلى معايير الجودة.");
+      : L("💡 احصل على أفضل تجربة مع المنتج الأصلي المعتمد وبأعلى معايير الجودة.", "💡 Get the best experience with the genuine, certified product at the highest quality standards."));
   // No invented rating: the badge only shows when the merchant wrote one.
   const heroBadge = c?.hero_badge || "";
   const heroImageSrc = c?.hero_image || images[activeImageIndex] || images[0];
@@ -137,10 +153,10 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
       : bulletLines.length > 0
       ? bulletLines
       : [
-          "خامات أصلية عالية الجودة تضمن المتانة والتحمل طويل الأمد.",
-          "تصميم عملي وعصري يلبي احتياجات الاستخدام اليومي بكل سهولة.",
-          "آمن وسهل الاستخدام مع ضمان كامل وحق الفحص والمعاينة قبل الدفع.",
-          "شحن سريع ومجاني لجميع محافظات مصر وتأكيد فوري للطلب.",
+          L("خامات أصلية عالية الجودة تضمن المتانة والتحمل طويل الأمد.", "High-quality original materials for long-lasting durability."),
+          L("تصميم عملي وعصري يلبي احتياجات الاستخدام اليومي بكل سهولة.", "A practical, modern design that fits everyday use with ease."),
+          L("آمن وسهل الاستخدام مع ضمان كامل وحق الفحص والمعاينة قبل الدفع.", "Safe and easy to use, with a full warranty and the right to inspect before you pay."),
+          L("شحن سريع ومجاني لجميع محافظات مصر وتأكيد فوري للطلب.", "Fast, free shipping to all governorates and instant order confirmation."),
         ];
 
   const scrollToCheckout = () => {
@@ -188,7 +204,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
                     activeImageIndex === idx ? "border-orange-500 ring-2 ring-orange-500/25" : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
-                  <Image src={img} alt={`صورة ${idx + 1}`} fill className="object-cover" />
+                  <Image src={img} alt={`${L("صورة", "Image")} ${idx + 1}`} fill className="object-cover" />
                 </button>
               ))}
             </div>
@@ -198,15 +214,15 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           {!c?.hide_hero_trust && (<div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <ShieldCheck className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
-              <span className="font-bold text-[11px] text-slate-700 block">معاينة قبل الدفع</span>
+              <span className="font-bold text-[11px] text-slate-700 block">{L("معاينة قبل الدفع", "Inspect before paying")}</span>
             </div>
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <Truck className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
-              <span className="font-bold text-[11px] text-slate-700 block">{shipHint.free ? "شحن مجاني 100%" : shipHint.text}</span>
+              <span className="font-bold text-[11px] text-slate-700 block">{shipHint.free ? L("شحن مجاني 100%", "100% free shipping") : shipHint.text}</span>
             </div>
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80">
               <Clock className="w-4 h-4 text-amber-600 mx-auto mb-0.5" />
-              <span className="font-bold text-[11px] text-slate-700 block">توصيل 5-7 أيام</span>
+              <span className="font-bold text-[11px] text-slate-700 block">{L("توصيل 5-7 أيام", "Delivery in 5-7 days")}</span>
             </div>
           </div>)}
         </div>
@@ -217,11 +233,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             {(heroBadge || editMode) && (
               <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
                 <Star className="w-3.5 h-3.5 fill-amber-500" />
-                <EText field="hero_badge" as="span" className="text-slate-800" value={heroBadge || "اضغط لإضافة شارة (اختياري)"} />
+                <EText field="hero_badge" as="span" className="text-slate-800" value={heroBadge || L("اضغط لإضافة شارة (اختياري)", "Click to add a badge (optional)")} />
               </div>
             )}
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-              ✓ متوفر الآن
+              {L("✓ متوفر الآن", "✓ In stock")}
             </span>
           </div>
 
@@ -265,19 +281,19 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           {/* Price Display */}
           <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-900 block font-medium">السعر في العرض الحالي:</span>
+              <span className="text-xs text-slate-900 block font-medium">{L("السعر في العرض الحالي:", "Price for the selected offer:")}</span>
               <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-2xl sm:text-3xl font-black text-slate-950 font-mono">{Number(selectedOffer.price).toLocaleString("en-US")} ج.م</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-950 font-mono">{Number(selectedOffer.price).toLocaleString("en-US")} {t("currency")}</span>
                 {selectedOffer.original_price && (
-                  <span className="text-sm text-slate-400 line-through font-mono">{Number(selectedOffer.original_price).toLocaleString("en-US")} ج.م</span>
+                  <span className="text-sm text-slate-400 line-through font-mono">{Number(selectedOffer.original_price).toLocaleString("en-US")} {t("currency")}</span>
                 )}
               </div>
             </div>
             <div className="text-left">
               <span className="inline-block text-xs font-bold text-emerald-800 bg-emerald-100/90 px-3 py-1 rounded-full border border-emerald-300">
-                🚚 {shipHint.free ? "شحن مجاني" : shipHint.text}
+                🚚 {shipHint.free ? t("free_shipping") : shipHint.text}
               </span>
-              <span className="block text-[11px] text-emerald-800 mt-1 font-semibold">الدفع عند الاستلام</span>
+              <span className="block text-[11px] text-emerald-800 mt-1 font-semibold">{t("urgency.cod")}</span>
             </div>
           </div>
 
@@ -287,7 +303,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             onClick={scrollToCheckout}
             className="w-full py-4 px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base sm:text-lg shadow-lg shadow-orange-500/25 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2"
           >
-            <span>اطلب الآن - الدفع بعد الفحص والمعاينة</span>
+            <span>{L("اطلب الآن - الدفع بعد الفحص والمعاينة", "Order now - pay after inspection")}</span>
             <ArrowDown className="w-5 h-5 animate-bounce" />
           </button>
         </div>
@@ -300,18 +316,18 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     const comparisonImage =
       c?.comparison_image ||
       (product.images && product.images.length > 1 ? product.images[1] : null);
-    const comparisonTitle = c?.comparison_title || "الفرق بين المنتج التقليدي والمنتج الأصلي";
-    const oldTitle = c?.comparison_old_title || "المنتجات والبدائل التقليدية";
+    const comparisonTitle = c?.comparison_title || L("الفرق بين المنتج التقليدي والمنتج الأصلي", "Ordinary product vs the genuine product");
+    const oldTitle = c?.comparison_old_title || L("المنتجات والبدائل التقليدية", "Ordinary alternatives");
     const oldPoints = c?.comparison_old_points || [
-      "خامات رديئة وضعيفة تتلف بسرعة بعد فترة قصيرة.",
-      "بدون ضمان أو معاينة حقيقية قبل الدفع.",
-      "صعوبة في الاستخدام ولا تلبي النتيجة المتوقعة.",
+      L("خامات رديئة وضعيفة تتلف بسرعة بعد فترة قصيرة.", "Cheap materials that break down quickly."),
+      L("بدون ضمان أو معاينة حقيقية قبل الدفع.", "No warranty and no real inspection before paying."),
+      L("صعوبة في الاستخدام ولا تلبي النتيجة المتوقعة.", "Hard to use and does not deliver the expected result."),
     ];
-    const newTitle = c?.comparison_new_title || "المنتج الأصلي من متجرنا";
+    const newTitle = c?.comparison_new_title || L("المنتج الأصلي من متجرنا", "The genuine product from our store");
     const newPoints = c?.comparison_new_points || [
-      "خامات أصلية 100% مختبرة ومضمونة الجودة.",
-      "حق فتح الشحنة والفحص والتجربة قبل الدفع للمندوب.",
-      "استبدال واسترجاع مجاني خلال 14 يوماً وخدمة عملاء مستمرة.",
+      L("خامات أصلية 100% مختبرة ومضمونة الجودة.", "100% original, tested materials with guaranteed quality."),
+      L("حق فتح الشحنة والفحص والتجربة قبل الدفع للمندوب.", "The right to open the parcel, inspect and try it before paying the courier."),
+      L("استبدال واسترجاع مجاني خلال 14 يوماً وخدمة عملاء مستمرة.", "Free exchange and return within 14 days, with ongoing customer service."),
     ];
 
     return (
@@ -321,7 +337,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             field="comparison_badge"
             as="span"
             className="text-xs font-bold text-emerald-800 bg-slate-50 px-3 py-1 rounded-full border border-slate-200"
-            value={c?.comparison_badge || "ليه ده أفضل اختيار؟"}
+            value={c?.comparison_badge || L("ليه ده أفضل اختيار؟", "Why is this the best choice?")}
           />
           <EText
             field="comparison_title"
@@ -382,11 +398,11 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
     const boxImage =
       c?.box_image ||
       (product.images && product.images.length > 2 ? product.images[2] : null);
-    const boxTitle = c?.box_title || "محتويات الشحنة الأصلية:";
+    const boxTitle = c?.box_title || L("محتويات الشحنة الأصلية:", "What is in the box:");
     const boxItems = c?.box_items || [
-      "المنتج الأصلي بكافة ملحقاته المعتمدة ومغلف بعناية.",
-      "كتالوج ودليل الاستخدام السريع باللغة العربية.",
-      "كارت الضمان الرسمي وحق الاستبدال والمعاينة.",
+      L("المنتج الأصلي بكافة ملحقاته المعتمدة ومغلف بعناية.", "The original product with all approved accessories, carefully packed."),
+      L("كتالوج ودليل الاستخدام السريع باللغة العربية.", "A catalogue and quick-start guide."),
+      L("كارت الضمان الرسمي وحق الاستبدال والمعاينة.", "The official warranty card and the right to exchange and inspect."),
     ];
 
     return (
@@ -402,7 +418,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
               <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
                 <Image
                   src={boxImage}
-                  alt="محتويات الشحنة"
+                  alt={L("محتويات الشحنة", "Box contents")}
                   fill
                   sizes="(max-width: 768px) 100vw, 400px"
                   className="object-contain p-2"
@@ -429,7 +445,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 4. HOW TO USE
   const renderHowToUse = () => {
-    const steps = c?.how_to_use_steps && c.how_to_use_steps.length > 0 ? c.how_to_use_steps : DEFAULT_STEPS;
+    const steps = c?.how_to_use_steps && c.how_to_use_steps.length > 0 ? c.how_to_use_steps : lang === "en" ? DEFAULT_STEPS_EN : DEFAULT_STEPS;
     return (
       <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-3 text-right">
         <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
@@ -437,7 +453,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
           <EText
             field="how_to_use_title"
             as="span"
-            value={c?.how_to_use_title || "طريقة الاستخدام والطلب في خطوات بسيطة:"}
+            value={c?.how_to_use_title || L("طريقة الاستخدام والطلب في خطوات بسيطة:", "How to order, in simple steps:")}
           />
         </div>
         <div className="space-y-2 text-xs sm:text-sm text-slate-700 pr-1">
@@ -462,9 +478,9 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
             location: "",
             comment: r.comment,
             rating: r.rating,
-            badge: DEFAULT_REVIEWS[i]?.badge || "✓ مشتري موثق",
+            badge: (lang === "en" ? DEFAULT_REVIEWS_EN : DEFAULT_REVIEWS)[i]?.badge || L("✓ مشتري موثق", "✓ Verified buyer"),
           }))
-        : DEFAULT_REVIEWS.map((r) => ({ name: r.name, location: "", comment: r.comment, rating: 5, badge: r.badge }));
+        : (lang === "en" ? DEFAULT_REVIEWS_EN : DEFAULT_REVIEWS).map((r) => ({ name: r.name, location: "", comment: r.comment, rating: 5, badge: r.badge }));
     const reviewsBase = reviews.map(({ name, location, comment, rating }) => ({ name, location, comment, rating }));
 
     return (
@@ -472,7 +488,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         <div className="flex items-center justify-between">
           <h3 className="text-base font-black text-slate-900 font-heading flex items-center gap-2">
             <ThumbsUp className="w-4 h-4 text-emerald-600" />
-            <EText field="reviews_title" as="span" value={c?.reviews_title || "تجارب حقيقية لعملائنا في مصر:"} />
+            <EText field="reviews_title" as="span" value={c?.reviews_title || L("تجارب حقيقية لعملائنا في مصر:", "Experiences from our customers:")} />
           </h3>
           <div className="flex text-amber-400">
             {[...Array(5)].map((_, i) => (
@@ -524,7 +540,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
 
   // 7. GUARANTEES FOOTER
   const renderGuarantees = () => (
-    <GuaranteesStrip title={c?.guarantees_title || "ضماناتنا ليك"} items={c?.guarantees} editable />
+    <GuaranteesStrip title={c?.guarantees_title || L("ضماناتنا ليك", "Our guarantees to you")} items={c?.guarantees} editable />
   );
 
   // 8. TRUST STRIP (stage 2) — only real rating/count are shown, never invented
@@ -551,14 +567,14 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         field="final_cta_desc"
         as="p"
         className="text-sm text-slate-600 leading-relaxed"
-        value={c?.final_cta_desc || "اطلب دلوقتي وادفع لما يوصلك، وافتح الشحنة وجرّبها قبل ما تدفع."}
+        value={c?.final_cta_desc || L("اطلب دلوقتي وادفع لما يوصلك، وافتح الشحنة وجرّبها قبل ما تدفع.", "Order now and pay when it arrives. Open the parcel and try it before you pay.")}
       />
       <button
         type="button"
         onClick={scrollToCheckout}
         className="min-h-[52px] px-8 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-base shadow-lg shadow-orange-500/25 active:scale-[0.98] transition cursor-pointer"
       >
-        {c?.cta_text?.trim() || "اطلب دلوقتي"}
+        {c?.cta_text?.trim() || L("اطلب دلوقتي", "Order now")}
       </button>
     </div>
   );
@@ -594,7 +610,8 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   };
 
   return (
-    <main style={pageTheme} className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir="rtl">
+    <main style={pageTheme} className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir={dir}>
+      <div className="fixed top-3 left-3 z-40"><LanguageSwitcher /></div>
       {/* 1. Announcement Bar */}
       {!c?.hide_announcement && (
       <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white py-2 px-3 text-center text-xs sm:text-sm font-bold shadow-sm flex items-center justify-center gap-2 border-b border-slate-500/20">

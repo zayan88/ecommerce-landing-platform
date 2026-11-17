@@ -57,3 +57,6 @@ h1, h2, h3, h4, .font-heading {
 @media (prefers-reduced-motion: reduce) {
   .store-marquee-track { animation: none; }
 }
+
+/* English storefront (dir="ltr" wrappers): the templates were written right-aligned for Arabic */
+[dir="ltr"] .text-right { text-align: left; }

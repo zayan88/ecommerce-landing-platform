@@ -58,3 +58,8 @@ export const landingPageRegistry: Record<string, React.ComponentType<LandingPage
 export function getLandingPageComponent(componentKey: string) {
   return landingPageRegistry[componentKey] || landingPageRegistry["starter-template"] || null;
 }
+
+/** Only the generic starter template has an English version; the product-specific pages stay Arabic. */
+export function supportsEnglish(componentKey: string): boolean {
+  return (landingPageRegistry[componentKey] || landingPageRegistry["starter-template"]) === StarterLandingPage;
+}

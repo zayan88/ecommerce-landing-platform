@@ -3,6 +3,8 @@
 import React from "react";
 import { ProductOffer } from "@/types";
 import { Check, Sparkles, Tag } from "lucide-react";
+import { useLang } from "@/components/i18n/LangProvider";
+import { offerLabel } from "@/lib/i18n";
 
 interface HeroOfferSelectorProps {
   offers: ProductOffer[];
@@ -19,6 +21,7 @@ export function HeroOfferSelector({
   accentColor = "orange",
   isDarkTheme = false,
 }: HeroOfferSelectorProps) {
+  const { t, lang, dir } = useLang();
   if (!offers || offers.length === 0) return null;
 
   // Color mapping
@@ -88,7 +91,7 @@ export function HeroOfferSelector({
   };
 
   return (
-    <div className="space-y-2.5 pt-2 text-right" dir="rtl">
+    <div className="space-y-2.5 pt-2 text-right" dir={dir}>
       <div className="flex items-center justify-between text-xs">
         <span
           className={`font-bold flex items-center gap-1.5 ${
@@ -96,14 +99,14 @@ export function HeroOfferSelector({
           }`}
         >
           <Tag className="w-3.5 h-3.5 text-emerald-500" />
-          <span>اختر الباقة المناسبة لك (المعاينة قبل الدفع):</span>
+          <span>{t("offers.title")}</span>
         </span>
         <span className="text-[11px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-          ✓ شحن مجاني
+          {t("offers.free_ship_badge")}
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1" role="radiogroup" aria-label="اختر الباقة">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1" role="radiogroup" aria-label={t("offers.aria")}>
         {offers.map((offer) => {
           const isSelected = selectedOffer?.id === offer.id || selectedOffer?.quantity === offer.quantity;
           const isSingle = offer.quantity === 1;
@@ -111,10 +114,10 @@ export function HeroOfferSelector({
           const isTriple = offer.quantity >= 3;
 
           const badgeText = isSingle
-            ? "قطعة واحدة"
+            ? t("offers.one_piece")
             : isDouble
-            ? "الأكثر طلباً ⭐"
-            : "أعلى توفير 🔥";
+            ? t("offers.badge_popular")
+            : t("offers.badge_best");
 
           const badgeClass = isDouble
             ? colors.badgePopular
@@ -163,7 +166,7 @@ export function HeroOfferSelector({
                     isDarkTheme ? "text-white" : "text-slate-900"
                   }`}
                 >
-                  {isSingle ? "قطعة واحدة" : isDouble ? "قطعتان" : `${offer.quantity} قطع`}
+                  {isSingle ? t("offers.one_piece") : isDouble ? t("offers.two_pieces") : t("offers.n_pieces", { n: offer.quantity })}
                 </div>
               </div>
 
@@ -172,7 +175,7 @@ export function HeroOfferSelector({
                 <div className="flex flex-wrap items-baseline gap-1">
                   <span className={`text-sm sm:text-base font-black font-mono leading-none ${colors.priceText}`}>
                     {offer.price}
-                    <span className="text-[10px] font-sans mr-0.5 font-normal">ج.م</span>
+                    <span className="text-[10px] font-sans mx-0.5 font-normal">{t("currency")}</span>
                   </span>
                   {offer.original_price && (
                     <span className="text-[10px] text-slate-400 line-through font-mono">
@@ -183,7 +186,7 @@ export function HeroOfferSelector({
 
                 {offer.discount_label && (
                   <span className="text-[10px] sm:text-xs font-bold text-emerald-600 block mt-1 leading-snug">
-                    {offer.discount_label}
+                    {offerLabel(lang, offer.discount_label)}
                   </span>
                 )}
               </div>

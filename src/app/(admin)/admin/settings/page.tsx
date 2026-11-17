@@ -21,6 +21,8 @@ interface BrandForm {
   support_email: string;
   site_domain: string;
   currency_symbol: string;
+  lang_mode: "ar" | "en" | "both";
+  lang_default: "ar" | "en";
   home_reviews: { name: string; place: string; comment: string; rating: number }[];
 }
 
@@ -36,6 +38,8 @@ const EMPTY: BrandForm = {
   support_email: "",
   site_domain: "",
   currency_symbol: "ج.م",
+  lang_mode: "ar",
+  lang_default: "ar",
   home_reviews: [],
 };
 
@@ -79,6 +83,8 @@ export default function BrandPage() {
           support_email: s.support_email || "",
           site_domain: s.site_domain || "",
           currency_symbol: s.currency_symbol || "ج.م",
+          lang_mode: s.lang_switch === false ? (s.lang_default === "en" ? "en" : "ar") : "both",
+          lang_default: s.lang_default === "en" ? "en" : "ar",
           home_reviews: Array.isArray(s.home_reviews)
             ? s.home_reviews.map((r: any) => ({ name: r.name || "", place: r.place || "", comment: r.comment || "", rating: Number(r.rating) || 5 }))
             : [],
@@ -100,6 +106,9 @@ export default function BrandPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          // language: one of Arabic only / English only / both (the visitor chooses)
+          lang_switch: form.lang_mode === "both",
+          lang_default: form.lang_mode === "en" ? "en" : form.lang_mode === "ar" ? "ar" : form.lang_default,
           onboarding_done: true,
         }),
       });
@@ -171,6 +180,22 @@ export default function BrandPage() {
             ))}
           </select>
         </Field>
+
+        <Field label="لغة المتجر" hint="اللغة اللي بتظهر بيها صفحات المتجر للزبون (الفورم، الشات، الأزرار والنصوص الثابتة). النصوص اللي إنت كاتبها (المنتج والوصف) بتظهر زي ما كتبتها.">
+          <select className={inputCls} value={form.lang_mode} onChange={(e) => set("lang_mode", e.target.value as BrandForm["lang_mode"])}>
+            <option value="ar">عربي فقط</option>
+            <option value="en">English فقط</option>
+            <option value="both">عربي و English (الزبون يختار)</option>
+          </select>
+        </Field>
+        {form.lang_mode === "both" && (
+          <Field label="اللغة الأولى للزبون الجديد">
+            <select className={inputCls} value={form.lang_default} onChange={(e) => set("lang_default", e.target.value as BrandForm["lang_default"])}>
+              <option value="ar">عربي</option>
+              <option value="en">English</option>
+            </select>
+          </Field>
+        )}
 
         <Field label="رقم خدمة العملاء">
           <input className={inputCls} dir="ltr" inputMode="tel" value={form.support_phone} onChange={(e) => set("support_phone", e.target.value)} placeholder="01012345678" />

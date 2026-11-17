@@ -5,6 +5,7 @@ import { useBrand } from "@/components/brand/BrandProvider";
 import { shippingHint } from "@/lib/commerce";
 import { ShieldCheck, RefreshCw, Truck } from "lucide-react";
 import { EText } from "@/components/editor/Editable";
+import { useLang } from "@/components/i18n/LangProvider";
 
 export interface GuaranteeItem {
   icon: "inspect" | "swap" | "shipping";
@@ -30,13 +31,19 @@ interface GuaranteesStripProps {
 
 export function GuaranteesStrip({ title, items, editable }: GuaranteesStripProps) {
   const hint = shippingHint(useBrand().commerce.shipping);
-  const defaults = DEFAULT_GUARANTEES.map((g) => (g.icon === "shipping" && !hint.free ? { ...g, title: hint.text, desc: "لكل محافظات مصر" } : g));
+  const { t, dir } = useLang();
+  const base: GuaranteeItem[] = [
+    { icon: "inspect", title: t("guar.inspect_t"), desc: t("guar.inspect_d") },
+    { icon: "swap", title: t("guar.swap_t"), desc: t("guar.swap_d") },
+    { icon: "shipping", title: t("guar.ship_t"), desc: t("guar.ship_d") },
+  ];
+  const defaults = base.map((g) => (g.icon === "shipping" && !hint.free ? { ...g, title: hint.text } : g));
   const valid = (items || []).filter((i) => i?.title);
   // Always exactly 3 cards; missing ones fall back to the defaults
   const list = [0, 1, 2].map((i) => valid[i] || defaults[i]);
 
   return (
-    <section dir="rtl" aria-label={title || "ضماناتنا"} className="bg-emerald-50 rounded-3xl border border-emerald-200 p-4 sm:p-6">
+    <section dir={dir} aria-label={title || t("guar.aria")} className="bg-emerald-50 rounded-3xl border border-emerald-200 p-4 sm:p-6">
       {title && (
         <EText field={editable ? "guarantees_title" : undefined} as="h2" className="text-lg sm:text-xl font-black text-emerald-900 font-heading text-center mb-3 leading-relaxed" value={title} />
       )}
