@@ -945,6 +945,40 @@ async function patchLandingPageOnD1(
  * free plan's 10ms budget. React's cache() is scoped to one server render; outside a render (API routes, writes) it
  * simply calls through, so writes and their read-backs are never served stale.
  */
+/**
+ * The demo catalog (DEMO_MODE) is hand-written seed data that every fresh isolate loads again, so deleting a seeded
+ * product / landing page only removed it from one isolate and it "came back". Deleting one now also records its id and
+ * slug here (a persisted setting), and every isolate drops those seeds when it reads the catalog. Pages the merchant
+ * created are stored normally and are never touched by this.
+ */
+const TOMBSTONE_KEY = "deleted_seed_items";
+let tombstonesCheckedAt = 0;
+async function applySeedTombstones(force = false): Promise<void> {
+  if (!DEMO_SEED) return;
+  const now = Date.now();
+  if (!force && now - tombstonesCheckedAt < 15000) return;
+  tombstonesCheckedAt = now;
+  try {
+    const overrides: any = await readSettingsOverrides();
+    const gone: string[] = Array.isArray(overrides?.[TOMBSTONE_KEY]) ? overrides[TOMBSTONE_KEY] : [];
+    if (gone.length === 0) return;
+    const dead = new Set(gone);
+    memoryLandingPages = memoryLandingPages.filter((l) => !dead.has(l.id) && !dead.has(l.slug));
+    memoryProducts = memoryProducts.filter((pr) => !dead.has(pr.id) && !dead.has(pr.slug));
+  } catch {
+    // never block a page render on this
+  }
+}
+async function addSeedTombstones(keys: string[]): Promise<void> {
+  const add = keys.filter(Boolean);
+  if (!DEMO_SEED || add.length === 0) return;
+  const overrides: any = await readSettingsOverrides();
+  const current: string[] = Array.isArray(overrides?.[TOMBSTONE_KEY]) ? overrides[TOMBSTONE_KEY] : [];
+  const union = Array.from(new Set([...current, ...add]));
+  await dbStore.updateSettings({ [TOMBSTONE_KEY]: union } as any);
+  await applySeedTombstones(true);
+}
+
 const settingsOnce = cache((s: any) => s.getSettingsUncached());
 const productsOnce = cache((s: any) => s.getProductsUncached());
 const landingPagesOnce = cache((s: any) => s.getLandingPagesUncached());
@@ -963,6 +997,7 @@ export const dbStore = {
   // PRODUCTS
   async getProductsUncached(): Promise<Product[]> {
     loadFromFile();
+    await applySeedTombstones();
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data, error } = await admin
@@ -985,6 +1020,7 @@ export const dbStore = {
 
   async getProduct(idOrSlug: string): Promise<Product | null> {
     loadFromFile();
+    await applySeedTombstones();
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data, error } = await admin
@@ -1085,6 +1121,13 @@ export const dbStore = {
   },
 
   async deleteProduct(id: string): Promise<boolean> {
+    {
+      const seed = initialProducts.find((pr) => pr.id === id || pr.slug === id);
+      if (seed) {
+        const pages = initialLandingPages.filter((l) => l.product_id === seed.id);
+        await addSeedTombstones([seed.id, seed.slug, ...pages.flatMap((l) => [l.id, l.slug])]);
+      }
+    }
     const admin = getSupabaseAdmin();
     if (admin) {
       await admin.from("product_offers").delete().eq("product_id", id);
@@ -1122,6 +1165,7 @@ export const dbStore = {
   // LANDING PAGES
   /** product_id -> landing page slug, without reading any page content (the home page only needs the links). */
   async getLandingSlugs(): Promise<Record<string, string>> {
+    await applySeedTombstones();
     if (!getSupabaseAdmin() && catalogOnD1()) {
       const rows = await cachedCatalogRead("landing_slugs", () => getCatalogRepo().listLandingSlugs());
       const map: Record<string, string> = {};
@@ -1135,6 +1179,7 @@ export const dbStore = {
   },
 
   async getLandingPagesUncached(): Promise<LandingPage[]> {
+    await applySeedTombstones();
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data, error } = await admin
@@ -1162,6 +1207,7 @@ export const dbStore = {
 
   async getLandingPage(slug: string): Promise<LandingPage | null> {
     loadFromFile();
+    await applySeedTombstones();
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data, error } = await admin
@@ -1447,6 +1493,10 @@ export const dbStore = {
   },
 
   async deleteLandingPage(id: string): Promise<boolean> {
+    {
+      const seed = initialLandingPages.find((l) => l.id === id || l.slug === id);
+      if (seed) await addSeedTombstones([seed.id, seed.slug]);
+    }
     const admin = getSupabaseAdmin();
     if (admin) {
       await admin.from("landing_pages").delete().eq("id", id);
