@@ -756,7 +756,18 @@ export default function AdminProductsPage() {
                     price={Number(basePrice) || undefined}
                     brandName={brand.store_name}
                     notes={descriptionAr}
-                    onApply={(text) => setDescriptionAr(text)}
+                    onApply={(c) => {
+                      if (c.title) setTitleAr(c.title);
+                      if (c.description) setDescriptionAr(c.description);
+                      if (c.faq.length > 0) {
+                        // keep the questions the merchant already wrote; add the AI ones (no repeats, up to 15)
+                        setChatFaq((cur) => {
+                          const kept = cur.filter((f) => f.q.trim() && f.answer.trim());
+                          const have = new Set(kept.map((f) => f.q.trim()));
+                          return [...kept, ...c.faq.filter((f) => !have.has(f.q))].slice(0, 15);
+                        });
+                      }
+                    }}
                   />
                 </section>
 
