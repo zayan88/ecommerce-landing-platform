@@ -850,7 +850,7 @@ export function EgyptianCheckoutForm({
           ) : (
             <>
               <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span>{ctaText?.trim() || t("co.cta")}</span>
+              <span>{ctaText?.trim() || ((brand.payments.vodafone_cash || brand.payments.instapay) ? t("co.cta_plain") : t("co.cta"))}</span>
             </>
           )}
         </button>

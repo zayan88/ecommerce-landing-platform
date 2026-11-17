@@ -138,6 +138,7 @@ const D: Record<string, Entry> = {
   "co.ref_ph": { ar: "رقم العملية أو آخر 4 أرقام من رقم التحويل (اختياري)", en: "Transaction number or last 4 digits of the transfer (optional)" },
   "co.transfer_note": { ar: "بنأكد الطلب لما التحويل يوصلنا ونكلمك. لو حوّلت بعد ما تبعت الطلب، ابعت صورة الإيصال لنا على واتساب.", en: "We confirm the order once the transfer reaches us and we call you. If you transfer after sending the order, send us the receipt on WhatsApp." },
   "co.submitting": { ar: "جاري تسجيل طلبك...", en: "Placing your order..." },
+  "co.cta_plain": { ar: "أكّد طلبي ✅", en: "Confirm my order ✅" },
   "co.cta": { ar: "أكّد طلبي.. وهدفع عند الاستلام 🛒", en: "Confirm my order… I pay on delivery 🛒" },
   "co.preview_only": { ar: "معاينة فقط — الطلب غير مفعّل داخل المحرر", en: "Preview only — ordering is disabled inside the editor" },
   "co.trust_line": { ar: "🔒 مفيش دفع أونلاين • معاينة كاملة قبل الدفع للمندوب • استبدال فوري لو في أي عيب", en: "🔒 No online payment • Full inspection before paying the courier • Instant exchange for any defect" },
