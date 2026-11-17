@@ -21,16 +21,20 @@ interface Msg {
 }
 
 const MAX_NUDGES = 4;
-const CID_KEY = "store_chat_cid";
+const OLD_CID_KEY = "store_chat_cid";
 
+/**
+ * The conversation id lives in memory only: a page reload / a new visit starts a brand new conversation, nothing of the old
+ * one is restored in the browser. (It still survives moving between the store's pages, because the page is not reloaded.)
+ */
+let memCid = "";
 function getCid(): string {
   try {
-    let v = localStorage.getItem(CID_KEY);
-    if (!v || !/^[a-f0-9]{24,40}$/.test(v)) {
-      v = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
-      localStorage.setItem(CID_KEY, v);
+    if (!memCid) {
+      memCid = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+      localStorage.removeItem(OLD_CID_KEY); // forget the id older versions kept in the browser
     }
-    return v;
+    return memCid;
   } catch {
     return "";
   }
