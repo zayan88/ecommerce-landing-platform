@@ -10,6 +10,7 @@ import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
 import type { Order } from "@/types";
 import { markAbandonedConverted } from "@/lib/db/abandoned-repo";
+import { formatOptionsNote, sanitizeProductOptions } from "@/lib/product-options";
 import { applyCoupon, bestAutoCoupon, computeShipping, sanitizeCoupons, sanitizeShipping } from "@/lib/commerce";
 import {
   beginOrder,
@@ -77,7 +78,12 @@ export async function POST(req: NextRequest) {
     // 3. Resolve pricing & offers server-side only (All shipping is 100% Free)
     const finalGov = data.governorate || data.shipping_governorate || "القاهرة";
     const finalAddress = data.address || data.shipping_address || "العنوان بالتفصيل";
-    const finalNotes = data.notes || data.customer_notes || "";
+    // Color / size etc.: required when the product has options, checked against the product itself, then written into the notes
+    const optionsCheck = formatOptionsNote(sanitizeProductOptions((product as any).options), data.options);
+    if (optionsCheck.error) {
+      return NextResponse.json({ success: false, error: optionsCheck.error }, { status: 400 });
+    }
+    const finalNotes = [optionsCheck.note ? `الخيارات: ${optionsCheck.note}` : "", data.notes || data.customer_notes || ""].filter(Boolean).join(" | ");
 
     let quantity: number;
     let unitPrice: number;

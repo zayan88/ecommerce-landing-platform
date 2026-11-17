@@ -17,6 +17,12 @@ export interface ProductOffer {
   sort_order: number;
 }
 
+/** A choice the customer makes when ordering (e.g. color: red / blue). */
+export interface ProductOption {
+  name: string;
+  values: string[];
+}
+
 export interface Product {
   id: string;
   title_ar: string;
@@ -35,6 +41,8 @@ export interface Product {
   safka_commission?: number;
   safka_raw?: any;
   offers?: ProductOffer[];
+  /** Color / size ... the customer picks in the order form. */
+  options?: ProductOption[];
   created_at: string;
   updated_at: string;
 }

@@ -10,6 +10,7 @@ import { LandingFooter } from "@/components/shared/LandingFooter";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { GuaranteesStrip } from "@/components/shared/GuaranteesStrip";
 import { SocialProofWall } from "@/components/shared/SocialProofWall";
+import { ShippingScope } from "@/components/shared/ShippingScope";
 import { shippingHint } from "@/lib/commerce";
 import { useBrand } from "@/components/brand/BrandProvider";
 import { EgyptianCheckoutForm } from "@/components/shared/EgyptianCheckoutForm";
@@ -134,7 +135,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   const hid = (k: string) => !!c?.hidden?.[k];
   // Editor only: list items get a relative box so their delete button can sit on them
   const rel = editMode ? " relative" : "";
-  const shipHint = shippingHint(useBrand().commerce.shipping);
+  const shipHint = shippingHint(useBrand().commerce.shipping, product.id);
 
   const announcementText =
     c?.announcement_bar ||
@@ -675,6 +676,7 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
   };
 
   return (
+    <ShippingScope productId={product.id}>
     <main style={pageTheme} className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white" dir={dir}>
       {/* 1. Announcement Bar */}
       <Removable flag="hide_announcement" hidden={!!c?.hide_announcement} label="شريط الإعلان">
@@ -709,5 +711,6 @@ export default function StarterLandingPage({ product, landingPage }: StarterLand
         />
       )}
     </main>
+    </ShippingScope>
   );
 }

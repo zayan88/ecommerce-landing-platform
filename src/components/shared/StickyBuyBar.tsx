@@ -4,7 +4,7 @@ import React from "react";
 import { ShoppingBagIcon } from "@heroicons/react/24/solid";
 import { Product, ProductOffer } from "@/types";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { shippingHint } from "@/lib/commerce";
+import { useShippingHint } from "@/components/shared/ShippingScope";
 import { useLang } from "@/components/i18n/LangProvider";
 
 interface StickyBuyBarProps {
@@ -32,7 +32,7 @@ export function StickyBuyBar({
 }: StickyBuyBarProps) {
   const { t, dir } = useLang();
   const cta = ctaText || t("sticky.cta");
-  const shipHint = shippingHint(useBrand().commerce.shipping);
+  const shipHint = useShippingHint();
   const [pastHero, setPastHero] = React.useState(false);
   const [formInView, setFormInView] = React.useState(false);
 

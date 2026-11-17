@@ -128,7 +128,7 @@ export async function registerSupportWebhook(token: string, url: string, secret:
 }
 
 /** One question to the merchant's LLM. Returns the answer, or null when it cannot / will not answer (then: hand off). */
-export async function askLlm(settings: any, message: string): Promise<string | null> {
+export async function askLlm(settings: any, message: string, productInfo = ""): Promise<string | null> {
   const cfg = sanitizeChat(settings.chat);
   const key = typeof settings.llm_api_key === "string" ? settings.llm_api_key : "";
   const base = safeLlmBaseUrl(cfg.llm_base_url);
@@ -145,7 +145,7 @@ export async function askLlm(settings: any, message: string): Promise<string | n
         max_tokens: 250,
         temperature: 0.3,
         messages: [
-          { role: "system", content: llmSystemPrompt(settings.store_name || "المتجر", cfg.llm_prompt) },
+          { role: "system", content: llmSystemPrompt(settings.store_name || "المتجر", [cfg.llm_prompt, productInfo].filter(Boolean).join("\n\n")) },
           { role: "user", content: message.slice(0, 500) },
         ],
       }),
