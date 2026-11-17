@@ -3,6 +3,7 @@ import { dbStore } from "@/lib/db/store";
 import { SafkaClient } from "@/lib/safqa/safka-client";
 import { isAdminRequest } from "@/lib/auth/session";
 import { checkSafqaWebhookSecret } from "@/lib/auth/webhook";
+import { mapSafkaStatus, readSafkaOrderPayload } from "@/lib/safqa/order-status";
 
 export const runtime = "edge";
 
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest, { params }: RouteProps) {
     }
 
     const { searchParams } = url;
-    const key = searchParams.get("api-safka-key") || searchParams.get("key") || searchParams.get("token");
+    const key = searchParams.get("api_safka_key") || searchParams.get("api-safka-key") || searchParams.get("key") || searchParams.get("token");
 
     if (typeof key === "string" && key.trim().length >= 8 && key.trim().length <= 512) {
       await dbStore.updateSettings({
@@ -163,6 +164,7 @@ export async function POST(req: NextRequest, { params }: RouteProps) {
     if (subAction === "connect-callback") {
       const payload = await req.json().catch(() => ({}));
       const apiKey =
+        payload.api_safka_key ||
         payload["api-safka-key"] ||
         payload.api_key ||
         payload.key ||
@@ -226,37 +228,27 @@ export async function POST(req: NextRequest, { params }: RouteProps) {
 
     // ----------------- C. ORDERS HOOK -----------------
     if (subAction === "orders" || subAction === "order-webhook") {
-      const safkaOrderId = payload.order_id || payload._id || payload.data?._id || payload.order_number;
-      const rawStatus = (payload.status || payload.data?.status || "").toLowerCase();
+      const { ids, phone, status: rawStatus } = readSafkaOrderPayload(payload);
 
-      if (safkaOrderId) {
+      if (ids.length > 0 || phone) {
         // Targeted lookup (indexed on D1) instead of loading every order on each webhook call.
-        const orders = await dbStore.findOrdersForLookup({
-          keys: [String(safkaOrderId)],
-          phone: typeof payload.client_phone1 === "string" ? payload.client_phone1 : null,
-        });
-        const matched = orders.find(
-          (o) =>
-            o.safqa_invoice_id === safkaOrderId ||
-            o.order_number === safkaOrderId ||
-            (payload.client_phone1 && o.customer_phone === payload.client_phone1)
-        );
+        const orders = await dbStore.findOrdersForLookup({ keys: ids, phone });
+        const idSet = new Set(ids.map((x) => x.toLowerCase()));
+        const phoneDigits = String(phone || "").replace(/D/g, "").replace(/^(?:20|0020)/, "0");
+        // The Safka order id first; the customer's phone only as a fallback (the newest order of that phone)
+        const byId = orders.find((o) => (o.safqa_invoice_id && idSet.has(String(o.safqa_invoice_id).toLowerCase())) || idSet.has(String(o.order_number || "").toLowerCase()));
+        const byPhone = phoneDigits
+          ? orders
+              .filter((o) => String(o.customer_phone || "").replace(/D/g, "").replace(/^(?:20|0020)/, "0") === phoneDigits)
+              .sort((x, y) => String(y.created_at || "").localeCompare(String(x.created_at || "")))[0]
+          : undefined;
+        const matched = byId || byPhone;
 
         if (matched) {
-          let newStatus = matched.status;
-          if (rawStatus.includes("ship") || rawStatus.includes("مكتمل") || rawStatus.includes("جار")) {
-            newStatus = "shipped";
-          } else if (rawStatus.includes("deliver") || rawStatus.includes("تم التسليم")) {
-            newStatus = "delivered";
-          } else if (rawStatus.includes("cancel") || rawStatus.includes("ملغي")) {
-            newStatus = "cancelled";
-          } else if (rawStatus.includes("return") || rawStatus.includes("مرتجع")) {
-            newStatus = "returned";
-          }
-
-          await dbStore.updateOrderStatus(matched.id, newStatus);
+          const newStatus = mapSafkaStatus(rawStatus) || matched.status;
+          if (newStatus !== matched.status) await dbStore.updateOrderStatus(matched.id, newStatus);
           await dbStore.updateSafqaInfo(matched.id, {
-            safqa_status: newStatus === "delivered" ? "paid" : "pending",
+            safqa_status: String(rawStatus).toLowerCase() === "collected" || newStatus === "delivered" ? "paid" : "pending",
             safqa_response: payload,
           });
 
