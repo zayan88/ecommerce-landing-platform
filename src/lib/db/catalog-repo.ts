@@ -310,6 +310,8 @@ export interface CatalogRepo {
   deleteProduct(idOrSlug: string): Promise<number>;
 
   listLandingPages(): Promise<LandingPage[]>;
+  /** Only (product_id, slug) of every landing page: the home page needs no more, so no content JSON is read or parsed. */
+  listLandingSlugs(): Promise<{ product_id: string; slug: string }[]>;
   /** By slug or id (slug wins). One indexed query. */
   getLandingPage(slugOrId: string): Promise<LandingPage | null>;
   /** `idProvided`: full replace by id. Otherwise: upsert on the slug, keeping what was not provided. */
@@ -422,6 +424,11 @@ export function createD1CatalogRepo(db: SqlClient, store: string = "default"): C
     async listLandingPages() {
       const res = await db.query("SELECT * FROM landing_pages WHERE store_id = ? ORDER BY created_ms DESC, id DESC", [store]);
       return res.rows.map(rowToLandingPage);
+    },
+
+    async listLandingSlugs() {
+      const res = await db.query("SELECT product_id, slug FROM landing_pages WHERE store_id = ? ORDER BY created_ms DESC, id DESC", [store]);
+      return res.rows.map((r: any) => ({ product_id: String(r.product_id || ""), slug: String(r.slug || "") }));
     },
 
     async getLandingPage(slugOrId) {

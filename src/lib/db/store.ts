@@ -1120,6 +1120,20 @@ export const dbStore = {
   },
 
   // LANDING PAGES
+  /** product_id -> landing page slug, without reading any page content (the home page only needs the links). */
+  async getLandingSlugs(): Promise<Record<string, string>> {
+    if (!getSupabaseAdmin() && catalogOnD1()) {
+      const rows = await cachedCatalogRead("landing_slugs", () => getCatalogRepo().listLandingSlugs());
+      const map: Record<string, string> = {};
+      for (const r of rows) if (r.product_id && !(r.product_id in map)) map[r.product_id] = r.slug;
+      for (const mlp of memoryLandingPages) if (mlp.product_id && !(mlp.product_id in map)) map[mlp.product_id] = mlp.slug;
+      return map;
+    }
+    const map: Record<string, string> = {};
+    for (const lp of await this.getLandingPages()) if (lp.product_id && !(lp.product_id in map)) map[lp.product_id] = lp.slug;
+    return map;
+  },
+
   async getLandingPagesUncached(): Promise<LandingPage[]> {
     const admin = getSupabaseAdmin();
     if (admin) {
