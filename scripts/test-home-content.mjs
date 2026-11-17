@@ -15,7 +15,7 @@ await test("defaults exist in both languages and mention the brand", () => {
   assert.ok(!/[\u0600-\u06FF]/.test(JSON.stringify(lib.defaultHomeContent("en", "Nour"))), "English defaults have no Arabic");
 });
 
-await test("sanitize keeps only real values, clips lengths, drops junk and bad image urls", () => {
+await test("sanitize: missing = default, saved empty = deleted, clips lengths, drops junk and bad image urls", () => {
   const s = lib.sanitizeHomeContent({
     hero_title: "  عنوان جديد  ",
     hero_text: "x".repeat(2000),
@@ -30,16 +30,20 @@ await test("sanitize keeps only real values, clips lengths, drops junk and bad i
   });
   assert.equal(s.hero_title, "عنوان جديد");
   assert.equal(s.hero_text.length, 500);
-  assert.equal(s.hero_cta, undefined);
-  assert.equal(s.hero_image, undefined);
+  assert.equal(s.hero_cta, "", "an empty saved field means the element was deleted");
+  assert.equal(s.hero_image, undefined, "a bad image url is dropped (falls back)");
+  assert.equal(s.hero_badge, undefined, "a missing field stays missing (default)");
   assert.deepEqual(s.faq, [{ q: "سؤال", a: "جواب" }]);
   assert.equal(s.trust.length, 1);
   assert.deepEqual(s.compare_old, ["نقطة"]);
-  assert.equal(s.steps, undefined);
+  assert.equal(s.steps, undefined, "not a list: ignored");
+  assert.deepEqual(lib.sanitizeHomeContent({ faq: [], compare_old: [], hero_image: "" }).faq, [], "an empty list stays empty");
+  assert.deepEqual(lib.sanitizeHomeContent({ compare_old: [] }).compare_old, []);
+  assert.equal(lib.sanitizeHomeContent({ hero_image: "" }).hero_image, "");
   assert.deepEqual(s.hide, { faq: true });
   assert.equal(s.evil, undefined);
   assert.equal(lib.sanitizeHomeContent({ hero_image: "/api/media/abc.webp" }).hero_image, "/api/media/abc.webp");
-  assert.deepEqual(lib.sanitizeHomeContent(null).hide, {});
+  assert.deepEqual(lib.sanitizeHomeContent(null), {}, "nothing saved = empty object (so 'customised' is false)");
 });
 
 await test("merge: saved fields override the defaults, the rest stays default", () => {
