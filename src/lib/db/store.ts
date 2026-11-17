@@ -1,4 +1,7 @@
 import { Product, ProductOffer, LandingPage, LandingPageSectionConfig, LandingPageContentConfig, DEFAULT_LANDING_PAGE_SECTIONS, Order, OrderTrackingMeta, AnalyticsEvent, SystemSettings, OrderStatus, SafqaSyncStatus } from "@/types";
+import * as React from "react";
+// React.cache only exists in the server-rendering build; elsewhere (scripts, tests) it is a plain call-through.
+const cache: <A extends (...a: any[]) => any>(fn: A) => A = (React as any).cache || ((fn: any) => fn);
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import { kvStore } from "./kv";
 import { generateOrderId, generateOrderNumber, generateUniqueOrderNumber } from "@/lib/orders/guard";
@@ -936,9 +939,29 @@ async function patchLandingPageOnD1(
   return saved;
 }
 
+/**
+ * Per-request memo of the three catalog reads every storefront render repeats (settings, products, landing pages):
+ * each read deep-clones its cached copy, and a page asks for them several times, which was the main CPU cost on the
+ * free plan's 10ms budget. React's cache() is scoped to one server render; outside a render (API routes, writes) it
+ * simply calls through, so writes and their read-backs are never served stale.
+ */
+const settingsOnce = cache((s: any) => s.getSettingsUncached());
+const productsOnce = cache((s: any) => s.getProductsUncached());
+const landingPagesOnce = cache((s: any) => s.getLandingPagesUncached());
+
 export const dbStore = {
-  // PRODUCTS
+  async getSettings(): Promise<SystemSettings> {
+    return settingsOnce(this);
+  },
   async getProducts(): Promise<Product[]> {
+    return productsOnce(this);
+  },
+  async getLandingPages(): Promise<LandingPage[]> {
+    return landingPagesOnce(this);
+  },
+
+  // PRODUCTS
+  async getProductsUncached(): Promise<Product[]> {
     loadFromFile();
     const admin = getSupabaseAdmin();
     if (admin) {
@@ -1097,7 +1120,7 @@ export const dbStore = {
   },
 
   // LANDING PAGES
-  async getLandingPages(): Promise<LandingPage[]> {
+  async getLandingPagesUncached(): Promise<LandingPage[]> {
     const admin = getSupabaseAdmin();
     if (admin) {
       const { data, error } = await admin
@@ -2349,7 +2372,7 @@ export const dbStore = {
   },
 
   // SETTINGS
-  async getSettings(): Promise<SystemSettings> {
+  async getSettingsUncached(): Promise<SystemSettings> {
     const overrides = await readSettingsOverrides();
     const merged: any = { ...memorySettings, ...overrides };
     // Empty secret fields fall back to env (so rotating an env var takes effect without a DB edit)
@@ -2375,11 +2398,11 @@ export const dbStore = {
           console.warn("[KV settings mirror error]", e);
         }
       }
-      return this.getSettings();
+      return this.getSettingsUncached();
     }
     const overrides = { ...(await readSettingsOverrides()), ...newSettings };
     memorySettings = { ...memorySettings, ...newSettings };
     await kvStore.put(SETTINGS_KV_KEY, overrides);
-    return this.getSettings();
+    return this.getSettingsUncached();
   },
 };
