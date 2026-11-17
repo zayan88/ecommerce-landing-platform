@@ -13,9 +13,11 @@ export interface ShippingConfig {
   min_order: number;
   /** Per-product fee overrides (product id -> fee, 0 = free). A product not listed uses default_fee. */
   product_fees: Record<string, number>;
+  /** Per-governorate fee (governorate name as the order carries it -> fee, 0 = free). Used when the product has no fee of its own. */
+  governorate_fees: Record<string, number>;
 }
 
-export const DEFAULT_SHIPPING: ShippingConfig = { default_fee: 0, free_over: 0, min_order: 0, product_fees: {} };
+export const DEFAULT_SHIPPING: ShippingConfig = { default_fee: 0, free_over: 0, min_order: 0, product_fees: {}, governorate_fees: {} };
 
 export interface Coupon {
   /** The code the customer types. For an automatic discount it is just the internal name. */
@@ -76,7 +78,13 @@ export function sanitizeShipping(input: unknown): ShippingConfig {
   for (const [id, fee] of Object.entries(raw).slice(0, 300)) {
     if (/^[A-Za-z0-9_-]{1,80}$/.test(id) && fee !== null && fee !== "" && Number.isFinite(Number(fee))) fees[id] = money(fee, 100000);
   }
-  return { default_fee: money(i.default_fee, 100000), free_over: money(i.free_over), min_order: money(i.min_order), product_fees: fees };
+  const gov: Record<string, number> = {};
+  const rawGov = i.governorate_fees && typeof i.governorate_fees === "object" && !Array.isArray(i.governorate_fees) ? (i.governorate_fees as Record<string, unknown>) : {};
+  for (const [name, fee] of Object.entries(rawGov).slice(0, 60)) {
+    const n = name.trim();
+    if (n.length >= 2 && n.length <= 40 && !/[<>"'&\u0000-\u001f]/.test(n) && fee !== null && fee !== "" && Number.isFinite(Number(fee))) gov[n] = money(fee, 100000);
+  }
+  return { default_fee: money(i.default_fee, 100000), free_over: money(i.free_over), min_order: money(i.min_order), product_fees: fees, governorate_fees: gov };
 }
 
 export function normalizeCouponCode(v: unknown): string {
@@ -211,16 +219,20 @@ export function bestAutoCoupon(coupons: Coupon[] | undefined, ctx: CouponContext
 }
 
 /** The shipping fee of an order. `total` is the order total after the coupon, before shipping. */
-export function computeShipping(cfg: ShippingConfig, opts: { total: number; productId: string; offerFree?: boolean }): number {
+export function computeShipping(cfg: ShippingConfig, opts: { total: number; productId: string; offerFree?: boolean; governorate?: string }): number {
   if (opts.offerFree) return 0;
   if (cfg.free_over > 0 && opts.total >= cfg.free_over) return 0;
+  // 1) the product's own fee (set in the product editor), 2) the governorate's fee, 3) the store's default fee
   const override = cfg.product_fees[opts.productId];
-  return Number.isFinite(override) ? override : cfg.default_fee;
+  if (Number.isFinite(override)) return override;
+  const gov = opts.governorate ? (cfg.governorate_fees || {})[opts.governorate.trim()] : undefined;
+  if (Number.isFinite(gov)) return gov as number;
+  return cfg.default_fee;
 }
 
 /** Short customer-facing text for "how much is shipping" (used where pages used to say "free shipping"). */
 export function shippingHint(cfg: ShippingConfig): { free: boolean; text: string } {
-  const anyPaid = cfg.default_fee > 0 || Object.values(cfg.product_fees).some((f) => f > 0);
+  const anyPaid = cfg.default_fee > 0 || Object.values(cfg.product_fees).some((f) => f > 0) || Object.values(cfg.governorate_fees || {}).some((f) => f > 0);
   if (!anyPaid) return { free: true, text: "شحن مجاني" };
   if (cfg.free_over > 0) return { free: false, text: `شحن مجاني للطلبات من ${cfg.free_over} ج.م` };
   return { free: false, text: "الشحن لكل المحافظات" };

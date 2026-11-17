@@ -3,6 +3,7 @@ import { dbStore } from "@/lib/db/store";
 import { isThemeColor } from "@/lib/palettes";
 import { sanitizeCoupons, sanitizeDownsell, sanitizePopup, sanitizeShipping } from "@/lib/commerce";
 import { sanitizeChat, sanitizeChatProducts } from "@/lib/chat";
+import { sanitizeHomeContent } from "@/lib/home-content";
 import { normalizeEgyptPhone } from "@/lib/db/abandoned-repo";
 import { META_PIXEL_RE, TIKTOK_PIXEL_RE, SNAP_PIXEL_RE, GA4_RE, GTM_RE, META_TEST_CODE_RE, cleanIdList } from "@/lib/tracking/tag-ids";
 
@@ -156,6 +157,12 @@ export async function POST(req: NextRequest) {
     }
     delete (toUpdate as Record<string, unknown>).coupon_usage;
     for (const f of ["mcp_enabled", "mcp_token_hash", "mcp_token_created_at", "support_webhook_secret"]) delete (toUpdate as Record<string, unknown>)[f];
+    if ("safka_page_id" in toUpdate) {
+      const v = typeof (toUpdate as Record<string, unknown>).safka_page_id === "string" ? ((toUpdate as Record<string, unknown>).safka_page_id as string).trim() : "";
+      (toUpdate as Record<string, unknown>).safka_page_id = /^[A-Za-z0-9_-]{4,64}$/.test(v) ? v : "";
+    }
+    if ("safka_enabled" in toUpdate) (toUpdate as Record<string, unknown>).safka_enabled = (toUpdate as Record<string, unknown>).safka_enabled === true;
+    if ("home_content" in toUpdate) (toUpdate as Record<string, unknown>).home_content = sanitizeHomeContent((toUpdate as Record<string, unknown>).home_content);
     if ("home_page_slug" in toUpdate) {
       const v = typeof (toUpdate as Record<string, unknown>).home_page_slug === "string" ? ((toUpdate as Record<string, unknown>).home_page_slug as string).trim() : "";
       (toUpdate as Record<string, unknown>).home_page_slug = /^[A-Za-z0-9][A-Za-z0-9_-]{0,100}$/.test(v) ? v : "";

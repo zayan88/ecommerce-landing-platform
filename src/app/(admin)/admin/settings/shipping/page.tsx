@@ -1,5 +1,6 @@
 "use client";
 
+import { EGYPTIAN_GOVERNORATES } from "@/lib/constants/governorates";
 import React, { useState } from "react";
 import type { ShippingConfig } from "@/lib/commerce";
 import { SettingsShell, Field, PageTabs, inputCls, cardCls } from "../../_components/settings-ui";
@@ -11,7 +12,7 @@ interface Prod {
 }
 
 type Tab = "own" | "company" | "options";
-const EMPTY: ShippingConfig = { default_fee: 0, free_over: 0, min_order: 0, product_fees: {} };
+const EMPTY: ShippingConfig = { default_fee: 0, free_over: 0, min_order: 0, product_fees: {}, governorate_fees: {} };
 const num = (v: string) => (v === "" ? 0 : Math.max(0, Math.round(Number(v)) || 0));
 
 export default function ShippingSettingsPage() {
@@ -31,7 +32,7 @@ export default function ShippingSettingsPage() {
       description="تكلفة الشحن، الربط مع شركة الشحن، والحد الأدنى للطلب."
       withProducts
       load={(s, p) => {
-        setCfg({ ...EMPTY, ...(s.shipping_config || {}), product_fees: { ...(s.shipping_config?.product_fees || {}) } });
+        setCfg({ ...EMPTY, ...(s.shipping_config || {}), product_fees: { ...(s.shipping_config?.product_fees || {}) }, governorate_fees: { ...(s.shipping_config?.governorate_fees || {}) } });
         setProducts(p);
         setProvider(s.shipping_provider === "bosta" ? "bosta" : "none");
         setBostaKey(s.bosta_api_key || "");
@@ -75,29 +76,34 @@ export default function ShippingSettingsPage() {
 
           <section className={cardCls}>
             <div>
-              <h2 className="text-lg font-black text-slate-900">تكلفة شحن لكل منتج</h2>
-              <p className="text-xs text-slate-500 leading-relaxed mt-1">سيب الخانة فاضية عشان المنتج ياخد تكلفة المتجر. اكتب 0 لشحن مجاني للمنتج ده، أو أي رقم لتكلفة خاصة.</p>
+              <h2 className="text-lg font-black text-slate-900">تكلفة الشحن لكل محافظة</h2>
+              <p className="text-xs text-slate-500 leading-relaxed mt-1">
+                سيب الخانة فاضية عشان المحافظة تاخد تكلفة الشحن العامة ({cfg.default_fee} ج.م). اكتب 0 لشحن مجاني لمحافظة. لو منتج ليه تكلفة شحن خاصة من إعدادات المنتج، هي اللي بتنفع عليه مهما كانت المحافظة.
+              </p>
             </div>
-            {products.length === 0 ? (
-              <p className="text-sm text-slate-500">مفيش منتجات نشطة.</p>
-            ) : (
-              products.map((p) => (
-                <div key={p.id} className="flex items-center gap-3">
-                  <span className="flex-1 min-w-0 text-sm font-bold text-slate-800 truncate">{p.title_ar}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5">
+              {EGYPTIAN_GOVERNORATES.map((g) => (
+                <div key={g.id} className="flex items-center gap-3">
+                  <span className="flex-1 min-w-0 text-sm font-bold text-slate-800 truncate">{g.nameAr}</span>
                   <input
-                    className={inputCls + " w-32 text-center"}
+                    className={inputCls + " w-28 text-center"}
                     inputMode="numeric"
-                    placeholder="تكلفة المتجر"
-                    value={p.id in cfg.product_fees ? cfg.product_fees[p.id] : ""}
+                    placeholder={String(cfg.default_fee)}
+                    value={g.nameAr in cfg.governorate_fees ? cfg.governorate_fees[g.nameAr] : ""}
                     onChange={(e) => {
-                      const fees = { ...cfg.product_fees };
-                      if (e.target.value === "") delete fees[p.id];
-                      else fees[p.id] = num(e.target.value);
-                      setCfg({ ...cfg, product_fees: fees });
+                      const fees = { ...cfg.governorate_fees };
+                      if (e.target.value === "") delete fees[g.nameAr];
+                      else fees[g.nameAr] = num(e.target.value);
+                      setCfg({ ...cfg, governorate_fees: fees });
                     }}
                   />
                 </div>
-              ))
+              ))}
+            </div>
+            {Object.keys(cfg.governorate_fees).length > 0 && (
+              <button type="button" onClick={() => setCfg({ ...cfg, governorate_fees: {} })} className="min-h-[44px] px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-sm font-bold cursor-pointer">
+                مسح كل أسعار المحافظات (الكل بالتكلفة العامة)
+              </button>
             )}
           </section>
         </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { PageHeader, Toast } from "../_components/toast";
+import { StoreTabs } from "../_components/store-tabs";
 import { useConfirm } from "../_components/confirm";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -133,7 +134,8 @@ export default function BrandPage() {
 
   return (
     <form onSubmit={save} className="max-w-2xl mx-auto p-4 sm:p-6 space-y-5 text-right" dir="rtl">
-      <PageHeader title="الإعدادات" saving={saving} />
+      <PageHeader title="إعدادات المتجر" saving={saving} />
+      <StoreTabs />
       <div>
         <p className="text-sm text-slate-600 mt-1">تحكم في متجرك: الاسم، الشكل، الألوان، اللوجو وبيانات التواصل.</p>
       </div>

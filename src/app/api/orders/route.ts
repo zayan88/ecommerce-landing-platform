@@ -4,6 +4,7 @@ import { dbStore } from "@/lib/db/store";
 import { getGovernorateDeliveryFee } from "@/lib/constants/governorates";
 import { SafkaClient } from "@/lib/safqa/safka-client";
 import { SAFKA_ENABLED } from "@/lib/features";
+import { receiptExists } from "@/lib/db/receipts-repo";
 import { MetaCapiClient } from "@/lib/tracking/meta-capi";
 import { generateEventId } from "@/lib/tracking/utm";
 import { TelegramNotifier } from "@/lib/notifications/telegram";
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
     const afterCoupon = totalAmount - (couponApplied?.amount || 0);
     const shippingFee = couponApplied?.free_shipping
       ? 0
-      : computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping });
+      : computeShipping(shippingCfg, { total: afterCoupon, productId: product.id, offerFree: offerFreeShipping, governorate: data.governorate });
     const finalAmount = afterCoupon + shippingFee;
 
     // 4. Resolve client IP and User-Agent for CAPI / rate limiting
@@ -188,6 +189,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: "طريقة الدفع دي مش متاحة حالياً، اختار الدفع عند الاستلام" }, { status: 400 });
       }
     }
+
+    // The customer's transfer screenshot (uploaded earlier through /api/receipts), only if it really exists
+    let receiptId: string | undefined;
+    if (manualMethod && data.payment_receipt && (await receiptExists(data.payment_receipt).catch(() => false))) receiptId = data.payment_receipt;
 
     // 4b. Duplicate guard: same phone + product inside 15 minutes returns the existing order.
     slot = await beginOrder(orderDedupeKey(data.customer_phone, product.id));
@@ -248,7 +253,7 @@ export async function POST(req: NextRequest) {
           event_id: eventId,
           ...(couponApplied ? { coupon: couponApplied } : {}),
           ...(manualMethod
-            ? { payment: { method: manualMethod, reference: data.payment_reference || undefined, status: "awaiting" as const } }
+            ? { payment: { method: manualMethod, reference: data.payment_reference || undefined, ...(receiptId ? { receipt_id: receiptId } : {}), status: "awaiting" as const } }
             : {}),
         },
       });
@@ -293,7 +298,8 @@ export async function POST(req: NextRequest) {
     // 6. Forward order to Safka Egypt Dropshipping API (Awaited to ensure completion on Serverless/Vercel)
     let safkaResult = null;
     try {
-      if (SAFKA_ENABLED) safkaResult = await SafkaClient.createOrder(createdOrder);
+      const safkaOn = SAFKA_ENABLED || Boolean(((await dbStore.getSettings()) as any).safka_enabled);
+      if (safkaOn) safkaResult = await SafkaClient.createOrder(createdOrder);
       console.log(`[Order Created] Linked to Safka Egypt:`, safkaResult);
     } catch (err) {
       console.error("[Safka dropshipping forward error]", err);

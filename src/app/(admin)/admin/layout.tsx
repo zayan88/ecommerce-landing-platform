@@ -6,7 +6,6 @@ import { ConfirmProvider } from "./_components/confirm";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useBrand } from "@/components/brand/BrandProvider";
-import { SAFKA_ENABLED } from "@/lib/features";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -38,6 +37,7 @@ import {
   Truck,
   MessageCircle,
   Plug,
+  Handshake,
 } from "lucide-react";
 
 interface NavChild {
@@ -85,7 +85,15 @@ const allNavigationItems: NavItem[] = [
       { name: "النافذة المنبثقة (Popup)", href: "/admin/marketing/popup", icon: PanelTop },
     ],
   },
-  { name: "دروبشيبينغ صفقة (Safka)", href: "/admin/safqa", icon: ShoppingBag },
+  {
+    name: "الموردين",
+    href: "/admin/suppliers",
+    icon: Handshake,
+    children: [
+      { name: "كل الموردين", href: "/admin/suppliers", icon: Handshake },
+      { name: "صفقة (Safka)", href: "/admin/safqa", icon: ShoppingBag },
+    ],
+  },
   {
     name: "الإعدادات",
     href: "/admin/settings",
@@ -105,7 +113,7 @@ const allNavigationItems: NavItem[] = [
 /** The admin keeps the default palette (green = success, orange = actions) whatever colors the store uses. */
 const ADMIN_THEME = { ...cssVarsFor("primary", "emerald"), ...cssVarsFor("accent", "orange") } as React.CSSProperties;
 
-const navigationItems = allNavigationItems.filter((item) => SAFKA_ENABLED || item.href !== "/admin/safqa");
+const navigationItems = allNavigationItems;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const brand = useBrand();
@@ -236,7 +244,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {navigationItems.map((item) => {
               const Icon = item.icon;
               if (item.children) {
-                const isChildActive = (href: string) => pathname === href || (href !== item.href && pathname.startsWith(href + "/"));
+                const isChildActive = (href: string) => pathname === href || (href !== item.href && pathname.startsWith(href + "/")) || (href === "/admin/settings" && pathname === "/admin/settings/home");
                 const groupActive = item.children.some((c) => isChildActive(c.href));
                 const open = groupActive || openGroups[item.href];
                 return (

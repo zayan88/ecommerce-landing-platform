@@ -107,6 +107,8 @@ export const orderFormSchema = z
     payment_method: z.enum(["cod", "safqa", "card", "vodafone_cash", "instapay"]).default("cod"),
     // Transfer reference the customer typed (manual methods only)
     payment_reference: trackingText(60, "truncate"),
+    // Id of the uploaded transfer screenshot (POST /api/receipts), manual methods only
+    payment_receipt: z.string().regex(/^[a-f0-9]{20}$/).optional(),
     coupon_code: trackingText(20, "truncate"),
 
     // Tracking metadata (lenient)
