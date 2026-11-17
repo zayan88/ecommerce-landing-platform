@@ -15,6 +15,7 @@ const D: Record<string, Entry> = {
   // ── generic ──
   "currency": { ar: "ج.م", en: "EGP" },
   "close": { ar: "إغلاق", en: "Close" },
+  "nav.home": { ar: "الرئيسية", en: "Home" },
   "free_shipping": { ar: "شحن مجاني", en: "Free shipping" },
   "lang_switch_label": { ar: "English", en: "عربي" },
   "lang_switch_aria": { ar: "Switch to English", en: "التبديل إلى العربية" },

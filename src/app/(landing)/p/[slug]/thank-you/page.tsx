@@ -1,8 +1,8 @@
 import React from "react";
 import type { Metadata } from "next";
 import { ThankYouClient } from "./ThankYouClient";
-import { StorePopups } from "@/components/shared/StorePopups";
-import { StoreChat } from "@/components/shared/StoreChat";
+import { LazyStorePopups, LazyStoreChat } from "@/components/shared/LazyExtras";
+import { StoreHeader } from "@/components/shared/StoreHeader";
 
 export const metadata: Metadata = {
   title: "تم استلام طلبك",
@@ -15,9 +15,10 @@ export const dynamic = "force-dynamic";
 export default function ThankYouPage({ params }: { params: { slug: string } }) {
   return (
     <>
+      <StoreHeader />
       <ThankYouClient slug={params.slug} />
-      <StorePopups />
-      <StoreChat />
+      <LazyStorePopups />
+      <LazyStoreChat />
     </>
   );
 }

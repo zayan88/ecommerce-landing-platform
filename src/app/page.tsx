@@ -6,8 +6,7 @@ import { MetaPixel } from "@/lib/tracking/meta-pixel";
 import { MarketingPixels } from "@/lib/tracking/marketing-pixels";
 import { effectiveMetaPixelIds, effectiveTiktokPixelIds, effectiveSnapPixelIds } from "@/lib/tracking/pixel-config";
 import { UrgencyBar } from "@/components/shared/UrgencyBar";
-import { StorePopups } from "@/components/shared/StorePopups";
-import { StoreChat } from "@/components/shared/StoreChat";
+import { LazyStorePopups, LazyStoreChat } from "@/components/shared/LazyExtras";
 import { HomeView, type HomeProduct } from "@/components/home/HomeView";
 import DynamicLandingPage, { generateMetadata as landingMetadata } from "@/app/(landing)/p/[slug]/page";
 import { getLang } from "@/lib/i18n-server";
@@ -78,10 +77,10 @@ export default async function HomePage() {
     <div dir={dirOf(lang)}>
       <MetaPixel pixelIds={effectiveMetaPixelIds(settings)} />
       <MarketingPixels tiktokPixelIds={effectiveTiktokPixelIds(settings)} snapPixelIds={effectiveSnapPixelIds(settings)} ga4Id={settings.ga4_measurement_id} gtmId={settings.gtm_container_id} />
-      <StorePopups />
+      <LazyStorePopups />
       <UrgencyBar />
       <HomeView hc={hc} products={cards} reviews={reviews} />
-      <StoreChat />
+      <LazyStoreChat />
     </div>
   );
 }
