@@ -837,6 +837,7 @@ function buildProduct(productData: Partial<Product> & { offers?: Partial<Product
     // Color / size options (kept with the product): without these lines a save would silently drop them
     ...(Array.isArray(productData.options) ? { options: productData.options } : {}),
     ...(productData.options_enabled === false ? { options_enabled: false } : {}),
+    ...(productData.digital === true ? { digital: true } : {}),
     ...(Array.isArray(productData.variants_off) && productData.variants_off.length ? { variants_off: productData.variants_off } : {}),
   };
 }

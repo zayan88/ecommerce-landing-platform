@@ -69,6 +69,9 @@ export function EgyptianCheckoutForm({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [governorate, setGovernorate] = useState("القاهرة");
+  // Digital product (file / course / theme): no address or shipping, an email instead
+  const digital = Boolean((product as any).digital);
+  const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   // Color / size etc. the merchant defined on the product: the customer must pick each one
@@ -219,7 +222,9 @@ export function EgyptianCheckoutForm({
       : null;
   const eff = coupon ?? autoCoupon;
   const discount = eff?.discount || 0;
-  const shipFee = eff
+  const shipFee = digital
+    ? 0
+    : eff
     ? eff.shipping
     : shipCfg
     ? computeShipping(shipCfg, { total: totalAmount, productId: product.id, offerFree, governorate })
@@ -341,7 +346,9 @@ export function EgyptianCheckoutForm({
     if (!egPhoneRegex.test(cleanedPhone)) {
       return t("co.v_phone");
     }
-    if (!address.trim() || address.trim().length < 3) {
+    if (digital) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) return "اكتب إيميل صحيح عشان نبعتلك المنتج";
+    } else if (!address.trim() || address.trim().length < 3) {
       return t("co.v_addr");
     }
     return null;
@@ -386,8 +393,9 @@ export function EgyptianCheckoutForm({
         shipping_governorate: governorate || "القاهرة",
         city: governorate || "القاهرة",
         shipping_city: governorate || "القاهرة",
-        address: address.trim(),
-        shipping_address: address.trim(),
+        address: digital ? "منتج رقمي - تسليم إلكتروني" : address.trim(),
+        shipping_address: digital ? "منتج رقمي - تسليم إلكتروني" : address.trim(),
+        email: digital ? email.trim() : undefined,
         options: productOptions.length > 0 ? picked : undefined,
         notes: notes.trim() || undefined,
         customer_notes: notes.trim() || undefined,
@@ -579,6 +587,29 @@ export function EgyptianCheckoutForm({
           />
         </div>
 
+        {/* Digital product: where to send it */}
+        {digital && (
+          <div>
+            <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
+              الإيميل <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              dir="ltr"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">هنبعتلك المنتج على الإيميل ده بعد تأكيد الطلب.</p>
+          </div>
+        )}
+
+        {!digital && (
+          <>
         {/* 3. Governorate */}
         <div>
           <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1">
@@ -615,6 +646,8 @@ export function EgyptianCheckoutForm({
             className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-900 placeholder-slate-400 text-sm outline-none transition"
           />
         </div>
+          </>
+        )}
 
         {/* 5. Details / Notes */}
         <div>
@@ -689,14 +722,14 @@ export function EgyptianCheckoutForm({
               <span className="font-bold">- {discount} {t("currency")}</span>
             </div>
           )}
-          <div className="flex justify-between text-slate-600">
+          {!digital && (<div className="flex justify-between text-slate-600">
             <span>{t("co.ship_to", { gov: governorate })}</span>
             {shipFee > 0 ? (
               <span className="font-bold text-slate-900">{shipFee} {t("currency")}</span>
             ) : (
               <span className="font-bold text-emerald-600">{t("co.free_all")}</span>
             )}
-          </div>
+          </div>)}
           {belowMin && (
             <div className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-2.5">
               {t("co.min_hint", { n: shipCfg?.min_order ?? 0, cur: t("currency") })}

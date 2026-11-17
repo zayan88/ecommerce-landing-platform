@@ -110,6 +110,8 @@ export const orderFormSchema = z
     // Id of the uploaded transfer screenshot (POST /api/receipts), manual methods only
     payment_receipt: z.string().regex(/^[a-f0-9]{20}$/).optional(),
     coupon_code: trackingText(20, "truncate"),
+    // Digital products: where to send the product
+    email: optionalText(120, "الإيميل طويل جداً"),
     // Product options the customer picked ({ "اللون": "أحمر" }); checked against the product's own options in the route
     options: z.unknown().optional(),
 
