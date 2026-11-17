@@ -191,7 +191,8 @@ export default function AdminNotificationsPage() {
                 value={settings.telegram_bot_token}
                 onChange={(e) => setSettings({ ...settings, telegram_bot_token: e.target.value })}
                 placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz..."
-                className="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 text-xs font-mono text-left direction-ltr transition"
+                className="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 text-xs font-mono text-left transition"
+                dir="ltr"
               />
               <p className="text-[11px] text-gray-400">
                 التوكن السري الخاص بالبوت الذي أنشأته على تليجرام.
@@ -209,7 +210,8 @@ export default function AdminNotificationsPage() {
                 value={settings.telegram_chat_id}
                 onChange={(e) => setSettings({ ...settings, telegram_chat_id: e.target.value })}
                 placeholder="مثال: 987654321 أو للجروبات: -100123456789"
-                className="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 text-xs font-mono text-left direction-ltr transition"
+                className="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 text-xs font-mono text-left transition"
+                dir="ltr"
               />
               <p className="text-[11px] text-gray-500 flex items-center gap-1">
                 <Users className="w-3.5 h-3.5 text-sky-600 flex-shrink-0" />
