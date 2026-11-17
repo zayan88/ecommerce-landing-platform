@@ -227,7 +227,7 @@ export default function AdminSafqaPage() {
   const secretQs = hookSecret ? `?secret=${encodeURIComponent(hookSecret)}` : "";
   const productWebhookUrl = `${effectiveOrigin}/api/safqa/products${secretQs}`;
   const orderWebhookUrl = `${effectiveOrigin}/api/safqa/orders${secretQs}`;
-  const callbackApiUrl = `${effectiveOrigin}/api/safqa/connect-callback`;
+  const callbackApiUrl = `${effectiveOrigin}/api/safqa/connect-callback${secretQs}`;
   const redirectAdminUrl = `${effectiveOrigin}/admin/safqa`;
 
   // Safka Direct Connect Link
