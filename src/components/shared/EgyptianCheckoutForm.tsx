@@ -318,6 +318,17 @@ export function EgyptianCheckoutForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone, name, governorate, activeOffer?.id]);
 
+  // ViewContent once per page load (Meta shows "Content views" from this; before, it was never sent)
+  useEffect(() => {
+    if (previewOnly) return;
+    const t = setTimeout(() => {
+      trackMetaEvent("ViewContent", { content_name: product.title_ar, content_ids: [product.id], content_type: "product", currency: "EGP", value: totalAmount });
+      trackMarketingEvent("ViewContent", { content_name: product.title_ar, content_ids: [product.id], currency: "EGP", value: totalAmount });
+    }, 1200); // wait for the pixel script (afterInteractive) to be ready
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Track InitiateCheckout on initial interaction
   const [hasInteracted, setHasInteracted] = useState(false);
   const handleFirstInteraction = () => {
